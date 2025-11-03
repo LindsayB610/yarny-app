@@ -9,8 +9,7 @@
     "build": "echo 'No build step needed'"
   },
   "dependencies": {
-    "@simplewebauthn/server": "^9.0.0",
-    "@simplewebauthn/browser": "^2.1.0"
+    "google-auth-library": "^9.0.0"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0"
