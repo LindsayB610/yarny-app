@@ -93,7 +93,9 @@ async function handleRegister(email) {
     }
   } catch (error) {
     console.error('Registration error:', error);
-    showError(error.message || 'Registration failed. Please try again.');
+    const errorMessage = error.message || 'Registration failed. Please try again.';
+    showError(errorMessage);
+    console.error('Full error details:', error);
   }
 }
 
@@ -145,7 +147,9 @@ async function handleLogin(email) {
     }
   } catch (error) {
     console.error('Login error:', error);
-    showError(error.message || 'Login failed. Please try again.');
+    const errorMessage = error.message || 'Login failed. Please try again.';
+    showError(errorMessage);
+    console.error('Full error details:', error);
   }
 }
 

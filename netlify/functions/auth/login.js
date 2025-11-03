@@ -1,5 +1,5 @@
 const { generateAuthenticationOptions } = require('@simplewebauthn/server');
-const { RP_ID } = require('./config');
+const { RP_ID, ALLOWED_EMAIL } = require('./config');
 const { getCredential, saveChallenge } = require('./storage');
 
 exports.handler = async (event) => {
@@ -17,6 +17,14 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Email required' })
+      };
+    }
+
+    // Only allow the whitelisted email
+    if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Access denied. This application is private.' })
       };
     }
 

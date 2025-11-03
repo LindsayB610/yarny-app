@@ -1,5 +1,5 @@
 const { generateRegistrationOptions } = require('@simplewebauthn/server');
-const { RP_ID, RP_NAME, ORIGIN } = require('./config');
+const { RP_ID, RP_NAME, ORIGIN, ALLOWED_EMAIL } = require('./config');
 const { saveChallenge, getChallenge } = require('./storage');
 
 exports.handler = async (event) => {
@@ -17,6 +17,14 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Email required' })
+      };
+    }
+
+    // Only allow the whitelisted email
+    if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Access denied. This application is private.' })
       };
     }
 
