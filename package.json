@@ -1,0 +1,22 @@
+{
+  "name": "yarny-app",
+  "version": "1.0.0",
+  "description": "Personal writing tool with WebAuthn authentication",
+  "author": "Lindsay Brunner",
+  "license": "MIT",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^9.0.0",
+    "@simplewebauthn/browser": "^2.1.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
