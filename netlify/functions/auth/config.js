@@ -5,6 +5,6 @@ module.exports = {
   RP_NAME: process.env.RP_NAME || 'Yarny - Writing Tool',
   ORIGIN: process.env.ORIGIN || 'https://yarny.lindsaybrunner.com',
   // Only allow this email address
-  ALLOWED_EMAIL: process.env.ALLOWED_EMAIL || 'lindsayb610@gmail.com',
+  ALLOWED_EMAIL: process.env.ALLOWED_EMAIL || 'lindsayb82@gmail.com',
 };
 
