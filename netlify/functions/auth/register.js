@@ -30,6 +30,11 @@ exports.handler = async (event) => {
       attestationType: 'none',
       excludeCredentials: [], // For first-time setup
       supportedAlgorithmIDs: [-7, -257], // ES256 and RS256
+      authenticatorSelection: {
+        authenticatorAttachment: 'cross-platform', // Allows cross-device (phone) authentication
+        userVerification: 'preferred',
+        requireResidentKey: false,
+      },
     });
 
     // Store challenge for verification

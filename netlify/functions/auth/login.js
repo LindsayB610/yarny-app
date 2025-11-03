@@ -36,7 +36,7 @@ exports.handler = async (event) => {
       allowCredentials: [{
         id: Buffer.from(credential.credentialID, 'base64'),
         type: 'public-key',
-        transports: credential.transports || ['internal'],
+        transports: credential.transports || ['internal', 'hybrid'], // Allow cross-device
       }],
       userVerification: 'preferred',
       timeout: 60000,
