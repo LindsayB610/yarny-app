@@ -3,10 +3,14 @@ let googleClientId = '';
 
 // Check if already authenticated
 function checkAuth() {
+  // Check localStorage first (faster)
+  const localStorageAuth = localStorage.getItem('yarny_auth');
+  
+  // Also check cookie
   const cookies = document.cookie.split(';');
   const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
-  if (authCookie) {
+  if (localStorageAuth || authCookie) {
     // Redirect to editor if already authenticated
     if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
       window.location.href = '/editor.html';
@@ -20,6 +24,8 @@ function showLogin() {
   document.getElementById('appContent').classList.remove('authenticated');
   document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  localStorage.removeItem('yarny_auth');
+  localStorage.removeItem('yarny_user');
 }
 
 function showApp(userData = null) {
@@ -134,12 +140,26 @@ async function handleGoogleSignIn(response) {
     const result = await verifyResponse.json();
     
     if (result.verified) {
+      // Store auth token in localStorage as backup
+      if (result.token) {
+        localStorage.setItem('yarny_auth', result.token);
+        localStorage.setItem('yarny_user', JSON.stringify({
+          name: result.name,
+          user: result.user,
+          picture: result.picture
+        }));
+      }
+      
       showSuccess('Login successful!');
-      showApp({
-        name: result.name,
-        user: result.user,
-        picture: result.picture
-      });
+      
+      // Small delay to ensure cookies are set before redirect
+      setTimeout(() => {
+        showApp({
+          name: result.name,
+          user: result.user,
+          picture: result.picture
+        });
+      }, 300);
     } else {
       throw new Error('Verification failed');
     }

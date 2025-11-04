@@ -52,21 +52,25 @@ exports.handler = async (event) => {
     const sessionToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
     
     // Set both HttpOnly (secure) and non-HttpOnly (for client-side checks) cookies
+    // Netlify Functions needs multiple Set-Cookie headers as an array
     const cookieOptions = `Path=/; Max-Age=${60 * 60 * 24 * 7}`; // 7 days
     const httpOnlyCookie = `session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; ${cookieOptions}`;
     const clientCookie = `auth=${sessionToken}; Secure; SameSite=Strict; ${cookieOptions}`;
     
     return {
       statusCode: 200,
+      multiValueHeaders: {
+        'Set-Cookie': [httpOnlyCookie, clientCookie],
+      },
       headers: {
-        'Set-Cookie': [httpOnlyCookie, clientCookie].join(', '),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
         verified: true,
         user: email,
         name: payload.name,
-        picture: payload.picture
+        picture: payload.picture,
+        token: sessionToken // Include token for localStorage fallback
       }),
     };
   } catch (error) {

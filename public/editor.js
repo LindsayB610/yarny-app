@@ -881,10 +881,14 @@ function escapeHtml(text) {
 // ============================================
 
 function checkAuth() {
+  // Check localStorage first (more reliable)
+  const localStorageAuth = localStorage.getItem('yarny_auth');
+  
+  // Also check cookie
   const cookies = document.cookie.split(';');
   const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
-  if (!authCookie) {
+  if (!localStorageAuth && !authCookie) {
     // Redirect to login if not authenticated
     window.location.href = '/';
   }
