@@ -210,43 +210,37 @@ async function getAuthenticatedDriveClient(email) {
   // Return Drive API client and auth client
   const driveClient = google.drive({ version: 'v3', auth: oauth2Client });
   
-  // Attach auth client for use in other APIs (like Docs API)
-  // Use Object.defineProperty to ensure it persists
-  Object.defineProperty(driveClient, '_auth', {
-    value: oauth2Client,
-    writable: false,
-    enumerable: false,
-    configurable: false
+  // Wrap the drive client in a Proxy to allow accessing _auth without modifying the object
+  // The driveClient object is not extensible, so we can't attach properties directly
+  const driveClientProxy = new Proxy(driveClient, {
+    get: function(target, prop) {
+      // If accessing _auth, return the oauth2Client
+      if (prop === '_auth') {
+        return oauth2Client;
+      }
+      // Otherwise, forward all other property accesses to the original driveClient
+      return target[prop];
+    },
+    set: function(target, prop, value) {
+      // Allow setting _auth (though it will only exist on the proxy, not the original object)
+      if (prop === '_auth') {
+        // Don't actually set it, just return true to indicate success
+        // The proxy will handle returning oauth2Client when _auth is accessed
+        return true;
+      }
+      // For other properties, try to set on the original object
+      target[prop] = value;
+      return true;
+    },
+    has: function(target, prop) {
+      // Check if property exists on target or if it's _auth
+      return prop === '_auth' || prop in target;
+    }
   });
   
-  // Verify it was attached
-  if (!driveClient._auth) {
-    console.error('WARNING: Failed to attach _auth to driveClient');
-    // Fallback: attach directly
-    driveClient._auth = oauth2Client;
-  }
+  console.log('Drive client created - _auth accessible via proxy');
   
-  console.log('Drive client created - _auth attached:', !!driveClient._auth);
-  
-  // Return both drive client and auth client for use in other APIs
-  // Wrap in an object so we can access both
-  const clientWrapper = {
-    drive: driveClient,
-    auth: oauth2Client,
-    // Also expose _auth for backward compatibility
-    get _auth() { return oauth2Client; }
-  };
-  
-  // Also attach _auth to the drive client itself for backward compatibility
-  if (!driveClient._auth) {
-    driveClient._auth = oauth2Client;
-  }
-  
-  // Return the wrapper, but also make driveClient accessible directly
-  // This allows existing code to work while also providing explicit access
-  Object.setPrototypeOf(clientWrapper, driveClient);
-  
-  return driveClient; // Return drive client for backward compatibility
+  return driveClientProxy; // Return proxied drive client with _auth support
 }
 
 module.exports = {
