@@ -88,7 +88,7 @@ async function initializeGoogleSignIn() {
 
   // Get client ID from server config endpoint
   try {
-    const configResponse = await fetch(`${API_BASE}/auth/config`);
+    const configResponse = await fetch(`${API_BASE}/config`);
     if (configResponse.ok) {
       const config = await configResponse.json();
       googleClientId = config.clientId;
