@@ -2,6 +2,17 @@
   publish = "public"
   functions = "netlify/functions"
 
+# FedCM web-identity file with proper headers
+[[redirects]]
+  from = "/.well-known/web-identity"
+  to = "/.well-known/web-identity"
+  status = 200
+  force = true
+  headers = { 
+    Access-Control-Allow-Origin = "*",
+    Content-Type = "application/json"
+  }
+
 # Allow direct access to editor.html and stories.html
 [[redirects]]
   from = "/editor.html"

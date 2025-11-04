@@ -192,14 +192,23 @@ async function initializeGoogleSignIn() {
     return;
   }
 
-  // Initialize Google Sign-In
-  google.accounts.id.initialize({
-    client_id: googleClientId,
-    callback: handleGoogleSignIn,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-    itp_support: true, // Intelligent Tracking Prevention support
-  });
+  // Initialize Google Sign-In with FedCM support
+  try {
+    google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleSignIn,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      itp_support: true, // Intelligent Tracking Prevention support
+      // FedCM configuration
+      use_fedcm_for_prompt: true,
+    });
+    
+    console.log('Google Sign-In initialized with FedCM support');
+  } catch (error) {
+    console.error('Error initializing Google Sign-In:', error);
+    showError('Failed to initialize Google Sign-In. Please refresh the page.');
+  }
 }
 
 // Handle Google Sign-In callback
