@@ -1,11 +1,10 @@
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
-const fs = require('fs').promises;
-const path = require('path');
+const { getStore } = require('@netlify/blobs');
 
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
-const STORAGE_PATH = '/tmp/drive_tokens.json';
+const STORAGE_KEY = 'drive_tokens.json';
 
 // Validate client ID format (shared validation)
 function validateClientId(clientId) {
@@ -35,30 +34,55 @@ function validateClientSecret(clientSecret) {
 
 async function getTokens(email) {
   try {
-    const data = await fs.readFile(STORAGE_PATH, 'utf8');
-    const allTokens = JSON.parse(data);
-    console.log('getTokens - file exists, looking for email:', email);
-    console.log('getTokens - available emails in file:', Object.keys(allTokens));
+    const store = getStore({
+      name: 'drive-tokens'
+    });
+    
+    let allTokens = {};
+    try {
+      const data = await store.get(STORAGE_KEY);
+      if (data) {
+        allTokens = JSON.parse(data);
+      }
+    } catch (error) {
+      // No data exists yet
+      console.log('getTokens - no existing data, starting fresh');
+    }
+    
+    console.log('getTokens - looking for email:', email);
+    console.log('getTokens - available emails:', Object.keys(allTokens));
     const tokens = allTokens[email] || null;
     console.log('getTokens - found tokens:', !!tokens);
     return tokens;
   } catch (error) {
-    console.log('getTokens - file read error:', error.message);
-    console.log('getTokens - storage path:', STORAGE_PATH);
+    console.log('getTokens - error:', error.message);
     return null;
   }
 }
 
 async function saveTokens(email, tokens) {
-  let allTokens = {};
   try {
-    const data = await fs.readFile(STORAGE_PATH, 'utf8');
-    allTokens = JSON.parse(data);
+    const store = getStore({
+      name: 'drive-tokens'
+    });
+    
+    let allTokens = {};
+    try {
+      const data = await store.get(STORAGE_KEY);
+      if (data) {
+        allTokens = JSON.parse(data);
+      }
+    } catch (error) {
+      // No data exists yet, start fresh
+    }
+    
+    allTokens[email] = tokens;
+    await store.set(STORAGE_KEY, JSON.stringify(allTokens, null, 2));
+    console.log('saveTokens - tokens saved successfully for:', email);
   } catch (error) {
-    // File doesn't exist, start fresh
+    console.error('saveTokens - error saving:', error.message);
+    throw error;
   }
-  allTokens[email] = tokens;
-  await fs.writeFile(STORAGE_PATH, JSON.stringify(allTokens, null, 2));
 }
 
 async function refreshAccessToken(email, refreshToken) {

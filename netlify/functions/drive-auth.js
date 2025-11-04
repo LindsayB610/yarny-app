@@ -135,7 +135,11 @@ exports.handler = async (event) => {
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
   
   console.log('Drive auth initiated - Redirect URI:', redirectUri);
+  console.log('Redirect URI length:', redirectUri.length);
+  console.log('Host:', host);
+  console.log('Protocol:', protocol);
   console.log('Using Client ID (first 20 chars):', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
+  console.log('Using Client ID (last 20 chars):', '...' + GDRIVE_CLIENT_ID?.substring(GDRIVE_CLIENT_ID.length - 20));
 
   // Create OAuth2 client
   const oauth2Client = new OAuth2Client(

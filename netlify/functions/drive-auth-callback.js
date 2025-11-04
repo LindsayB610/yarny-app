@@ -1,9 +1,9 @@
 const { OAuth2Client } = require('google-auth-library');
-const fs = require('fs').promises;
+const crypto = require('crypto');
+const { saveTokens } = require('./drive-client');
 
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
-const STORAGE_PATH = '/tmp/drive_tokens.json';
 
 // Validate client ID format
 function validateClientId(clientId) {
@@ -56,18 +56,6 @@ function validateClientSecret(clientSecret) {
   }
   
   return { valid: true };
-}
-
-async function saveTokens(email, tokens) {
-  let allTokens = {};
-  try {
-    const data = await fs.readFile(STORAGE_PATH, 'utf8');
-    allTokens = JSON.parse(data);
-  } catch (error) {
-    // File doesn't exist, start fresh
-  }
-  allTokens[email] = tokens;
-  await fs.writeFile(STORAGE_PATH, JSON.stringify(allTokens, null, 2));
 }
 
 async function getUserEmailFromSession(event) {
@@ -228,9 +216,19 @@ exports.handler = async (event) => {
   try {
     console.log('Attempting token exchange...');
     console.log('Redirect URI:', redirectUri);
+    console.log('Redirect URI length:', redirectUri.length);
     console.log('Client ID (first 20 chars):', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
+    console.log('Client ID (last 20 chars):', '...' + GDRIVE_CLIENT_ID?.substring(GDRIVE_CLIENT_ID.length - 20));
+    console.log('Client Secret (first 10 chars):', GDRIVE_CLIENT_SECRET?.substring(0, 10) + '...');
+    console.log('Client Secret (last 10 chars):', '...' + GDRIVE_CLIENT_SECRET?.substring(GDRIVE_CLIENT_SECRET.length - 10));
     console.log('Code present:', !!code);
     console.log('Code length:', code?.length);
+    
+    // Log a hash of the credentials to verify they're consistent (not logging full values for security)
+    const clientIdHash = crypto.createHash('sha256').update(GDRIVE_CLIENT_ID).digest('hex').substring(0, 8);
+    const secretHash = crypto.createHash('sha256').update(GDRIVE_CLIENT_SECRET).digest('hex').substring(0, 8);
+    console.log('Client ID hash (first 8 chars):', clientIdHash);
+    console.log('Client Secret hash (first 8 chars):', secretHash);
     
     const { tokens } = await oauth2Client.getToken(code);
     
@@ -264,7 +262,13 @@ exports.handler = async (event) => {
          console.error('Error message:', error.message);
          console.error('Error code:', error.code);
          console.error('Error response:', error.response?.data);
-         console.error('Full error object:', JSON.stringify(error, null, 2));
+         
+         // Log the exact request details (without sensitive data)
+         if (error.config) {
+           console.error('Request URL:', error.config.url);
+           console.error('Request method:', error.config.method);
+           console.error('Request headers:', JSON.stringify(error.config.headers, null, 2));
+         }
          
          // More detailed error message
          let errorMessage = 'Token exchange failed';
@@ -276,10 +280,13 @@ exports.handler = async (event) => {
          }
          if (error.response?.data?.error === 'invalid_client') {
            errorMessage += '\n\nTroubleshooting:';
-           errorMessage += '\n1. Verify GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET in Netlify env vars';
-           errorMessage += '\n2. Check redirect URI matches Google Cloud Console exactly: ' + redirectUri;
-           errorMessage += '\n3. Ensure Google Drive API is enabled for this OAuth client\'s project';
-           errorMessage += '\n4. Verify the OAuth client exists and is active in Google Cloud Console';
+           errorMessage += '\n1. Verify GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET in Netlify env vars match EXACTLY what\'s in Google Cloud Console';
+           errorMessage += '\n2. Ensure the Client ID and Client Secret belong to the SAME OAuth 2.0 client';
+           errorMessage += '\n3. Check that the OAuth client type is "Web application" (not Desktop app or other)';
+           errorMessage += '\n4. Verify redirect URI matches Google Cloud Console EXACTLY (including trailing slashes): ' + redirectUri;
+           errorMessage += '\n5. If you regenerated the client secret, make sure you updated the env var';
+           errorMessage += '\n6. Ensure Google Drive API is enabled for this OAuth client\'s project';
+           errorMessage += '\n7. Check that the OAuth consent screen is configured correctly';
          }
     
     return {

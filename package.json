@@ -9,6 +9,7 @@
     "build": "echo 'No build step needed'"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.3.2",
     "axios": "^1.13.1",
     "google-auth-library": "^9.0.0",
     "googleapis": "^128.0.0"
