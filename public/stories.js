@@ -6,6 +6,72 @@ if (typeof window.API_BASE === 'undefined') {
 // Redeclare var API_BASE (allowed with var) - references the same variable if already declared
 var API_BASE = window.API_BASE || '/.netlify/functions';
 
+// Error logging to localStorage so errors persist across page reloads
+(function() {
+  const MAX_ERRORS = 50;
+  const ERROR_KEY = 'yarny_error_log';
+  
+  function logError(type, message, error) {
+    try {
+      const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+      const errorEntry = {
+        timestamp: new Date().toISOString(),
+        type: type,
+        message: message,
+        error: error ? {
+          message: error.message,
+          stack: error.stack,
+          response: error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : null
+        } : null
+      };
+      errors.unshift(errorEntry);
+      if (errors.length > MAX_ERRORS) {
+        errors.pop();
+      }
+      localStorage.setItem(ERROR_KEY, JSON.stringify(errors));
+    } catch (e) {
+      // If localStorage fails, just log to console
+      console.error('Failed to log error to localStorage:', e);
+    }
+  }
+  
+  // Override console.error to capture errors
+  const originalError = console.error;
+  console.error = function(...args) {
+    originalError.apply(console, args);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('Error')) {
+      logError('console.error', args[0], args[1] || null);
+    }
+  };
+  
+  // Capture unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    logError('unhandledrejection', event.reason?.message || 'Unhandled promise rejection', event.reason);
+  });
+  
+  // Capture global errors
+  window.addEventListener('error', (event) => {
+    logError('error', event.message || 'Global error', event.error);
+  });
+  
+  // Expose function to view errors
+  window.viewYarnyErrors = function() {
+    const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+    console.log('=== Yarny Error Log ===');
+    console.table(errors);
+    return errors;
+  };
+  
+  // Expose function to clear errors
+  window.clearYarnyErrors = function() {
+    localStorage.removeItem(ERROR_KEY);
+    console.log('Error log cleared');
+  };
+})();
+
 // Force logout handler - check URL parameter first
 const urlParamsCheck = new URLSearchParams(window.location.search);
 if (urlParamsCheck.get('force_logout') === 'true') {
@@ -497,6 +563,29 @@ async function initializeStoryStructure(storyFolderId) {
       console.error('Error details:', error.message);
       console.error('Error stack:', error.stack);
       console.error('Error response:', error.response?.data);
+      
+      // Log to persistent error log
+      try {
+        const errors = JSON.parse(localStorage.getItem('yarny_error_log') || '[]');
+        errors.unshift({
+          timestamp: new Date().toISOString(),
+          type: 'Opening Scene Doc Creation',
+          message: error.message,
+          error: {
+            message: error.message,
+            stack: error.stack,
+            response: error.response ? {
+              status: error.response.status,
+              data: error.response.data
+            } : null,
+            code: error.code
+          }
+        });
+        if (errors.length > 50) errors.pop();
+        localStorage.setItem('yarny_error_log', JSON.stringify(errors));
+      } catch (e) {
+        console.error('Failed to log error:', e);
+      }
       
       // Check if this is a scope issue
       if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
