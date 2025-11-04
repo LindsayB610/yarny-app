@@ -1,6 +1,16 @@
 const { getAuthenticatedDriveClient } = require('./drive-client');
 const { Readable } = require('stream');
 
+// Helper to add timeout to promises
+function withTimeout(promise, timeoutMs, errorMessage) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error(errorMessage || 'Operation timed out')), timeoutMs)
+    )
+  ]);
+}
+
 async function getUserEmailFromSession(event) {
   const cookies = event.headers.cookie?.split(';') || [];
   const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
@@ -17,6 +27,9 @@ async function getUserEmailFromSession(event) {
 }
 
 exports.handler = async (event, context) => {
+  // Set function timeout to use as much time as available
+  context.callbackWaitsForEmptyEventLoop = false;
+  
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -36,8 +49,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Get authenticated drive client - this will refresh tokens if needed
-    const drive = await getAuthenticatedDriveClient(email);
+    console.log('Drive write request:', { fileName, fileId, isGoogleDoc: mimeType === 'application/vnd.google-apps.document', contentLength: content?.length });
+
+    // Get authenticated drive client - this will refresh tokens if needed (with timeout)
+    const drive = await withTimeout(
+      getAuthenticatedDriveClient(email),
+      8000,
+      'Drive client authentication timed out'
+    );
     const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
     
     // For Google Docs, we need the OAuth client to use the Docs API
@@ -68,13 +87,21 @@ exports.handler = async (event, context) => {
           refresh_token: tokens.refresh_token
         });
         
-        // Attach to drive for future use
-        drive._auth = oauth2Client;
-        console.log('Created and attached new OAuth client');
+        // Try to attach to drive for future use (may fail if not extensible, but that's okay)
+        try {
+          drive._auth = oauth2Client;
+        } catch (e) {
+          // If drive is not extensible, that's fine - we'll recreate the client next time
+          console.log('Could not attach _auth to drive (non-extensible), will recreate next time');
+        }
+        console.log('Created new OAuth client');
       }
-    }
       
       // Check if credentials are set
+      if (!oauth2Client) {
+        throw new Error('OAuth client not initialized for Google Docs');
+      }
+      
       let credentials = oauth2Client.credentials;
       if (!credentials || !credentials.access_token) {
         console.log('Credentials missing or expired, attempting to get access token...');
@@ -421,9 +448,19 @@ exports.handler = async (event, context) => {
     }
   } catch (error) {
     console.error('Drive write error:', error);
+    const errorMessage = error.message || 'Failed to write file';
+    
+    // Check if it's a timeout error
+    if (errorMessage.includes('timed out') || errorMessage.includes('timeout')) {
+      return {
+        statusCode: 504,
+        body: JSON.stringify({ error: 'Request timed out. Please try again.' })
+      };
+    }
+    
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message || 'Failed to write file' })
+      body: JSON.stringify({ error: errorMessage })
     };
   }
 };
