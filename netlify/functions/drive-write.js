@@ -37,18 +37,13 @@ exports.handler = async (event, context) => {
     }
 
     // Get authenticated drive client - this will refresh tokens if needed
-    let drive = await getAuthenticatedDriveClient(email);
+    const drive = await getAuthenticatedDriveClient(email);
     const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
     
-    // If we're creating/updating a Google Doc, verify the auth client has valid credentials
-    if (isGoogleDoc) {
-      const auth = drive._auth;
-      const credentials = auth.credentials;
-      if (!credentials || !credentials.access_token) {
-        console.log('Auth credentials missing for Google Doc - re-authenticating');
-        // Re-authenticate to get fresh tokens
-        drive = await getAuthenticatedDriveClient(email);
-      }
+    // Verify the auth client is attached and has credentials
+    if (isGoogleDoc && (!drive._auth || !drive._auth.credentials || !drive._auth.credentials.access_token)) {
+      console.error('Auth client missing or invalid - drive._auth:', !!drive._auth);
+      throw new Error('Authentication client not properly initialized');
     }
 
     if (fileId) {
