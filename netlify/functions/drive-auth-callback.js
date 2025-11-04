@@ -1,8 +1,8 @@
 const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs').promises;
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GDRIVE_CLIENT_ID = process.env.GDRIVE_CLIENT_ID;
+const GDRIVE_CLIENT_SECRET = process.env.GDRIVE_CLIENT_SECRET;
 const STORAGE_PATH = '/tmp/drive_tokens.json';
 
 async function saveTokens(email, tokens) {
@@ -141,8 +141,8 @@ exports.handler = async (event) => {
 
   // Exchange code for tokens
   const oauth2Client = new OAuth2Client(
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
+    GDRIVE_CLIENT_ID,
+    GDRIVE_CLIENT_SECRET,
     redirectUri
   );
 

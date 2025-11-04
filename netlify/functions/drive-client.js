@@ -3,8 +3,8 @@ const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs').promises;
 const path = require('path');
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GDRIVE_CLIENT_ID = process.env.GDRIVE_CLIENT_ID;
+const GDRIVE_CLIENT_SECRET = process.env.GDRIVE_CLIENT_SECRET;
 const STORAGE_PATH = '/tmp/drive_tokens.json';
 
 async function getTokens(email) {
@@ -30,13 +30,13 @@ async function saveTokens(email, tokens) {
 }
 
 async function refreshAccessToken(email, refreshToken) {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    throw new Error('Missing Google OAuth credentials. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
+  if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
+    throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
   }
 
   const oauth2Client = new OAuth2Client(
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET
+    GDRIVE_CLIENT_ID,
+    GDRIVE_CLIENT_SECRET
   );
 
   oauth2Client.setCredentials({
@@ -48,8 +48,8 @@ async function refreshAccessToken(email, refreshToken) {
 }
 
 async function getAuthenticatedDriveClient(email) {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    throw new Error('Missing Google OAuth credentials. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
+  if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
+    throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
   }
 
   let tokens = await getTokens(email);
@@ -82,8 +82,8 @@ async function getAuthenticatedDriveClient(email) {
 
   // Create OAuth2 client with current tokens
   const oauth2Client = new OAuth2Client(
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET
+    GDRIVE_CLIENT_ID,
+    GDRIVE_CLIENT_SECRET
   );
 
   oauth2Client.setCredentials({

@@ -203,9 +203,7 @@ async function initializeGoogleSignIn() {
     return;
   }
 
-  // Initialize Google Sign-In
-  // Note: FedCM disabled temporarily due to CORS issues with Google's token endpoint
-  // The traditional OAuth flow works reliably
+  // Initialize Google Sign-In with FedCM support
   try {
     google.accounts.id.initialize({
       client_id: googleClientId,
@@ -213,10 +211,10 @@ async function initializeGoogleSignIn() {
       auto_select: false,
       cancel_on_tap_outside: true,
       itp_support: true, // Intelligent Tracking Prevention support
-      use_fedcm_for_prompt: false, // Disabled until FedCM CORS issues are resolved
+      use_fedcm_for_prompt: true, // Enable FedCM
     });
     
-    console.log('Google Sign-In initialized (traditional OAuth flow)');
+    console.log('Google Sign-In initialized with FedCM support');
   } catch (error) {
     console.error('Error initializing Google Sign-In:', error);
     showError('Failed to initialize Google Sign-In. Please refresh the page.');

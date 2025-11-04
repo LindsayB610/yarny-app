@@ -1,8 +1,8 @@
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GDRIVE_CLIENT_ID = process.env.GDRIVE_CLIENT_ID;
+const GDRIVE_CLIENT_SECRET = process.env.GDRIVE_CLIENT_SECRET;
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 async function getUserEmailFromSession(event) {
@@ -26,11 +26,11 @@ exports.handler = async (event) => {
   }
 
   // Validate environment variables
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.error('Missing Google OAuth credentials');
+  if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
+    console.error('Missing Drive OAuth credentials');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server configuration error: Missing Google OAuth credentials' })
+      body: JSON.stringify({ error: 'Server configuration error: Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.' })
     };
   }
 
@@ -61,8 +61,8 @@ exports.handler = async (event) => {
 
   // Create OAuth2 client
   const oauth2Client = new OAuth2Client(
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
+    GDRIVE_CLIENT_ID,
+    GDRIVE_CLIENT_SECRET,
     redirectUri
   );
 
