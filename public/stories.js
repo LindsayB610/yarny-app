@@ -315,5 +315,20 @@ if (urlParams.get('drive_auth_success') === 'true') {
   initialize();
 }
 
+// Logout function
+window.logout = function() {
+  // Clear all auth data
+  localStorage.removeItem('yarny_auth');
+  localStorage.removeItem('yarny_user');
+  localStorage.removeItem('yarny_current_story');
+  
+  // Clear cookies
+  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  
+  // Redirect to login
+  window.location.href = '/';
+};
+
 // Export for global access
 window.closeNewStoryModal = closeNewStoryModal;
