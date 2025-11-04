@@ -1,19 +1,66 @@
 const API_BASE = '/.netlify/functions';
 let googleClientId = '';
 
+// Session expiration: 48 hours in milliseconds
+const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
+
+// Check if token is expired (token format: base64(email:timestamp))
+function isTokenExpired(token) {
+  if (!token) return true;
+  
+  try {
+    // Decode base64 token (browser-compatible)
+    const decoded = atob(token);
+    const parts = decoded.split(':');
+    
+    if (parts.length !== 2) return true;
+    
+    const timestamp = parseInt(parts[1], 10);
+    if (isNaN(timestamp)) return true;
+    
+    // Check if token is within 48 hours
+    const now = Date.now();
+    const age = now - timestamp;
+    
+    return age > SESSION_DURATION_MS;
+  } catch (error) {
+    console.error('Error checking token expiration:', error);
+    return true;
+  }
+}
+
 // Check if already authenticated
 function checkAuth() {
   // Check localStorage first (faster)
   const localStorageAuth = localStorage.getItem('yarny_auth');
   
+  // Validate localStorage token if present
+  if (localStorageAuth && !isTokenExpired(localStorageAuth)) {
+    // Redirect to editor if already authenticated
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      window.location.href = '/editor.html';
+    }
+    return;
+  } else if (localStorageAuth && isTokenExpired(localStorageAuth)) {
+    // Clear expired token
+    localStorage.removeItem('yarny_auth');
+    localStorage.removeItem('yarny_user');
+  }
+  
   // Also check cookie
   const cookies = document.cookie.split(';');
   const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
-  if (localStorageAuth || authCookie) {
-    // Redirect to editor if already authenticated
-    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-      window.location.href = '/editor.html';
+  if (authCookie) {
+    const cookieValue = authCookie.split('=')[1].trim();
+    if (!isTokenExpired(cookieValue)) {
+      // Redirect to editor if already authenticated
+      if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+        window.location.href = '/editor.html';
+      }
+    } else {
+      // Clear expired cookie
+      document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
   }
 }

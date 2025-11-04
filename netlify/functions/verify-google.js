@@ -53,7 +53,7 @@ exports.handler = async (event) => {
     
     // Set both HttpOnly (secure) and non-HttpOnly (for client-side checks) cookies
     // Netlify Functions needs multiple Set-Cookie headers as an array
-    const cookieOptions = `Path=/; Max-Age=${60 * 60 * 24 * 7}`; // 7 days
+    const cookieOptions = `Path=/; Max-Age=${60 * 60 * 48}`; // 48 hours
     const httpOnlyCookie = `session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; ${cookieOptions}`;
     const clientCookie = `auth=${sessionToken}; Secure; SameSite=Strict; ${cookieOptions}`;
     
