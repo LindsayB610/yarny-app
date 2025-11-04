@@ -166,13 +166,16 @@ async function getAuthenticatedDriveClient(email) {
     
     const newTokens = await refreshAccessToken(email, tokens.refresh_token);
     
-    // Update stored tokens
+    // Update stored tokens - preserve scope from original tokens
+    // Refresh tokens maintain the original scopes, so new access token has same scopes
     tokens = {
       access_token: newTokens.access_token,
       refresh_token: tokens.refresh_token, // Keep original refresh token
-      expiry_date: newTokens.expiry_date
+      expiry_date: newTokens.expiry_date,
+      scope: tokens.scope || newTokens.scope // Preserve scope from original or use from refresh
     };
     
+    console.log('Refreshed tokens - scope preserved:', tokens.scope);
     await saveTokens(email, tokens);
   }
 
@@ -182,9 +185,26 @@ async function getAuthenticatedDriveClient(email) {
     GDRIVE_CLIENT_SECRET
   );
 
+  // Set credentials including access token and refresh token
+  // The refresh token will automatically refresh the access token if it expires
   oauth2Client.setCredentials({
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token
+  });
+  
+  // Enable automatic token refresh
+  oauth2Client.on('tokens', (newTokens) => {
+    if (newTokens.access_token) {
+      // Update stored tokens when automatically refreshed
+      tokens.access_token = newTokens.access_token;
+      if (newTokens.expiry_date) {
+        tokens.expiry_date = newTokens.expiry_date;
+      }
+      // Save updated tokens
+      saveTokens(email, tokens).catch(err => {
+        console.error('Error saving auto-refreshed tokens:', err);
+      });
+    }
   });
 
   // Return Drive API client and auth client

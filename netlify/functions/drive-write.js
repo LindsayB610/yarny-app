@@ -36,8 +36,20 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const drive = await getAuthenticatedDriveClient(email);
+    // Get authenticated drive client - this will refresh tokens if needed
+    let drive = await getAuthenticatedDriveClient(email);
     const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
+    
+    // If we're creating/updating a Google Doc, verify the auth client has valid credentials
+    if (isGoogleDoc) {
+      const auth = drive._auth;
+      const credentials = auth.credentials;
+      if (!credentials || !credentials.access_token) {
+        console.log('Auth credentials missing for Google Doc - re-authenticating');
+        // Re-authenticate to get fresh tokens
+        drive = await getAuthenticatedDriveClient(email);
+      }
+    }
 
     if (fileId) {
       // Update existing file
@@ -165,6 +177,7 @@ exports.handler = async (event, context) => {
         if (content && content.trim()) {
           const { google } = require('googleapis');
           // Get the auth from the drive client
+          // The drive client should already have fresh tokens from getAuthenticatedDriveClient
           const auth = drive._auth;
           const docs = google.docs({ version: 'v1', auth: auth });
           
