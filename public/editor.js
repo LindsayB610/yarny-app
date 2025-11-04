@@ -106,14 +106,12 @@ const state = {
     wordGoal: 3000,
     genre: '',
     groupIds: [],
-    tagIds: [],
     noteIds: [],
     activeSnippetId: null,
     activeNoteId: null,
     activeRightTab: 'people',
     filters: {
-      search: '',
-      tagIds: []
+      search: ''
     },
     editing: {
       isTyping: false,
@@ -124,7 +122,6 @@ const state = {
   groups: {},
   snippets: {},
   notes: {},
-  tags: {},
   previewVersion: 1,
   // Drive integration
   drive: {
@@ -146,9 +143,7 @@ function initializeState() {
   state.groups = {};
   state.snippets = {};
   state.notes = {};
-  state.tags = {};
   state.project.groupIds = [];
-  state.project.tagIds = [];
   state.project.noteIds = [];
   state.project.activeSnippetId = null;
 
@@ -184,17 +179,6 @@ function renderStoryList() {
                  snippet.body.toLowerCase().includes(searchLower);
         });
         if (!matchesGroup && !matchesSnippets) return false;
-      }
-      // Filter by tags
-      if (state.project.filters.tagIds.length > 0) {
-        const hasMatchingSnippet = group.snippetIds.some(snippetId => {
-          const snippet = state.snippets[snippetId];
-          if (!snippet) return false;
-          return state.project.filters.tagIds.every(tagId => 
-            snippet.tagIds.includes(tagId)
-          );
-        });
-        if (!hasMatchingSnippet) return false;
       }
       return true;
     })
@@ -245,6 +229,12 @@ function renderStoryList() {
     headerEl.addEventListener('dragover', handleDragOver);
     headerEl.addEventListener('drop', (e) => handleGroupDrop(e, group.id));
     headerEl.addEventListener('dragend', handleDragEnd);
+    
+    // Right-click context menu
+    headerEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showContextMenu(e, 'group', group.id);
+    });
 
     const snippetsEl = document.createElement('div');
     snippetsEl.className = 'group-snippets';
@@ -259,12 +249,6 @@ function renderStoryList() {
           const matches = snippet.title.toLowerCase().includes(searchLower) ||
                          snippet.body.toLowerCase().includes(searchLower);
           if (!matches) return false;
-        }
-        // Filter by tags
-        if (state.project.filters.tagIds.length > 0) {
-          return state.project.filters.tagIds.every(tagId => 
-            snippet.tagIds.includes(tagId)
-          );
         }
         return true;
       })
@@ -296,6 +280,12 @@ function renderStoryList() {
       snippetEl.addEventListener('dragover', handleDragOver);
       snippetEl.addEventListener('drop', (e) => handleSnippetDrop(e, snippet.id, group.id));
       snippetEl.addEventListener('dragend', handleDragEnd);
+      
+      // Right-click context menu
+      snippetEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e, 'snippet', snippet.id);
+      });
 
       snippetsEl.appendChild(snippetEl);
     });
@@ -363,6 +353,12 @@ function renderNotesList() {
         renderNotesList();
         renderNoteEditor();
       });
+      
+      // Right-click context menu
+      noteEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e, 'note', note.id);
+      });
 
       listEl.appendChild(noteEl);
     });
@@ -427,52 +423,6 @@ function renderNoteEditor() {
   }
 }
 
-function renderTagPalette() {
-  const listEl = document.getElementById('tagPaletteList');
-  listEl.innerHTML = '';
-
-  const allTags = Object.values(state.tags);
-  
-  if (allTags.length === 0) {
-    listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #6B7280; font-size: 13px;">No tags yet</div>';
-    return;
-  }
-
-  allTags.forEach(tag => {
-    const tagEl = document.createElement('div');
-    const isSelected = state.project.filters.tagIds.includes(tag.id);
-    tagEl.className = `tag-palette-item ${isSelected ? 'selected' : ''}`;
-    tagEl.innerHTML = `
-      <span class="tag-palette-item-name">${escapeHtml(tag.name)}</span>
-      <span class="tag-palette-item-remove" onclick="removeTag('${tag.id}')">×</span>
-    `;
-
-    tagEl.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tag-palette-item-remove')) return;
-      toggleTagFilter(tag.id);
-    });
-
-    listEl.appendChild(tagEl);
-  });
-}
-
-function renderSelectedTags() {
-  const containerEl = document.getElementById('selectedTags');
-  containerEl.innerHTML = '';
-
-  state.project.filters.tagIds.forEach(tagId => {
-    const tag = state.tags[tagId];
-    if (!tag) return;
-
-    const chipEl = document.createElement('div');
-    chipEl.className = 'tag-chip';
-    chipEl.innerHTML = `
-      <span>${escapeHtml(tag.name)}</span>
-      <span class="remove-tag" onclick="removeTagFilter('${tag.id}')">×</span>
-    `;
-    containerEl.appendChild(chipEl);
-  });
-}
 
 // ============================================
 // Update Functions
@@ -510,7 +460,7 @@ function updateGoalMeter() {
     if (!group) return false;
     
     // Check if group is visible
-    if (state.project.filters.search || state.project.filters.tagIds.length > 0) {
+    if (state.project.filters.search) {
       // Only count if would be visible after filtering
       return true; // Simplified for now
     }
@@ -706,32 +656,6 @@ function highlightSearchMatches() {
   });
 }
 
-// ============================================
-// Tag Filtering
-// ============================================
-
-function toggleTagFilter(tagId) {
-  const index = state.project.filters.tagIds.indexOf(tagId);
-  if (index > -1) {
-    state.project.filters.tagIds.splice(index, 1);
-  } else {
-    state.project.filters.tagIds.push(tagId);
-  }
-  renderTagPalette();
-  renderSelectedTags();
-  renderStoryList();
-  updateGoalMeter();
-}
-
-function removeTagFilter(tagId) {
-  const index = state.project.filters.tagIds.indexOf(tagId);
-  if (index > -1) {
-    state.project.filters.tagIds.splice(index, 1);
-    renderSelectedTags();
-    renderStoryList();
-    updateGoalMeter();
-  }
-}
 
 // ============================================
 // Drag & Drop
@@ -850,12 +774,6 @@ function handleKeyboardShortcuts(e) {
     createNewGroup();
   }
 
-  // Cmd/Ctrl+K = open Tag palette
-  if (cmdOrCtrl && e.key === 'k') {
-    e.preventDefault();
-    toggleTagPalette();
-  }
-
   // Cmd/Ctrl+F = focus Search
   if (cmdOrCtrl && e.key === 'f') {
     e.preventDefault();
@@ -939,7 +857,6 @@ async function addSnippetToGroup(groupId) {
     body: '',
     words: 0,
     chars: 0,
-    tagIds: [],
     updatedAt: new Date().toISOString(),
     version: 1,
     driveFileId: null,
@@ -997,7 +914,6 @@ async function saveStoryDataToDrive() {
         places: {},
         things: {}
       },
-      tags: state.tags || []
     };
     
     // Organize notes by kind
@@ -1133,20 +1049,6 @@ async function createNewNote() {
 window.createNewNote = createNewNote;
 
 // ============================================
-// Tag Palette
-// ============================================
-
-function toggleTagPalette() {
-  const palette = document.getElementById('tagPalette');
-  if (palette.classList.contains('hidden')) {
-    palette.classList.remove('hidden');
-    renderTagPalette();
-  } else {
-    palette.classList.add('hidden');
-  }
-}
-
-// ============================================
 // Color Picker
 // ============================================
 
@@ -1233,28 +1135,391 @@ function closeColorPicker() {
   currentColorPickerChip = null;
 }
 
-function removeTag(tagId) {
-  // Remove tag from all snippets
-  Object.values(state.snippets).forEach(snippet => {
-    const index = snippet.tagIds.indexOf(tagId);
-    if (index > -1) {
-      snippet.tagIds.splice(index, 1);
+// ============================================
+// Context Menu
+// ============================================
+
+let currentContextType = null; // 'group', 'snippet', or 'note'
+let currentContextId = null;
+
+function showContextMenu(event, type, id) {
+  const menu = document.getElementById('contextMenu');
+  currentContextType = type;
+  currentContextId = id;
+  
+  // Position menu at cursor
+  menu.style.left = `${event.clientX}px`;
+  menu.style.top = `${event.clientY}px`;
+  menu.classList.remove('hidden');
+  
+  // Close menu on outside click
+  const closeMenu = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.classList.add('hidden');
+      document.removeEventListener('click', closeMenu);
     }
-  });
+  };
+  
+  // Use setTimeout to avoid immediate close
+  setTimeout(() => {
+    document.addEventListener('click', closeMenu);
+  }, 0);
+}
 
-  // Remove from filters
-  removeTagFilter(tagId);
+function hideContextMenu() {
+  const menu = document.getElementById('contextMenu');
+  menu.classList.add('hidden');
+  currentContextType = null;
+  currentContextId = null;
+}
 
-  // Remove tag
-  delete state.tags[tagId];
-  const tagIndex = state.project.tagIds.indexOf(tagId);
-  if (tagIndex > -1) {
-    state.project.tagIds.splice(tagIndex, 1);
+// ============================================
+// Rename Functionality
+// ============================================
+
+function openRenameModal() {
+  hideContextMenu();
+  
+  const modal = document.getElementById('renameModal');
+  const input = document.getElementById('renameInput');
+  const title = document.getElementById('renameModalTitle');
+  
+  let currentTitle = '';
+  let itemType = '';
+  
+  if (currentContextType === 'group') {
+    const group = state.groups[currentContextId];
+    if (!group) return;
+    currentTitle = group.title;
+    itemType = 'Chapter';
+  } else if (currentContextType === 'snippet') {
+    const snippet = state.snippets[currentContextId];
+    if (!snippet) return;
+    currentTitle = snippet.title;
+    itemType = 'Snippet';
+  } else if (currentContextType === 'note') {
+    const note = state.notes[currentContextId];
+    if (!note) return;
+    currentTitle = note.title;
+    itemType = 'Note';
+  } else {
+    return;
   }
+  
+  title.textContent = `Rename ${itemType}`;
+  input.value = currentTitle;
+  modal.classList.remove('hidden');
+  
+  // Focus and select text
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 100);
+}
 
-  renderTagPalette();
+function closeRenameModal() {
+  const modal = document.getElementById('renameModal');
+  modal.classList.add('hidden');
+  currentContextType = null;
+  currentContextId = null;
+}
+
+async function saveRename() {
+  const input = document.getElementById('renameInput');
+  const newName = input.value.trim();
+  const saveBtn = document.getElementById('renameSaveBtn');
+  
+  if (!newName) {
+    alert('Please enter a name');
+    return;
+  }
+  
+  if (!currentContextType || !currentContextId) {
+    closeRenameModal();
+    return;
+  }
+  
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+  
+  try {
+    if (currentContextType === 'group') {
+      const group = state.groups[currentContextId];
+      if (!group) return;
+      
+      group.title = newName;
+      
+      // Save to Drive
+      await saveStoryDataToDrive();
+      
+      // Re-render
+      renderStoryList();
+    } else if (currentContextType === 'snippet') {
+      const snippet = state.snippets[currentContextId];
+      if (!snippet) return;
+      
+      snippet.title = newName;
+      
+      // Update Drive file name
+      if (snippet.driveFileId) {
+        try {
+          // Rename the Drive file
+          await window.driveAPI.rename(snippet.driveFileId, `${newName}.doc`);
+          // Also save content to ensure it's up to date
+          if (state.drive.folderIds.chapters) {
+            await saveSnippetToDrive(snippet);
+          }
+        } catch (error) {
+          console.error('Error renaming snippet in Drive:', error);
+          // Continue even if Drive rename fails
+        }
+      }
+      
+      // Save story data
+      await saveStoryDataToDrive();
+      
+      // Re-render
+      renderStoryList();
+      
+      // Update editor if this is the active snippet
+      if (state.project.activeSnippetId === snippet.id) {
+        renderEditor();
+      }
+    } else if (currentContextType === 'note') {
+      const note = state.notes[currentContextId];
+      if (!note) return;
+      
+      note.title = newName;
+      
+      // Update Drive file name
+      if (note.driveFileId) {
+        try {
+          // Rename the Drive file (notes are .txt files)
+          await window.driveAPI.rename(note.driveFileId, `${newName}.txt`);
+        } catch (error) {
+          console.error('Error renaming note in Drive:', error);
+          // Continue even if Drive rename fails
+        }
+      }
+      
+      // Save note content to Drive (will create file if it doesn't exist)
+      try {
+        await saveNoteToDrive(note);
+      } catch (error) {
+        console.error('Error saving note to Drive:', error);
+        // Continue even if save fails
+      }
+      
+      // Save story data
+      await saveStoryDataToDrive();
+      
+      // Re-render
+      renderNotesList();
+      
+      // Update editor if this is the active note
+      if (state.project.activeNoteId === note.id) {
+        renderNoteEditor();
+      }
+    }
+    
+    closeRenameModal();
+  } catch (error) {
+    console.error('Error renaming:', error);
+    alert('Failed to rename: ' + error.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
+}
+
+// Export for global access
+window.closeRenameModal = closeRenameModal;
+window.saveRename = saveRename;
+
+// ============================================
+// Delete Functionality
+// ============================================
+
+function openDeleteModal() {
+  hideContextMenu();
+  
+  const modal = document.getElementById('deleteModal');
+  const message = document.getElementById('deleteModalMessage');
+  
+  let itemName = '';
+  let itemType = '';
+  
+  if (currentContextType === 'group') {
+    const group = state.groups[currentContextId];
+    if (!group) return;
+    itemName = group.title;
+    itemType = 'chapter';
+  } else if (currentContextType === 'snippet') {
+    const snippet = state.snippets[currentContextId];
+    if (!snippet) return;
+    itemName = snippet.title;
+    itemType = 'snippet';
+  } else if (currentContextType === 'note') {
+    const note = state.notes[currentContextId];
+    if (!note) return;
+    itemName = note.title;
+    itemType = 'note';
+  } else {
+    return;
+  }
+  
+  message.textContent = `Are you sure you want to delete "${itemName}"? This will move it to your Google Drive trash.`;
+  modal.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('hidden');
+  currentContextType = null;
+  currentContextId = null;
+}
+
+async function confirmDelete() {
+  const confirmBtn = document.getElementById('deleteConfirmBtn');
+  
+  if (!currentContextType || !currentContextId) {
+    closeDeleteModal();
+    return;
+  }
+  
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Deleting...';
+  
+  try {
+    if (currentContextType === 'group') {
+      const group = state.groups[currentContextId];
+      if (!group) return;
+      
+      // Delete all snippets in this group first
+      const snippetIds = [...group.snippetIds]; // Copy array
+      for (const snippetId of snippetIds) {
+        await deleteSnippet(snippetId);
+      }
+      
+      // Remove group from state
+      delete state.groups[currentContextId];
+      const groupIndex = state.project.groupIds.indexOf(currentContextId);
+      if (groupIndex > -1) {
+        state.project.groupIds.splice(groupIndex, 1);
+      }
+      
+      // Save to Drive
+      await saveStoryDataToDrive();
+      
+      // Re-render
+      renderStoryList();
+      
+      // Clear editor if this group's snippet was active
+      if (state.project.activeSnippetId) {
+        const activeSnippet = state.snippets[state.project.activeSnippetId];
+        if (!activeSnippet || activeSnippet.groupId === currentContextId) {
+          state.project.activeSnippetId = null;
+          renderEditor();
+          updateFooter();
+        }
+      }
+    } else if (currentContextType === 'snippet') {
+      await deleteSnippet(currentContextId);
+    } else if (currentContextType === 'note') {
+      await deleteNote(currentContextId);
+    }
+    
+    closeDeleteModal();
+  } catch (error) {
+    console.error('Error deleting:', error);
+    alert('Failed to delete: ' + error.message);
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Delete';
+  }
+}
+
+async function deleteSnippet(snippetId) {
+  const snippet = state.snippets[snippetId];
+  if (!snippet) return;
+  
+  // Delete from Drive (move to trash)
+  if (snippet.driveFileId) {
+    try {
+      await window.driveAPI.delete(snippet.driveFileId);
+    } catch (error) {
+      console.error('Error deleting snippet from Drive:', error);
+      // Continue with local deletion even if Drive deletion fails
+    }
+  }
+  
+  // Remove snippet from its group
+  if (snippet.groupId) {
+    const group = state.groups[snippet.groupId];
+    if (group) {
+      const snippetIndex = group.snippetIds.indexOf(snippetId);
+      if (snippetIndex > -1) {
+        group.snippetIds.splice(snippetIndex, 1);
+      }
+    }
+  }
+  
+  // Remove from state
+  delete state.snippets[snippetId];
+  
+  // Clear active snippet if it was this one
+  if (state.project.activeSnippetId === snippetId) {
+    state.project.activeSnippetId = null;
+    renderEditor();
+    updateFooter();
+  }
+  
+  // Save to Drive
+  await saveStoryDataToDrive();
+  
+  // Re-render
   renderStoryList();
 }
+
+async function deleteNote(noteId) {
+  const note = state.notes[noteId];
+  if (!note) return;
+  
+  // Delete from Drive (move to trash)
+  if (note.driveFileId) {
+    try {
+      await window.driveAPI.delete(note.driveFileId);
+    } catch (error) {
+      console.error('Error deleting note from Drive:', error);
+      // Continue with local deletion even if Drive deletion fails
+    }
+  }
+  
+  // Remove from state
+  delete state.notes[noteId];
+  
+  // Remove from project noteIds
+  const noteIndex = state.project.noteIds.indexOf(noteId);
+  if (noteIndex > -1) {
+    state.project.noteIds.splice(noteIndex, 1);
+  }
+  
+  // Clear active note if it was this one
+  if (state.project.activeNoteId === noteId) {
+    state.project.activeNoteId = null;
+    renderNoteEditor();
+  }
+  
+  // Save to Drive
+  await saveStoryDataToDrive();
+  
+  // Re-render
+  renderNotesList();
+}
+
+// Export for global access
+window.closeDeleteModal = closeDeleteModal;
+window.confirmDelete = confirmDelete;
 
 // ============================================
 // Notes Tab Switching
@@ -1677,7 +1942,6 @@ async function loadStoryFromDrive(storyFolderId) {
     state.snippets = {};
     state.groups = {};
     state.notes = {};
-    state.tags = {};
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
     try {
@@ -1716,7 +1980,6 @@ async function loadStoryFromDrive(storyFolderId) {
               Object.assign(state.notes, parsed.notes.things);
             }
           }
-          if (parsed.tags) state.tags = parsed.tags;
         }
       }
     } catch (error) {
@@ -1806,7 +2069,6 @@ async function loadStoryFromDrive(storyFolderId) {
                   body: snippetBody,
                   words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
                   chars: snippetBody.length,
-                  tagIds: [],
                   updatedAt: file.modifiedTime || new Date().toISOString(),
                   version: 1,
                   driveFileId: file.id
@@ -1965,11 +2227,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchTimeout = setTimeout(handleSearch, 200);
   });
 
-  // Tags button
-  document.getElementById('tagsButton').addEventListener('click', toggleTagPalette);
-  document.getElementById('closeTagPalette').addEventListener('click', () => {
-    document.getElementById('tagPalette').classList.add('hidden');
-  });
 
   // Pointer move to restore sidebars
   document.addEventListener('pointermove', handlePointerMove);
@@ -1995,16 +2252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Close modal on overlay click
   document.querySelector('#storyInfoModal .modal-overlay').addEventListener('click', closeStoryInfoModal);
 
-  // Close tag palette on outside click
+  // Close color picker on outside click
   document.addEventListener('click', (e) => {
-    const palette = document.getElementById('tagPalette');
-    const tagsButton = document.getElementById('tagsButton');
-    
-    if (!palette.contains(e.target) && !tagsButton.contains(e.target) && !palette.classList.contains('hidden')) {
-      palette.classList.add('hidden');
-    }
-    
-    // Close color picker on outside click
     const colorPicker = document.getElementById('colorPicker');
     const colorChip = e.target.closest('.group-color-chip');
     
@@ -2012,5 +2261,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       closeColorPicker();
     }
   });
+  
+  // Context menu button handlers
+  document.getElementById('contextMenuRename').addEventListener('click', openRenameModal);
+  document.getElementById('contextMenuDelete').addEventListener('click', openDeleteModal);
+  
+  // Rename modal keyboard shortcuts
+  document.getElementById('renameInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeRenameModal();
+    }
+  });
+  
+  // Close rename modal on overlay click
+  document.querySelector('#renameModal .modal-overlay').addEventListener('click', closeRenameModal);
+  
+  // Close delete modal on overlay click
+  document.querySelector('#deleteModal .modal-overlay').addEventListener('click', closeDeleteModal);
 });
 

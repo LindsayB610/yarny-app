@@ -132,11 +132,45 @@ async function checkDriveAuth() {
   }
 }
 
+// Delete file from Drive (moves to trash)
+async function deleteDriveFile(fileId) {
+  try {
+    const response = await axios.post(`${API_BASE}/drive-delete-file`,
+      { fileId },
+      { withCredentials: true }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Drive delete error:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to delete file';
+    throw new Error(errorMessage);
+  }
+}
+
+// Rename file in Drive
+async function renameDriveFile(fileId, newName) {
+  try {
+    const response = await axios.post(`${API_BASE}/drive-rename-file`,
+      { fileId, fileName: newName },
+      { withCredentials: true }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Drive rename error:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to rename file';
+    throw new Error(errorMessage);
+  }
+}
+
 // Export for use in editor
 window.driveAPI = {
   authorize: authorizeDrive,
   list: listDriveFiles,
   read: readDriveFile,
   write: writeDriveFile,
+  delete: deleteDriveFile,
+  rename: renameDriveFile,
   checkAuth: checkDriveAuth
 };
