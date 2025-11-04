@@ -196,6 +196,9 @@ async function initializeGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: googleClientId,
     callback: handleGoogleSignIn,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    itp_support: true, // Intelligent Tracking Prevention support
   });
 }
 

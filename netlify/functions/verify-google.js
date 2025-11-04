@@ -4,9 +4,27 @@ const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || 'lindsayb82@gmail.com';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 exports.handler = async (event) => {
+  // Handle preflight OPTIONS request for CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '86400',
+      },
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -64,6 +82,10 @@ exports.handler = async (event) => {
       },
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true',
       },
       body: JSON.stringify({ 
         verified: true,
@@ -77,6 +99,10 @@ exports.handler = async (event) => {
     console.error('Google OAuth verification error:', error);
     return {
       statusCode: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Authentication failed. Please try again.' }),
     };
   }
