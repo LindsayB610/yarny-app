@@ -38,20 +38,20 @@ exports.handler = async (event) => {
   }
 
   // Validate environment variables
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.error('Missing Google OAuth credentials');
+  if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
+    console.error('Missing Drive OAuth credentials');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server configuration error: Missing Google OAuth credentials' })
+      body: JSON.stringify({ error: 'Server configuration error: Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.' })
     };
   }
 
-  console.log('OAuth credentials check:');
-  console.log('Client ID present:', !!GOOGLE_CLIENT_ID);
-  console.log('Client ID length:', GOOGLE_CLIENT_ID?.length);
-  console.log('Client ID prefix:', GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
-  console.log('Client Secret present:', !!GOOGLE_CLIENT_SECRET);
-  console.log('Client Secret length:', GOOGLE_CLIENT_SECRET?.length);
+  console.log('Drive OAuth credentials check:');
+  console.log('Client ID present:', !!GDRIVE_CLIENT_ID);
+  console.log('Client ID length:', GDRIVE_CLIENT_ID?.length);
+  console.log('Client ID prefix:', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
+  console.log('Client Secret present:', !!GDRIVE_CLIENT_SECRET);
+  console.log('Client Secret length:', GDRIVE_CLIENT_SECRET?.length);
 
   const { code, state, error } = event.queryStringParameters || {};
 
