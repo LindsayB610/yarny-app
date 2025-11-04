@@ -82,6 +82,22 @@
   console.log('Error logging initialized. Use viewYarnyErrors() to see captured errors.');
 })();
 
+// Define the 12 categorical accent colors (used for chapter color coding)
+const ACCENT_COLORS = [
+  { name: 'red', value: '#EF4444' },
+  { name: 'orange', value: '#F97316' },
+  { name: 'amber', value: '#F59E0B' },
+  { name: 'yellow', value: '#EAB308' },
+  { name: 'lime', value: '#84CC16' },
+  { name: 'emerald', value: '#10B981' },
+  { name: 'teal', value: '#14B8A6' },
+  { name: 'cyan', value: '#06B6D4' },
+  { name: 'blue', value: '#3B82F6' },
+  { name: 'indigo', value: '#6366F1' },
+  { name: 'violet', value: '#8B5CF6' },
+  { name: 'fuchsia', value: '#D946EF' }
+];
+
 // State Management
 const state = {
   project: {
@@ -192,12 +208,37 @@ function renderStoryList() {
     const headerEl = document.createElement('div');
     headerEl.className = 'group-header';
     headerEl.draggable = true;
-    headerEl.innerHTML = `
-      <div class="group-color-chip" style="background-color: ${group.color}"></div>
-      <span class="group-title">${escapeHtml(group.title)}</span>
-      <span class="group-snippet-count">${group.snippetIds.length} snippets</span>
-      <button class="add-snippet-btn" title="Add snippet to this chapter" onclick="event.stopPropagation(); addSnippetToGroup('${group.id}')">+</button>
-    `;
+    
+    const colorChip = document.createElement('div');
+    colorChip.className = 'group-color-chip';
+    colorChip.style.backgroundColor = group.color || '#3B82F6';
+    colorChip.title = 'Click to change color';
+    colorChip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openColorPicker(group.id, colorChip);
+    });
+    
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'group-title';
+    titleSpan.textContent = group.title;
+    
+    const countSpan = document.createElement('span');
+    countSpan.className = 'group-snippet-count';
+    countSpan.textContent = `${group.snippetIds.length} snippets`;
+    
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-snippet-btn';
+    addBtn.title = 'Add snippet to this chapter';
+    addBtn.textContent = '+';
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addSnippetToGroup(group.id);
+    });
+    
+    headerEl.appendChild(colorChip);
+    headerEl.appendChild(titleSpan);
+    headerEl.appendChild(countSpan);
+    headerEl.appendChild(addBtn);
     
     // Drag & drop handlers
     headerEl.addEventListener('dragstart', (e) => handleGroupDragStart(e, group.id));
@@ -567,7 +608,25 @@ function handleTypingStop() {
         const snippet = state.snippets[state.project.activeSnippetId];
         // Update snippet body from editor
         snippet.body = document.getElementById('editorContent').textContent || document.getElementById('editorContent').innerText || '';
+        
+        // If Drive file is being created in background, wait a bit for it to complete
+        // This prevents duplicate file creation
+        if (snippet._creatingDriveFile && !snippet.driveFileId) {
+          // Wait up to 2 seconds for background creation to complete
+          let waited = 0;
+          while (snippet._creatingDriveFile && waited < 2000) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waited += 100;
+          }
+        }
+        
+        // Save to Drive (will create file if driveFileId is null, or update if it exists)
         await saveSnippetToDrive(snippet);
+        
+        // Clear the background creation flag if it was set
+        if (snippet._creatingDriveFile) {
+          snippet._creatingDriveFile = false;
+        }
       } catch (error) {
         console.error('Error saving snippet to Drive:', error);
       }
@@ -807,8 +866,8 @@ async function createNewSnippet() {
 
 async function createNewGroup() {
   const groupId = 'group_' + Date.now();
-  const colors = ['#E57A24', '#D9534F', '#3B82F6', '#764BA2', '#F093FB', '#4FACFE'];
-  const color = colors[state.project.groupIds.length % colors.length];
+  // Use the 12 accent colors, cycling through them
+  const defaultColor = ACCENT_COLORS[state.project.groupIds.length % ACCENT_COLORS.length].value;
   
   // Generate chapter number based on existing chapters
   const chapterNumber = state.project.groupIds.length + 1;
@@ -818,7 +877,7 @@ async function createNewGroup() {
     id: groupId,
     projectId: 'default',
     title: title,
-    color: color,
+    color: defaultColor,
     position: state.project.groupIds.length,
     snippetIds: []
   };
@@ -851,27 +910,40 @@ async function addSnippetToGroup(groupId) {
     tagIds: [],
     updatedAt: new Date().toISOString(),
     version: 1,
-    driveFileId: null
+    driveFileId: null,
+    _creatingDriveFile: false // Flag to track background Drive file creation
   };
 
   state.snippets[snippetId] = newSnippet;
   state.groups[groupId].snippetIds.push(snippetId);
   state.project.activeSnippetId = snippetId;
 
-  // Create Google Doc in Drive
-  try {
-    await saveSnippetToDrive(newSnippet);
-    await saveStoryDataToDrive();
-  } catch (error) {
-    console.error('Error creating snippet in Drive:', error);
-  }
-
+  // Render UI immediately so user can start typing
   renderStoryList();
   renderEditor();
   updateFooter();
   
   // Focus editor and allow title editing
   document.getElementById('editorContent').focus();
+
+  // Create Google Doc in Drive in the background (don't block UI)
+  // If user starts typing before this completes, autosave will handle it
+  (async () => {
+    try {
+      // Only create if chapters folder is available and file isn't already being created
+      if (state.drive.folderIds.chapters && !newSnippet.driveFileId) {
+        newSnippet._creatingDriveFile = true;
+        await saveSnippetToDrive(newSnippet);
+        newSnippet._creatingDriveFile = false;
+        // Only save story data if we successfully created the file
+        await saveStoryDataToDrive();
+      }
+    } catch (error) {
+      console.error('Error creating snippet in Drive:', error);
+      newSnippet._creatingDriveFile = false;
+      // Don't show error to user - Drive file will be created on first autosave
+    }
+  })();
 }
 
 // Save story data to Drive (data.json and project.json)
@@ -957,6 +1029,93 @@ function toggleTagPalette() {
   } else {
     palette.classList.add('hidden');
   }
+}
+
+// ============================================
+// Color Picker
+// ============================================
+
+let currentColorPickerGroupId = null;
+let currentColorPickerChip = null;
+
+function openColorPicker(groupId, colorChip) {
+  const picker = document.getElementById('colorPicker');
+  const grid = picker.querySelector('.color-picker-grid');
+  
+  currentColorPickerGroupId = groupId;
+  currentColorPickerChip = colorChip;
+  
+  // Clear previous colors
+  grid.innerHTML = '';
+  
+  // Render color options
+  ACCENT_COLORS.forEach(color => {
+    const colorOption = document.createElement('button');
+    colorOption.className = 'color-picker-option';
+    colorOption.style.backgroundColor = color.value;
+    colorOption.title = color.name;
+    colorOption.setAttribute('data-color', color.value);
+    colorOption.setAttribute('data-color-name', color.name);
+    
+    // Check if this is the current color
+    const group = state.groups[groupId];
+    if (group && group.color === color.value) {
+      colorOption.classList.add('selected');
+    }
+    
+    colorOption.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectColor(groupId, color.value, color.name);
+    });
+    
+    grid.appendChild(colorOption);
+  });
+  
+  // Position the picker near the color chip
+  const chipRect = colorChip.getBoundingClientRect();
+  picker.style.top = `${chipRect.bottom + 8}px`;
+  picker.style.left = `${chipRect.left}px`;
+  picker.classList.remove('hidden');
+}
+
+function selectColor(groupId, colorValue, colorName) {
+  const group = state.groups[groupId];
+  if (!group) return;
+  
+  // Update group color
+  group.color = colorValue;
+  
+  // Update the color chip
+  if (currentColorPickerChip) {
+    currentColorPickerChip.style.backgroundColor = colorValue;
+  }
+  
+  // Update selected state in picker
+  const picker = document.getElementById('colorPicker');
+  const options = picker.querySelectorAll('.color-picker-option');
+  options.forEach(option => {
+    option.classList.remove('selected');
+    if (option.getAttribute('data-color') === colorValue) {
+      option.classList.add('selected');
+    }
+  });
+  
+  // Close picker after a short delay
+  setTimeout(() => {
+    closeColorPicker();
+  }, 150);
+  
+  // Save to Drive
+  saveStoryDataToDrive().catch(error => {
+    console.error('Error saving color change to Drive:', error);
+  });
+}
+
+function closeColorPicker() {
+  const picker = document.getElementById('colorPicker');
+  picker.classList.add('hidden');
+  currentColorPickerGroupId = null;
+  currentColorPickerChip = null;
 }
 
 function removeTag(tagId) {
@@ -1307,6 +1466,7 @@ async function saveSnippetToDrive(snippet) {
   
   try {
     const fileName = `${snippet.title}.doc`;
+    // If driveFileId exists, update the existing file; otherwise create a new one
     const result = await window.driveAPI.write(
       fileName,
       snippet.body,
@@ -1315,8 +1475,8 @@ async function saveSnippetToDrive(snippet) {
       'application/vnd.google-apps.document'
     );
     
-    // Store Drive file ID in snippet
-    if (!snippet.driveFileId) {
+    // Store Drive file ID in snippet if it wasn't set before
+    if (!snippet.driveFileId && result && result.id) {
       snippet.driveFileId = result.id;
     }
     
@@ -1727,6 +1887,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!palette.contains(e.target) && !tagsButton.contains(e.target) && !palette.classList.contains('hidden')) {
       palette.classList.add('hidden');
+    }
+    
+    // Close color picker on outside click
+    const colorPicker = document.getElementById('colorPicker');
+    const colorChip = e.target.closest('.group-color-chip');
+    
+    if (!colorPicker.contains(e.target) && !colorChip && !colorPicker.classList.contains('hidden')) {
+      closeColorPicker();
     }
   });
 });

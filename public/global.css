@@ -45,6 +45,67 @@
   --color-bg-secondary: #F9FAFB;
   --color-bg-tertiary: #F3F4F6;
   --color-border: #E5E7EB;
+  
+  /* 12 Categorical Accents (base = "500", soft = pale bg tint, dark = hover/border) */
+  --accent-red: #EF4444;
+  --accent-red-soft: #FEE2E2;
+  --accent-red-dark: #991B1B;
+  --on-red-solid: #FFFFFF;
+  
+  --accent-orange: #F97316;
+  --accent-orange-soft: #FFEDD5;
+  --accent-orange-dark: #9A3412;
+  --on-orange-solid: #FFFFFF;
+  
+  --accent-amber: #F59E0B;
+  --accent-amber-soft: #FEF3C7;
+  --accent-amber-dark: #92400E;
+  --on-amber-solid: #1F2937;
+  
+  --accent-yellow: #EAB308;
+  --accent-yellow-soft: #FEF9C3;
+  --accent-yellow-dark: #854D0E;
+  --on-yellow-solid: #1F2937;
+  
+  --accent-lime: #84CC16;
+  --accent-lime-soft: #ECFCCB;
+  --accent-lime-dark: #365314;
+  --on-lime-solid: #0B1220;
+  
+  --accent-emerald: #10B981;
+  --accent-emerald-soft: #D1FAE5;
+  --accent-emerald-dark: #065F46;
+  --on-emerald-solid: #FFFFFF;
+  
+  --accent-teal: #14B8A6;
+  --accent-teal-soft: #CCFBF1;
+  --accent-teal-dark: #115E59;
+  --on-teal-solid: #FFFFFF;
+  
+  --accent-cyan: #06B6D4;
+  --accent-cyan-soft: #CFFAFE;
+  --accent-cyan-dark: #155E75;
+  --on-cyan-solid: #FFFFFF;
+  
+  --accent-blue: #3B82F6;
+  --accent-blue-soft: #DBEAFE;
+  --accent-blue-dark: #1E40AF;
+  --on-blue-solid: #FFFFFF;
+  
+  --accent-indigo: #6366F1;
+  --accent-indigo-soft: #E0E7FF;
+  --accent-indigo-dark: #3730A3;
+  --on-indigo-solid: #FFFFFF;
+  
+  --accent-violet: #8B5CF6;
+  --accent-violet-soft: #EDE9FE;
+  --accent-violet-dark: #5B21B6;
+  --on-violet-solid: #FFFFFF;
+  
+  --accent-fuchsia: #D946EF;
+  --accent-fuchsia-soft: #FAE8FF;
+  --accent-fuchsia-dark: #86198F;
+  --on-fuchsia-solid: #FFFFFF;
 }
 
 /* Dark Mode Support (optional future) */

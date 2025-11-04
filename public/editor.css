@@ -219,6 +219,14 @@ body {
   height: 12px;
   border-radius: 2px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.group-color-chip:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 .group-title {
@@ -675,6 +683,73 @@ body {
 
 .tag-palette-item-remove:hover {
   color: #333;
+}
+
+/* ============================================
+   Color Picker Dropdown
+   ============================================ */
+
+.color-picker {
+  position: absolute;
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 1001;
+  min-width: 200px;
+}
+
+.color-picker.hidden {
+  display: none;
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.color-picker-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+
+.color-picker-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.color-picker-option.selected {
+  border-color: #333;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #333;
+}
+
+.color-picker-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Special handling for light colors (yellow, amber, lime) */
+.color-picker-option[data-color-name="yellow"].selected::after,
+.color-picker-option[data-color-name="amber"].selected::after,
+.color-picker-option[data-color-name="lime"].selected::after {
+  color: #1F2937;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================
