@@ -46,6 +46,13 @@ exports.handler = async (event) => {
     };
   }
 
+  console.log('OAuth credentials check:');
+  console.log('Client ID present:', !!GOOGLE_CLIENT_ID);
+  console.log('Client ID length:', GOOGLE_CLIENT_ID?.length);
+  console.log('Client ID prefix:', GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+  console.log('Client Secret present:', !!GOOGLE_CLIENT_SECRET);
+  console.log('Client Secret length:', GOOGLE_CLIENT_SECRET?.length);
+
   const { code, state, error } = event.queryStringParameters || {};
 
   if (error) {
