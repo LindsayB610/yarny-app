@@ -1,22 +1,61 @@
 # Yarny - Personal Writing Tool
 
-A simple, secure writing tool with Google Sign-In authentication and Google Drive integration for cloud storage.
+A simple, secure writing tool with Google Sign-In authentication and Google Drive integration for cloud storage. Perfect for writers who want a distraction-free environment with powerful organization features.
 
 ## Features
 
+### Authentication & Security
 - **Google Sign-In Authentication**: Secure authentication using Google Identity Services
-- **Google Drive Integration**: All stories are stored in your Google Drive
-- **Story Management**: Create and manage multiple writing projects (stories)
-- **Rich Text Editor**: Write with tags, notes, and organization features
-- **Cloud Sync**: All your work is automatically synced to Google Drive
+- **Multi-User Support**: Configure allowed users via environment variables
+- **Session Management**: HttpOnly cookies for secure session handling
+- **CSRF Protection**: OAuth state parameter verification
+
+### Google Drive Integration
+- **Cloud Storage**: All stories are automatically saved to Google Drive
+- **Google Docs API**: Stories are stored as Google Docs for rich text support
+- **Automatic Sync**: Changes are saved automatically to Drive
+- **Token Refresh**: OAuth tokens automatically refresh when expired
 - **Privacy-Focused**: Uses `drive.file` scope - only accesses files created by the app
+- **Refresh from Drive**: Manual sync button to remove deleted stories from the list
+
+### Story Management
+- **Create Stories**: Start new writing projects with organized folder structure
+- **List Stories**: View all your stories with last modified dates
+- **Delete Stories**: Remove stories with confirmation (optional Drive deletion)
+- **Story Organization**: Each story is a folder in Google Drive containing organized subfolders
+
+### Rich Text Editor
+- **Chapters (Groups)**: Organize your writing into chapters or groups
+- **Snippets**: Individual writing snippets within chapters
+- **Drag & Drop**: Reorder chapters and snippets by dragging
+- **Search**: Full-text search across all snippets and chapters
+- **Tags**: Create and apply tags to snippets for better organization
+- **Tag Filtering**: Filter snippets by selected tags
+- **Notes System**: Three types of notes:
+  - **People**: Character notes and details
+  - **Places**: Location and setting notes
+  - **Things**: Object and item notes
+- **Word Count Tracking**: Real-time word and character counts
+- **Goal Tracking**: Set word count goals with visual progress indicator
+- **Auto-Save**: Automatic saving to Google Drive as you write
+- **Save Status**: Visual indicator showing save state (idle/saving/saved)
+
+### Keyboard Shortcuts
+- `Cmd/Ctrl + N`: Create new snippet
+- `Cmd/Ctrl + Shift + N`: Create new chapter/group
+- `Cmd/Ctrl + K`: Open tag palette
+- `Cmd/Ctrl + F`: Focus search input
+- `Esc`: Toggle focus mode (hide sidebars)
 
 ## Tech Stack
 
-- **Frontend**: Vanilla HTML/JS/CSS (no framework)
+- **Frontend**: Vanilla HTML/JS/CSS (no framework dependencies)
 - **Backend**: Netlify Functions (serverless)
 - **Authentication**: Google Identity Services (GSI)
-- **Storage**: Google Drive API with `https://www.googleapis.com/auth/drive.file` scope
+- **Storage**: 
+  - Google Drive API with `https://www.googleapis.com/auth/drive.file` scope
+  - Google Docs API with `https://www.googleapis.com/auth/documents` scope
+  - Netlify Blobs for OAuth token storage (multi-user support)
 - **Deployment**: Netlify
 
 ## Setup Instructions
@@ -32,10 +71,9 @@ npm install
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
-3. Enable the **Google Drive API**:
-   - Navigate to "APIs & Services" > "Library"
-   - Search for "Google Drive API"
-   - Click "Enable"
+3. Enable the required APIs:
+   - **Google Drive API**: Navigate to "APIs & Services" > "Library" > Search "Google Drive API" > Enable
+   - **Google Docs API**: Navigate to "APIs & Services" > "Library" > Search "Google Docs API" > Enable
 4. Create OAuth 2.0 credentials (you need TWO separate clients):
    
    **Client 1: Google Sign-In (for user authentication)**
@@ -115,7 +153,7 @@ git push -u origin main
 1. Visit your deployed site
 2. Click "Sign in with Google"
 3. Select your Google account
-4. Authorize Google Drive access when prompted
+4. Authorize Google Drive access when prompted (make sure to grant both Drive and Docs API permissions)
 5. Create your first story!
 
 ## Project Structure
@@ -124,34 +162,36 @@ git push -u origin main
 yarny-app/
 ├── netlify/
 │   ├── functions/
-│   │   ├── auth/
-│   │   │   ├── config.js              # Auth configuration (RP_ID, ALLOWED_EMAIL, etc.)
-│   │   │   ├── login.js                # WebAuthn login initiation
-│   │   │   ├── register.js             # WebAuthn registration
-│   │   │   ├── verify-login.js         # WebAuthn login verification
-│   │   │   ├── verify-register.js      # WebAuthn registration verification
-│   │   │   └── storage.js              # WebAuthn credential storage
-│   │   ├── config.js                   # Google Client ID config (for frontend)
-│   │   ├── verify-google.js            # Verify Google ID tokens
-│   │   ├── drive-auth.js              # Initiate Drive OAuth flow
-│   │   ├── drive-auth-callback.js     # Handle OAuth callback
-│   │   ├── drive-client.js            # Drive API client with token refresh
-│   │   ├── drive-list.js              # List files/folders
-│   │   ├── drive-read.js              # Read file content
-│   │   ├── drive-write.js             # Write/update files
-│   │   ├── drive-create-folder.js     # Create folders
-│   │   └── drive-get-or-create-yarny-stories.js  # Manage yarny-stories folder
-│   └── netlify.toml                   # Netlify configuration
+│   │   ├── auth/                          # WebAuthn authentication (legacy, not currently used)
+│   │   │   ├── config.js
+│   │   │   ├── login.js
+│   │   │   ├── register.js
+│   │   │   ├── storage.js
+│   │   │   ├── verify-login.js
+│   │   │   └── verify-register.js
+│   │   ├── config.js                      # Google Client ID config (for frontend)
+│   │   ├── verify-google.js               # Verify Google ID tokens
+│   │   ├── logout.js                      # Logout handler
+│   │   ├── drive-auth.js                  # Initiate Drive OAuth flow
+│   │   ├── drive-auth-callback.js         # Handle OAuth callback
+│   │   ├── drive-client.js                # Drive API client with token refresh & Proxy support
+│   │   ├── drive-list.js                  # List files/folders
+│   │   ├── drive-read.js                  # Read file content (supports Google Docs)
+│   │   ├── drive-write.js                 # Write/update files (supports Google Docs)
+│   │   ├── drive-create-folder.js         # Create folders
+│   │   ├── drive-delete-story.js          # Delete story folders
+│   │   └── drive-get-or-create-yarny-stories.js  # Manage Yarny stories folder
+│   └── netlify.toml                       # Netlify configuration
 ├── public/
-│   ├── index.html                     # Login page
-│   ├── stories.html                   # Stories landing page
-│   ├── editor.html                    # Main editor interface
-│   ├── app.js                         # Login/authentication logic
-│   ├── stories.js                     # Stories management
-│   ├── editor.js                      # Editor functionality
-│   ├── drive.js                       # Drive API frontend wrapper
-│   ├── stories.css                    # Stories page styles
-│   └── editor.css                     # Editor styles
+│   ├── index.html                         # Login page
+│   ├── stories.html                       # Stories landing page
+│   ├── editor.html                        # Main editor interface
+│   ├── app.js                             # Login/authentication logic
+│   ├── stories.js                         # Stories management (list, create, delete, refresh)
+│   ├── editor.js                          # Editor functionality (snippets, tags, notes, etc.)
+│   ├── drive.js                           # Drive API frontend wrapper
+│   ├── stories.css                        # Stories page styles
+│   └── editor.css                         # Editor styles
 ├── package.json
 └── README.md
 ```
@@ -162,7 +202,7 @@ yarny-app/
 
 1. User clicks "Sign in with Google" on the login page
 2. Google Identity Services handles the sign-in
-3. Backend verifies the Google ID token
+3. Backend verifies the Google ID token via `verify-google` function
 4. Session cookie is set for authenticated requests
 5. User is redirected to the stories page
 
@@ -170,16 +210,35 @@ yarny-app/
 
 1. On first use, user must authorize Google Drive access
 2. OAuth2 flow exchanges authorization code for access/refresh tokens
-3. Tokens are stored server-side in Netlify Blobs (persistent storage, supports multiple users)
-4. All Drive API calls use server-side Netlify Functions
-5. Tokens automatically refresh when expired
+3. Tokens include both Drive and Docs API scopes
+4. Tokens are stored server-side in Netlify Blobs (persistent storage, supports multiple users)
+5. All Drive API calls use server-side Netlify Functions
+6. Tokens automatically refresh when expired (handled by `drive-client.js`)
+7. The Drive client uses a Proxy to provide `_auth` access without modifying non-extensible objects
 
 ### Stories Management
 
-1. All stories are stored as folders in a `yarny-stories` folder in Google Drive
-2. The `yarny-stories` folder is automatically created on first story creation
-3. Each story is a directory that can contain multiple files
-4. Stories are listed on the landing page and can be opened in the editor
+1. All stories are stored as folders in a `Yarny` folder in Google Drive
+2. The `Yarny` folder is automatically created on first story creation
+3. Each story contains organized subfolders:
+   - `Snippets`: Individual writing snippets
+   - `Chapters`: Chapter/group metadata
+   - `People`, `Places`, `Things`: Note folders
+4. Story data is stored as JSON files within each story folder
+5. Snippet content is stored as Google Docs for rich text support
+6. Stories can be deleted from the UI (with optional Drive deletion)
+
+### Editor Features
+
+1. **Chapters (Groups)**: Each chapter can contain multiple snippets
+2. **Snippets**: Individual pieces of writing within chapters
+3. **Drag & Drop**: Reorder chapters and snippets by dragging
+4. **Search**: Searches across snippet titles and content
+5. **Tags**: Create tags and apply to snippets for organization
+6. **Tag Filtering**: Show only snippets matching selected tags
+7. **Notes**: Three-tab note system (People, Places, Things)
+8. **Auto-Save**: Changes are automatically saved to Drive
+9. **Word Count**: Real-time tracking with goal progress indicator
 
 ## Development
 
@@ -211,6 +270,35 @@ NETLIFY_AUTH_TOKEN=your-netlify-token
 GDRIVE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
 ```
 
+### Error Logging
+
+The application includes error logging that persists to localStorage. To view errors in the browser console:
+
+```javascript
+// View error log
+viewYarnyErrors()
+
+// Clear error log
+clearYarnyErrors()
+```
+
+## API Endpoints
+
+### Authentication
+- `GET /.netlify/functions/config` - Get Google Client ID for frontend
+- `POST /.netlify/functions/verify-google` - Verify Google ID token and create session
+- `POST /.netlify/functions/logout` - Clear session and logout
+
+### Drive Integration
+- `GET /.netlify/functions/drive-auth` - Initiate Drive OAuth flow
+- `GET /.netlify/functions/drive-auth-callback` - OAuth callback handler (redirects to stories page)
+- `GET /.netlify/functions/drive-list?folderId=<id>` - List files/folders in a folder
+- `POST /.netlify/functions/drive-read` - Read file content (supports Google Docs)
+- `POST /.netlify/functions/drive-write` - Write/update file (creates Google Docs)
+- `POST /.netlify/functions/drive-create-folder` - Create a new folder
+- `POST /.netlify/functions/drive-delete-story` - Delete a story folder (optional Drive deletion)
+- `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get or create the main Yarny stories folder
+
 ## Security Notes
 
 - **Multi-User Support**: Supports multiple users via `ALLOWED_EMAIL` environment variable (comma-separated emails)
@@ -219,6 +307,7 @@ GDRIVE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
 - **CSRF Protection**: OAuth flow includes state parameter verification
 - **Scope Limitation**: Uses `drive.file` scope - only accesses files created by the app
 - **HTTPS Required**: All authentication requires HTTPS (provided by Netlify)
+- **Token Refresh**: Automatic token refresh with error handling and timeout protection
 
 ### Adding New Users
 
@@ -228,20 +317,13 @@ To allow a new user to access the app:
 3. Add the new email address (comma-separated): `existing@email.com,new@email.com`
 4. Save and redeploy (or the next deployment will pick it up)
 
-## API Endpoints
+## Recent Improvements
 
-### Authentication
-- `GET /.netlify/functions/config` - Get Google Client ID
-- `POST /.netlify/functions/verify-google` - Verify Google ID token
-
-### Drive Integration
-- `GET /.netlify/functions/drive-auth` - Initiate Drive OAuth
-- `GET /.netlify/functions/drive-auth-callback` - OAuth callback handler
-- `GET /.netlify/functions/drive-list?folderId=<id>` - List files/folders
-- `POST /.netlify/functions/drive-read` - Read file content
-- `POST /.netlify/functions/drive-write` - Write/update file
-- `POST /.netlify/functions/drive-create-folder` - Create folder
-- `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get/create yarny-stories folder
+- **Proxy-based Drive Client**: Fixed "object is not extensible" error using Proxy pattern
+- **Timeout Handling**: Added timeout protection to prevent function hangs
+- **Refresh from Drive**: Added manual sync button to remove deleted stories
+- **Google Docs Support**: Full support for creating and editing Google Docs
+- **Error Handling**: Improved error handling and logging throughout
 
 ## License
 
