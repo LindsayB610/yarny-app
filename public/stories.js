@@ -1,12 +1,10 @@
 // API_BASE is declared in drive.js which loads first (as var, so can be redeclared)
-// Ensure it exists (fallback if drive.js hasn't loaded)
-if (typeof API_BASE === 'undefined') {
-  var API_BASE = '/.netlify/functions';
-  window.API_BASE = API_BASE;
-} else {
-  // Reference the existing API_BASE from drive.js
-  var API_BASE = window.API_BASE || API_BASE;
+// If drive.js hasn't loaded yet, set a fallback
+if (typeof window.API_BASE === 'undefined') {
+  window.API_BASE = '/.netlify/functions';
 }
+// Redeclare var API_BASE (allowed with var) - references the same variable if already declared
+var API_BASE = window.API_BASE || '/.netlify/functions';
 
 // Force logout handler - check URL parameter first
 const urlParamsCheck = new URLSearchParams(window.location.search);
