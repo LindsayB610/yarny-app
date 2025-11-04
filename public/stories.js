@@ -442,25 +442,52 @@ async function initialize() {
   // Check Drive authorization
   const driveAuthorized = await checkDriveAuth();
   
+  console.log('Drive authorization status:', driveAuthorized);
+  console.log('driveAuthPrompt element:', document.getElementById('driveAuthPrompt'));
+  console.log('storiesContent element:', document.getElementById('storiesContent'));
+  
   if (!driveAuthorized) {
+    console.log('Drive NOT authorized - showing prompt');
     // Show Drive auth prompt
-    document.getElementById('driveAuthPrompt').classList.remove('hidden');
-    document.getElementById('storiesContent').classList.add('hidden');
+    const driveAuthPrompt = document.getElementById('driveAuthPrompt');
+    const storiesContent = document.getElementById('storiesContent');
+    
+    if (driveAuthPrompt) {
+      driveAuthPrompt.classList.remove('hidden');
+      console.log('Drive auth prompt is now visible');
+    } else {
+      console.error('driveAuthPrompt element not found!');
+    }
+    
+    if (storiesContent) {
+      storiesContent.classList.add('hidden');
+    }
     
     // Connect Drive button
     const connectBtn = document.getElementById('connectDriveBtn');
     if (connectBtn) {
-      connectBtn.addEventListener('click', async () => {
+      // Remove any existing listeners to avoid duplicates
+      const newConnectBtn = connectBtn.cloneNode(true);
+      connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+      
+      newConnectBtn.addEventListener('click', async () => {
+        console.log('Connect Drive button clicked');
         try {
           await window.driveAPI.authorize();
         } catch (error) {
+          console.error('Failed to authorize Drive:', error);
           alert('Failed to connect to Drive: ' + error.message);
         }
       });
+      console.log('Connect Drive button listener attached');
+    } else {
+      console.error('connectDriveBtn element not found!');
     }
     
     return;
   }
+  
+  console.log('Drive IS authorized - showing stories content');
   
   // Drive is authorized, show stories content
   document.getElementById('driveAuthPrompt').classList.add('hidden');
