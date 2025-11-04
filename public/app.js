@@ -125,7 +125,7 @@ async function handleGoogleSignIn(response) {
     console.log('Google Sign-In response received');
 
     // Verify the token with our backend
-    const verifyResponse = await fetch(`${API_BASE}/auth/verify-google`, {
+    const verifyResponse = await fetch(`${API_BASE}/verify-google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: response.credential }),
