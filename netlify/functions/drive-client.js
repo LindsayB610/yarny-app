@@ -37,8 +37,14 @@ async function getTokens(email) {
   try {
     const data = await fs.readFile(STORAGE_PATH, 'utf8');
     const allTokens = JSON.parse(data);
-    return allTokens[email] || null;
+    console.log('getTokens - file exists, looking for email:', email);
+    console.log('getTokens - available emails in file:', Object.keys(allTokens));
+    const tokens = allTokens[email] || null;
+    console.log('getTokens - found tokens:', !!tokens);
+    return tokens;
   } catch (error) {
+    console.log('getTokens - file read error:', error.message);
+    console.log('getTokens - storage path:', STORAGE_PATH);
     return null;
   }
 }

@@ -25,6 +25,8 @@ exports.handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Not authenticated' }) };
   }
 
+  console.log('Drive list - looking for tokens for email:', email);
+
   try {
     const drive = await getAuthenticatedDriveClient(email);
     
