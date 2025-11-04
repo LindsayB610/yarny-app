@@ -34,8 +34,15 @@ function validateClientSecret(clientSecret) {
 
 async function getTokens(email) {
   try {
-    // Try to get store - if Blobs is enabled, this will work automatically
-    const store = getStore('drive-tokens');
+    // Use Netlify Blobs with Site ID from environment variable
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const storeOptions = { name: 'drive-tokens' };
+    
+    if (siteID) {
+      storeOptions.siteID = siteID;
+    }
+    
+    const store = getStore(storeOptions);
     
     let allTokens = {};
     try {
@@ -55,15 +62,21 @@ async function getTokens(email) {
     return tokens;
   } catch (error) {
     console.log('getTokens - error:', error.message);
-    // If Blobs isn't configured, fall back to null
     return null;
   }
 }
 
 async function saveTokens(email, tokens) {
   try {
-    // Try to get store - if Blobs is enabled, this will work automatically
-    const store = getStore('drive-tokens');
+    // Use Netlify Blobs with Site ID from environment variable
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const storeOptions = { name: 'drive-tokens' };
+    
+    if (siteID) {
+      storeOptions.siteID = siteID;
+    }
+    
+    const store = getStore(storeOptions);
     
     let allTokens = {};
     try {
