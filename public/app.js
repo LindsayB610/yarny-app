@@ -36,9 +36,9 @@ function checkAuth() {
   
   // Validate localStorage token if present
   if (localStorageAuth && !isTokenExpired(localStorageAuth)) {
-    // Redirect to editor if already authenticated
+    // Redirect to stories page if already authenticated
     if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-      window.location.href = '/editor.html';
+      window.location.href = '/stories.html';
     }
     return;
   } else if (localStorageAuth && isTokenExpired(localStorageAuth)) {
@@ -54,9 +54,9 @@ function checkAuth() {
   if (authCookie) {
     const cookieValue = authCookie.split('=')[1].trim();
     if (!isTokenExpired(cookieValue)) {
-      // Redirect to editor if already authenticated
+      // Redirect to stories page if already authenticated
       if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-        window.location.href = '/editor.html';
+        window.location.href = '/stories.html';
       }
     } else {
       // Clear expired cookie
@@ -201,11 +201,8 @@ async function handleGoogleSignIn(response) {
       
       // Small delay to ensure cookies are set before redirect
       setTimeout(() => {
-        showApp({
-          name: result.name,
-          user: result.user,
-          picture: result.picture
-        });
+        // Redirect to stories page instead of editor
+        window.location.href = '/stories.html';
       }, 300);
     } else {
       throw new Error('Verification failed');

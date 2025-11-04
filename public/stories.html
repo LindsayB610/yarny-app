@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yarny - Stories</title>
+  <link rel="stylesheet" href="/stories.css">
+</head>
+<body>
+  <div class="stories-container">
+    <header class="stories-header">
+      <h1>Yarny</h1>
+      <p class="subtitle">Your writing projects</p>
+    </header>
+
+    <div id="driveAuthPrompt" class="drive-auth-prompt hidden">
+      <div class="prompt-content">
+        <h2>Connect to Google Drive</h2>
+        <p>To create and manage stories, you need to connect your Google Drive account.</p>
+        <button id="connectDriveBtn" class="connect-drive-btn">Connect to Drive</button>
+      </div>
+    </div>
+
+    <div id="storiesContent" class="stories-content hidden">
+      <div class="stories-header-bar">
+        <h2>Your Stories</h2>
+        <button id="newStoryBtn" class="new-story-btn">+ New Story</button>
+      </div>
+
+      <div id="storiesList" class="stories-list">
+        <!-- Stories will be rendered here -->
+      </div>
+
+      <div id="loadingState" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading stories...</p>
+      </div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <p>No stories yet. Create your first story to get started!</p>
+      </div>
+    </div>
+
+    <!-- New Story Modal -->
+    <div id="newStoryModal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create New Story</h2>
+          <button class="modal-close" onclick="closeNewStoryModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="modalError" class="error-message hidden"></div>
+          <form id="newStoryForm">
+            <div class="form-group">
+              <label for="storyName">Story Name</label>
+              <input 
+                type="text" 
+                id="storyName" 
+                name="storyName" 
+                placeholder="My Novel"
+                required
+                autocomplete="off"
+              >
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeNewStoryModal()">Cancel</button>
+              <button type="submit" class="btn-primary" id="createStoryBtn">Create Story</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/drive.js"></script>
+  <script src="/stories.js"></script>
+</body>
+</html>

@@ -1,20 +1,23 @@
 # Yarny - Personal Writing Tool
 
-A simple, secure writing tool with WebAuthn authentication (passwordless login using your device's biometric authentication).
+A simple, secure writing tool with Google Sign-In authentication and Google Drive integration for cloud storage.
 
 ## Features
 
-- **Passwordless Authentication**: Sign in using email + WebAuthn (Touch ID, Face ID, fingerprint, or security key)
-- **No Passwords**: Uses your device's built-in security instead
-- **Simple & Secure**: Built on WebAuthn standard (FIDO2)
-- **Free**: No third-party services or costs
+- **Google Sign-In Authentication**: Secure authentication using Google Identity Services
+- **Google Drive Integration**: All stories are stored in your Google Drive
+- **Story Management**: Create and manage multiple writing projects (stories)
+- **Rich Text Editor**: Write with tags, notes, and organization features
+- **Cloud Sync**: All your work is automatically synced to Google Drive
+- **Privacy-Focused**: Uses `drive.file` scope - only accesses files created by the app
 
 ## Tech Stack
 
-- **Frontend**: Vanilla HTML/JS (no framework needed)
+- **Frontend**: Vanilla HTML/JS/CSS (no framework)
 - **Backend**: Netlify Functions (serverless)
-- **Authentication**: WebAuthn via @simplewebauthn
-- **Storage**: Temporary file storage (for single-user use)
+- **Authentication**: Google Identity Services (GSI)
+- **Storage**: Google Drive API with `https://www.googleapis.com/auth/drive.file` scope
+- **Deployment**: Netlify
 
 ## Setup Instructions
 
@@ -25,21 +28,43 @@ cd yarny-app
 npm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Google Cloud Console Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google Drive API**:
+   - Navigate to "APIs & Services" > "Library"
+   - Search for "Google Drive API"
+   - Click "Enable"
+4. Create OAuth 2.0 credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Application type: "Web application"
+   - Authorized redirect URIs: 
+     - `http://localhost:8888/.netlify/functions/drive-auth-callback` (for local dev)
+     - `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback` (for production)
+   - Copy the **Client ID** and **Client Secret**
+
+### 3. Configure Environment Variables
 
 In your Netlify dashboard, go to **Site settings > Environment variables** and add:
 
-- `RP_ID`: Your domain (e.g., `yarny.lindsaybrunner.com`)
-- `RP_NAME`: Display name (e.g., `Yarny - Writing Tool`)
-- `ORIGIN`: Full URL (e.g., `https://yarny.lindsaybrunner.com`)
+#### Required:
+- `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID
+- `GOOGLE_CLIENT_SECRET`: Your Google OAuth Client Secret
+- `ALLOWED_EMAIL`: Email address allowed to access the app (e.g., `your-email@gmail.com`)
 
-### 3. Create GitHub Repository
+#### Optional:
+- `GOOGLE_REDIRECT_URI`: Full callback URL (auto-detected if not set)
+  - Production: `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback`
+
+### 4. Create GitHub Repository
 
 ```bash
 # Initialize git (if not already done)
 git init
 git add .
-git commit -m "Initial commit: Yarny writing tool with WebAuthn"
+git commit -m "Initial commit: Yarny writing tool"
 
 # Create new repo on GitHub, then:
 git remote add origin https://github.com/YOUR_USERNAME/yarny-app.git
@@ -47,33 +72,90 @@ git branch -M main
 git push -u origin main
 ```
 
-### 4. Deploy to Netlify
+### 5. Deploy to Netlify
 
 1. Go to [Netlify](https://app.netlify.com)
 2. Click **Add new site > Import an existing project**
 3. Connect your GitHub repository
 4. Configure build settings:
-   - **Build command**: Leave empty (or `echo 'No build'`)
+   - **Build command**: Leave empty (or `echo 'No build step needed'`)
    - **Publish directory**: `public`
-5. Add environment variables (from step 2)
+5. Add environment variables (from step 3)
 6. Click **Deploy site**
 
-### 5. Configure Subdomain
+### 6. Configure Custom Domain
 
 1. In Netlify dashboard, go to **Domain settings**
 2. Click **Add custom domain**
-3. Enter `yarny.lindsaybrunner.com`
+3. Enter your domain (e.g., `yarny.lindsaybrunner.com`)
 4. Follow DNS configuration instructions:
    - Add a CNAME record: `yarny` → `your-site.netlify.app`
    - Or use Netlify DNS if you manage DNS there
 
-### 6. Test Authentication
+### 7. Test the Application
 
-1. Visit `https://yarny.lindsaybrunner.com`
-2. Enter your email address
-3. Click "Sign in with your device"
-4. Approve the authentication request on your device (biometric, PIN, etc.)
-5. You're in!
+1. Visit your deployed site
+2. Click "Sign in with Google"
+3. Select your Google account
+4. Authorize Google Drive access when prompted
+5. Create your first story!
+
+## Project Structure
+
+```
+yarny-app/
+├── netlify/
+│   ├── functions/
+│   │   ├── auth/
+│   │   │   ├── config.js              # Google Client ID config
+│   │   │   └── verify-google.js       # Verify Google ID tokens
+│   │   ├── drive-auth.js              # Initiate Drive OAuth flow
+│   │   ├── drive-auth-callback.js     # Handle OAuth callback
+│   │   ├── drive-client.js            # Drive API client with token refresh
+│   │   ├── drive-list.js              # List files/folders
+│   │   ├── drive-read.js              # Read file content
+│   │   ├── drive-write.js             # Write/update files
+│   │   ├── drive-create-folder.js     # Create folders
+│   │   └── drive-get-or-create-yarny-stories.js  # Manage yarny-stories folder
+│   └── netlify.toml                   # Netlify configuration
+├── public/
+│   ├── index.html                     # Login page
+│   ├── stories.html                   # Stories landing page
+│   ├── editor.html                    # Main editor interface
+│   ├── app.js                         # Login/authentication logic
+│   ├── stories.js                     # Stories management
+│   ├── editor.js                      # Editor functionality
+│   ├── drive.js                       # Drive API frontend wrapper
+│   ├── stories.css                    # Stories page styles
+│   └── editor.css                     # Editor styles
+├── package.json
+└── README.md
+```
+
+## How It Works
+
+### Authentication Flow
+
+1. User clicks "Sign in with Google" on the login page
+2. Google Identity Services handles the sign-in
+3. Backend verifies the Google ID token
+4. Session cookie is set for authenticated requests
+5. User is redirected to the stories page
+
+### Drive Integration
+
+1. On first use, user must authorize Google Drive access
+2. OAuth2 flow exchanges authorization code for access/refresh tokens
+3. Tokens are stored server-side (in `/tmp` for single-user)
+4. All Drive API calls use server-side Netlify Functions
+5. Tokens automatically refresh when expired
+
+### Stories Management
+
+1. All stories are stored as folders in a `yarny-stories` folder in Google Drive
+2. The `yarny-stories` folder is automatically created on first story creation
+3. Each story is a directory that can contain multiple files
+4. Stories are listed on the landing page and can be opened in the editor
 
 ## Development
 
@@ -89,44 +171,50 @@ npm run dev
 
 Visit `http://localhost:8888` to test locally.
 
-### Project Structure
+**Note**: For local development, make sure to add `http://localhost:8888/.netlify/functions/drive-auth-callback` as an authorized redirect URI in Google Cloud Console.
 
-```
-yarny-app/
-├── netlify/
-│   ├── functions/
-│   │   └── auth/
-│   │       ├── register.js          # Generate registration options
-│   │       ├── verify-register.js   # Verify registration
-│   │       ├── login.js             # Generate login options
-│   │       ├── verify-login.js      # Verify login
-│   │       ├── config.js            # WebAuthn configuration
-│   │       └── storage.js           # Credential storage
-│   └── functions/
-├── public/
-│   ├── index.html                   # Main app page
-│   └── app.js                       # Frontend WebAuthn logic
-├── netlify.toml                     # Netlify configuration
-├── package.json
-└── README.md
+### Environment Variables for Local Dev
+
+Create a `.env` file in the root directory (not committed to git):
+
+```env
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
+ALLOWED_EMAIL=your-email@gmail.com
+GOOGLE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
 ```
 
 ## Security Notes
 
-- Credentials are stored in `/tmp` (temporary filesystem) - this is fine for single-user personal use
-- For production with multiple users, consider:
-  - Netlify Blobs for credential storage
-  - Database (PostgreSQL, MongoDB, etc.)
-  - Proper session management with secure cookies
-- WebAuthn requires HTTPS (Netlify provides this automatically)
+- **Single-User App**: Currently configured for a single email address via `ALLOWED_EMAIL`
+- **Token Storage**: OAuth tokens stored in `/tmp` (temporary filesystem) - suitable for single-user use
+- **Session Management**: Uses HttpOnly cookies for session tokens
+- **CSRF Protection**: OAuth flow includes state parameter verification
+- **Scope Limitation**: Uses `drive.file` scope - only accesses files created by the app
+- **HTTPS Required**: All authentication requires HTTPS (provided by Netlify)
 
-## Next Steps
+### For Production with Multiple Users
 
-After authentication is working, you can build out the writing tool features:
-- Text editor
-- Save/load documents
-- Export options
-- etc.
+Consider implementing:
+- Netlify Blobs or a database for token storage
+- User-specific token storage (currently uses email as key)
+- Database for story metadata and user management
+- More robust session management
+
+## API Endpoints
+
+### Authentication
+- `GET /.netlify/functions/config` - Get Google Client ID
+- `POST /.netlify/functions/verify-google` - Verify Google ID token
+
+### Drive Integration
+- `GET /.netlify/functions/drive-auth` - Initiate Drive OAuth
+- `GET /.netlify/functions/drive-auth-callback` - OAuth callback handler
+- `GET /.netlify/functions/drive-list?folderId=<id>` - List files/folders
+- `POST /.netlify/functions/drive-read` - Read file content
+- `POST /.netlify/functions/drive-write` - Write/update file
+- `POST /.netlify/functions/drive-create-folder` - Create folder
+- `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get/create yarny-stories folder
 
 ## License
 

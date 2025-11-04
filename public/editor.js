@@ -914,6 +914,8 @@ function checkAuth() {
   
   // Validate localStorage token if present
   if (localStorageAuth && !isTokenExpired(localStorageAuth)) {
+    // Check if story is selected
+    checkStorySelected();
     return; // Authenticated
   } else if (localStorageAuth && isTokenExpired(localStorageAuth)) {
     // Clear expired token
@@ -928,6 +930,8 @@ function checkAuth() {
   if (authCookie) {
     const cookieValue = authCookie.split('=')[1].trim();
     if (!isTokenExpired(cookieValue)) {
+      // Check if story is selected
+      checkStorySelected();
       return; // Authenticated
     } else {
       // Clear expired cookie
@@ -939,11 +943,21 @@ function checkAuth() {
   window.location.href = '/';
 }
 
+// Check if a story is selected, redirect to stories page if not
+function checkStorySelected() {
+  const currentStory = localStorage.getItem('yarny_current_story');
+  if (!currentStory) {
+    // No story selected, redirect to stories page
+    window.location.href = '/stories.html';
+  }
+}
+
 // Logout function
 window.logout = function() {
   // Clear all auth data
   localStorage.removeItem('yarny_auth');
   localStorage.removeItem('yarny_user');
+  localStorage.removeItem('yarny_current_story');
   
   // Clear cookies
   document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -952,6 +966,15 @@ window.logout = function() {
   // Redirect to login
   window.location.href = '/';
 };
+
+// Get current story info
+function getCurrentStory() {
+  const storyData = localStorage.getItem('yarny_current_story');
+  if (storyData) {
+    return JSON.parse(storyData);
+  }
+  return null;
+}
 
 // ============================================
 // Event Listeners

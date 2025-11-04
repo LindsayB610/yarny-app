@@ -25,6 +25,15 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+  // Validate environment variables
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error('Missing Google OAuth credentials');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error: Missing Google OAuth credentials' })
+    };
+  }
+
   // Get user session from cookie
   const email = await getUserEmailFromSession(event);
   if (!email) {

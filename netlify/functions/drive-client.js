@@ -30,6 +30,10 @@ async function saveTokens(email, tokens) {
 }
 
 async function refreshAccessToken(email, refreshToken) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    throw new Error('Missing Google OAuth credentials. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
+  }
+
   const oauth2Client = new OAuth2Client(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET
@@ -44,6 +48,10 @@ async function refreshAccessToken(email, refreshToken) {
 }
 
 async function getAuthenticatedDriveClient(email) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    throw new Error('Missing Google OAuth credentials. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
+  }
+
   let tokens = await getTokens(email);
   
   if (!tokens) {

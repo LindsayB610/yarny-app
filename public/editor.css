@@ -455,6 +455,20 @@ body {
   gap: 12px;
 }
 
+.back-to-stories-link {
+  color: #6B7280;
+  font-size: 12px;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 120ms ease;
+}
+
+.back-to-stories-link:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: #333;
+}
+
 .version-control {
   display: flex;
   align-items: center;
