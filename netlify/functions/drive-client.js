@@ -209,8 +209,24 @@ async function getAuthenticatedDriveClient(email) {
 
   // Return Drive API client and auth client
   const driveClient = google.drive({ version: 'v3', auth: oauth2Client });
+  
   // Attach auth client for use in other APIs (like Docs API)
-  driveClient._auth = oauth2Client;
+  // Use Object.defineProperty to ensure it persists
+  Object.defineProperty(driveClient, '_auth', {
+    value: oauth2Client,
+    writable: false,
+    enumerable: false,
+    configurable: false
+  });
+  
+  // Verify it was attached
+  if (!driveClient._auth) {
+    console.error('WARNING: Failed to attach _auth to driveClient');
+    // Fallback: attach directly
+    driveClient._auth = oauth2Client;
+  }
+  
+  console.log('Drive client created - _auth attached:', !!driveClient._auth);
   return driveClient;
 }
 
