@@ -1,4 +1,6 @@
+// Declare API_BASE globally so it can be shared with other scripts
 const API_BASE = '/.netlify/functions';
+window.API_BASE = API_BASE;
 
 // Initiate Drive authorization
 async function authorizeDrive() {
