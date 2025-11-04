@@ -30,7 +30,9 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 
 ### Rich Text Editor
 - **Chapters (Groups)**: Organize your writing into chapters or groups
+- **Chapter Color Coding**: Color-code chapters with 12 accent colors using an interactive color picker
 - **Snippets**: Individual writing snippets within chapters
+- **Instant Snippet Creation**: New snippets appear immediately - start typing while Drive file creation happens in the background
 - **Drag & Drop**: Reorder chapters and snippets by dragging
 - **Search**: Full-text search across all snippets and chapters
 - **Tags**: Create and apply tags to snippets for better organization
@@ -190,13 +192,16 @@ yarny-app/
 ├── public/
 │   ├── index.html                         # Login page
 │   ├── stories.html                       # Stories landing page
-│   ├── editor.html                        # Main editor interface
-│   ├── app.js                             # Login/authentication logic
-│   ├── stories.js                         # Stories management (list, create, delete, refresh)
-│   ├── editor.js                          # Editor functionality (snippets, tags, notes, etc.)
-│   ├── drive.js                           # Drive API frontend wrapper
-│   ├── stories.css                        # Stories page styles
-│   └── editor.css                         # Editor styles
+│   ├── editor.html                         # Main editor interface
+│   ├── docs.html                           # User guide/documentation
+│   ├── app.js                              # Login/authentication logic
+│   ├── stories.js                          # Stories management (list, create, delete, refresh)
+│   ├── editor.js                            # Editor functionality (snippets, tags, notes, color picker, etc.)
+│   ├── drive.js                            # Drive API frontend wrapper
+│   ├── global.css                           # Global design system and CSS variables
+│   ├── stories.css                          # Stories page styles
+│   ├── editor.css                           # Editor styles
+│   └── docs.css                             # Documentation page styles
 ├── package.json
 └── README.md
 ```
@@ -236,14 +241,16 @@ yarny-app/
 ### Editor Features
 
 1. **Chapters (Groups)**: Each chapter can contain multiple snippets
-2. **Snippets**: Individual pieces of writing within chapters
-3. **Drag & Drop**: Reorder chapters and snippets by dragging
-4. **Search**: Searches across snippet titles and content
-5. **Tags**: Create tags and apply to snippets for organization
-6. **Tag Filtering**: Show only snippets matching selected tags
-7. **Notes**: Three-tab note system (People, Places, Things)
-8. **Auto-Save**: Changes are automatically saved to Drive
-9. **Word Count**: Real-time tracking with goal progress indicator
+2. **Chapter Color Coding**: Click the color chip next to a chapter title to open a color picker with 12 accent colors (red, orange, amber, yellow, lime, emerald, teal, cyan, blue, indigo, violet, fuchsia)
+3. **Snippets**: Individual pieces of writing within chapters
+4. **Instant Snippet Creation**: Click the "+" button to add a snippet - it appears immediately so you can start typing right away, while Drive file creation happens in the background
+5. **Drag & Drop**: Reorder chapters and snippets by dragging
+6. **Search**: Searches across snippet titles and content
+7. **Tags**: Create tags and apply to snippets for organization
+8. **Tag Filtering**: Show only snippets matching selected tags
+9. **Notes**: Three-tab note system (People, Places, Things)
+10. **Auto-Save**: Changes are automatically saved to Drive
+11. **Word Count**: Real-time tracking with goal progress indicator
 
 ## Development
 
@@ -324,6 +331,9 @@ To allow a new user to access the app:
 
 ## Recent Improvements
 
+- **Chapter Color Coding**: Interactive color picker with 12 accent colors for visual chapter organization
+- **Improved Snippet Creation UX**: Snippets appear instantly when created - no waiting for Drive file creation
+- **Background File Creation**: Drive files are created asynchronously so users can start typing immediately
 - **Proxy-based Drive Client**: Fixed "object is not extensible" error using Proxy pattern
 - **Timeout Handling**: Added timeout protection to prevent function hangs
 - **Refresh from Drive**: Added manual sync button to remove deleted stories

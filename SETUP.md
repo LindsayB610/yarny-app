@@ -1,62 +1,51 @@
-# How to Register and Use Yarny
+# How to Sign In and Use Yarny
 
-## Registration Flow
+> ⚠️ **Note**: This file is outdated. For the most up-to-date setup instructions, please see [README.md](./README.md).
 
-### Option 1: Register on Your Phone (Easiest)
+## Sign In Process
 
-1. **On your Google Pixel phone**, open Chrome or any browser
-2. Navigate to `https://yarny.lindsaybrunner.com`
-3. Enter your email address
-4. Click "Sign in with your device"
-5. You'll get a **direct fingerprint/face unlock prompt** on your phone
-6. Approve with your biometric
-7. Done! You're registered
+Yarny uses Google Sign-In for authentication. To access Yarny:
 
-### Option 2: Register on Desktop (Cross-Device)
+1. **Request Access**: Email [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) with your Google account email address to request an invitation
+2. **Sign In**: Once you have access, navigate to `https://yarny.lindsaybrunner.com`
+3. **Click "Sign in with Google"**: Use your Google account credentials
+4. **Authorize Drive Access**: On first use, you'll be prompted to authorize Google Drive access for cloud storage
 
-1. **On your computer**, open Chrome (best support) or Edge
-2. Navigate to `https://yarny.lindsaybrunner.com`
-3. Enter your email address
-4. Click "Sign in with your device"
-5. Chrome will show options:
-   - **"Use your phone"** - Click this if you see it
-   - Or use a USB security key if you have one
-6. On your phone, you'll get a notification to approve
-7. Approve on your phone
-8. Done! You're registered
+## First Time Setup
 
-## How Cross-Device Authentication Works
+After signing in for the first time:
 
-When you're on desktop and registered:
+1. **Authorize Google Drive**: Click the authorization button when prompted
+2. **Grant Permissions**: Allow Yarny to access Google Drive (only files created by the app)
+3. **Create Your First Story**: Click "New Story" to start writing
+4. **Start Writing**: Create chapters and snippets to organize your work
 
-1. Enter your email on desktop
-2. Click "Sign in with your device"
-3. Chrome will automatically detect your phone (if signed into same Google account)
-4. You'll see "Use your phone" option
-5. A notification appears on your Pixel
-6. Approve on your phone → logged in on desktop
+## Features Overview
 
-## Tips
-
-- **Best experience**: Register on your phone first (direct biometric)
-- **Chrome works best** for cross-device authentication
-- Make sure you're signed into the same Google account on both devices
-- For desktop, Chrome/Edge have the best WebAuthn support
+- **Chapters**: Organize your writing into chapters with color coding
+- **Color Coding**: Click the color chip next to a chapter to choose from 12 accent colors
+- **Snippets**: Add writing snippets to chapters - they appear instantly so you can start typing right away
+- **Search**: Search across all your writing
+- **Tags**: Organize snippets with tags
+- **Notes**: Keep track of people, places, and things
+- **Auto-Save**: Everything saves automatically to Google Drive
 
 ## Troubleshooting
 
-### "No available authenticator" error
-- Make sure you're using HTTPS (Netlify provides this)
-- Try a different browser (Chrome or Edge)
-- On desktop, make sure you're signed into Chrome/Google account
+### Can't sign in
+- Make sure your email is in the allowed users list
+- Check that you're using the correct Google account
+- Contact [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) if you need access
 
-### Can't see "Use your phone" option
-- Make sure you're signed into Chrome/Google account on both devices
-- Try refreshing the page
-- Check that both devices are on the same network (helps with discovery)
+### Drive authorization fails
+- Make sure you grant both Drive and Docs API permissions
+- Check that popups are not blocked
+- Try refreshing the page and authorizing again
 
-### Phone notification not appearing
-- Check that Chrome notifications are enabled on your phone
-- Make sure both devices have internet connection
-- Try registering directly on your phone instead
+### Files not saving
+- Check your internet connection
+- Look for the save status indicator in the editor
+- Check browser console for any errors
+
+For detailed setup and deployment instructions, see [README.md](./README.md).
 
