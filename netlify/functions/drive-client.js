@@ -34,12 +34,16 @@ function validateClientSecret(clientSecret) {
 
 async function getTokens(email) {
   try {
-    // Use Netlify Blobs with Site ID from environment variable
+    // Use Netlify Blobs for multi-user token storage
     const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-    const storeOptions = { name: 'drive-tokens' };
+    const token = process.env.NETLIFY_AUTH_TOKEN;
     
+    const storeOptions = { name: 'drive-tokens' };
     if (siteID) {
       storeOptions.siteID = siteID;
+    }
+    if (token) {
+      storeOptions.token = token;
     }
     
     const store = getStore(storeOptions);
@@ -68,12 +72,16 @@ async function getTokens(email) {
 
 async function saveTokens(email, tokens) {
   try {
-    // Use Netlify Blobs with Site ID from environment variable
+    // Use Netlify Blobs for multi-user token storage
     const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-    const storeOptions = { name: 'drive-tokens' };
+    const token = process.env.NETLIFY_AUTH_TOKEN;
     
+    const storeOptions = { name: 'drive-tokens' };
     if (siteID) {
       storeOptions.siteID = siteID;
+    }
+    if (token) {
+      storeOptions.token = token;
     }
     
     const store = getStore(storeOptions);
