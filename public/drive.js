@@ -6,28 +6,11 @@ window.API_BASE = API_BASE;
 // Initiate Drive authorization
 async function authorizeDrive() {
   try {
-    const response = await fetch(`${API_BASE}/drive-auth`);
-    if (response.status === 302 || response.redirected) {
-      // Redirect to Google OAuth
-      const location = response.headers.get('Location') || response.url;
-      if (location) {
-        window.location.href = location;
-      } else {
-        throw new Error('No redirect URL received');
-      }
-    } else if (response.ok) {
-      // Try to get location from headers
-      const location = response.headers.get('Location');
-      if (location) {
-        window.location.href = location;
-      } else {
-        const text = await response.text();
-        throw new Error('Unexpected response format');
-      }
-    } else {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to initiate Drive authorization');
-    }
+    // For OAuth redirects, we can't use fetch() due to CORS
+    // Instead, directly navigate to the auth endpoint which will redirect to Google
+    // But first, let's verify the endpoint exists by making a HEAD request
+    // Actually, just navigate directly - the server will handle the redirect
+    window.location.href = `${API_BASE}/drive-auth`;
   } catch (error) {
     console.error('Drive authorization error:', error);
     alert('Failed to authorize Drive: ' + error.message);
