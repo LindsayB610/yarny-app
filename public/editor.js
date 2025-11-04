@@ -2041,11 +2041,17 @@ async function loadStoryFromDrive(storyFolderId) {
             state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
               return (state.groups[a].position || 0) - (state.groups[b].position || 0);
             });
+            console.log('Loaded groups from data.json:', Object.keys(state.groups), 'groupIds:', state.project.groupIds);
+          } else {
+            console.warn('No groups found in data.json');
           }
           
           // Load snippets metadata (content will be loaded from Google Docs)
           if (parsed.snippets) {
             state.snippets = parsed.snippets;
+            console.log('Loaded snippets from data.json:', Object.keys(state.snippets));
+          } else {
+            console.warn('No snippets found in data.json');
           }
           
           // Merge legacy notes into snippets (for backward compatibility)
@@ -2206,12 +2212,15 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // Build groups from data.json structure
     const loadedGroups = {};
+    console.log('Processing groups - state.groups:', Object.keys(state.groups), 'state.project.groupIds:', state.project.groupIds);
     Object.keys(state.groups).forEach(groupId => {
       const group = state.groups[groupId];
+      console.log(`Processing group ${groupId}:`, group);
       // Include group if it has snippets in mergedSnippets OR if it's in project.groupIds
       if (validGroupIds.has(groupId) || state.project.groupIds.includes(groupId)) {
         // Filter snippetIds to only include snippets that exist
         let validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+        console.log(`Group ${groupId} validSnippetIds after filtering:`, validSnippetIds);
         
         // If this is the first group and validSnippetIds is empty, ensure snippets from data.json are included
         // This ensures the initial chapter/snippet from data.json is preserved even if Google Doc wasn't created
@@ -2226,6 +2235,7 @@ async function loadStoryFromDrive(storyFolderId) {
           });
           // Recalculate validSnippetIds after adding missing snippets
           validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+          console.log(`Group ${groupId} validSnippetIds after adding from data.json:`, validSnippetIds);
         }
         
         // Include group if it has valid snippets or if it's the first group (Chapter 1)
@@ -2233,7 +2243,12 @@ async function loadStoryFromDrive(storyFolderId) {
           group.snippetIds = validSnippetIds;
           loadedGroups[groupId] = group;
           validGroupIds.add(groupId);
+          console.log(`Added group ${groupId} to loadedGroups with snippetIds:`, validSnippetIds);
+        } else {
+          console.log(`Skipping group ${groupId} - no valid snippets and not first group`);
         }
+      } else {
+        console.log(`Skipping group ${groupId} - not in validGroupIds or project.groupIds`);
       }
     });
     
@@ -2248,7 +2263,9 @@ async function loadStoryFromDrive(storyFolderId) {
     console.log('Final state after loading:', {
       snippets: Object.keys(state.snippets),
       groups: Object.keys(state.groups),
-      groupIds: state.project.groupIds
+      groupIds: state.project.groupIds,
+      loadedGroups: Object.keys(loadedGroups),
+      mergedSnippetsCount: Object.keys(mergedSnippets).length
     });
     
     // Ensure activeSnippetId is valid after loading
@@ -2256,13 +2273,21 @@ async function loadStoryFromDrive(storyFolderId) {
     if (!state.project.activeSnippetId || !state.snippets[state.project.activeSnippetId]) {
       if (state.project.groupIds.length > 0) {
         const firstGroup = state.groups[state.project.groupIds[0]];
+        console.log('First group:', firstGroup);
         if (firstGroup && firstGroup.snippetIds && firstGroup.snippetIds.length > 0) {
           const firstSnippetId = firstGroup.snippetIds[0];
+          console.log('First snippet ID:', firstSnippetId, 'exists:', !!state.snippets[firstSnippetId]);
           if (state.snippets[firstSnippetId]) {
             state.project.activeSnippetId = firstSnippetId;
             console.log('Set activeSnippetId to first snippet:', firstSnippetId);
+          } else {
+            console.warn('First snippet not found in state.snippets:', firstSnippetId);
           }
+        } else {
+          console.warn('First group has no snippetIds:', firstGroup);
         }
+      } else {
+        console.warn('No groupIds in state.project.groupIds');
       }
     }
     
