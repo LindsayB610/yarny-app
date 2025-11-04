@@ -1,5 +1,24 @@
 const API_BASE = '/.netlify/functions';
 
+// Force logout handler - check URL parameter first
+const urlParamsCheck = new URLSearchParams(window.location.search);
+if (urlParamsCheck.get('force_logout') === 'true') {
+  // Aggressively clear everything
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Clear all cookies
+  document.cookie.split(';').forEach(c => {
+    const cookieName = c.split('=')[0].trim();
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+  });
+  
+  // Redirect to login with logout flag
+  window.location.href = '/?logout=true&force=true';
+}
+
 // Add create folder function to driveAPI if not exists
 if (window.driveAPI && !window.driveAPI.createFolder) {
   window.driveAPI.createFolder = async function(folderName, parentFolderId) {
@@ -32,6 +51,13 @@ let isDriveAuthorized = false;
 
 // Check if user is authenticated
 function checkAuth() {
+  // If force logout parameter is present, redirect immediately
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('force_logout') === 'true') {
+    window.location.href = '/?logout=true&force=true';
+    return false;
+  }
+  
   const cookies = document.cookie.split(';');
   const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
@@ -384,49 +410,54 @@ if (urlParams.get('drive_auth_success') === 'true') {
   initialize();
 }
 
-// Logout function
+// Logout function - simplified and more aggressive
 window.logout = async function(e) {
   if (e) {
     e.preventDefault();
     e.stopPropagation();
   }
   
-  console.log('Logout function called');
+  console.log('Logout function called - forcing logout');
+  
+  // Aggressively clear all storage
+  localStorage.clear();
+  sessionStorage.clear();
   
   // Disable Google auto-select if available
   if (window.google && window.google.accounts && window.google.accounts.id) {
     try {
       window.google.accounts.id.disableAutoSelect();
+      window.google.accounts.id.cancel();
     } catch (error) {
       console.error('Error disabling Google auto-select:', error);
     }
   }
   
-  // Clear all auth data from localStorage
-  localStorage.removeItem('yarny_auth');
-  localStorage.removeItem('yarny_user');
-  localStorage.removeItem('yarny_current_story');
+  // Clear all cookies - try multiple variations
+  const cookiesToClear = ['session', 'auth', 'drive_auth_state'];
+  cookiesToClear.forEach(cookieName => {
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`;
+  });
   
-  // Call server-side logout to clear HttpOnly cookies
-  try {
-    const response = await fetch(`${API_BASE}/logout`, {
-      method: 'POST',
-      credentials: 'include' // Important: include cookies in the request
-    });
-    console.log('Logout response:', response.status);
-  } catch (error) {
-    console.error('Logout request failed:', error);
-    // Continue with logout anyway
-  }
+  // Also clear all cookies found in document.cookie
+  document.cookie.split(';').forEach(c => {
+    const cookieName = c.split('=')[0].trim();
+    if (cookieName) {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    }
+  });
   
-  // Clear client-side cookies as backup
-  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-  document.cookie = 'session=' + cookieOptions;
-  document.cookie = 'auth=' + cookieOptions;
-  document.cookie = 'drive_auth_state=' + cookieOptions;
+  // Call server-side logout (don't wait for it)
+  fetch(`${API_BASE}/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  }).catch(err => console.error('Logout request failed:', err));
   
-  // Force redirect to login page with a flag to prevent auto-redirect
-  window.location.href = '/?logout=true';
+  // Force immediate redirect with force parameter
+  window.location.href = '/?logout=true&force=true';
 };
 
 // Export for global access

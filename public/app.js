@@ -33,7 +33,30 @@ function isTokenExpired(token) {
 function checkAuth() {
   // Don't auto-redirect if this is a logout action
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('logout') === 'true') {
+  if (urlParams.get('logout') === 'true' || urlParams.get('force') === 'true') {
+    // Aggressively clear everything on force logout
+    if (urlParams.get('force') === 'true') {
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear all cookies
+      document.cookie.split(';').forEach(c => {
+        const cookieName = c.split('=')[0].trim();
+        if (cookieName) {
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        }
+      });
+      
+      // Disable Google auto-select
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.disableAutoSelect();
+          window.google.accounts.id.cancel();
+        } catch (e) {}
+      }
+    }
+    
     // Clean up the URL
     window.history.replaceState({}, document.title, window.location.pathname);
     return; // Stay on login page
