@@ -150,6 +150,65 @@ function renderStories(stories) {
   });
 }
 
+// Create initial files and folders for a new story
+async function initializeStoryStructure(storyFolderId) {
+  try {
+    // Create initial folder structure
+    const folders = [
+      { name: 'snippets', description: 'Story snippets and content' },
+      { name: 'groups', description: 'Story groups' },
+      { name: 'notes', description: 'Story notes' }
+    ];
+
+    const createdFolders = {};
+    for (const folder of folders) {
+      const folderResult = await createDriveFolder(folder.name, storyFolderId);
+      createdFolders[folder.name] = folderResult.id;
+    }
+
+    // Create initial project.json file
+    const projectData = {
+      name: 'New Project',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      activeSnippetId: null,
+      snippetIds: [],
+      groupIds: []
+    };
+
+    await window.driveAPI.write(
+      'project.json',
+      JSON.stringify(projectData, null, 2),
+      null,
+      storyFolderId
+    );
+
+    // Create initial data.json file with empty state
+    const initialState = {
+      snippets: {},
+      groups: {},
+      notes: {
+        people: {},
+        places: {},
+        things: {}
+      },
+      tags: []
+    };
+
+    await window.driveAPI.write(
+      'data.json',
+      JSON.stringify(initialState, null, 2),
+      null,
+      storyFolderId
+    );
+
+    return { folders: createdFolders, projectData, initialState };
+  } catch (error) {
+    console.error('Error initializing story structure:', error);
+    throw error;
+  }
+}
+
 // Create new story
 async function createStory(storyName) {
   try {
@@ -160,6 +219,9 @@ async function createStory(storyName) {
     
     // Create story folder in yarny-stories
     const storyFolder = await createDriveFolder(storyName, yarnyStoriesFolderId);
+    
+    // Initialize story structure with folders and files
+    await initializeStoryStructure(storyFolder.id);
     
     return storyFolder;
   } catch (error) {
@@ -286,7 +348,7 @@ async function initialize() {
       const storyFolder = await createStory(storyName);
       closeNewStoryModal();
       
-      // Open the new story
+      // Open the new story in editor
       openStory(storyFolder.id, storyFolder.name);
     } catch (error) {
       showError('Failed to create story: ' + error.message);
@@ -317,16 +379,29 @@ if (urlParams.get('drive_auth_success') === 'true') {
 
 // Logout function
 window.logout = function() {
+  // Disable Google auto-select if available
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+  
   // Clear all auth data
   localStorage.removeItem('yarny_auth');
   localStorage.removeItem('yarny_user');
   localStorage.removeItem('yarny_current_story');
   
-  // Clear cookies
-  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  // Clear cookies with proper flags to ensure they're deleted
+  // Need to match the flags used when setting (Secure, SameSite=Strict)
+  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict';
+  document.cookie = 'session=' + cookieOptions;
+  document.cookie = 'auth=' + cookieOptions;
+  document.cookie = 'drive_auth_state=' + cookieOptions;
   
-  // Redirect to login
+  // Also try clearing without flags (for http/localhost)
+  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+  document.cookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+  
+  // Force redirect to login page
   window.location.href = '/';
 };
 
