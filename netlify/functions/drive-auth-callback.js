@@ -140,7 +140,16 @@ exports.handler = async (event) => {
   );
 
   try {
+    console.log('Attempting token exchange...');
+    console.log('Redirect URI:', redirectUri);
+    console.log('Code present:', !!code);
+    console.log('Code length:', code?.length);
+    
     const { tokens } = await oauth2Client.getToken(code);
+    
+    console.log('Token exchange successful');
+    console.log('Has access_token:', !!tokens.access_token);
+    console.log('Has refresh_token:', !!tokens.refresh_token);
     
     // Save tokens (access_token, refresh_token, expiry_date)
     await saveTokens(email, {
@@ -148,6 +157,8 @@ exports.handler = async (event) => {
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date
     });
+    
+    console.log('Tokens saved successfully for:', email);
 
     // Clear state cookie (with SameSite=Lax to match original cookie)
     const clearStateCookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;';
@@ -163,10 +174,23 @@ exports.handler = async (event) => {
     };
   } catch (error) {
     console.error('Token exchange error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error response:', error.response?.data);
+    
+    // More detailed error message
+    let errorMessage = 'Token exchange failed';
+    if (error.message) {
+      errorMessage += ': ' + error.message;
+    }
+    if (error.response?.data?.error_description) {
+      errorMessage += ' - ' + error.response.data.error_description;
+    }
+    
     return {
       statusCode: 302,
       headers: {
-        'Location': '/stories.html?drive_auth_error=' + encodeURIComponent('Token exchange failed')
+        'Location': '/stories.html?drive_auth_error=' + encodeURIComponent(errorMessage)
       }
     };
   }
