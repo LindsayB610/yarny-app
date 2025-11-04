@@ -29,24 +29,18 @@ if (urlParamsCheck.get('force_logout') === 'true') {
 if (window.driveAPI && !window.driveAPI.createFolder) {
   window.driveAPI.createFolder = async function(folderName, parentFolderId) {
     try {
-      const response = await fetch(`${API_BASE}/drive-create-folder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          folderName: folderName,
-          parentFolderId: parentFolderId
-        })
+      const response = await axios.post(`${API_BASE}/drive-create-folder`, {
+        folderName: folderName,
+        parentFolderId: parentFolderId
+      }, {
+        withCredentials: true
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create folder');
-      }
-      
-      return await response.json();
+      return response.data;
     } catch (error) {
       console.error('Error creating folder:', error);
-      throw error;
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to create folder';
+      throw new Error(errorMessage);
     }
   };
 }
@@ -96,10 +90,16 @@ window.logout = async function(e) {
   });
   
   // Call server-side logout (don't wait for it)
-  fetch(`${API_BASE}/logout`, {
-    method: 'POST',
-    credentials: 'include'
-  }).catch(err => console.error('Logout request failed:', err));
+  if (typeof axios !== 'undefined') {
+    axios.post(`${API_BASE}/logout`, {}, {
+      withCredentials: true
+    }).catch(err => console.error('Logout request failed:', err));
+  } else {
+    fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    }).catch(err => console.error('Logout request failed:', err));
+  }
   
   // Force immediate redirect with force parameter
   console.log('Redirecting to login...');
@@ -166,41 +166,34 @@ async function checkDriveAuth() {
 // Get or create yarny-stories folder
 async function getOrCreateYarnyStoriesFolder() {
   try {
-    const response = await fetch(`${API_BASE}/drive-get-or-create-yarny-stories`);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to get yarny-stories folder');
-    }
-    const data = await response.json();
-    yarnyStoriesFolderId = data.id;
-    return data.id;
+    const response = await axios.get(`${API_BASE}/drive-get-or-create-yarny-stories`, {
+      withCredentials: true
+    });
+    
+    yarnyStoriesFolderId = response.data.id;
+    return response.data.id;
   } catch (error) {
     console.error('Error getting yarny-stories folder:', error);
-    throw error;
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to get yarny-stories folder';
+    throw new Error(errorMessage);
   }
 }
 
 // Create a new folder in Drive
 async function createDriveFolder(folderName, parentFolderId) {
   try {
-    const response = await fetch(`${API_BASE}/drive-create-folder`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        folderName: folderName,
-        parentFolderId: parentFolderId
-      })
+    const response = await axios.post(`${API_BASE}/drive-create-folder`, {
+      folderName: folderName,
+      parentFolderId: parentFolderId
+    }, {
+      withCredentials: true
     });
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create folder');
-    }
-    
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('Error creating folder:', error);
-    throw error;
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to create folder';
+    throw new Error(errorMessage);
   }
 }
 

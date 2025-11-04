@@ -3,6 +3,11 @@
 var API_BASE = '/.netlify/functions';
 window.API_BASE = API_BASE;
 
+// Configure axios defaults if available (loaded via CDN)
+if (typeof axios !== 'undefined') {
+  axios.defaults.withCredentials = true; // Include cookies in requests
+}
+
 // Initiate Drive authorization
 async function authorizeDrive() {
   try {
@@ -21,68 +26,55 @@ async function authorizeDrive() {
 // List files in Drive
 async function listDriveFiles(folderId = null) {
   try {
-    const url = new URL(`${API_BASE}/drive-list`, window.location.origin);
-    if (folderId) {
-      url.searchParams.set('folderId', folderId);
-    }
+    const params = folderId ? { folderId } : {};
     
-    const response = await fetch(url);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to list files');
-    }
+    const response = await axios.get(`${API_BASE}/drive-list`, {
+      params: params,
+      withCredentials: true
+    });
     
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('Drive list error:', error);
-    throw error;
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to list files';
+    throw new Error(errorMessage);
   }
 }
 
 // Read file from Drive
 async function readDriveFile(fileId) {
   try {
-    const response = await fetch(`${API_BASE}/drive-read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId })
-    });
+    const response = await axios.post(`${API_BASE}/drive-read`, 
+      { fileId },
+      { withCredentials: true }
+    );
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to read file');
-    }
-    
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('Drive read error:', error);
-    throw error;
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to read file';
+    throw new Error(errorMessage);
   }
 }
 
 // Write file to Drive
 async function writeDriveFile(fileName, content, fileId = null, parentFolderId = null) {
   try {
-    const response = await fetch(`${API_BASE}/drive-write`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const response = await axios.post(`${API_BASE}/drive-write`,
+      {
         fileName,
         content,
         fileId,
         parentFolderId
-      })
-    });
+      },
+      { withCredentials: true }
+    );
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to write file');
-    }
-    
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error('Drive write error:', error);
-    throw error;
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to write file';
+    throw new Error(errorMessage);
   }
 }
 
@@ -90,52 +82,42 @@ async function writeDriveFile(fileName, content, fileId = null, parentFolderId =
 async function checkDriveAuth() {
   try {
     // Try to call a simple Drive API endpoint - if it fails with auth error, not authorized
-    const response = await fetch('/.netlify/functions/drive-list', {
-      method: 'GET',
-      credentials: 'include'
+    const response = await axios.get('/.netlify/functions/drive-list', {
+      withCredentials: true
     });
-    
-    if (response.status === 401) {
-      console.log('Drive not authorized: 401 Unauthorized');
-      return false;
-    }
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error || response.statusText;
-      
-      // Check if error indicates missing authorization
-      if (
-        errorMessage.includes('No Drive tokens') || 
-        errorMessage.includes('authorize') ||
-        errorMessage.includes('Not authenticated') ||
-        errorMessage.includes('401')
-      ) {
-        console.log('Drive not authorized:', errorMessage);
-        return false;
-      }
-      
-      // Other errors might mean we're authorized but something else went wrong
-      // In that case, return true since we got past auth check
-      console.log('Drive API error (but past auth):', errorMessage);
-      return true;
-    }
     
     // If we get here, we successfully called the API
     console.log('Drive is authorized');
     return true;
   } catch (error) {
-    console.log('Drive auth check error:', error.message);
-    // Check error message for auth-related keywords
-    if (
-      error.message.includes('No Drive tokens') || 
-      error.message.includes('authorize') ||
-      error.message.includes('Not authenticated') ||
-      error.message.includes('401')
-    ) {
+    const status = error.response?.status;
+    const errorMessage = error.response?.data?.error || error.message || '';
+    
+    if (status === 401) {
+      console.log('Drive not authorized: 401 Unauthorized');
       return false;
     }
+    
+    // Check if error indicates missing authorization
+    if (
+      errorMessage.includes('No Drive tokens') || 
+      errorMessage.includes('authorize') ||
+      errorMessage.includes('Not authenticated') ||
+      errorMessage.includes('401')
+    ) {
+      console.log('Drive not authorized:', errorMessage);
+      return false;
+    }
+    
+    // Other errors might mean we're authorized but something else went wrong
+    // In that case, return true since we got past auth check
+    if (status && status !== 401) {
+      console.log('Drive API error (but past auth):', errorMessage);
+      return true;
+    }
+    
     // For network errors, assume not authorized to be safe
+    console.log('Drive auth check error:', error.message);
     return false;
   }
 }
