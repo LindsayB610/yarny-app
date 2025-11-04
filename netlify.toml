@@ -8,10 +8,9 @@
   to = "/.well-known/web-identity"
   status = 200
   force = true
-  headers = { 
-    Access-Control-Allow-Origin = "*",
+  [redirects.headers]
+    Access-Control-Allow-Origin = "*"
     Content-Type = "application/json"
-  }
 
 # Allow direct access to editor.html and stories.html
 [[redirects]]
