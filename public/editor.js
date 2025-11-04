@@ -961,6 +961,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check authentication first
   checkAuth();
   
+  // Handle Drive auth callbacks
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('drive_auth_success') === 'true') {
+    // Show success message or update UI
+    console.log('Drive authorization successful!');
+    // You can add UI feedback here if needed
+    // Clean up URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (urlParams.get('drive_auth_error')) {
+    const error = urlParams.get('drive_auth_error');
+    console.error('Drive authorization failed:', decodeURIComponent(error));
+    alert('Drive authorization failed: ' + decodeURIComponent(error));
+    // Clean up URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
   // Initialize state
   initializeState();
 
