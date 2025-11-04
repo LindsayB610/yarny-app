@@ -899,11 +899,18 @@ async function createNewGroup() {
 // Add snippet to a specific group/chapter
 async function addSnippetToGroup(groupId) {
   const snippetId = 'snippet_' + Date.now();
+  
+  // Count existing snippets in this chapter to generate a unique numbered title
+  const group = state.groups[groupId];
+  const existingSnippetCount = group ? group.snippetIds.length : 0;
+  const snippetNumber = existingSnippetCount + 1;
+  const snippetTitle = `Snippet ${snippetNumber}`;
+  
   const newSnippet = {
     id: snippetId,
     projectId: 'default',
     groupId: groupId,
-    title: 'Untitled Snippet',
+    title: snippetTitle,
     body: '',
     words: 0,
     chars: 0,
