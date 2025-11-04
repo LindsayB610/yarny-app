@@ -199,6 +199,7 @@ async function initializeGoogleSignIn() {
     auto_select: false,
     cancel_on_tap_outside: true,
     itp_support: true, // Intelligent Tracking Prevention support
+    use_fedcm_for_prompt: false, // Disable FedCM if causing CORS issues
   });
 }
 
