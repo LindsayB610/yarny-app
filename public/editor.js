@@ -2178,6 +2178,8 @@ async function loadStoryFromDrive(storyFolderId) {
         
         // Merge loaded snippets from Google Docs with snippets from data.json
         // This ensures snippets show up even if Google Doc creation failed
+        // Save original snippets from data.json before merging
+        const originalSnippets = { ...state.snippets };
         const mergedSnippets = { ...state.snippets };
         
         // Add or update snippets from Google Docs
@@ -2188,13 +2190,8 @@ async function loadStoryFromDrive(storyFolderId) {
         // If no Google Docs were loaded but we have snippets in data.json, keep them
         if (Object.keys(loadedSnippets).length === 0 && Object.keys(state.snippets).length > 0) {
           console.log('No Google Docs found, but data.json has snippets - keeping snippets from data.json');
-          // Keep all snippets from data.json
-          Object.keys(state.snippets).forEach(snippetId => {
-            mergedSnippets[snippetId] = state.snippets[snippetId];
-          });
+          // Keep all snippets from data.json (they're already in mergedSnippets from line above)
         }
-        
-        state.snippets = mergedSnippets;
         
         // Ensure groups are created for all snippets
         const validGroupIds = new Set();
@@ -2210,7 +2207,23 @@ async function loadStoryFromDrive(storyFolderId) {
           // Include group if it has snippets in mergedSnippets OR if it's in project.groupIds
           if (validGroupIds.has(groupId) || state.project.groupIds.includes(groupId)) {
             // Filter snippetIds to only include snippets that exist
-            const validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+            let validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+            
+            // If this is the first group and validSnippetIds is empty, ensure snippets from data.json are included
+            // This ensures the initial chapter/snippet from data.json is preserved even if Google Doc wasn't created
+            if (validSnippetIds.length === 0 && groupId === state.project.groupIds[0] && group.snippetIds.length > 0) {
+              console.log('First group has no valid snippets, ensuring snippets from data.json are included');
+              // Add any missing snippets from data.json to mergedSnippets
+              group.snippetIds.forEach(sid => {
+                if (originalSnippets[sid] && !mergedSnippets[sid]) {
+                  mergedSnippets[sid] = originalSnippets[sid];
+                  console.log(`Added missing snippet ${sid} from data.json to mergedSnippets`);
+                }
+              });
+              // Recalculate validSnippetIds after adding missing snippets
+              validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+            }
+            
             // Include group if it has valid snippets or if it's the first group (Chapter 1)
             if (validSnippetIds.length > 0 || groupId === state.project.groupIds[0]) {
               group.snippetIds = validSnippetIds;
@@ -2219,6 +2232,9 @@ async function loadStoryFromDrive(storyFolderId) {
             }
           }
         });
+        
+        // Update state.snippets with the final merged snippets
+        state.snippets = mergedSnippets;
         
         state.groups = loadedGroups;
         state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
@@ -2232,6 +2248,21 @@ async function loadStoryFromDrive(storyFolderId) {
         });
       } catch (error) {
         console.warn('Could not load chapter files:', error);
+      }
+    }
+    
+    // Ensure activeSnippetId is valid after loading
+    // If activeSnippetId is not set or doesn't exist, set it to the first snippet of the first group
+    if (!state.project.activeSnippetId || !state.snippets[state.project.activeSnippetId]) {
+      if (state.project.groupIds.length > 0) {
+        const firstGroup = state.groups[state.project.groupIds[0]];
+        if (firstGroup && firstGroup.snippetIds && firstGroup.snippetIds.length > 0) {
+          const firstSnippetId = firstGroup.snippetIds[0];
+          if (state.snippets[firstSnippetId]) {
+            state.project.activeSnippetId = firstSnippetId;
+            console.log('Set activeSnippetId to first snippet:', firstSnippetId);
+          }
+        }
       }
     }
     
