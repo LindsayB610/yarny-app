@@ -31,8 +31,28 @@ function isTokenExpired(token) {
 
 // Check if already authenticated
 function checkAuth() {
-  // Don't auto-redirect if this is a logout action
+  // Development mode: allow bypassing auth on localhost
   const urlParams = new URLSearchParams(window.location.search);
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  if (isDev && urlParams.get('dev') === 'true') {
+    // Set up fake auth for development
+    const devUser = {
+      name: 'Dev User',
+      user: 'dev@local.test',
+      picture: 'https://ui-avatars.com/api/?name=Dev+User&background=10B981&color=fff'
+    };
+    localStorage.setItem('yarny_auth', btoa('dev@local.test:' + Date.now()));
+    localStorage.setItem('yarny_user', JSON.stringify(devUser));
+
+    // Redirect to editor if on login page
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      window.location.href = '/editor.html';
+    }
+    return;
+  }
+
+  // Don't auto-redirect if this is a logout action
   if (urlParams.get('logout') === 'true' || urlParams.get('force') === 'true') {
     // Aggressively clear everything on force logout
     if (urlParams.get('force') === 'true') {
@@ -153,7 +173,7 @@ async function initializeGoogleSignIn() {
   // Get client ID from environment or config
   // For now, we'll need to get it from a config endpoint or set it directly
   // You'll need to set GOOGLE_CLIENT_ID in Netlify environment variables
-  
+
   // Wait for Google API to load
   await new Promise((resolve) => {
     if (window.google) {
@@ -175,31 +195,45 @@ async function initializeGoogleSignIn() {
     if (configResponse.ok) {
       const config = await configResponse.json();
       googleClientId = (config.clientId || '').trim(); // Trim whitespace
-      
+
       if (!googleClientId) {
         console.error('Client ID is empty after parsing');
         showError('Google Client ID is empty. Please check Netlify environment variables.');
         return;
       }
-      
+
       // Log first and last few characters for debugging (don't log full ID)
-      const preview = googleClientId.length > 20 
+      const preview = googleClientId.length > 20
         ? googleClientId.substring(0, 10) + '...' + googleClientId.substring(googleClientId.length - 5)
         : '***';
       console.log('Google Client ID loaded:', 'Yes (length:', googleClientId.length + ', preview:', preview + ')');
     } else {
-      const errorText = await configResponse.text();
-      console.error('Config response error:', configResponse.status, errorText);
-      throw new Error(`Could not get Google Client ID: ${configResponse.status}`);
+      // On localhost/dev, functions might not be available. Show a gentle warning
+      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const errorMsg = `Config endpoint error: ${configResponse.status}`;
+      console.warn(errorMsg);
+
+      if (!isDev) {
+        // On production, this is an error
+        throw new Error(errorMsg);
+      }
+      // On dev, continue - user can use dev mode
     }
   } catch (error) {
     console.error('Error getting config:', error);
-    showError('Configuration error. Please check server settings. Error: ' + error.message);
-    return;
+
+    // On localhost, this is expected when functions aren't available
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isDev) {
+      showError('Configuration error. Please check server settings. Error: ' + error.message);
+      return;
+    }
   }
 
+  // If we don't have a client ID, we'll skip Google Sign-In initialization
+  // Users can still use dev mode on localhost
   if (!googleClientId) {
-    showError('Google Sign-In not configured. Please set GOOGLE_CLIENT_ID environment variable in Netlify.');
+    console.warn('Google Sign-In not configured. Use dev mode on localhost or set GOOGLE_CLIENT_ID environment variable for production.');
     return;
   }
 
@@ -213,7 +247,7 @@ async function initializeGoogleSignIn() {
       itp_support: true, // Intelligent Tracking Prevention support
       use_fedcm_for_prompt: true, // Enable FedCM
     });
-    
+
     console.log('Google Sign-In initialized with FedCM support');
   } catch (error) {
     console.error('Error initializing Google Sign-In:', error);
@@ -275,7 +309,13 @@ async function handleGoogleSignIn(response) {
 // Sign in with Google button click
 window.signInWithGoogle = function() {
   if (!googleClientId) {
-    showError('Google Sign-In not initialized. Please refresh the page.');
+    // On localhost, suggest using dev mode
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isDev) {
+      showError('Google Sign-In not available locally. Click "Enter Dev Mode" below to test.');
+    } else {
+      showError('Google Sign-In not initialized. Please refresh the page.');
+    }
     return;
   }
 

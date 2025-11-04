@@ -1,18 +1,10 @@
 /* ============================================
-   Yarny Editor Styles
-   Based on brief specifications
+   Yarny Editor Styles - Extended from Global
    ============================================ */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #E9E9EB;
-  color: #333;
+  background-color: #F3F4F6;
+  color: var(--color-text-primary);
   overflow: hidden;
   height: 100vh;
 }
@@ -38,12 +30,12 @@ body {
 
 .left-rail {
   grid-area: left-rail;
-  background-color: #F5F5F6;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: opacity 200ms ease;
+  transition: opacity var(--transition-base);
 }
 
 .left-rail.faded {
@@ -51,32 +43,32 @@ body {
 }
 
 .left-rail-header {
-  padding: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .back-to-stories-link {
   display: inline-block;
-  color: #6B7280;
-  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 120ms ease;
-  margin-bottom: 12px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-md);
 }
 
 .back-to-stories-link:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-  color: #333;
+  background-color: var(--color-gray-100);
+  color: var(--color-text-primary);
 }
 
 .rail-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
 }
 
 .goal-meter {
@@ -99,9 +91,9 @@ body {
 
 .goal-progress-bar {
   height: 100%;
-  background-color: #2FB34A;
+  background-color: var(--color-success);
   width: 0%;
-  transition: width 200ms ease;
+  transition: width var(--transition-base);
 }
 
 .search-container {
@@ -110,33 +102,34 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  font-size: 13px;
-  background-color: #FFFFFF;
-  color: #333;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 .tags-button {
   width: 100%;
-  padding: 8px 10px;
-  background-color: #FFFFFF;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  font-size: 13px;
-  color: #333;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color var(--transition-fast);
 }
 
 .tags-button:hover {
-  background-color: #F5F5F6;
+  background-color: var(--color-gray-100);
 }
 
 .selected-tags {
@@ -319,21 +312,21 @@ body {
 .canvas-card {
   width: 100%;
   max-width: 100%;
-  background-color: #FFFFFF;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  padding: 40px 64px;
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-5xl) var(--space-6xl);
   position: relative;
   min-height: 400px;
 }
 
 .editor-content {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #333;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
   min-height: 300px;
   outline: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .editor-content:focus {
@@ -341,7 +334,7 @@ body {
 }
 
 .editor-content::selection {
-  background-color: rgba(66, 133, 244, 0.2);
+  background-color: var(--color-primary-light);
 }
 
 .save-status {
@@ -366,12 +359,12 @@ body {
 
 .right-rail {
   grid-area: right-rail;
-  background-color: #F5F5F6;
-  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: opacity 200ms ease;
+  transition: opacity var(--transition-base);
 }
 
 .right-rail.faded {
@@ -379,8 +372,8 @@ body {
 }
 
 .right-rail-header {
-  padding: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -390,24 +383,24 @@ body {
 }
 
 .notes-tab {
-  padding: 6px 12px;
+  padding: var(--space-sm) var(--space-md);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  font-size: 13px;
-  color: #6B7280;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: color 120ms ease;
+  transition: color var(--transition-fast);
 }
 
 .notes-tab:hover {
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .notes-tab.active {
-  color: #333;
-  border-bottom-color: #333;
-  font-weight: 500;
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .notes-list {
@@ -480,12 +473,12 @@ body {
 
 .footer-bar {
   grid-area: footer;
-  background-color: #F5F5F6;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 0 var(--space-md);
   height: 44px;
   flex-shrink: 0;
 }
@@ -497,60 +490,60 @@ body {
 .footer-center {
   flex: 1;
   text-align: center;
-  font-size: 12px;
-  color: #6B7280;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .separator {
-  margin: 0 8px;
+  margin: 0 var(--space-sm);
 }
 
 .footer-right {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
 }
-
 
 .version-control {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 #versionLabel {
-  font-size: 12px;
-  color: #6B7280;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .version-slider {
   width: 120px;
   height: 4px;
   cursor: pointer;
+  accent-color: var(--color-primary);
 }
 
 .last-modified {
-  font-size: 11px;
-  color: #6B7280;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .logout-button {
   background: none;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #6B7280;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 120ms ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family-base);
 }
 
 .logout-button:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.15);
-  color: #333;
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-300);
+  color: var(--color-text-primary);
 }
 
 /* ============================================
@@ -682,4 +675,3 @@ body {
 .tag-palette-list::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
 }
-
