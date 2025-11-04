@@ -174,8 +174,19 @@ async function initializeGoogleSignIn() {
     const configResponse = await fetch(`${API_BASE}/config`);
     if (configResponse.ok) {
       const config = await configResponse.json();
-      googleClientId = config.clientId;
-      console.log('Google Client ID loaded:', googleClientId ? 'Yes' : 'No');
+      googleClientId = (config.clientId || '').trim(); // Trim whitespace
+      
+      if (!googleClientId) {
+        console.error('Client ID is empty after parsing');
+        showError('Google Client ID is empty. Please check Netlify environment variables.');
+        return;
+      }
+      
+      // Log first and last few characters for debugging (don't log full ID)
+      const preview = googleClientId.length > 20 
+        ? googleClientId.substring(0, 10) + '...' + googleClientId.substring(googleClientId.length - 5)
+        : '***';
+      console.log('Google Client ID loaded:', 'Yes (length:', googleClientId.length + ', preview:', preview + ')');
     } else {
       const errorText = await configResponse.text();
       console.error('Config response error:', configResponse.status, errorText);
