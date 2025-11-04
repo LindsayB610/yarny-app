@@ -1,4 +1,4 @@
-const API_BASE = '/.netlify/functions/auth';
+const API_BASE = '/.netlify/functions';
 let googleClientId = '';
 
 // Check if already authenticated
@@ -88,7 +88,7 @@ async function initializeGoogleSignIn() {
 
   // Get client ID from server config endpoint
   try {
-    const configResponse = await fetch(`${API_BASE}/config`);
+    const configResponse = await fetch(`${API_BASE}/auth/config`);
     if (configResponse.ok) {
       const config = await configResponse.json();
       googleClientId = config.clientId;
@@ -125,7 +125,7 @@ async function handleGoogleSignIn(response) {
     console.log('Google Sign-In response received');
 
     // Verify the token with our backend
-    const verifyResponse = await fetch(`${API_BASE}/verify-google`, {
+    const verifyResponse = await fetch(`${API_BASE}/auth/verify-google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: response.credential }),
