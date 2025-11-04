@@ -86,23 +86,26 @@ async function initializeGoogleSignIn() {
     }
   });
 
-  // Get client ID from server (we'll create a simple endpoint for this)
+  // Get client ID from server config endpoint
   try {
     const configResponse = await fetch(`${API_BASE}/config`);
     if (configResponse.ok) {
       const config = await configResponse.json();
       googleClientId = config.clientId;
+      console.log('Google Client ID loaded:', googleClientId ? 'Yes' : 'No');
     } else {
-      throw new Error('Could not get Google Client ID');
+      const errorText = await configResponse.text();
+      console.error('Config response error:', configResponse.status, errorText);
+      throw new Error(`Could not get Google Client ID: ${configResponse.status}`);
     }
   } catch (error) {
     console.error('Error getting config:', error);
-    showError('Configuration error. Please check server settings.');
+    showError('Configuration error. Please check server settings. Error: ' + error.message);
     return;
   }
 
   if (!googleClientId) {
-    showError('Google Sign-In not configured. Please set GOOGLE_CLIENT_ID.');
+    showError('Google Sign-In not configured. Please set GOOGLE_CLIENT_ID environment variable in Netlify.');
     return;
   }
 
