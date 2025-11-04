@@ -149,6 +149,9 @@ body {
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .refresh-btn:hover {
@@ -175,6 +178,9 @@ body {
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .new-story-btn:hover {
@@ -236,6 +242,13 @@ body {
   opacity: 0.6;
   flex-shrink: 0;
   margin-left: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-delete-btn .material-icons {
+  font-size: 20px;
 }
 
 .story-delete-btn:hover {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yarny - Editor</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/editor.css">
 </head>
@@ -12,10 +13,15 @@
     <!-- Left Rail: Story -->
     <aside id="leftRail" class="left-rail">
       <div class="left-rail-header">
-        <a href="/stories.html" class="back-to-stories-link" title="Back to Stories">← Stories</a>
+        <a href="/stories.html" class="back-to-stories-link" title="Back to Stories">
+          <i class="material-icons" style="font-size: 16px; vertical-align: middle;">arrow_back</i>
+          <span>Stories</span>
+        </a>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
           <h2 class="rail-title">Story</h2>
-          <button id="storyInfoBtn" class="story-info-btn" title="Story Info & Settings">⚙️</button>
+          <button id="storyInfoBtn" class="story-info-btn" title="Story Info & Settings">
+            <i class="material-icons">settings</i>
+          </button>
         </div>
         <div class="goal-meter" id="goalMeter" style="cursor: pointer;" title="Click to edit word count goal">
           <span id="goalText" class="goal-text">0 / 3,000</span>
@@ -75,7 +81,9 @@
             class="add-note-btn" 
             title="Add new snippet"
             onclick="createNewSnippet()"
-          >+</button>
+          >
+            <i class="material-icons">add</i>
+          </button>
         </div>
       </div>
       <div id="notesList" class="notes-list">
@@ -113,7 +121,10 @@
           >
           <span id="lastModified" class="last-modified">Last Modified: —</span>
         </div>
-        <a href="/docs.html" class="logout-button" style="text-decoration: none; margin-right: var(--space-md);" title="View User Guide">📖 Docs</a>
+        <a href="/docs.html" class="logout-button" style="text-decoration: none; margin-right: var(--space-md); display: inline-flex; align-items: center; gap: 6px;" title="View User Guide">
+          <i class="material-icons" style="font-size: 16px;">menu_book</i>
+          <span>Docs</span>
+        </a>
         <button id="logoutBtn" class="logout-button" onclick="logout()" title="Sign out">Sign out</button>
       </div>
     </footer>
@@ -124,7 +135,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Story Info & Settings</h2>
-          <button class="modal-close" onclick="closeStoryInfoModal()">×</button>
+          <button class="modal-close" onclick="closeStoryInfoModal()">
+            <i class="material-icons">close</i>
+          </button>
         </div>
         <div class="modal-body">
           <div id="storyInfoError" class="error-message hidden"></div>
@@ -191,7 +204,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="renameModalTitle">Rename</h2>
-          <button class="modal-close" onclick="closeRenameModal()">×</button>
+          <button class="modal-close" onclick="closeRenameModal()">
+            <i class="material-icons">close</i>
+          </button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -218,7 +233,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Delete</h2>
-          <button class="modal-close" onclick="closeDeleteModal()">×</button>
+          <button class="modal-close" onclick="closeDeleteModal()">
+            <i class="material-icons">close</i>
+          </button>
         </div>
         <div class="modal-body">
           <p id="deleteModalMessage">Are you sure you want to delete this item? This will move it to your Google Drive trash.</p>

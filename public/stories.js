@@ -388,7 +388,10 @@ function renderStories(stories) {
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'story-delete-btn';
-    deleteBtn.textContent = '×';
+    const deleteIcon = document.createElement('i');
+    deleteIcon.className = 'material-icons';
+    deleteIcon.textContent = 'close';
+    deleteBtn.appendChild(deleteIcon);
     deleteBtn.title = 'Delete story';
     deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();

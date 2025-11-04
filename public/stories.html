@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yarny - Stories</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/stories.css">
 </head>
@@ -16,7 +17,10 @@
           <p class="subtitle">Your writing projects</p>
         </div>
         <div style="display: flex; gap: var(--space-md); align-items: center;">
-          <a href="/docs.html" class="logout-button" style="text-decoration: none;" title="View User Guide">📖 Docs</a>
+          <a href="/docs.html" class="logout-button" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="View User Guide">
+            <i class="material-icons" style="font-size: 16px;">menu_book</i>
+            <span>Docs</span>
+          </a>
           <button id="logoutBtn" class="logout-button" onclick="if(window.logout){window.logout();} else {localStorage.clear(); window.location.href='/?logout=true&force=true';}" title="Sign out">Sign out</button>
         </div>
       </div>
@@ -34,8 +38,14 @@
       <div class="stories-header-bar">
         <h2>Your Stories</h2>
         <div class="header-actions">
-          <button id="refreshBtn" class="refresh-btn" title="Refresh from Drive">↻ Refresh</button>
-          <button id="newStoryBtn" class="new-story-btn">+ New Story</button>
+          <button id="refreshBtn" class="refresh-btn" title="Refresh from Drive">
+            <i class="material-icons" style="font-size: 18px;">refresh</i>
+            <span>Refresh</span>
+          </button>
+          <button id="newStoryBtn" class="new-story-btn">
+            <i class="material-icons" style="font-size: 18px;">add</i>
+            <span>New Story</span>
+          </button>
         </div>
       </div>
 
@@ -59,7 +69,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Create New Story</h2>
-          <button class="modal-close" onclick="closeNewStoryModal()">×</button>
+          <button class="modal-close" onclick="closeNewStoryModal()">
+            <i class="material-icons">close</i>
+          </button>
         </div>
         <div class="modal-body">
           <div id="modalError" class="error-message hidden"></div>
@@ -114,7 +126,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Delete Story</h2>
-          <button class="modal-close" onclick="closeDeleteStoryModal()">×</button>
+          <button class="modal-close" onclick="closeDeleteStoryModal()">
+            <i class="material-icons">close</i>
+          </button>
         </div>
         <div class="modal-body">
           <div id="modalError" class="error-message hidden"></div>

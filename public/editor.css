@@ -49,7 +49,9 @@ body {
 }
 
 .back-to-stories-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   text-decoration: none;
@@ -80,6 +82,14 @@ body {
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-info-btn .material-icons {
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -209,6 +219,13 @@ body {
   opacity: 0.6;
   flex-shrink: 0;
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-snippet-btn .material-icons {
+  font-size: 18px;
 }
 
 .add-snippet-btn:hover {
@@ -228,7 +245,10 @@ body {
   color: #6B7280;
   cursor: pointer;
   transition: all 120ms ease;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .new-chapter-btn:hover {
@@ -403,6 +423,13 @@ body {
   opacity: 0.6;
   flex-shrink: 0;
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-note-btn .material-icons {
+  font-size: 18px;
 }
 
 .add-note-btn:hover {
@@ -486,7 +513,10 @@ body {
   color: #6B7280;
   cursor: pointer;
   transition: all 120ms ease;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .new-note-btn:hover {
@@ -751,6 +781,10 @@ body {
   justify-content: center;
   border-radius: var(--radius-sm);
   transition: background-color var(--transition-fast);
+}
+
+.modal-close .material-icons {
+  font-size: 24px;
 }
 
 .modal-close:hover {

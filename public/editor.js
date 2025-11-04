@@ -212,7 +212,10 @@ function renderStoryList() {
     const addBtn = document.createElement('button');
     addBtn.className = 'add-snippet-btn';
     addBtn.title = 'Add snippet to this chapter';
-    addBtn.textContent = '+';
+    const addIcon = document.createElement('i');
+    addIcon.className = 'material-icons';
+    addIcon.textContent = 'add';
+    addBtn.appendChild(addIcon);
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       addSnippetToGroup(group.id);
@@ -326,7 +329,17 @@ function renderStoryList() {
   // Add "New Chapter" button at the bottom
   const newChapterBtn = document.createElement('button');
   newChapterBtn.className = 'new-chapter-btn';
-  newChapterBtn.textContent = '+ New Chapter';
+  newChapterBtn.style.display = 'flex';
+  newChapterBtn.style.alignItems = 'center';
+  newChapterBtn.style.gap = '6px';
+  const newChapterIcon = document.createElement('i');
+  newChapterIcon.className = 'material-icons';
+  newChapterIcon.textContent = 'add';
+  newChapterIcon.style.fontSize = '18px';
+  const newChapterText = document.createElement('span');
+  newChapterText.textContent = 'New Chapter';
+  newChapterBtn.appendChild(newChapterIcon);
+  newChapterBtn.appendChild(newChapterText);
   newChapterBtn.addEventListener('click', async () => {
     await createNewGroup();
   });
@@ -423,7 +436,17 @@ function renderSnippetsList() {
   // Add "New Snippet" button at the bottom
   const newSnippetBtn = document.createElement('button');
   newSnippetBtn.className = 'new-note-btn'; // Keep CSS class for now
-  newSnippetBtn.textContent = '+ New Snippet';
+  newSnippetBtn.style.display = 'flex';
+  newSnippetBtn.style.alignItems = 'center';
+  newSnippetBtn.style.gap = '6px';
+  const newSnippetIcon = document.createElement('i');
+  newSnippetIcon.className = 'material-icons';
+  newSnippetIcon.textContent = 'add';
+  newSnippetIcon.style.fontSize = '18px';
+  const newSnippetText = document.createElement('span');
+  newSnippetText.textContent = 'New Snippet';
+  newSnippetBtn.appendChild(newSnippetIcon);
+  newSnippetBtn.appendChild(newSnippetText);
   newSnippetBtn.addEventListener('click', async () => {
     await createNewSnippet();
   });
