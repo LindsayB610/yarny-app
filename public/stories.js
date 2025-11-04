@@ -497,7 +497,7 @@ async function initializeStoryStructure(storyFolderId) {
       console.error('Error details:', error.message, error.stack);
       
       // Check if this is a scope issue
-      if (error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
+      if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
         // Show user-friendly error and prompt re-authorization
         alert('Your Drive authorization needs to be updated to support Google Docs. Please re-authorize Drive access.');
         // Redirect to authorize Drive again

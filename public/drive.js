@@ -74,7 +74,16 @@ async function writeDriveFile(fileName, content, fileId = null, parentFolderId =
     return response.data;
   } catch (error) {
     console.error('Drive write error:', error);
-    const errorMessage = error.response?.data?.error || error.message || 'Failed to write file';
+    
+    // Check if this is a missing scope error
+    if (error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.response?.data?.requiresReauth) {
+      const scopeError = new Error(error.response.data.message || 'Missing Google Docs API scope');
+      scopeError.code = 'MISSING_DOCS_SCOPE';
+      scopeError.requiresReauth = true;
+      throw scopeError;
+    }
+    
+    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to write file';
     throw new Error(errorMessage);
   }
 }
