@@ -498,11 +498,12 @@ async function initializeStoryStructure(storyFolderId) {
       
       // Check if this is a scope issue
       if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
-        // Show user-friendly error and prompt re-authorization
-        alert('Your Drive authorization needs to be updated to support Google Docs. Please re-authorize Drive access.');
-        // Redirect to authorize Drive again
-        window.location.href = '/.netlify/functions/drive-auth';
-        return { folders: createdFolders, projectData, initialState };
+        // Throw the error so it can be caught by the caller
+        // The caller (createStory) will handle the redirect
+        const scopeError = new Error('MISSING_DOCS_SCOPE: OAuth tokens are missing Google Docs API scope. Please re-authorize Drive access.');
+        scopeError.code = 'MISSING_DOCS_SCOPE';
+        scopeError.requiresReauth = true;
+        throw scopeError;
       }
       
       // Continue anyway - the data.json has the content
@@ -533,6 +534,17 @@ async function createStory(storyName) {
     return storyFolder;
   } catch (error) {
     console.error('Error creating story:', error);
+    
+    // Check if this is a scope issue that requires re-authorization
+    if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.message?.includes('MISSING_DOCS_SCOPE')) {
+      // Show alert and redirect to re-authorize
+      alert('Your Drive authorization needs to be updated to support Google Docs. Redirecting to re-authorize...');
+      // Redirect immediately - don't wait for anything
+      window.location.href = '/.netlify/functions/drive-auth';
+      // Return null to indicate the operation was cancelled (redirect happened)
+      return null;
+    }
+    
     throw error;
   }
 }
@@ -824,13 +836,22 @@ async function initialize() {
       return;
     }
     
-    const createBtn = document.getElementById('createStoryBtn');
-    createBtn.disabled = true;
-    createBtn.textContent = 'Creating...';
-    
-    try {
-      const storyFolder = await createStory(storyName);
-      closeNewStoryModal();
+      const createBtn = document.getElementById('createStoryBtn');
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating...';
+      
+      try {
+        const storyFolder = await createStory(storyName);
+        
+        // If storyFolder is null, it means we redirected for re-auth
+        if (storyFolder === null) {
+          // The redirect already happened, just reset the button state
+          createBtn.disabled = false;
+          createBtn.textContent = 'Create Story';
+          return;
+        }
+        
+        closeNewStoryModal();
       
       // Open the new story in editor
       openStory(storyFolder.id, storyFolder.name);
