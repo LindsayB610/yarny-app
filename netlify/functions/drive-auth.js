@@ -151,11 +151,14 @@ exports.handler = async (event) => {
 
   // Generate authorization URL
   // Include both Drive and Docs API scopes since we create/edit Google Docs
+  // Use 'select_account' and 'consent' to force showing the consent screen
+  // This ensures users can grant the new Docs API scope
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Required to get refresh token
     scope: [DRIVE_SCOPE, DOCS_SCOPE],
     state: state,
-    prompt: 'consent' // Force consent screen to get refresh token
+    prompt: 'select_account consent', // Force account selection and consent screen
+    include_granted_scopes: false // Don't include previously granted scopes - force new consent
   });
 
   return {

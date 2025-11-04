@@ -235,12 +235,26 @@ exports.handler = async (event, context) => {
     console.log('Token exchange successful');
     console.log('Has access_token:', !!tokens.access_token);
     console.log('Has refresh_token:', !!tokens.refresh_token);
+    console.log('Token scope:', tokens.scope);
     
-    // Save tokens (access_token, refresh_token, expiry_date)
+    // Verify that tokens include the Docs API scope
+    const hasDriveScope = tokens.scope?.includes('drive.file') || tokens.scope?.includes('https://www.googleapis.com/auth/drive.file');
+    const hasDocsScope = tokens.scope?.includes('documents') || tokens.scope?.includes('https://www.googleapis.com/auth/documents');
+    
+    console.log('Has Drive scope:', hasDriveScope);
+    console.log('Has Docs scope:', hasDocsScope);
+    
+    if (!hasDocsScope) {
+      console.error('WARNING: Tokens do not include Google Docs API scope!');
+      console.error('Token scopes:', tokens.scope);
+    }
+    
+    // Save tokens (access_token, refresh_token, expiry_date, scope)
     await saveTokens(email, {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expiry_date: tokens.expiry_date
+      expiry_date: tokens.expiry_date,
+      scope: tokens.scope // Store scope for verification
     });
     
     console.log('Tokens saved successfully for:', email);

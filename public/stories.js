@@ -537,10 +537,12 @@ async function createStory(storyName) {
     
     // Check if this is a scope issue that requires re-authorization
     if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.message?.includes('MISSING_DOCS_SCOPE')) {
-      // Show alert and redirect to re-authorize
-      alert('Your Drive authorization needs to be updated to support Google Docs. Redirecting to re-authorize...');
-      // Redirect immediately - don't wait for anything
-      window.location.href = '/.netlify/functions/drive-auth';
+      // Redirect immediately - don't use alert() as it blocks the redirect
+      console.log('Missing Docs API scope - redirecting to re-authorize');
+      // Use setTimeout to ensure redirect happens in next event loop tick
+      setTimeout(() => {
+        window.location.href = '/.netlify/functions/drive-auth';
+      }, 0);
       // Return null to indicate the operation was cancelled (redirect happened)
       return null;
     }
