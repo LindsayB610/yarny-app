@@ -42,9 +42,22 @@ exports.handler = async (event, context) => {
     
     // Verify the auth client is attached and has credentials
     if (isGoogleDoc) {
+      // Check if _auth exists - it should be attached by getAuthenticatedDriveClient
       if (!drive._auth) {
-        console.error('drive._auth is undefined - drive client:', Object.keys(drive));
-        throw new Error('Authentication client not properly initialized - drive._auth is undefined');
+        console.error('drive._auth is undefined');
+        console.error('drive client keys:', Object.keys(drive));
+        console.error('drive client type:', typeof drive);
+        console.error('drive client constructor:', drive.constructor?.name);
+        
+        // Try to get auth from the drive client's internal auth property
+        // The googleapis drive client might store auth differently
+        const possibleAuth = drive.context?.auth || drive.auth || null;
+        if (possibleAuth) {
+          console.log('Found auth via alternative path, attaching to _auth');
+          drive._auth = possibleAuth;
+        } else {
+          throw new Error('Authentication client not properly initialized - drive._auth is undefined and no alternative auth found');
+        }
       }
       
       // Check if credentials are set
