@@ -58,14 +58,15 @@ async function readDriveFile(fileId) {
 }
 
 // Write file to Drive
-async function writeDriveFile(fileName, content, fileId = null, parentFolderId = null) {
+async function writeDriveFile(fileName, content, fileId = null, parentFolderId = null, mimeType = 'text/plain') {
   try {
     const response = await axios.post(`${API_BASE}/drive-write`,
       {
         fileName,
         content,
         fileId,
-        parentFolderId
+        parentFolderId,
+        mimeType
       },
       { withCredentials: true }
     );

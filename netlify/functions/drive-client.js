@@ -187,8 +187,11 @@ async function getAuthenticatedDriveClient(email) {
     refresh_token: tokens.refresh_token
   });
 
-  // Return Drive API client
-  return google.drive({ version: 'v3', auth: oauth2Client });
+  // Return Drive API client and auth client
+  const driveClient = google.drive({ version: 'v3', auth: oauth2Client });
+  // Attach auth client for use in other APIs (like Docs API)
+  driveClient._auth = oauth2Client;
+  return driveClient;
 }
 
 module.exports = {

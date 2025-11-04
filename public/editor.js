@@ -28,7 +28,18 @@ const state = {
   snippets: {},
   notes: {},
   tags: {},
-  previewVersion: 1
+  previewVersion: 1,
+  // Drive integration
+  drive: {
+    storyFolderId: null,
+    folderIds: {
+      chapters: null,
+      snippets: null,
+      people: null,
+      places: null,
+      things: null
+    }
+  }
 };
 
 // Initialize with sample data
@@ -189,6 +200,7 @@ function renderStoryList() {
       <div class="group-color-chip" style="background-color: ${group.color}"></div>
       <span class="group-title">${escapeHtml(group.title)}</span>
       <span class="group-snippet-count">${group.snippetIds.length} snippets</span>
+      <button class="add-snippet-btn" title="Add snippet to this chapter" onclick="event.stopPropagation(); addSnippetToGroup('${group.id}')">+</button>
     `;
     
     // Drag & drop handlers
@@ -260,6 +272,15 @@ function renderStoryList() {
   if (state.project.filters.search) {
     highlightSearchMatches();
   }
+  
+  // Add "New Chapter" button at the bottom
+  const newChapterBtn = document.createElement('button');
+  newChapterBtn.className = 'new-chapter-btn';
+  newChapterBtn.textContent = '+ New Chapter';
+  newChapterBtn.addEventListener('click', async () => {
+    await createNewGroup();
+  });
+  listEl.appendChild(newChapterBtn);
 }
 
 function renderEditor() {
@@ -326,9 +347,16 @@ function renderNoteEditor() {
       let saveTimeout;
       textEl.addEventListener('input', () => {
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
+        saveTimeout = setTimeout(async () => {
           note.body = textEl.value;
           renderNotesList();
+          
+          // Save to Drive
+          try {
+            await saveNoteToDrive(note);
+          } catch (error) {
+            console.error('Error saving note to Drive:', error);
+          }
         }, 500);
       });
     }
@@ -516,8 +544,23 @@ function handleTypingStop() {
   state.project.editing.savingState = 'saving';
   updateSaveStatus();
 
-  // After debounce, mark as saved
-  typingTimeout = setTimeout(() => {
+  // After debounce, save to Drive and mark as saved
+  typingTimeout = setTimeout(async () => {
+    state.project.editing.savingState = 'saving';
+    updateSaveStatus();
+    
+    // Save current snippet to Drive if active
+    if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
+      try {
+        const snippet = state.snippets[state.project.activeSnippetId];
+        // Update snippet body from editor
+        snippet.body = document.getElementById('editorContent').textContent || document.getElementById('editorContent').innerText || '';
+        await saveSnippetToDrive(snippet);
+      } catch (error) {
+        console.error('Error saving snippet to Drive:', error);
+      }
+    }
+    
     state.project.editing.savingState = 'saved';
     state.project.editing.lastSavedAt = new Date().toISOString();
     updateSaveStatus();
@@ -738,50 +781,31 @@ function handleKeyboardShortcuts(e) {
   }
 }
 
-function createNewSnippet() {
+async function createNewSnippet() {
   const activeGroupId = state.project.groupIds[0] || null;
   if (!activeGroupId) {
     // Create a default group first
-    const groupId = createNewGroup();
+    const groupId = await createNewGroup();
     if (!groupId) return;
     activeGroupId = groupId;
   }
 
-  const snippetId = 'snippet_' + Date.now();
-  const newSnippet = {
-    id: snippetId,
-    projectId: 'default',
-    groupId: activeGroupId,
-    title: 'Untitled Snippet',
-    body: '',
-    words: 0,
-    chars: 0,
-    tagIds: [],
-    updatedAt: new Date().toISOString(),
-    version: 1
-  };
-
-  state.snippets[snippetId] = newSnippet;
-  state.groups[activeGroupId].snippetIds.push(snippetId);
-  state.project.activeSnippetId = snippetId;
-
-  renderStoryList();
-  renderEditor();
-  updateFooter();
-  
-  // Focus editor
-  document.getElementById('editorContent').focus();
+  await addSnippetToGroup(activeGroupId);
 }
 
-function createNewGroup() {
+async function createNewGroup() {
   const groupId = 'group_' + Date.now();
-  const colors = ['#E57A24', '#D9534F', '#3B82F6'];
+  const colors = ['#E57A24', '#D9534F', '#3B82F6', '#764BA2', '#F093FB', '#4FACFE'];
   const color = colors[state.project.groupIds.length % colors.length];
+  
+  // Generate chapter number based on existing chapters
+  const chapterNumber = state.project.groupIds.length + 1;
+  const title = `Chapter ${chapterNumber}`;
   
   const newGroup = {
     id: groupId,
     projectId: 'default',
-    title: 'New Group',
+    title: title,
     color: color,
     position: state.project.groupIds.length,
     snippetIds: []
@@ -790,9 +814,122 @@ function createNewGroup() {
   state.groups[groupId] = newGroup;
   state.project.groupIds.push(groupId);
 
+  // Save to Drive
+  try {
+    await saveStoryDataToDrive();
+  } catch (error) {
+    console.error('Error saving new chapter to Drive:', error);
+  }
+
   renderStoryList();
   return groupId;
 }
+
+// Add snippet to a specific group/chapter
+async function addSnippetToGroup(groupId) {
+  const snippetId = 'snippet_' + Date.now();
+  const newSnippet = {
+    id: snippetId,
+    projectId: 'default',
+    groupId: groupId,
+    title: 'Untitled Snippet',
+    body: '',
+    words: 0,
+    chars: 0,
+    tagIds: [],
+    updatedAt: new Date().toISOString(),
+    version: 1,
+    driveFileId: null
+  };
+
+  state.snippets[snippetId] = newSnippet;
+  state.groups[groupId].snippetIds.push(snippetId);
+  state.project.activeSnippetId = snippetId;
+
+  // Create Google Doc in Drive
+  try {
+    await saveSnippetToDrive(newSnippet);
+    await saveStoryDataToDrive();
+  } catch (error) {
+    console.error('Error creating snippet in Drive:', error);
+  }
+
+  renderStoryList();
+  renderEditor();
+  updateFooter();
+  
+  // Focus editor and allow title editing
+  document.getElementById('editorContent').focus();
+}
+
+// Save story data to Drive (data.json and project.json)
+async function saveStoryDataToDrive() {
+  if (!state.drive.storyFolderId) {
+    console.warn('Story folder ID not set, cannot save to Drive');
+    return;
+  }
+  
+  try {
+    const files = await window.driveAPI.list(state.drive.storyFolderId);
+    
+    // Save data.json
+    const storyData = {
+      snippets: state.snippets,
+      groups: state.groups,
+      notes: {
+        people: {},
+        places: {},
+        things: {}
+      },
+      tags: state.tags || []
+    };
+    
+    // Organize notes by kind
+    Object.values(state.notes).forEach(note => {
+      if (note.kind === 'person') {
+        storyData.notes.people[note.id] = note;
+      } else if (note.kind === 'place') {
+        storyData.notes.places[note.id] = note;
+      } else if (note.kind === 'thing') {
+        storyData.notes.things[note.id] = note;
+      }
+    });
+    
+    const dataFile = files.files.find(f => f.name === 'data.json');
+    await window.driveAPI.write(
+      'data.json',
+      JSON.stringify(storyData, null, 2),
+      dataFile ? dataFile.id : null,
+      state.drive.storyFolderId,
+      'text/plain'
+    );
+    
+    // Save project.json
+    const projectData = {
+      name: state.project.title || 'New Project',
+      createdAt: state.project.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      activeSnippetId: state.project.activeSnippetId,
+      snippetIds: Object.keys(state.snippets),
+      groupIds: state.project.groupIds
+    };
+    
+    const projectFile = files.files.find(f => f.name === 'project.json');
+    await window.driveAPI.write(
+      'project.json',
+      JSON.stringify(projectData, null, 2),
+      projectFile ? projectFile.id : null,
+      state.drive.storyFolderId,
+      'text/plain'
+    );
+  } catch (error) {
+    console.error('Error saving story data to Drive:', error);
+    throw error;
+  }
+}
+
+// Export for global access
+window.addSnippetToGroup = addSnippetToGroup;
 
 // ============================================
 // Tag Palette
@@ -996,10 +1133,198 @@ function getCurrentStory() {
 }
 
 // ============================================
+// Drive Integration Functions
+// ============================================
+
+// Load story folder structure from Drive
+async function loadStoryFolders(storyFolderId) {
+  try {
+    state.drive.storyFolderId = storyFolderId;
+    
+    // List folders in the story directory
+    const files = await window.driveAPI.list(storyFolderId);
+    const folders = {};
+    
+    files.files.forEach(file => {
+      if (file.mimeType === 'application/vnd.google-apps.folder') {
+        const name = file.name.toLowerCase();
+        if (name === 'chapters') {
+          folders.chapters = file.id;
+        } else if (name === 'people') {
+          folders.people = file.id;
+        } else if (name === 'places') {
+          folders.places = file.id;
+        } else if (name === 'things') {
+          folders.things = file.id;
+        }
+      }
+    });
+    
+    state.drive.folderIds = folders;
+    return folders;
+  } catch (error) {
+    console.error('Error loading story folders:', error);
+    throw error;
+  }
+}
+
+// Save snippet to Drive as Google Doc
+async function saveSnippetToDrive(snippet) {
+  if (!state.drive.folderIds.chapters) {
+    console.warn('Chapters folder not loaded, skipping Drive save');
+    return;
+  }
+  
+  try {
+    const fileName = `${snippet.title}.doc`;
+    const result = await window.driveAPI.write(
+      fileName,
+      snippet.body,
+      snippet.driveFileId || null,
+      state.drive.folderIds.chapters,
+      'application/vnd.google-apps.document'
+    );
+    
+    // Store Drive file ID in snippet
+    if (!snippet.driveFileId) {
+      snippet.driveFileId = result.id;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error saving snippet to Drive:', error);
+    throw error;
+  }
+}
+
+// Save note to Drive
+async function saveNoteToDrive(note) {
+  let folderId = null;
+  
+  // Determine which folder based on note kind
+  if (note.kind === 'person') {
+    folderId = state.drive.folderIds.people;
+  } else if (note.kind === 'place') {
+    folderId = state.drive.folderIds.places;
+  } else if (note.kind === 'thing') {
+    folderId = state.drive.folderIds.things;
+  }
+  
+  if (!folderId) {
+    console.warn('Folder not found for note kind:', note.kind);
+    return;
+  }
+  
+  try {
+    const fileName = `${note.title}.txt`;
+    const content = note.body || '';
+    const result = await window.driveAPI.write(
+      fileName,
+      content,
+      note.driveFileId || null,
+      folderId,
+      'text/plain'
+    );
+    
+    // Store Drive file ID in note
+    if (!note.driveFileId) {
+      note.driveFileId = result.id;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error saving note to Drive:', error);
+    throw error;
+  }
+}
+
+// Load story data from Drive
+async function loadStoryFromDrive(storyFolderId) {
+  try {
+    // Load folder structure
+    await loadStoryFolders(storyFolderId);
+    
+    // Load project.json
+    try {
+      const projectFiles = await window.driveAPI.list(storyFolderId);
+      const projectFile = projectFiles.files.find(f => f.name === 'project.json');
+      
+      if (projectFile) {
+        const projectData = await window.driveAPI.read(projectFile.id);
+        if (projectData.content) {
+          const parsed = JSON.parse(projectData.content);
+          Object.assign(state.project, parsed);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not load project.json:', error);
+    }
+    
+    // Load data.json
+    try {
+      const dataFiles = await window.driveAPI.list(storyFolderId);
+      const dataFile = dataFiles.files.find(f => f.name === 'data.json');
+      
+      if (dataFile) {
+        const dataContent = await window.driveAPI.read(dataFile.id);
+        if (dataContent.content) {
+          const parsed = JSON.parse(dataContent.content);
+          // Merge into state
+          if (parsed.snippets) state.snippets = parsed.snippets;
+          if (parsed.groups) state.groups = parsed.groups;
+          if (parsed.notes) {
+            // Merge notes by kind
+            if (parsed.notes.people) {
+              Object.assign(state.notes, parsed.notes.people);
+            }
+            if (parsed.notes.places) {
+              Object.assign(state.notes, parsed.notes.places);
+            }
+            if (parsed.notes.things) {
+              Object.assign(state.notes, parsed.notes.things);
+            }
+          }
+          if (parsed.tags) state.tags = parsed.tags;
+        }
+      }
+    } catch (error) {
+      console.warn('Could not load data.json:', error);
+    }
+    
+    // Load individual files from Chapters folder
+    if (state.drive.folderIds.chapters) {
+      try {
+        const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
+        // Match files to snippets by title or driveFileId
+        chapterFiles.files.forEach(file => {
+          if (file.mimeType === 'application/vnd.google-apps.document') {
+            const fileName = file.name.replace('.doc', '');
+            // Try to find matching snippet
+            const snippet = Object.values(state.snippets).find(s => 
+              s.title === fileName || s.driveFileId === file.id
+            );
+            
+            if (snippet) {
+              snippet.driveFileId = file.id;
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Could not load chapter files:', error);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error loading story from Drive:', error);
+    throw error;
+  }
+}
+
+// ============================================
 // Event Listeners
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Check authentication first
   checkAuth();
   
@@ -1019,8 +1344,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
   
-  // Initialize state
-  initializeState();
+  // Load story from Drive if available
+  const currentStory = getCurrentStory();
+  if (currentStory && currentStory.id) {
+    try {
+      await loadStoryFromDrive(currentStory.id);
+      // Render UI with loaded data
+      renderStoryList();
+      renderEditor();
+      renderNotesList();
+      updateFooter();
+      updateGoalMeter();
+    } catch (error) {
+      console.error('Error loading story from Drive, using sample data:', error);
+      // Fallback to sample data
+      initializeState();
+    }
+  } else {
+    // No story loaded, use sample data
+    initializeState();
+  }
 
   // Editor content editable
   const editorEl = document.getElementById('editorContent');

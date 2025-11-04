@@ -39,14 +39,43 @@ exports.handler = async (event, context) => {
       fields: 'id, name, mimeType'
     });
 
-    // Download file content
-    const fileContent = await drive.files.get(
-      { fileId: fileId, alt: 'media' },
-      { responseType: 'arraybuffer' }
-    );
+    let content = '';
+    
+    // Handle Google Docs differently
+    if (fileMetadata.data.mimeType === 'application/vnd.google-apps.document') {
+      // Export Google Doc as plain text
+      const { google } = require('googleapis');
+      const auth = drive._auth;
+      const docs = google.docs({ version: 'v1', auth: auth });
+      
+      const doc = await docs.documents.get({
+        documentId: fileId
+      });
+      
+      // Extract text from document
+      if (doc.data.body && doc.data.body.content) {
+        content = doc.data.body.content
+          .map(element => {
+            if (element.paragraph) {
+              return element.paragraph.elements
+                .map(elem => elem.textRun ? elem.textRun.content : '')
+                .join('');
+            }
+            return '';
+          })
+          .join('\n')
+          .trim();
+      }
+    } else {
+      // Download regular file content
+      const fileContent = await drive.files.get(
+        { fileId: fileId, alt: 'media' },
+        { responseType: 'arraybuffer' }
+      );
 
-    // Convert buffer to string (assuming text files)
-    const content = Buffer.from(fileContent.data).toString('utf8');
+      // Convert buffer to string (assuming text files)
+      content = Buffer.from(fileContent.data).toString('utf8');
+    }
 
     return {
       statusCode: 200,
