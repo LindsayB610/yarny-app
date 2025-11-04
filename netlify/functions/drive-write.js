@@ -1,4 +1,5 @@
 const { getAuthenticatedDriveClient } = require('./drive-client');
+const { Readable } = require('stream');
 
 async function getUserEmailFromSession(event) {
   const cookies = event.headers.cookie?.split(';') || [];
@@ -40,11 +41,13 @@ exports.handler = async (event, context) => {
 
     if (fileId) {
       // Update existing file
+      // Convert Buffer to stream for Google Drive API
+      const fileStream = Readable.from(fileBuffer);
       await drive.files.update({
         fileId: fileId,
         media: {
           mimeType: 'text/plain',
-          body: fileBuffer
+          body: fileStream
         }
       });
 
@@ -73,11 +76,13 @@ exports.handler = async (event, context) => {
         fileMetadata.parents = [parentFolderId];
       }
 
+      // Convert Buffer to stream for Google Drive API
+      const fileStream = Readable.from(fileBuffer);
       const response = await drive.files.create({
         requestBody: fileMetadata,
         media: {
           mimeType: 'text/plain',
-          body: fileBuffer
+          body: fileStream
         },
         fields: 'id, name, modifiedTime'
       });
