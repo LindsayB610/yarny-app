@@ -40,7 +40,10 @@ npm install
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth client ID"
    - Application type: "Web application"
-   - Authorized redirect URIs: 
+   - **Authorized JavaScript origins:**
+     - `http://localhost:8888` (for local dev)
+     - `https://yarny.lindsaybrunner.com` (for production)
+   - **Authorized redirect URIs:**
      - `http://localhost:8888/.netlify/functions/drive-auth-callback` (for local dev)
      - `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback` (for production)
    - Copy the **Client ID** and **Client Secret**
