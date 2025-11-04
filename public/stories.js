@@ -404,16 +404,6 @@ async function initialize() {
   document.getElementById('driveAuthPrompt').classList.add('hidden');
   document.getElementById('storiesContent').classList.remove('hidden');
   
-  // Make sure storiesContent is visible
-  const storiesContent = document.getElementById('storiesContent');
-  if (storiesContent) {
-    storiesContent.classList.remove('hidden');
-  }
-  
-  // Drive is authorized, show stories content
-  document.getElementById('driveAuthPrompt').classList.add('hidden');
-  document.getElementById('storiesContent').classList.remove('hidden');
-  
   // Load stories
   try {
     const stories = await listStories();
