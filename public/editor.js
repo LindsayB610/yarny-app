@@ -141,6 +141,7 @@ function initializeState() {
   renderNotesList();
   updateFooter();
   updateGoalMeter();
+  updateSaveStatus(); // Initialize save status and logout button warning
 }
 
 // ============================================
@@ -473,6 +474,22 @@ function updateSaveStatus() {
     statusEl.classList.add('saved');
   } else {
     statusEl.textContent = '';
+  }
+  
+  // Update logout button appearance based on unsaved changes
+  updateLogoutButtonWarning();
+}
+
+function updateLogoutButtonWarning() {
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (!logoutBtn) return;
+  
+  if (hasUnsavedChanges()) {
+    logoutBtn.classList.add('has-unsaved-changes');
+    logoutBtn.title = 'Sign out (You have unsaved changes)';
+  } else {
+    logoutBtn.classList.remove('has-unsaved-changes');
+    logoutBtn.title = 'Sign out';
   }
 }
 
@@ -1083,8 +1100,36 @@ function checkStorySelected() {
   }
 }
 
-// Logout function
+// Check if there are unsaved changes
+function hasUnsavedChanges() {
+  // Check if currently saving or has pending changes
+  if (state.project.editing.savingState === 'saving') {
+    return true;
+  }
+  
+  // Check if user is currently typing (which would trigger a save)
+  if (state.project.editing.isTyping) {
+    return true;
+  }
+  
+  // If we've never saved or last saved is null, there might be changes
+  // This is a basic check - could be enhanced by tracking actual changes
+  return false;
+}
+
+// Logout function with unsaved changes warning
 window.logout = async function() {
+  // Check for unsaved changes
+  if (hasUnsavedChanges()) {
+    const confirmMessage = 'You have unsaved changes. Are you sure you want to sign out? Your changes may be lost if they haven\'t been saved yet.';
+    const shouldLogout = confirm(confirmMessage);
+    
+    if (!shouldLogout) {
+      // User canceled logout
+      return;
+    }
+  }
+  
   // Disable Google auto-select if available
   if (window.google && window.google.accounts && window.google.accounts.id) {
     window.google.accounts.id.disableAutoSelect();
@@ -1512,14 +1557,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderNotesList();
       updateFooter();
       updateGoalMeter();
+      updateSaveStatus(); // Initialize save status and logout button warning
     } catch (error) {
       console.error('Error loading story from Drive, using sample data:', error);
       // Fallback to sample data
       initializeState();
+      updateSaveStatus(); // Initialize save status and logout button warning
     }
   } else {
     // No story loaded, use sample data
     initializeState();
+    updateSaveStatus(); // Initialize save status and logout button warning
   }
 
   // Editor content editable

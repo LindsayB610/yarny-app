@@ -546,6 +546,18 @@ body {
   color: var(--color-text-primary);
 }
 
+.logout-button.has-unsaved-changes {
+  border-color: var(--color-error);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+}
+
+.logout-button.has-unsaved-changes:hover {
+  background-color: #FEE;
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
 /* ============================================
    Tag Palette Popover
    ============================================ */
