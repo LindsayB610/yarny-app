@@ -1,8 +1,8 @@
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 
-const GDRIVE_CLIENT_ID = process.env.GDRIVE_CLIENT_ID;
-const GDRIVE_CLIENT_SECRET = process.env.GDRIVE_CLIENT_SECRET;
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 async function getUserEmailFromSession(event) {
