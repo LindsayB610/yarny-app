@@ -1,0 +1,194 @@
+/* ============================================
+   Yarny Documentation Styles
+   ============================================ */
+
+.docs-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.docs-header {
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-lg) 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-xs);
+}
+
+.docs-header-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.docs-header h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-xs);
+}
+
+.docs-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.docs-nav {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+
+.docs-main {
+  flex: 1;
+  padding: var(--space-6xl) 0;
+}
+
+.docs-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.docs-section {
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4xl);
+  margin-bottom: var(--space-3xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.docs-section:last-child {
+  margin-bottom: 0;
+}
+
+.docs-section h2 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-primary-light);
+}
+
+.docs-section h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-top: var(--space-3xl);
+  margin-bottom: var(--space-md);
+}
+
+.docs-section h3:first-of-type {
+  margin-top: var(--space-lg);
+}
+
+.docs-section p {
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-lg);
+}
+
+.docs-section ul,
+.docs-section ol {
+  margin-bottom: var(--space-lg);
+  padding-left: var(--space-3xl);
+}
+
+.docs-section li {
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-sm);
+}
+
+.docs-section ul li {
+  list-style-type: disc;
+}
+
+.docs-section ol li {
+  list-style-type: decimal;
+}
+
+.docs-section strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.docs-footer {
+  background-color: var(--color-white);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3xl) 0;
+  margin-top: var(--space-6xl);
+}
+
+.docs-footer p {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-md);
+}
+
+.docs-footer-nav {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+.docs-footer-nav a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: color var(--transition-fast);
+}
+
+.docs-footer-nav a:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+  .docs-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .docs-section {
+    padding: var(--space-2xl);
+  }
+
+  .docs-section h2 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .docs-section h3 {
+    font-size: var(--font-size-lg);
+  }
+}
+

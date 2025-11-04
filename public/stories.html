@@ -15,7 +15,10 @@
           <h1>Yarny</h1>
           <p class="subtitle">Your writing projects</p>
         </div>
-        <button id="logoutBtn" class="logout-button" onclick="if(window.logout){window.logout();} else {localStorage.clear(); window.location.href='/?logout=true&force=true';}" title="Sign out">Sign out</button>
+        <div style="display: flex; gap: var(--space-md); align-items: center;">
+          <a href="/docs.html" class="logout-button" style="text-decoration: none;" title="View User Guide">📖 Help</a>
+          <button id="logoutBtn" class="logout-button" onclick="if(window.logout){window.logout();} else {localStorage.clear(); window.location.href='/?logout=true&force=true';}" title="Sign out">Sign out</button>
+        </div>
       </div>
     </header>
 

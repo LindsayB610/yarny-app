@@ -31,6 +31,13 @@ function isTokenExpired(token) {
 
 // Check if already authenticated
 function checkAuth() {
+  // Skip auth check for public documentation pages
+  const publicPages = ['/docs.html', '/help.html', '/guide.html'];
+  const currentPath = window.location.pathname;
+  if (publicPages.some(page => currentPath.includes(page))) {
+    return; // Don't run auth checks on docs pages
+  }
+
   // Development mode: allow bypassing auth on localhost
   const urlParams = new URLSearchParams(window.location.search);
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
