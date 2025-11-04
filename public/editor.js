@@ -2,6 +2,86 @@
 // Yarny Editor - Main Application Logic
 // ============================================
 
+// Error logging to localStorage so errors persist across page reloads
+(function() {
+  const MAX_ERRORS = 50;
+  const ERROR_KEY = 'yarny_error_log';
+  
+  function logError(type, message, error) {
+    try {
+      const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+      const errorEntry = {
+        timestamp: new Date().toISOString(),
+        type: type,
+        message: message,
+        error: error ? {
+          message: error.message,
+          stack: error.stack,
+          response: error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : null
+        } : null
+      };
+      errors.unshift(errorEntry);
+      if (errors.length > MAX_ERRORS) {
+        errors.pop();
+      }
+      localStorage.setItem(ERROR_KEY, JSON.stringify(errors));
+    } catch (e) {
+      // If localStorage fails, just log to console
+      console.error('Failed to log error to localStorage:', e);
+    }
+  }
+  
+  // Override console.error to capture errors
+  const originalError = console.error;
+  console.error = function(...args) {
+    originalError.apply(console, args);
+    if (args[0] && (typeof args[0] === 'string' && args[0].includes('Error')) || (args[1] && args[1] instanceof Error)) {
+      const message = typeof args[0] === 'string' ? args[0] : args[1]?.message || 'Error';
+      const errorObj = args[1] instanceof Error ? args[1] : args[0] instanceof Error ? args[0] : null;
+      logError('console.error', message, errorObj);
+    }
+  };
+  
+  // Capture unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    logError('unhandledrejection', event.reason?.message || 'Unhandled promise rejection', event.reason);
+  });
+  
+  // Capture global errors
+  window.addEventListener('error', (event) => {
+    logError('error', event.message || 'Global error', event.error);
+  });
+  
+  // Expose function to view errors (only if not already defined)
+  if (!window.viewYarnyErrors) {
+    window.viewYarnyErrors = function() {
+      const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+      console.log('=== Yarny Error Log ===');
+      if (errors.length === 0) {
+        console.log('No errors logged yet.');
+        return errors;
+      }
+      console.table(errors);
+      console.log('\nFull error details:', errors);
+      return errors;
+    };
+  }
+  
+  // Expose function to clear errors (only if not already defined)
+  if (!window.clearYarnyErrors) {
+    window.clearYarnyErrors = function() {
+      localStorage.removeItem(ERROR_KEY);
+      console.log('Error log cleared');
+    };
+  }
+  
+  // Log when page loads
+  console.log('Error logging initialized. Use viewYarnyErrors() to see captured errors.');
+})();
+
 // State Management
 const state = {
   project: {
