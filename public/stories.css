@@ -159,11 +159,19 @@ body {
   padding: 20px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .story-card:hover {
   border-color: #4285F4;
   background: #F9F9FA;
+}
+
+.story-card-content {
+  flex: 1;
 }
 
 .story-card h3 {
@@ -176,6 +184,27 @@ body {
 .story-card p {
   font-size: 14px;
   color: #6B7280;
+}
+
+.story-delete-btn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 24px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.6;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.story-delete-btn:hover {
+  background: #FEE;
+  color: #DC3545;
+  opacity: 1;
 }
 
 /* Loading State */
@@ -373,6 +402,27 @@ body {
 }
 
 .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #DC3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #C82333;
+}
+
+.btn-danger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

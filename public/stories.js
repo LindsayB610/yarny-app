@@ -163,7 +163,7 @@ async function checkDriveAuth() {
   }
 }
 
-// Get or create yarny-stories folder
+// Get or create Yarny folder
 async function getOrCreateYarnyStoriesFolder() {
   try {
     const response = await axios.get(`${API_BASE}/drive-get-or-create-yarny-stories`, {
@@ -173,8 +173,8 @@ async function getOrCreateYarnyStoriesFolder() {
     yarnyStoriesFolderId = response.data.id;
     return response.data.id;
   } catch (error) {
-    console.error('Error getting yarny-stories folder:', error);
-    const errorMessage = error.response?.data?.error || error.message || 'Failed to get yarny-stories folder';
+    console.error('Error getting Yarny folder:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to get Yarny folder';
     throw new Error(errorMessage);
   }
 }
@@ -197,7 +197,7 @@ async function createDriveFolder(folderName, parentFolderId) {
   }
 }
 
-// List folders (stories) in yarny-stories directory
+// List folders (stories) in Yarny directory
 async function listStories() {
   try {
     if (!yarnyStoriesFolderId) {
@@ -238,13 +238,31 @@ function renderStories(stories) {
   stories.forEach(story => {
     const storyCard = document.createElement('div');
     storyCard.className = 'story-card';
-    storyCard.innerHTML = `
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'story-card-content';
+    contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
       <p>Last modified: ${formatDate(story.modifiedTime)}</p>
     `;
     
-    storyCard.addEventListener('click', () => {
-      openStory(story.id, story.name);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'story-delete-btn';
+    deleteBtn.textContent = '×';
+    deleteBtn.title = 'Delete story';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDeleteStoryModal(story.id, story.name);
+    });
+    
+    storyCard.appendChild(contentDiv);
+    storyCard.appendChild(deleteBtn);
+    
+    storyCard.addEventListener('click', (e) => {
+      // Don't open story if clicking on delete button
+      if (!e.target.classList.contains('story-delete-btn')) {
+        openStory(story.id, story.name);
+      }
     });
     
     listEl.appendChild(storyCard);
@@ -255,10 +273,13 @@ function renderStories(stories) {
 async function initializeStoryStructure(storyFolderId) {
   try {
     // Create initial folder structure
+    // Folder names match UI labels for better organization
     const folders = [
-      { name: 'snippets', description: 'Story snippets and content' },
-      { name: 'groups', description: 'Story groups' },
-      { name: 'notes', description: 'Story notes' }
+      { name: 'Snippets', description: 'Story snippets and content' },
+      { name: 'Chapters', description: 'Story chapters' },
+      { name: 'People', description: 'People notes' },
+      { name: 'Places', description: 'Places notes' },
+      { name: 'Things', description: 'Things notes' }
     ];
 
     const createdFolders = {};
@@ -313,12 +334,12 @@ async function initializeStoryStructure(storyFolderId) {
 // Create new story
 async function createStory(storyName) {
   try {
-    // Ensure yarny-stories folder exists
+    // Ensure Yarny folder exists
     if (!yarnyStoriesFolderId) {
       await getOrCreateYarnyStoriesFolder();
     }
     
-    // Create story folder in yarny-stories
+    // Create story folder in Yarny
     const storyFolder = await createDriveFolder(storyName, yarnyStoriesFolderId);
     
     // Initialize story structure with folders and files
@@ -342,6 +363,88 @@ function openStory(storyFolderId, storyName) {
   // Navigate to editor
   window.location.href = '/editor.html';
 }
+
+// Delete story function
+async function deleteStory(storyFolderId, deleteFromDrive) {
+  try {
+    const response = await axios.post(`${API_BASE}/drive-delete-story`, {
+      storyFolderId: storyFolderId,
+      deleteFromDrive: deleteFromDrive
+    }, {
+      withCredentials: true
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting story:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to delete story';
+    throw new Error(errorMessage);
+  }
+}
+
+// Open delete story modal
+function openDeleteStoryModal(storyId, storyName) {
+  document.getElementById('deleteStoryModal').classList.remove('hidden');
+  document.getElementById('deleteStoryModal').dataset.storyId = storyId;
+  document.getElementById('deleteStoryModal').dataset.storyName = storyName;
+  // Use textContent to safely escape HTML
+  document.getElementById('deleteStoryName').textContent = storyName;
+  document.getElementById('deleteConfirmInput').value = '';
+  document.getElementById('deleteFromDriveCheckbox').checked = false;
+  document.getElementById('deleteConfirmBtn').disabled = true;
+  document.getElementById('deleteConfirmInput').focus();
+  hideError();
+}
+
+// Close delete story modal
+function closeDeleteStoryModal() {
+  document.getElementById('deleteStoryModal').classList.add('hidden');
+  document.getElementById('deleteConfirmInput').value = '';
+  document.getElementById('deleteFromDriveCheckbox').checked = false;
+  hideError();
+}
+
+// Handle delete confirmation input
+function handleDeleteConfirmInput() {
+  const input = document.getElementById('deleteConfirmInput');
+  const btn = document.getElementById('deleteConfirmBtn');
+  btn.disabled = input.value !== 'DELETE';
+}
+
+// Confirm delete story
+async function confirmDeleteStory() {
+  const modal = document.getElementById('deleteStoryModal');
+  const storyId = modal.dataset.storyId;
+  const deleteFromDrive = document.getElementById('deleteFromDriveCheckbox').checked;
+  
+  if (!storyId) {
+    showError('Story ID not found');
+    return;
+  }
+  
+  const btn = document.getElementById('deleteConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  
+  try {
+    await deleteStory(storyId, deleteFromDrive);
+    closeDeleteStoryModal();
+    
+    // Reload stories list
+    const stories = await listStories();
+    renderStories(stories);
+  } catch (error) {
+    showError('Failed to delete story: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = 'Delete Story';
+  }
+}
+
+// Export for global access
+window.openDeleteStoryModal = openDeleteStoryModal;
+window.closeDeleteStoryModal = closeDeleteStoryModal;
+window.handleDeleteConfirmInput = handleDeleteConfirmInput;
+window.confirmDeleteStory = confirmDeleteStory;
 
 // Show error message
 function showError(message) {
@@ -532,8 +635,8 @@ async function initialize() {
     }
   });
   
-  // Close modal on overlay click
-  document.querySelector('.modal-overlay').addEventListener('click', closeNewStoryModal);
+  // Close modal on overlay click (only for new story modal)
+  document.querySelector('#newStoryModal .modal-overlay').addEventListener('click', closeNewStoryModal);
 }
 
 // Handle Drive auth callback

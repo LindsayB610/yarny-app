@@ -76,6 +76,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Story Modal -->
+    <div id="deleteStoryModal" class="modal hidden">
+      <div class="modal-overlay" onclick="closeDeleteStoryModal()"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Delete Story</h2>
+          <button class="modal-close" onclick="closeDeleteStoryModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="modalError" class="error-message hidden"></div>
+          <p style="margin-bottom: 16px;">Are you sure you want to delete <strong id="deleteStoryName"></strong>?</p>
+          <p style="margin-bottom: 20px; color: #6B7280; font-size: 14px;">This action cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
+          
+          <div class="form-group">
+            <label for="deleteConfirmInput">Type DELETE to confirm</label>
+            <input 
+              type="text" 
+              id="deleteConfirmInput" 
+              placeholder="DELETE"
+              autocomplete="off"
+              oninput="handleDeleteConfirmInput()"
+            >
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; cursor: pointer; font-weight: normal;">
+              <input 
+                type="checkbox" 
+                id="deleteFromDriveCheckbox"
+                style="margin-right: 8px; width: auto;"
+              >
+              <span>Also permanently delete from Google Drive (default: move to trash)</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeDeleteStoryModal()">Cancel</button>
+            <button type="button" class="btn-danger" id="deleteConfirmBtn" onclick="confirmDeleteStory()" disabled>Delete Story</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>

@@ -27,9 +27,9 @@ exports.handler = async (event, context) => {
 
   try {
     const drive = await getAuthenticatedDriveClient(email);
-    const YARNY_STORIES_FOLDER = 'yarny-stories';
+    const YARNY_STORIES_FOLDER = 'Yarny';
     
-    // Search for yarny-stories folder
+    // Search for Yarny folder
     const query = `name='${YARNY_STORIES_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
     const existingFolders = await drive.files.list({
       q: query,
@@ -70,10 +70,10 @@ exports.handler = async (event, context) => {
       })
     };
   } catch (error) {
-    console.error('Drive get/create yarny-stories error:', error);
+    console.error('Drive get/create Yarny folder error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message || 'Failed to get or create yarny-stories folder' })
+      body: JSON.stringify({ error: error.message || 'Failed to get or create Yarny folder' })
     };
   }
 };
