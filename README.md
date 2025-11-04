@@ -36,13 +36,24 @@ npm install
    - Navigate to "APIs & Services" > "Library"
    - Search for "Google Drive API"
    - Click "Enable"
-4. Create OAuth 2.0 credentials:
+4. Create OAuth 2.0 credentials (you need TWO separate clients):
+   
+   **Client 1: Google Sign-In (for user authentication)**
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth client ID"
    - Application type: "Web application"
+   - Name: `Yarny Google Sign-In`
    - **Authorized JavaScript origins:**
      - `http://localhost:8888` (for local dev)
      - `https://yarny.lindsaybrunner.com` (for production)
+   - **Authorized redirect URIs:** Leave empty (not needed for Google Sign-In)
+   - Copy the **Client ID** (you won't need the secret for this one)
+   
+   **Client 2: Google Drive (for Drive API access)**
+   - Click "Create Credentials" > "OAuth client ID" again
+   - Application type: "Web application"
+   - Name: `Yarny Drive OAuth Client`
+   - **Authorized JavaScript origins:** Leave empty
    - **Authorized redirect URIs:**
      - `http://localhost:8888/.netlify/functions/drive-auth-callback` (for local dev)
      - `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback` (for production)
@@ -53,12 +64,16 @@ npm install
 In your Netlify dashboard, go to **Site settings > Environment variables** and add:
 
 #### Required:
-- `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET`: Your Google OAuth Client Secret
-- `ALLOWED_EMAIL`: Email address allowed to access the app (e.g., `your-email@gmail.com`)
+- `GOOGLE_CLIENT_ID`: Your Google Sign-In OAuth Client ID (from Client 1 above)
+- `GDRIVE_CLIENT_ID`: Your Google Drive OAuth Client ID (from Client 2 above)
+- `GDRIVE_CLIENT_SECRET`: Your Google Drive OAuth Client Secret (from Client 2 above)
+- `ALLOWED_EMAIL`: Email addresses allowed to access the app, comma-separated (e.g., `user1@gmail.com,user2@example.com`)
+  - **Note**: To add new users, update this environment variable with their email addresses separated by commas
+- `NETLIFY_SITE_ID`: Your Netlify Site ID (Project ID) - found in Project configuration > General > Project information
+- `NETLIFY_AUTH_TOKEN`: Your Netlify Personal Access Token - create at https://app.netlify.com/user/applications
 
 #### Optional:
-- `GOOGLE_REDIRECT_URI`: Full callback URL (auto-detected if not set)
+- `GDRIVE_REDIRECT_URI`: Full callback URL (auto-detected if not set)
   - Production: `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback`
 
 ### 4. Create GitHub Repository
@@ -110,8 +125,14 @@ yarny-app/
 ├── netlify/
 │   ├── functions/
 │   │   ├── auth/
-│   │   │   ├── config.js              # Google Client ID config
-│   │   │   └── verify-google.js       # Verify Google ID tokens
+│   │   │   ├── config.js              # Auth configuration (RP_ID, ALLOWED_EMAIL, etc.)
+│   │   │   ├── login.js                # WebAuthn login initiation
+│   │   │   ├── register.js             # WebAuthn registration
+│   │   │   ├── verify-login.js         # WebAuthn login verification
+│   │   │   ├── verify-register.js      # WebAuthn registration verification
+│   │   │   └── storage.js              # WebAuthn credential storage
+│   │   ├── config.js                   # Google Client ID config (for frontend)
+│   │   ├── verify-google.js            # Verify Google ID tokens
 │   │   ├── drive-auth.js              # Initiate Drive OAuth flow
 │   │   ├── drive-auth-callback.js     # Handle OAuth callback
 │   │   ├── drive-client.js            # Drive API client with token refresh
@@ -149,7 +170,7 @@ yarny-app/
 
 1. On first use, user must authorize Google Drive access
 2. OAuth2 flow exchanges authorization code for access/refresh tokens
-3. Tokens are stored server-side (in `/tmp` for single-user)
+3. Tokens are stored server-side in Netlify Blobs (persistent storage, supports multiple users)
 4. All Drive API calls use server-side Netlify Functions
 5. Tokens automatically refresh when expired
 
@@ -181,28 +202,31 @@ Visit `http://localhost:8888` to test locally.
 Create a `.env` file in the root directory (not committed to git):
 
 ```env
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-ALLOWED_EMAIL=your-email@gmail.com
-GOOGLE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
+GOOGLE_CLIENT_ID=your-google-signin-client-id
+GDRIVE_CLIENT_ID=your-drive-client-id
+GDRIVE_CLIENT_SECRET=your-drive-client-secret
+ALLOWED_EMAIL=your-email@gmail.com,another@email.com
+NETLIFY_SITE_ID=your-site-id
+NETLIFY_AUTH_TOKEN=your-netlify-token
+GDRIVE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
 ```
 
 ## Security Notes
 
-- **Single-User App**: Currently configured for a single email address via `ALLOWED_EMAIL`
-- **Token Storage**: OAuth tokens stored in `/tmp` (temporary filesystem) - suitable for single-user use
+- **Multi-User Support**: Supports multiple users via `ALLOWED_EMAIL` environment variable (comma-separated emails)
+- **Token Storage**: OAuth tokens stored in Netlify Blobs (persistent, secure, supports multiple users)
 - **Session Management**: Uses HttpOnly cookies for session tokens
 - **CSRF Protection**: OAuth flow includes state parameter verification
 - **Scope Limitation**: Uses `drive.file` scope - only accesses files created by the app
 - **HTTPS Required**: All authentication requires HTTPS (provided by Netlify)
 
-### For Production with Multiple Users
+### Adding New Users
 
-Consider implementing:
-- Netlify Blobs or a database for token storage
-- User-specific token storage (currently uses email as key)
-- Database for story metadata and user management
-- More robust session management
+To allow a new user to access the app:
+1. Go to Netlify dashboard → Site settings → Environment variables
+2. Find `ALLOWED_EMAIL`
+3. Add the new email address (comma-separated): `existing@email.com,new@email.com`
+4. Save and redeploy (or the next deployment will pick it up)
 
 ## API Endpoints
 
