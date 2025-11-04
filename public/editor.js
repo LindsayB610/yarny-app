@@ -882,9 +882,9 @@ function escapeHtml(text) {
 
 function checkAuth() {
   const cookies = document.cookie.split(';');
-  const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
+  const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
-  if (!sessionCookie) {
+  if (!authCookie) {
     // Redirect to login if not authenticated
     window.location.href = '/';
   }

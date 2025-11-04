@@ -51,10 +51,15 @@ exports.handler = async (event) => {
     // Create session
     const sessionToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
     
+    // Set both HttpOnly (secure) and non-HttpOnly (for client-side checks) cookies
+    const cookieOptions = `Path=/; Max-Age=${60 * 60 * 24 * 7}`; // 7 days
+    const httpOnlyCookie = `session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; ${cookieOptions}`;
+    const clientCookie = `auth=${sessionToken}; Secure; SameSite=Strict; ${cookieOptions}`;
+    
     return {
       statusCode: 200,
       headers: {
-        'Set-Cookie': `session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${60 * 60 * 24 * 7}`, // 7 days
+        'Set-Cookie': [httpOnlyCookie, clientCookie].join(', '),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 

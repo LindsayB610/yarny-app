@@ -4,9 +4,9 @@ let googleClientId = '';
 // Check if already authenticated
 function checkAuth() {
   const cookies = document.cookie.split(';');
-  const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
+  const authCookie = cookies.find(c => c.trim().startsWith('auth='));
   
-  if (sessionCookie) {
+  if (authCookie) {
     // Redirect to editor if already authenticated
     if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
       window.location.href = '/editor.html';
@@ -19,6 +19,7 @@ function showLogin() {
   document.getElementById('loginForm').classList.remove('hidden');
   document.getElementById('appContent').classList.remove('authenticated');
   document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 }
 
 function showApp(userData = null) {
