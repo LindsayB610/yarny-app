@@ -7,8 +7,10 @@ function checkAuth() {
   const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
   
   if (sessionCookie) {
-    // Try to get user info from session
-    showApp();
+    // Redirect to editor if already authenticated
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      window.location.href = '/editor.html';
+    }
   }
 }
 
@@ -20,16 +22,8 @@ function showLogin() {
 }
 
 function showApp(userData = null) {
-  document.getElementById('loginForm').classList.add('hidden');
-  document.getElementById('appContent').classList.add('authenticated');
-  
-  if (userData) {
-    document.getElementById('userName').textContent = userData.name || 'Welcome back!';
-    document.getElementById('userEmail').textContent = userData.user || '';
-    if (userData.picture) {
-      document.getElementById('userAvatar').src = userData.picture;
-    }
-  }
+  // Redirect to editor page after authentication
+  window.location.href = '/editor.html';
 }
 
 function showError(message) {

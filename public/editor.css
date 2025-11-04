@@ -1,0 +1,609 @@
+/* ============================================
+   Yarny Editor Styles
+   Based on brief specifications
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #E9E9EB;
+  color: #333;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ============================================
+   EditorShell - Main Grid Container
+   ============================================ */
+
+.editor-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  grid-template-rows: 1fr 44px;
+  grid-template-areas:
+    "left-rail center right-rail"
+    "footer footer footer";
+  height: 100vh;
+  gap: 0;
+}
+
+/* ============================================
+   Left Rail (Story)
+   ============================================ */
+
+.left-rail {
+  grid-area: left-rail;
+  background-color: #F5F5F6;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 200ms ease;
+}
+
+.left-rail.faded {
+  opacity: 0.35;
+}
+
+.left-rail-header {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.rail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.goal-meter {
+  margin-bottom: 12px;
+}
+
+.goal-text {
+  display: block;
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 6px;
+}
+
+.goal-progress {
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.goal-progress-bar {
+  height: 100%;
+  background-color: #2FB34A;
+  width: 0%;
+  transition: width 200ms ease;
+}
+
+.search-container {
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 13px;
+  background-color: #FFFFFF;
+  color: #333;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.tags-button {
+  width: 100%;
+  padding: 8px 10px;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.tags-button:hover {
+  background-color: #F5F5F6;
+}
+
+.selected-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #6B7280;
+}
+
+.tag-chip .remove-tag {
+  cursor: pointer;
+  color: #6B7280;
+  font-weight: bold;
+}
+
+.tag-chip .remove-tag:hover {
+  color: #333;
+}
+
+.story-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+.story-group {
+  margin-bottom: 16px;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  transition: background-color 120ms ease;
+}
+
+.group-header:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.group-header.dragging {
+  opacity: 0.5;
+}
+
+.group-color-chip {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.group-snippet-count {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+.group-snippets {
+  margin-left: 20px;
+  margin-top: 4px;
+}
+
+.snippet-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 120ms ease;
+  user-select: none;
+}
+
+.snippet-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.snippet-item.active {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.snippet-item.dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.snippet-title {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+.snippet-word-count {
+  font-size: 11px;
+  color: #6B7280;
+  margin-left: 8px;
+}
+
+/* ============================================
+   Center Editor Canvas
+   ============================================ */
+
+.editor-canvas {
+  grid-area: center;
+  background-color: #E9E9EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 64px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 640px;
+}
+
+.canvas-card {
+  width: 100%;
+  max-width: 100%;
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  padding: 40px 64px;
+  position: relative;
+  min-height: 400px;
+}
+
+.editor-content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  min-height: 300px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.editor-content:focus {
+  outline: none;
+}
+
+.editor-content::selection {
+  background-color: rgba(66, 133, 244, 0.2);
+}
+
+.save-status {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.save-status.saving {
+  color: #6B7280;
+}
+
+.save-status.saved {
+  color: #2FB34A;
+}
+
+/* ============================================
+   Right Rail (Notes)
+   ============================================ */
+
+.right-rail {
+  grid-area: right-rail;
+  background-color: #F5F5F6;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 200ms ease;
+}
+
+.right-rail.faded {
+  opacity: 0.35;
+}
+
+.right-rail-header {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.notes-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.notes-tab {
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.notes-tab:hover {
+  color: #333;
+}
+
+.notes-tab.active {
+  color: #333;
+  border-bottom-color: #333;
+  font-weight: 500;
+}
+
+.notes-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+.note-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.note-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.note-item.active {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.note-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.note-excerpt {
+  font-size: 12px;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+.note-editor {
+  padding: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: #FFFFFF;
+}
+
+.note-editor.hidden {
+  display: none;
+}
+
+.note-editor-text {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+}
+
+.note-editor-text:focus {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   Footer Bar
+   ============================================ */
+
+.footer-bar {
+  grid-area: footer;
+  background-color: #F5F5F6;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.footer-left {
+  flex: 0 0 auto;
+}
+
+.footer-center {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.separator {
+  margin: 0 8px;
+}
+
+.footer-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.version-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#versionLabel {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.version-slider {
+  width: 120px;
+  height: 4px;
+  cursor: pointer;
+}
+
+.last-modified {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* ============================================
+   Tag Palette Popover
+   ============================================ */
+
+.tag-palette {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 1000;
+}
+
+.tag-palette.hidden {
+  display: none;
+}
+
+.tag-palette-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tag-palette-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 120ms ease;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.tag-palette-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.tag-palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.tag-palette-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.tag-palette-item.selected {
+  background-color: rgba(47, 179, 74, 0.1);
+}
+
+.tag-palette-item-name {
+  font-size: 13px;
+  color: #333;
+}
+
+.tag-palette-item-remove {
+  font-size: 16px;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.tag-palette-item-remove:hover {
+  color: #333;
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+
+.hidden {
+  display: none !important;
+}
+
+/* Scrollbar styling */
+.story-list::-webkit-scrollbar,
+.notes-list::-webkit-scrollbar,
+.tag-palette-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.story-list::-webkit-scrollbar-track,
+.notes-list::-webkit-scrollbar-track,
+.tag-palette-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.story-list::-webkit-scrollbar-thumb,
+.notes-list::-webkit-scrollbar-thumb,
+.tag-palette-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.story-list::-webkit-scrollbar-thumb:hover,
+.notes-list::-webkit-scrollbar-thumb:hover,
+.tag-palette-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+

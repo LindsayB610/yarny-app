@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yarny - Editor</title>
+  <link rel="stylesheet" href="/editor.css">
+</head>
+<body>
+  <div id="editorShell" class="editor-shell">
+    <!-- Left Rail: Story -->
+    <aside id="leftRail" class="left-rail">
+      <div class="left-rail-header">
+        <h2 class="rail-title">Story</h2>
+        <div class="goal-meter">
+          <span id="goalText" class="goal-text">0 / 3,000</span>
+          <div class="goal-progress">
+            <div id="goalProgressBar" class="goal-progress-bar"></div>
+          </div>
+        </div>
+        <div class="search-container">
+          <input 
+            type="text" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="Search…"
+            autocomplete="off"
+          >
+        </div>
+        <button id="tagsButton" class="tags-button">Tags</button>
+        <div id="selectedTags" class="selected-tags"></div>
+      </div>
+      <div id="storyList" class="story-list">
+        <!-- Groups and Snippets will be rendered here -->
+      </div>
+    </aside>
+
+    <!-- Center Editor -->
+    <main id="editorCanvas" class="editor-canvas">
+      <div class="canvas-card">
+        <div 
+          id="editorContent" 
+          class="editor-content" 
+          contenteditable="true"
+          spellcheck="true"
+        ></div>
+        <div id="saveStatus" class="save-status"></div>
+      </div>
+    </main>
+
+    <!-- Right Rail: Notes -->
+    <aside id="rightRail" class="right-rail">
+      <div class="right-rail-header">
+        <div class="notes-tabs">
+          <button 
+            class="notes-tab active" 
+            data-tab="people"
+            onclick="switchNotesTab('people')"
+          >People</button>
+          <button 
+            class="notes-tab" 
+            data-tab="places"
+            onclick="switchNotesTab('places')"
+          >Places</button>
+          <button 
+            class="notes-tab" 
+            data-tab="things"
+            onclick="switchNotesTab('things')"
+          >Things</button>
+        </div>
+      </div>
+      <div id="notesList" class="notes-list">
+        <!-- Notes will be rendered here -->
+      </div>
+      <div id="noteEditor" class="note-editor hidden">
+        <textarea 
+          id="noteEditorText" 
+          class="note-editor-text"
+          placeholder="Enter note content..."
+        ></textarea>
+      </div>
+    </aside>
+
+    <!-- Footer -->
+    <footer id="footerBar" class="footer-bar">
+      <div class="footer-left">
+        <!-- Placeholder icons -->
+      </div>
+      <div class="footer-center">
+        <span id="wordCount">Words: 0</span>
+        <span class="separator">—</span>
+        <span id="charCount">Characters: 0</span>
+      </div>
+      <div class="footer-right">
+        <div class="version-control">
+          <span id="versionLabel">Version: 1</span>
+          <input 
+            type="range" 
+            id="versionSlider" 
+            class="version-slider" 
+            min="1" 
+            max="1" 
+            value="1"
+          >
+          <span id="lastModified" class="last-modified">Last Modified: —</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Tag Palette Popover -->
+    <div id="tagPalette" class="tag-palette hidden">
+      <div class="tag-palette-header">
+        <h3>Tags</h3>
+        <button id="closeTagPalette" class="close-button">×</button>
+      </div>
+      <div id="tagPaletteList" class="tag-palette-list">
+        <!-- Tags will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/editor.js"></script>
+</body>
+</html>
+

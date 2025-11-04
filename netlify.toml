@@ -2,6 +2,13 @@
   publish = "public"
   functions = "netlify/functions"
 
+# Allow direct access to editor.html
+[[redirects]]
+  from = "/editor.html"
+  to = "/editor.html"
+  status = 200
+
+# Catch-all for other routes (SPA fallback)
 [[redirects]]
   from = "/*"
   to = "/index.html"
