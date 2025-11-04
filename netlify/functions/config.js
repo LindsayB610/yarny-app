@@ -9,10 +9,14 @@ exports.handler = async (event) => {
     };
   }
 
+  // Log first few characters for debugging (don't log full ID for security)
+  console.log('Serving Client ID:', clientId.substring(0, 20) + '...');
+
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*', // Allow CORS
     },
     body: JSON.stringify({ clientId }),
   };
