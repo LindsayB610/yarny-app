@@ -466,6 +466,7 @@ async function initializeStoryStructure(storyFolderId) {
     try {
       const chaptersFolderId = createdFolders['Chapters'];
       if (chaptersFolderId) {
+        console.log('Creating Opening Scene Google Doc with content:', randomOpening.substring(0, 50) + '...');
         const docResult = await window.driveAPI.write(
           'Opening Scene.doc',
           randomOpening,
@@ -473,6 +474,8 @@ async function initializeStoryStructure(storyFolderId) {
           chaptersFolderId,
           'application/vnd.google-apps.document'
         );
+        
+        console.log('Opening Scene Google Doc created:', docResult.id);
         
         // Update the snippet with the Drive file ID
         initialState.snippets[snippetId].driveFileId = docResult.id;
@@ -484,9 +487,14 @@ async function initializeStoryStructure(storyFolderId) {
           null,
           storyFolderId
         );
+        
+        console.log('data.json updated with snippet structure');
+      } else {
+        console.error('Chapters folder ID not found');
       }
     } catch (error) {
       console.error('Error creating opening scene Google Doc:', error);
+      console.error('Error details:', error.message, error.stack);
       // Continue anyway - the data.json has the content
     }
 

@@ -168,21 +168,29 @@ exports.handler = async (event, context) => {
           const auth = drive._auth;
           const docs = google.docs({ version: 'v1', auth: auth });
           
-          // For new Google Docs, we need to get the document structure first
-          // Then replace all content with our new content
+          // Small delay to ensure the document is fully initialized
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           try {
-            // Get the document to find the end index
+            // Get the document structure
             const doc = await docs.documents.get({ documentId: response.data.id });
+            console.log('Google Doc structure:', JSON.stringify(doc.data.body, null, 2));
             
             // Find the end of the document body
             let endIndex = 1;
             if (doc.data.body && doc.data.body.content && doc.data.body.content.length > 0) {
               const lastElement = doc.data.body.content[doc.data.body.content.length - 1];
               endIndex = lastElement.endIndex - 1;
+              console.log('Document endIndex:', endIndex);
             }
             
-            // If the document has content (more than just the initial paragraph break), delete it
+            // New Google Docs have a structure where the first paragraph contains a break element
+            // We need to insert text after the break, or replace the break with our text
+            // The typical structure is: paragraph with break at index 1, so we insert at index 1
+            
+            // Delete existing content if any (beyond the initial paragraph break)
             if (endIndex > 1) {
+              console.log('Deleting existing content from index 1 to', endIndex);
               await docs.documents.batchUpdate({
                 documentId: response.data.id,
                 requestBody: {
@@ -200,7 +208,8 @@ exports.handler = async (event, context) => {
               });
             }
             
-            // Insert the new content at index 1 (start of first paragraph)
+            // Insert the new content at index 1
+            console.log('Inserting text at index 1:', content.substring(0, 50) + '...');
             await docs.documents.batchUpdate({
               documentId: response.data.id,
               requestBody: {
@@ -216,8 +225,30 @@ exports.handler = async (event, context) => {
                 ]
               }
             });
+            
+            // Verify the content was inserted
+            const verifyDoc = await docs.documents.get({ documentId: response.data.id });
+            if (verifyDoc.data.body && verifyDoc.data.body.content) {
+              const textContent = verifyDoc.data.body.content
+                .map(element => {
+                  if (element.paragraph && element.paragraph.elements) {
+                    return element.paragraph.elements
+                      .map(elem => elem.textRun ? elem.textRun.content : '')
+                      .join('');
+                  }
+                  return '';
+                })
+                .join('')
+                .trim();
+              console.log('Verified content length:', textContent.length, 'First 50 chars:', textContent.substring(0, 50));
+              
+              if (textContent.length === 0) {
+                throw new Error('Content insertion failed - document is still empty');
+              }
+            }
           } catch (error) {
             console.error('Error inserting text into Google Doc:', error);
+            console.error('Error details:', error.message, error.stack);
             // Re-throw so the error is visible
             throw error;
           }

@@ -1228,7 +1228,13 @@ async function loadStoryFromDrive(storyFolderId) {
     // Google Docs content overrides data.json content
     if (state.drive.folderIds.chapters) {
       try {
+        console.log('Loading chapter files from folder:', state.drive.folderIds.chapters);
         const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
+        console.log('Chapter files found:', chapterFiles.files?.length || 0, chapterFiles.files);
+        console.log('Current state.snippets:', Object.keys(state.snippets));
+        console.log('Current state.groups:', Object.keys(state.groups));
+        console.log('Current state.project.groupIds:', state.project.groupIds);
+        
         // Build structure from Google Docs - this is the source of truth
         // Only show snippets that exist as Google Docs in the Chapters folder
         const loadedSnippets = {};
@@ -1246,10 +1252,13 @@ async function loadStoryFromDrive(storyFolderId) {
               return snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id;
             });
             
+            console.log(`Processing file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
+            
             // Load content from Google Doc
             try {
               const docContent = await window.driveAPI.read(file.id);
               const snippetBody = (docContent.content || '').trim();
+              console.log(`Loaded content from ${file.name}, length: ${snippetBody.length}, first 50: ${snippetBody.substring(0, 50)}`);
               
               if (snippet) {
                 // Update existing snippet with Google Doc content
@@ -1258,6 +1267,7 @@ async function loadStoryFromDrive(storyFolderId) {
                 snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
                 snippet.chars = snippetBody.length;
                 loadedSnippets[snippet.id] = snippet;
+                console.log(`Updated snippet ${snippet.id} with content`);
               } else {
                 // Create new snippet from Google Doc
                 // Use the snippet ID from data.json if we can find it by group membership
