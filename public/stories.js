@@ -326,6 +326,12 @@ async function initialize() {
     alert('Failed to load stories: ' + error.message);
   }
   
+  // Logout button
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', window.logout);
+  }
+  
   // New story button
   document.getElementById('newStoryBtn').addEventListener('click', openNewStoryModal);
   
@@ -378,10 +384,21 @@ if (urlParams.get('drive_auth_success') === 'true') {
 }
 
 // Logout function
-window.logout = async function() {
+window.logout = async function(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  console.log('Logout function called');
+  
   // Disable Google auto-select if available
   if (window.google && window.google.accounts && window.google.accounts.id) {
-    window.google.accounts.id.disableAutoSelect();
+    try {
+      window.google.accounts.id.disableAutoSelect();
+    } catch (error) {
+      console.error('Error disabling Google auto-select:', error);
+    }
   }
   
   // Clear all auth data from localStorage
@@ -391,10 +408,11 @@ window.logout = async function() {
   
   // Call server-side logout to clear HttpOnly cookies
   try {
-    await fetch(`${API_BASE}/logout`, {
+    const response = await fetch(`${API_BASE}/logout`, {
       method: 'POST',
       credentials: 'include' // Important: include cookies in the request
     });
+    console.log('Logout response:', response.status);
   } catch (error) {
     console.error('Logout request failed:', error);
     // Continue with logout anyway
