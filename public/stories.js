@@ -1,7 +1,9 @@
 // API_BASE is declared in drive.js which loads first
 // Use window.API_BASE if available, otherwise fallback
-const API_BASE = window.API_BASE || '/.netlify/functions';
-window.API_BASE = API_BASE; // Make it available globally
+if (typeof window.API_BASE === 'undefined') {
+  window.API_BASE = '/.netlify/functions';
+}
+const API_BASE = window.API_BASE;
 
 // Force logout handler - check URL parameter first
 const urlParamsCheck = new URLSearchParams(window.location.search);
