@@ -42,106 +42,20 @@ const state = {
   }
 };
 
-// Initialize with sample data
+// Initialize with empty state (should only be used as fallback)
+// Real stories should load from Drive via loadStoryFromDrive()
 function initializeState() {
-  // Sample groups
-  const group1 = {
-    id: 'group1',
-    projectId: 'default',
-    title: 'Chapter 1',
-    color: '#E57A24',
-    position: 0,
-    snippetIds: ['snippet1', 'snippet2']
-  };
-  
-  const group2 = {
-    id: 'group2',
-    projectId: 'default',
-    title: 'Chapter 2',
-    color: '#3B82F6',
-    position: 1,
-    snippetIds: ['snippet3']
-  };
+  // Clear all state
+  state.groups = {};
+  state.snippets = {};
+  state.notes = {};
+  state.tags = {};
+  state.project.groupIds = [];
+  state.project.tagIds = [];
+  state.project.noteIds = [];
+  state.project.activeSnippetId = null;
 
-  // Sample snippets
-  const snippet1 = {
-    id: 'snippet1',
-    projectId: 'default',
-    groupId: 'group1',
-    title: 'Opening Scene',
-    body: 'The morning light filtered through the window, casting long shadows across the room.',
-    words: 12,
-    chars: 81,
-    tagIds: ['tag1'],
-    updatedAt: new Date().toISOString(),
-    version: 1
-  };
-
-  const snippet2 = {
-    id: 'snippet2',
-    projectId: 'default',
-    groupId: 'group1',
-    title: 'Character Introduction',
-    body: 'She stood at the edge of the cliff, the wind whipping through her hair.',
-    words: 13,
-    chars: 68,
-    tagIds: ['tag2'],
-    updatedAt: new Date().toISOString(),
-    version: 1
-  };
-
-  const snippet3 = {
-    id: 'snippet3',
-    projectId: 'default',
-    groupId: 'group2',
-    title: 'The Journey Begins',
-    body: 'The path ahead was long and winding, disappearing into the mist.',
-    words: 11,
-    chars: 65,
-    tagIds: [],
-    updatedAt: new Date().toISOString(),
-    version: 1
-  };
-
-  // Sample tags
-  const tag1 = {
-    id: 'tag1',
-    name: 'Opening',
-    color: '#E57A24'
-  };
-
-  const tag2 = {
-    id: 'tag2',
-    name: 'Character',
-    color: '#D9534F'
-  };
-
-  // Sample notes
-  const note1 = {
-    id: 'note1',
-    projectId: 'default',
-    kind: 'person',
-    title: 'Sarah',
-    body: 'Main protagonist. 28 years old. Works as a journalist.',
-    tagIds: [],
-    position: 0
-  };
-
-  state.groups[group1.id] = group1;
-  state.groups[group2.id] = group2;
-  state.snippets[snippet1.id] = snippet1;
-  state.snippets[snippet2.id] = snippet2;
-  state.snippets[snippet3.id] = snippet3;
-  state.tags[tag1.id] = tag1;
-  state.tags[tag2.id] = tag2;
-  state.notes[note1.id] = note1;
-
-  state.project.groupIds = [group1.id, group2.id];
-  state.project.tagIds = [tag1.id, tag2.id];
-  state.project.noteIds = [note1.id];
-  state.project.activeSnippetId = snippet1.id;
-
-  // Render initial UI
+  // Render empty UI
   renderStoryList();
   renderEditor();
   renderNotesList();
@@ -1260,7 +1174,13 @@ async function loadStoryFromDrive(storyFolderId) {
       console.warn('Could not load project.json:', error);
     }
     
-    // Load data.json
+    // Clear existing state first
+    state.snippets = {};
+    state.groups = {};
+    state.notes = {};
+    state.tags = {};
+    
+    // Load data.json for metadata (but we'll prioritize Google Docs for content)
     try {
       const dataFiles = await window.driveAPI.list(storyFolderId);
       const dataFile = dataFiles.files.find(f => f.name === 'data.json');
@@ -1269,9 +1189,22 @@ async function loadStoryFromDrive(storyFolderId) {
         const dataContent = await window.driveAPI.read(dataFile.id);
         if (dataContent.content) {
           const parsed = JSON.parse(dataContent.content);
-          // Merge into state
-          if (parsed.snippets) state.snippets = parsed.snippets;
-          if (parsed.groups) state.groups = parsed.groups;
+          
+          // Load groups and structure from data.json
+          if (parsed.groups) {
+            // Only keep groups that have snippets or are valid
+            state.groups = parsed.groups;
+            // Update project groupIds to match what we have
+            state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
+              return (state.groups[a].position || 0) - (state.groups[b].position || 0);
+            });
+          }
+          
+          // Load snippets metadata (content will be loaded from Google Docs)
+          if (parsed.snippets) {
+            state.snippets = parsed.snippets;
+          }
+          
           if (parsed.notes) {
             // Merge notes by kind
             if (parsed.notes.people) {
@@ -1291,23 +1224,85 @@ async function loadStoryFromDrive(storyFolderId) {
       console.warn('Could not load data.json:', error);
     }
     
-    // Load individual files from Chapters folder
+    // Load individual files from Chapters folder - this is the source of truth
+    // Google Docs content overrides data.json content
     if (state.drive.folderIds.chapters) {
       try {
         const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
-        // Match files to snippets by title or driveFileId
-        chapterFiles.files.forEach(file => {
-          if (file.mimeType === 'application/vnd.google-apps.document') {
-            const fileName = file.name.replace('.doc', '');
-            // Try to find matching snippet
-            const snippet = Object.values(state.snippets).find(s => 
+        // Build structure from Google Docs - this is the source of truth
+        // Only show snippets that exist as Google Docs in the Chapters folder
+        const loadedSnippets = {};
+        const loadedGroups = {};
+        
+        for (const file of chapterFiles.files || []) {
+          if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+            const fileName = file.name.replace('.doc', '').replace('.docx', '');
+            
+            // Try to find matching snippet in existing state
+            let snippet = Object.values(state.snippets).find(s => 
               s.title === fileName || s.driveFileId === file.id
             );
             
-            if (snippet) {
-              snippet.driveFileId = file.id;
+            // Load content from Google Doc
+            try {
+              const docContent = await window.driveAPI.read(file.id);
+              const snippetBody = docContent.content || '';
+              
+              if (snippet) {
+                // Update existing snippet with Google Doc content
+                snippet.driveFileId = file.id;
+                snippet.body = snippetBody;
+                snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                snippet.chars = snippetBody.length;
+                loadedSnippets[snippet.id] = snippet;
+              } else {
+                // Create new snippet from Google Doc
+                const newSnippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                snippet = {
+                  id: newSnippetId,
+                  projectId: 'default',
+                  groupId: state.project.groupIds[0] || null,
+                  title: fileName,
+                  body: snippetBody,
+                  words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
+                  chars: snippetBody.length,
+                  tagIds: [],
+                  updatedAt: file.modifiedTime || new Date().toISOString(),
+                  version: 1,
+                  driveFileId: file.id
+                };
+                loadedSnippets[newSnippetId] = snippet;
+              }
+            } catch (error) {
+              console.warn('Could not load content from Google Doc:', file.name, error);
             }
           }
+        }
+        
+        // Update state with only loaded snippets
+        state.snippets = loadedSnippets;
+        
+        // Filter groups to only include those that have snippets in loadedSnippets
+        const validGroupIds = new Set();
+        Object.values(loadedSnippets).forEach(snippet => {
+          if (snippet.groupId) {
+            validGroupIds.add(snippet.groupId);
+          }
+        });
+        
+        // Rebuild groups with only valid snippets
+        Object.keys(state.groups).forEach(groupId => {
+          if (validGroupIds.has(groupId)) {
+            const group = state.groups[groupId];
+            // Filter snippetIds to only include loaded snippets
+            group.snippetIds = group.snippetIds.filter(sid => loadedSnippets[sid]);
+            loadedGroups[groupId] = group;
+          }
+        });
+        
+        state.groups = loadedGroups;
+        state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
+          return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
         });
       } catch (error) {
         console.warn('Could not load chapter files:', error);
