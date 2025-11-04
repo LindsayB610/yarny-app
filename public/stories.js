@@ -494,7 +494,9 @@ async function initializeStoryStructure(storyFolderId) {
       }
     } catch (error) {
       console.error('Error creating opening scene Google Doc:', error);
-      console.error('Error details:', error.message, error.stack);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Error response:', error.response?.data);
       
       // Check if this is a scope issue
       if (error.code === 'MISSING_DOCS_SCOPE' || error.requiresReauth || error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
@@ -506,8 +508,13 @@ async function initializeStoryStructure(storyFolderId) {
         throw scopeError;
       }
       
-      // Continue anyway - the data.json has the content
-      console.warn('Continuing without Google Doc - data.json has the content');
+      // For other errors, log them but continue - the data.json has the content
+      // However, we should still throw so the user knows something went wrong
+      console.error('Failed to create Opening Scene Google Doc - story will be created but snippet may not display correctly');
+      console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
+      // Don't throw - continue with story creation even if Google Doc fails
+      // The snippet will be in data.json, just not as a Google Doc
     }
 
     return { folders: createdFolders, projectData, initialState };

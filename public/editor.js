@@ -1230,7 +1230,14 @@ async function loadStoryFromDrive(storyFolderId) {
       try {
         console.log('Loading chapter files from folder:', state.drive.folderIds.chapters);
         const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
-        console.log('Chapter files found:', chapterFiles.files?.length || 0, chapterFiles.files);
+        console.log('Chapter files found:', chapterFiles.files?.length || 0);
+        if (chapterFiles.files && chapterFiles.files.length > 0) {
+          console.log('Chapter files:', chapterFiles.files.map(f => ({ name: f.name, id: f.id, mimeType: f.mimeType })));
+        } else {
+          console.warn('No chapter files found! This means the Opening Scene Google Doc was not created.');
+          console.warn('State snippets:', Object.keys(state.snippets));
+          console.warn('State groups:', Object.keys(state.groups));
+        }
         console.log('Current state.snippets:', Object.keys(state.snippets));
         console.log('Current state.groups:', Object.keys(state.groups));
         console.log('Current state.project.groupIds:', state.project.groupIds);
