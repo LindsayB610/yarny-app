@@ -259,42 +259,58 @@ exports.handler = async (event, context) => {
             
             // Check if this is a scope/authentication issue
             if (error.status === 401 || error.code === 401) {
-              // This likely means the OAuth tokens don't have the Google Docs API scope
-              // Clear tokens so user needs to re-authorize with new scopes
-              const { getTokens, saveTokens } = require('./drive-client');
-              const { getStore } = require('@netlify/blobs');
-              const STORAGE_KEY = 'drive_tokens.json';
+              // Check if tokens actually have the Docs scope before clearing
+              const { getTokens } = require('./drive-client');
+              const tokens = await getTokens(email);
               
-              try {
-                const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-                const token = process.env.NETLIFY_AUTH_TOKEN;
-                
-                const storeOptions = { name: 'drive-tokens' };
-                if (siteID) storeOptions.siteID = siteID;
-                if (token) storeOptions.token = token;
-                
-                const store = getStore(storeOptions);
-                const data = await store.get(STORAGE_KEY);
-                if (data) {
-                  const allTokens = JSON.parse(data);
-                  delete allTokens[email]; // Remove this user's tokens
-                  await store.set(STORAGE_KEY, JSON.stringify(allTokens, null, 2));
-                  console.log('Cleared tokens due to missing Docs API scope - user needs to re-authorize');
-                }
-              } catch (clearError) {
-                console.error('Error clearing tokens:', clearError);
+              let hasDocsScope = false;
+              if (tokens && tokens.scope) {
+                hasDocsScope = tokens.scope.includes('documents') || tokens.scope.includes('https://www.googleapis.com/auth/documents');
+                console.log('Checking token scope:', tokens.scope);
+                console.log('Has Docs scope in stored tokens:', hasDocsScope);
               }
               
-              // Return a specific error that the frontend can handle
-              return {
-                statusCode: 403,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  error: 'MISSING_DOCS_SCOPE',
-                  message: 'OAuth tokens are missing Google Docs API scope. Please re-authorize Drive access to enable Google Docs creation.',
-                  requiresReauth: true
-                })
-              };
+              // Only clear tokens if they don't have the Docs scope
+              if (!hasDocsScope) {
+                console.log('Tokens do not have Docs scope - clearing to force re-authorization');
+                const { getStore } = require('@netlify/blobs');
+                const STORAGE_KEY = 'drive_tokens.json';
+                
+                try {
+                  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+                  const token = process.env.NETLIFY_AUTH_TOKEN;
+                  
+                  const storeOptions = { name: 'drive-tokens' };
+                  if (siteID) storeOptions.siteID = siteID;
+                  if (token) storeOptions.token = token;
+                  
+                  const store = getStore(storeOptions);
+                  const data = await store.get(STORAGE_KEY);
+                  if (data) {
+                    const allTokens = JSON.parse(data);
+                    delete allTokens[email]; // Remove this user's tokens
+                    await store.set(STORAGE_KEY, JSON.stringify(allTokens, null, 2));
+                    console.log('Cleared tokens due to missing Docs API scope - user needs to re-authorize');
+                  }
+                } catch (clearError) {
+                  console.error('Error clearing tokens:', clearError);
+                }
+                
+                // Return a specific error that the frontend can handle
+                return {
+                  statusCode: 403,
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    error: 'MISSING_DOCS_SCOPE',
+                    message: 'OAuth tokens are missing Google Docs API scope. Please re-authorize Drive access to enable Google Docs creation.',
+                    requiresReauth: true
+                  })
+                };
+              } else {
+                // Tokens have the scope, but still got 401 - this might be a different auth issue
+                console.error('Got 401 error but tokens have Docs scope - might be expired or invalid token');
+                throw error; // Re-throw the original error
+              }
             }
             
             // Re-throw other errors
