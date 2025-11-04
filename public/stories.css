@@ -1,5 +1,9 @@
 body {
-  background-color: #F3F4F6;
+  background: hsla(160, 84%, 39%, 1);
+  background: linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  background: -moz-linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  background: -webkit-linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#10B981", endColorstr="#059999", GradientType=1 );
   color: var(--color-text-primary);
   min-height: 100vh;
 }
@@ -28,31 +32,33 @@ body {
 .stories-header h1 {
   font-size: var(--font-size-5xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: var(--color-white);
   margin-bottom: var(--space-sm);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .subtitle {
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.9);
   font-size: var(--font-size-md);
 }
 
 .logout-button {
-  background: none;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
   font-size: var(--font-size-base);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-fast);
   font-family: var(--font-family-base);
+  backdrop-filter: blur(10px);
 }
 
 .logout-button:hover {
-  background-color: var(--color-gray-100);
-  border-color: var(--color-gray-300);
-  color: var(--color-text-primary);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: var(--color-white);
 }
 
 /* Drive Auth Prompt */
@@ -78,6 +84,12 @@ body {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-3xl);
   font-size: var(--font-size-md);
+}
+
+/* Ensure spinner is visible on gradient background */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid var(--color-white);
 }
 
 .connect-drive-btn {
@@ -258,7 +270,7 @@ body {
 }
 
 .loading-state p {
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.9);
   font-size: var(--font-size-base);
 }
 
@@ -266,7 +278,7 @@ body {
 .empty-state {
   text-align: center;
   padding: var(--space-6xl);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .empty-state.hidden {
@@ -363,6 +375,13 @@ body {
 
 .form-group {
   margin-bottom: var(--space-xl);
+}
+
+.form-hint {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
 }
 
 .form-group label {

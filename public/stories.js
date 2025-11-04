@@ -519,7 +519,7 @@ function getRandomOpeningSentence() {
 }
 
 // Create initial files and folders for a new story
-async function initializeStoryStructure(storyFolderId) {
+async function initializeStoryStructure(storyFolderId, metadata = {}) {
   try {
     // Create initial folder structure
     // Folder names match UI labels for better organization
@@ -549,7 +549,9 @@ async function initializeStoryStructure(storyFolderId) {
       updatedAt: new Date().toISOString(),
       activeSnippetId: snippetId,
       snippetIds: [snippetId],
-      groupIds: [groupId]
+      groupIds: [groupId],
+      wordGoal: metadata.wordGoal || 3000,
+      genre: metadata.genre || ''
     };
 
     await window.driveAPI.write(
@@ -695,7 +697,7 @@ async function initializeStoryStructure(storyFolderId) {
 }
 
 // Create new story
-async function createStory(storyName) {
+async function createStory(storyName, metadata = {}) {
   try {
     // Ensure Yarny folder exists
     if (!yarnyStoriesFolderId) {
@@ -706,7 +708,7 @@ async function createStory(storyName) {
     const storyFolder = await createDriveFolder(storyName, yarnyStoriesFolderId);
     
     // Initialize story structure with folders and files
-    await initializeStoryStructure(storyFolder.id);
+    await initializeStoryStructure(storyFolder.id, metadata);
     
     return storyFolder;
   } catch (error) {
@@ -1021,12 +1023,15 @@ async function initialize() {
       return;
     }
     
+    const storyGenre = document.getElementById('storyGenre').value.trim() || '';
+    const wordGoal = parseInt(document.getElementById('wordGoal').value) || 3000;
+    
       const createBtn = document.getElementById('createStoryBtn');
       createBtn.disabled = true;
       createBtn.textContent = 'Creating...';
       
       try {
-        const storyFolder = await createStory(storyName);
+        const storyFolder = await createStory(storyName, { genre: storyGenre, wordGoal: wordGoal });
         
         // If storyFolder is null, it means we redirected for re-auth
         if (storyFolder === null) {

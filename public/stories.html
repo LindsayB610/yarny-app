@@ -16,7 +16,7 @@
           <p class="subtitle">Your writing projects</p>
         </div>
         <div style="display: flex; gap: var(--space-md); align-items: center;">
-          <a href="/docs.html" class="logout-button" style="text-decoration: none;" title="View User Guide">📖 Help</a>
+          <a href="/docs.html" class="logout-button" style="text-decoration: none;" title="View User Guide">📖 Docs</a>
           <button id="logoutBtn" class="logout-button" onclick="if(window.logout){window.logout();} else {localStorage.clear(); window.location.href='/?logout=true&force=true';}" title="Sign out">Sign out</button>
         </div>
       </div>
@@ -74,6 +74,30 @@
                 required
                 autocomplete="off"
               >
+            </div>
+            <div class="form-group">
+              <label for="storyGenre">Genre (optional)</label>
+              <input 
+                type="text" 
+                id="storyGenre" 
+                name="storyGenre" 
+                placeholder="e.g., Fantasy, Sci-Fi, Romance"
+                autocomplete="off"
+              >
+            </div>
+            <div class="form-group">
+              <label for="wordGoal">Word Count Goal</label>
+              <input 
+                type="number" 
+                id="wordGoal" 
+                name="wordGoal" 
+                placeholder="3000"
+                value="3000"
+                min="1"
+                required
+                autocomplete="off"
+              >
+              <small class="form-hint">Set a target word count for this story</small>
             </div>
             <div class="form-actions">
               <button type="button" class="btn-secondary" onclick="closeNewStoryModal()">Cancel</button>

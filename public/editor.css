@@ -68,11 +68,34 @@ body {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin-bottom: var(--space-md);
+  margin: 0;
+}
+
+.story-info-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.story-info-btn:hover {
+  background-color: var(--color-gray-100);
+  color: var(--color-text-primary);
 }
 
 .goal-meter {
   margin-bottom: 12px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.goal-meter:hover {
+  opacity: 0.8;
 }
 
 .goal-text {
@@ -686,4 +709,173 @@ body {
 .notes-list::-webkit-scrollbar-thumb:hover,
 .tag-palette-list::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   Modal Styles (for Story Info Modal)
+   ============================================ */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-3xl);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: var(--color-gray-100);
+}
+
+.modal-body {
+  padding: var(--space-2xl);
+}
+
+.error-message {
+  background: #FEE;
+  color: #C33;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-base);
+}
+
+.error-message.hidden {
+  display: none;
+}
+
+.form-group {
+  margin-bottom: var(--space-xl);
+}
+
+.form-group label {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-group input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.form-hint {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  margin-top: var(--space-3xl);
+}
+
+.btn-secondary {
+  background: var(--color-gray-100);
+  color: var(--color-text-primary);
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--color-gray-200);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

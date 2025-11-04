@@ -1,6 +1,10 @@
 # Yarny - Personal Writing Tool
 
+> ⚠️ **Alpha Version**: Yarny is currently in alpha testing. Features may change, and there may be bugs or incomplete functionality.
+
 A simple, secure writing tool with Google Sign-In authentication and Google Drive integration for cloud storage. Perfect for writers who want a distraction-free environment with powerful organization features.
+
+**Access**: Yarny requires an invitation. To request access, please email [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) with your Google account email address.
 
 ## Features
 
@@ -107,6 +111,7 @@ In your Netlify dashboard, go to **Site settings > Environment variables** and a
 - `GDRIVE_CLIENT_SECRET`: Your Google Drive OAuth Client Secret (from Client 2 above)
 - `ALLOWED_EMAIL`: Email addresses allowed to access the app, comma-separated (e.g., `user1@gmail.com,user2@example.com`)
   - **Note**: To add new users, update this environment variable with their email addresses separated by commas
+  - **For users**: If you need access, email [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) to request an invitation
 - `NETLIFY_SITE_ID`: Your Netlify Site ID (Project ID) - found in Project configuration > General > Project information
 - `NETLIFY_AUTH_TOKEN`: Your Netlify Personal Access Token - create at https://app.netlify.com/user/applications
 

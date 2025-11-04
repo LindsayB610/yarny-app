@@ -13,8 +13,11 @@
     <aside id="leftRail" class="left-rail">
       <div class="left-rail-header">
         <a href="/stories.html" class="back-to-stories-link" title="Back to Stories">← Stories</a>
-        <h2 class="rail-title">Story</h2>
-        <div class="goal-meter">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+          <h2 class="rail-title">Story</h2>
+          <button id="storyInfoBtn" class="story-info-btn" title="Story Info & Settings">⚙️</button>
+        </div>
+        <div class="goal-meter" id="goalMeter" style="cursor: pointer;" title="Click to edit word count goal">
           <span id="goalText" class="goal-text">0 / 3,000</span>
           <div class="goal-progress">
             <div id="goalProgressBar" class="goal-progress-bar"></div>
@@ -106,10 +109,64 @@
           >
           <span id="lastModified" class="last-modified">Last Modified: —</span>
         </div>
-        <a href="/docs.html" class="logout-button" style="text-decoration: none; margin-right: var(--space-md);" title="View User Guide">📖 Help</a>
+        <a href="/docs.html" class="logout-button" style="text-decoration: none; margin-right: var(--space-md);" title="View User Guide">📖 Docs</a>
         <button id="logoutBtn" class="logout-button" onclick="logout()" title="Sign out">Sign out</button>
       </div>
     </footer>
+
+    <!-- Story Info Modal -->
+    <div id="storyInfoModal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Story Info & Settings</h2>
+          <button class="modal-close" onclick="closeStoryInfoModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="storyInfoError" class="error-message hidden"></div>
+          <form id="storyInfoForm">
+            <div class="form-group">
+              <label for="storyTitle">Story Title</label>
+              <input 
+                type="text" 
+                id="storyTitle" 
+                name="storyTitle" 
+                placeholder="My Novel"
+                required
+                autocomplete="off"
+              >
+            </div>
+            <div class="form-group">
+              <label for="storyGenreInfo">Genre (optional)</label>
+              <input 
+                type="text" 
+                id="storyGenreInfo" 
+                name="storyGenreInfo" 
+                placeholder="e.g., Fantasy, Sci-Fi, Romance"
+                autocomplete="off"
+              >
+            </div>
+            <div class="form-group">
+              <label for="wordGoalInfo">Word Count Goal</label>
+              <input 
+                type="number" 
+                id="wordGoalInfo" 
+                name="wordGoalInfo" 
+                placeholder="3000"
+                min="1"
+                required
+                autocomplete="off"
+              >
+              <small class="form-hint">Set a target word count for this story</small>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeStoryInfoModal()">Cancel</button>
+              <button type="submit" class="btn-primary" id="saveStoryInfoBtn">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- Tag Palette Popover -->
     <div id="tagPalette" class="tag-palette hidden">

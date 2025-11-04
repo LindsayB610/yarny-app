@@ -88,6 +88,7 @@ const state = {
     id: 'default',
     title: 'Untitled Project',
     wordGoal: 3000,
+    genre: '',
     groupIds: [],
     tagIds: [],
     noteIds: [],
@@ -922,7 +923,9 @@ async function saveStoryDataToDrive() {
       updatedAt: new Date().toISOString(),
       activeSnippetId: state.project.activeSnippetId,
       snippetIds: Object.keys(state.snippets),
-      groupIds: state.project.groupIds
+      groupIds: state.project.groupIds,
+      wordGoal: state.project.wordGoal || 3000,
+      genre: state.project.genre || ''
     };
     
     const projectFile = files.files.find(f => f.name === 'project.json');
@@ -1013,6 +1016,94 @@ function setupVersionSlider() {
     // In future: could show version diff here
   });
 }
+
+// ============================================
+// Story Info Modal
+// ============================================
+
+function openStoryInfoModal() {
+  const modal = document.getElementById('storyInfoModal');
+  const titleInput = document.getElementById('storyTitle');
+  const genreInput = document.getElementById('storyGenreInfo');
+  const wordGoalInput = document.getElementById('wordGoalInfo');
+  
+  // Populate form with current values
+  titleInput.value = state.project.title || '';
+  genreInput.value = state.project.genre || '';
+  wordGoalInput.value = state.project.wordGoal || 3000;
+  
+  // Hide error message
+  document.getElementById('storyInfoError').classList.add('hidden');
+  
+  modal.classList.remove('hidden');
+  titleInput.focus();
+}
+
+function closeStoryInfoModal() {
+  const modal = document.getElementById('storyInfoModal');
+  modal.classList.add('hidden');
+  document.getElementById('storyInfoError').classList.add('hidden');
+}
+
+async function saveStoryInfo() {
+  const titleInput = document.getElementById('storyTitle');
+  const genreInput = document.getElementById('storyGenreInfo');
+  const wordGoalInput = document.getElementById('wordGoalInfo');
+  const errorEl = document.getElementById('storyInfoError');
+  const saveBtn = document.getElementById('saveStoryInfoBtn');
+  
+  errorEl.classList.add('hidden');
+  
+  const title = titleInput.value.trim();
+  const genre = genreInput.value.trim();
+  const wordGoal = parseInt(wordGoalInput.value);
+  
+  if (!title) {
+    errorEl.textContent = 'Please enter a story title';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  
+  if (!wordGoal || wordGoal < 1) {
+    errorEl.textContent = 'Please enter a valid word count goal';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+  
+  try {
+    // Update state
+    state.project.title = title;
+    state.project.genre = genre;
+    state.project.wordGoal = wordGoal;
+    
+    // Save to Drive
+    await saveStoryDataToDrive();
+    
+    // Update UI
+    updateGoalMeter();
+    
+    // Update document title if needed
+    if (document.title) {
+      document.title = `${title} - Yarny`;
+    }
+    
+    closeStoryInfoModal();
+  } catch (error) {
+    console.error('Error saving story info:', error);
+    errorEl.textContent = 'Failed to save: ' + error.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Changes';
+  }
+}
+
+// Make functions globally accessible
+window.openStoryInfoModal = openStoryInfoModal;
+window.closeStoryInfoModal = closeStoryInfoModal;
 
 // ============================================
 // Utility Functions
@@ -1292,7 +1383,15 @@ async function loadStoryFromDrive(storyFolderId) {
         const projectData = await window.driveAPI.read(projectFile.id);
         if (projectData.content) {
           const parsed = JSON.parse(projectData.content);
-          Object.assign(state.project, parsed);
+          // Merge with defaults to ensure required fields exist
+          // Map 'name' from project.json to 'title' in state
+          Object.assign(state.project, {
+            wordGoal: 3000,
+            genre: '',
+            title: 'Untitled Project',
+            ...parsed,
+            title: parsed.name || parsed.title || 'Untitled Project'
+          });
         }
       }
     } catch (error) {
@@ -1605,6 +1704,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Version slider
   setupVersionSlider();
+  
+  // Story info button
+  document.getElementById('storyInfoBtn').addEventListener('click', openStoryInfoModal);
+  
+  // Goal meter click
+  document.getElementById('goalMeter').addEventListener('click', openStoryInfoModal);
+  
+  // Story info form
+  document.getElementById('storyInfoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveStoryInfo();
+  });
+  
+  // Close modal on overlay click
+  document.querySelector('#storyInfoModal .modal-overlay').addEventListener('click', closeStoryInfoModal);
 
   // Close tag palette on outside click
   document.addEventListener('click', (e) => {
