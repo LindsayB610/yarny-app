@@ -2071,6 +2071,7 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // Load individual files from Chapters folder - this is the source of truth
     // Google Docs content overrides data.json content
+    const loadedSnippets = {};
     if (state.drive.folderIds.chapters) {
       try {
         console.log('Loading chapter files from folder:', state.drive.folderIds.chapters);
@@ -2089,9 +2090,6 @@ async function loadStoryFromDrive(storyFolderId) {
         
         // Build structure from Google Docs - this is the source of truth
         // Only show snippets that exist as Google Docs in the Chapters folder
-        const loadedSnippets = {};
-        const loadedGroups = {};
-        
         for (const file of chapterFiles.files || []) {
           if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
             // Remove .doc or .docx extension from filename
@@ -2175,81 +2173,83 @@ async function loadStoryFromDrive(storyFolderId) {
             }
           }
         }
-        
-        // Merge loaded snippets from Google Docs with snippets from data.json
-        // This ensures snippets show up even if Google Doc creation failed
-        // Save original snippets from data.json before merging
-        const originalSnippets = { ...state.snippets };
-        const mergedSnippets = { ...state.snippets };
-        
-        // Add or update snippets from Google Docs
-        Object.keys(loadedSnippets).forEach(snippetId => {
-          mergedSnippets[snippetId] = loadedSnippets[snippetId];
-        });
-        
-        // If no Google Docs were loaded but we have snippets in data.json, keep them
-        if (Object.keys(loadedSnippets).length === 0 && Object.keys(state.snippets).length > 0) {
-          console.log('No Google Docs found, but data.json has snippets - keeping snippets from data.json');
-          // Keep all snippets from data.json (they're already in mergedSnippets from line above)
-        }
-        
-        // Ensure groups are created for all snippets
-        const validGroupIds = new Set();
-        Object.values(mergedSnippets).forEach(snippet => {
-          if (snippet.groupId) {
-            validGroupIds.add(snippet.groupId);
-          }
-        });
-        
-        // Build groups from data.json structure
-        Object.keys(state.groups).forEach(groupId => {
-          const group = state.groups[groupId];
-          // Include group if it has snippets in mergedSnippets OR if it's in project.groupIds
-          if (validGroupIds.has(groupId) || state.project.groupIds.includes(groupId)) {
-            // Filter snippetIds to only include snippets that exist
-            let validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
-            
-            // If this is the first group and validSnippetIds is empty, ensure snippets from data.json are included
-            // This ensures the initial chapter/snippet from data.json is preserved even if Google Doc wasn't created
-            if (validSnippetIds.length === 0 && groupId === state.project.groupIds[0] && group.snippetIds.length > 0) {
-              console.log('First group has no valid snippets, ensuring snippets from data.json are included');
-              // Add any missing snippets from data.json to mergedSnippets
-              group.snippetIds.forEach(sid => {
-                if (originalSnippets[sid] && !mergedSnippets[sid]) {
-                  mergedSnippets[sid] = originalSnippets[sid];
-                  console.log(`Added missing snippet ${sid} from data.json to mergedSnippets`);
-                }
-              });
-              // Recalculate validSnippetIds after adding missing snippets
-              validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
-            }
-            
-            // Include group if it has valid snippets or if it's the first group (Chapter 1)
-            if (validSnippetIds.length > 0 || groupId === state.project.groupIds[0]) {
-              group.snippetIds = validSnippetIds;
-              loadedGroups[groupId] = group;
-              validGroupIds.add(groupId);
-            }
-          }
-        });
-        
-        // Update state.snippets with the final merged snippets
-        state.snippets = mergedSnippets;
-        
-        state.groups = loadedGroups;
-        state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
-          return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
-        });
-        
-        console.log('Final state after loading:', {
-          snippets: Object.keys(state.snippets),
-          groups: Object.keys(state.groups),
-          groupIds: state.project.groupIds
-        });
       } catch (error) {
         console.warn('Could not load chapter files:', error);
       }
     }
+    
+    // Merge loaded snippets from Google Docs with snippets from data.json
+    // This ensures snippets show up even if Google Doc creation failed
+    // Save original snippets from data.json before merging
+    const originalSnippets = { ...state.snippets };
+    const mergedSnippets = { ...state.snippets };
+    
+    // Add or update snippets from Google Docs
+    Object.keys(loadedSnippets).forEach(snippetId => {
+      mergedSnippets[snippetId] = loadedSnippets[snippetId];
+    });
+    
+    // If no Google Docs were loaded but we have snippets in data.json, keep them
+    if (Object.keys(loadedSnippets).length === 0 && Object.keys(state.snippets).length > 0) {
+      console.log('No Google Docs found, but data.json has snippets - keeping snippets from data.json');
+      // Keep all snippets from data.json (they're already in mergedSnippets from line above)
+    }
+    
+    // Ensure groups are created for all snippets
+    // This MUST run regardless of whether chapters folder exists
+    const validGroupIds = new Set();
+    Object.values(mergedSnippets).forEach(snippet => {
+      if (snippet.groupId) {
+        validGroupIds.add(snippet.groupId);
+      }
+    });
+    
+    // Build groups from data.json structure
+    const loadedGroups = {};
+    Object.keys(state.groups).forEach(groupId => {
+      const group = state.groups[groupId];
+      // Include group if it has snippets in mergedSnippets OR if it's in project.groupIds
+      if (validGroupIds.has(groupId) || state.project.groupIds.includes(groupId)) {
+        // Filter snippetIds to only include snippets that exist
+        let validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+        
+        // If this is the first group and validSnippetIds is empty, ensure snippets from data.json are included
+        // This ensures the initial chapter/snippet from data.json is preserved even if Google Doc wasn't created
+        if (validSnippetIds.length === 0 && groupId === state.project.groupIds[0] && group.snippetIds.length > 0) {
+          console.log('First group has no valid snippets, ensuring snippets from data.json are included');
+          // Add any missing snippets from data.json to mergedSnippets
+          group.snippetIds.forEach(sid => {
+            if (originalSnippets[sid] && !mergedSnippets[sid]) {
+              mergedSnippets[sid] = originalSnippets[sid];
+              console.log(`Added missing snippet ${sid} from data.json to mergedSnippets`);
+            }
+          });
+          // Recalculate validSnippetIds after adding missing snippets
+          validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+        }
+        
+        // Include group if it has valid snippets or if it's the first group (Chapter 1)
+        if (validSnippetIds.length > 0 || groupId === state.project.groupIds[0]) {
+          group.snippetIds = validSnippetIds;
+          loadedGroups[groupId] = group;
+          validGroupIds.add(groupId);
+        }
+      }
+    });
+    
+    // Update state.snippets with the final merged snippets
+    state.snippets = mergedSnippets;
+    
+    state.groups = loadedGroups;
+    state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
+      return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
+    });
+    
+    console.log('Final state after loading:', {
+      snippets: Object.keys(state.snippets),
+      groups: Object.keys(state.groups),
+      groupIds: state.project.groupIds
+    });
     
     // Ensure activeSnippetId is valid after loading
     // If activeSnippetId is not set or doesn't exist, set it to the first snippet of the first group
