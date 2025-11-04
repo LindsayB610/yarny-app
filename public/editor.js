@@ -106,9 +106,8 @@ const state = {
     wordGoal: 3000,
     genre: '',
     groupIds: [],
-    noteIds: [],
-    activeSnippetId: null,
-    activeNoteId: null,
+    snippetIds: [], // Unified: includes both chapter snippets and People/Places/Things snippets
+    activeSnippetId: null, // Unified: active snippet (chapter or People/Places/Things)
     activeRightTab: 'people',
     filters: {
       search: ''
@@ -120,8 +119,7 @@ const state = {
     }
   },
   groups: {},
-  snippets: {},
-  notes: {},
+  snippets: {}, // Unified: all snippets (chapters have groupId, People/Places/Things have kind)
   previewVersion: 1,
   // Drive integration
   drive: {
@@ -142,15 +140,16 @@ function initializeState() {
   // Clear all state
   state.groups = {};
   state.snippets = {};
-  state.notes = {};
   state.project.groupIds = [];
-  state.project.noteIds = [];
+  state.project.snippetIds = [];
   state.project.activeSnippetId = null;
 
   // Render empty UI
   renderStoryList();
   renderEditor();
-  renderNotesList();
+  renderSnippetsList();
+  // Ensure noteEditor textarea is hidden (notes now open in main editor)
+  document.getElementById('noteEditor').classList.add('hidden');
   updateFooter();
   updateGoalMeter();
   updateSaveStatus(); // Initialize save status and logout button warning
@@ -268,7 +267,31 @@ function renderStoryList() {
         <span class="snippet-word-count">${snippet.words} words</span>
       `;
       
-      snippetEl.addEventListener('click', () => {
+      snippetEl.addEventListener('click', async () => {
+        // Cancel any pending autosave timeout (we'll save manually)
+        clearTimeout(typingTimeout);
+        
+        // Save current editor content to in-memory state before switching
+        // This ensures no data loss when jumping between snippets
+        saveCurrentEditorContent();
+        
+        // Capture ID of previous snippet before switching
+        const previousSnippetId = state.project.activeSnippetId;
+        
+        // If switching from a different snippet, save it to Drive in background
+        if (previousSnippetId && previousSnippetId !== snippet.id) {
+          // Fire-and-forget save - don't block UI
+          // Use the saved in-memory state, not the editor (which will change)
+          (async () => {
+            try {
+              await saveItemToDriveById(previousSnippetId, null);
+            } catch (error) {
+              console.error('Background save failed (non-critical):', error);
+            }
+          })();
+        }
+        
+        // Switch immediately (responsive UI)
         state.project.activeSnippetId = snippet.id;
         renderStoryList();
         renderEditor();
@@ -326,103 +349,86 @@ function renderEditor() {
   updateSaveStatus();
 }
 
-function renderNotesList() {
-  const listEl = document.getElementById('notesList');
+function renderSnippetsList() {
+  const listEl = document.getElementById('notesList'); // Keep HTML ID for now
   listEl.innerHTML = '';
 
   const activeTab = state.project.activeRightTab;
-  const notes = state.project.noteIds
-    .map(id => state.notes[id])
-    .filter(note => note && note.kind === activeTab)
-    .sort((a, b) => a.position - b.position);
+  // Map tab names to snippet kinds
+  const kindMap = {
+    'people': 'person',
+    'places': 'place',
+    'things': 'thing'
+  };
+  const targetKind = kindMap[activeTab];
+  
+  // Filter snippets by kind (People/Places/Things snippets have kind, chapter snippets don't)
+  const snippets = state.project.snippetIds
+    .map(id => state.snippets[id])
+    .filter(snippet => snippet && snippet.kind === targetKind)
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  if (notes.length === 0) {
-    listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #6B7280; font-size: 13px;">No notes yet</div>';
+  if (snippets.length === 0) {
+    listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #6B7280; font-size: 13px;">No snippets yet</div>';
   } else {
-    notes.forEach(note => {
-      const noteEl = document.createElement('div');
-      noteEl.className = `note-item ${note.id === state.project.activeNoteId ? 'active' : ''}`;
-      noteEl.dataset.noteId = note.id;
-      noteEl.innerHTML = `
-        <div class="note-title">${escapeHtml(note.title)}</div>
-        <div class="note-excerpt">${escapeHtml(note.body.substring(0, 60))}${note.body.length > 60 ? '...' : ''}</div>
+    snippets.forEach(snippet => {
+      const snippetEl = document.createElement('div');
+      snippetEl.className = `note-item ${snippet.id === state.project.activeSnippetId ? 'active' : ''}`; // Keep CSS class for now
+      snippetEl.dataset.snippetId = snippet.id;
+      snippetEl.innerHTML = `
+        <div class="note-title">${escapeHtml(snippet.title)}</div>
+        <div class="note-excerpt">${escapeHtml(snippet.body.substring(0, 60))}${snippet.body.length > 60 ? '...' : ''}</div>
       `;
 
-      noteEl.addEventListener('click', () => {
-        state.project.activeNoteId = note.id;
-        renderNotesList();
-        renderNoteEditor();
+      snippetEl.addEventListener('click', async () => {
+        // Cancel any pending autosave timeout (we'll save manually)
+        clearTimeout(typingTimeout);
+        
+        // Save current editor content to in-memory state before switching
+        // This ensures no data loss when jumping between snippets
+        saveCurrentEditorContent();
+        
+        // Capture ID of previous snippet before switching
+        const previousSnippetId = state.project.activeSnippetId;
+        
+        // If switching from a different snippet, save it to Drive in background
+        if (previousSnippetId && previousSnippetId !== snippet.id) {
+          // Fire-and-forget save - don't block UI
+          (async () => {
+            try {
+              await saveItemToDriveById(previousSnippetId, null);
+            } catch (error) {
+              console.error('Background save failed (non-critical):', error);
+            }
+          })();
+        }
+        
+        // Switch immediately (responsive UI)
+        state.project.activeSnippetId = snippet.id;
+        renderSnippetsList();
+        renderEditor();
+        updateFooter();
       });
       
       // Right-click context menu
-      noteEl.addEventListener('contextmenu', (e) => {
+      snippetEl.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        showContextMenu(e, 'note', note.id);
+        showContextMenu(e, 'snippet', snippet.id);
       });
 
-      listEl.appendChild(noteEl);
+      listEl.appendChild(snippetEl);
     });
   }
   
-  // Add "New Note" button at the bottom
-  const newNoteBtn = document.createElement('button');
-  newNoteBtn.className = 'new-note-btn';
-  newNoteBtn.textContent = '+ New Note';
-  newNoteBtn.addEventListener('click', async () => {
-    await createNewNote();
+  // Add "New Snippet" button at the bottom
+  const newSnippetBtn = document.createElement('button');
+  newSnippetBtn.className = 'new-note-btn'; // Keep CSS class for now
+  newSnippetBtn.textContent = '+ New Snippet';
+  newSnippetBtn.addEventListener('click', async () => {
+    await createNewSnippet();
   });
-  listEl.appendChild(newNoteBtn);
+  listEl.appendChild(newSnippetBtn);
 }
-
-// Store the current save timeout and event listener to avoid duplicates
-let noteSaveTimeout = null;
-let noteSaveHandler = null;
-
-function renderNoteEditor() {
-  const editorEl = document.getElementById('noteEditor');
-  const textEl = document.getElementById('noteEditorText');
-  
-  // Remove previous event listener if it exists
-  if (noteSaveHandler && textEl) {
-    textEl.removeEventListener('input', noteSaveHandler);
-    noteSaveHandler = null;
-  }
-  
-  // Clear any pending save timeout
-  if (noteSaveTimeout) {
-    clearTimeout(noteSaveTimeout);
-    noteSaveTimeout = null;
-  }
-  
-  if (state.project.activeNoteId) {
-    const note = state.notes[state.project.activeNoteId];
-    if (note) {
-      editorEl.classList.remove('hidden');
-      textEl.value = note.body;
-      
-      // Auto-save on change
-      noteSaveHandler = () => {
-        clearTimeout(noteSaveTimeout);
-        noteSaveTimeout = setTimeout(async () => {
-          note.body = textEl.value;
-          renderNotesList();
-          
-          // Save to Drive
-          try {
-            await saveNoteToDrive(note);
-          } catch (error) {
-            console.error('Error saving note to Drive:', error);
-          }
-        }, 500);
-      };
-      
-      textEl.addEventListener('input', noteSaveHandler);
-    }
-  } else {
-    editorEl.classList.add('hidden');
-  }
-}
-
 
 // ============================================
 // Update Functions
@@ -434,8 +440,11 @@ function updateFooter() {
     : null;
 
   if (activeSnippet) {
-    document.getElementById('wordCount').textContent = `Words: ${activeSnippet.words}`;
-    document.getElementById('charCount').textContent = `Characters: ${activeSnippet.chars}`;
+    // Calculate word and char count if not already set (for People/Places/Things snippets)
+    const words = activeSnippet.words || (activeSnippet.body ? activeSnippet.body.trim().split(/\s+/).filter(w => w.length > 0).length : 0);
+    const chars = activeSnippet.chars || (activeSnippet.body ? activeSnippet.body.length : 0);
+    document.getElementById('wordCount').textContent = `Words: ${words}`;
+    document.getElementById('charCount').textContent = `Characters: ${chars}`;
   } else {
     document.getElementById('wordCount').textContent = 'Words: 0';
     document.getElementById('charCount').textContent = 'Characters: 0';
@@ -527,14 +536,110 @@ function updateWordCount() {
       updateFooter();
       updateGoalMeter();
       
-      // Update snippet in list if visible
+      // Update snippet in list if visible (check both chapter and People/Places/Things snippets)
       const snippetEl = document.querySelector(`[data-snippet-id="${snippet.id}"]`);
       if (snippetEl) {
         const wordCountEl = snippetEl.querySelector('.snippet-word-count');
         if (wordCountEl) {
           wordCountEl.textContent = `${words} words`;
         }
+        // Also update excerpt for People/Places/Things snippets
+        const excerptEl = snippetEl.querySelector('.note-excerpt');
+        if (excerptEl) {
+          excerptEl.textContent = `${escapeHtml(snippet.body.substring(0, 60))}${snippet.body.length > 60 ? '...' : ''}`;
+        }
       }
+    }
+  }
+}
+
+// Save current editor content to in-memory state (synchronous)
+// This ensures no data loss when switching between snippets
+function saveCurrentEditorContent() {
+  const editorEl = document.getElementById('editorContent');
+  const text = editorEl.textContent || '';
+  
+  if (state.project.activeSnippetId) {
+    const snippet = state.snippets[state.project.activeSnippetId];
+    if (snippet) {
+      snippet.body = text;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const chars = text.length;
+      snippet.words = words;
+      snippet.chars = chars;
+      snippet.updatedAt = new Date().toISOString();
+    }
+  }
+}
+
+// Save current editor content to Drive (async, non-blocking)
+// Returns a promise that resolves when save completes
+async function saveCurrentEditorToDrive() {
+  // First, save to in-memory state immediately
+  saveCurrentEditorContent();
+  
+  // Then save to Drive asynchronously
+  if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
+    const snippet = state.snippets[state.project.activeSnippetId];
+    try {
+      // If Drive file is being created in background, wait a bit for it to complete
+      if (snippet._creatingDriveFile && !snippet.driveFileId) {
+        let waited = 0;
+        while (snippet._creatingDriveFile && waited < 2000) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waited += 100;
+        }
+      }
+      
+      // Save to appropriate folder based on snippet type
+      if (snippet.kind) {
+        // People/Places/Things snippet - save to appropriate folder
+        await saveSnippetToDriveByKind(snippet);
+      } else {
+        // Chapter snippet - save to chapters folder
+        await saveSnippetToDrive(snippet);
+      }
+      
+      if (snippet._creatingDriveFile) {
+        snippet._creatingDriveFile = false;
+      }
+    } catch (error) {
+      console.error('Error saving snippet to Drive:', error);
+      throw error;
+    }
+  }
+}
+
+// Save a specific snippet to Drive (by ID, using in-memory state)
+// This is used when switching - saves the previous snippet without reading from editor
+async function saveItemToDriveById(snippetId, noteId) {
+  // Note: noteId parameter kept for backward compatibility but unused
+  if (snippetId && state.snippets[snippetId]) {
+    const snippet = state.snippets[snippetId];
+    try {
+      if (snippet._creatingDriveFile && !snippet.driveFileId) {
+        let waited = 0;
+        while (snippet._creatingDriveFile && waited < 2000) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waited += 100;
+        }
+      }
+      
+      // Save to appropriate folder based on snippet type
+      if (snippet.kind) {
+        // People/Places/Things snippet
+        await saveSnippetToDriveByKind(snippet);
+      } else {
+        // Chapter snippet
+        await saveSnippetToDrive(snippet);
+      }
+      
+      if (snippet._creatingDriveFile) {
+        snippet._creatingDriveFile = false;
+      }
+    } catch (error) {
+      console.error('Error saving snippet to Drive:', error);
+      throw error;
     }
   }
 }
@@ -577,39 +682,20 @@ function handleTypingStop() {
     state.project.editing.savingState = 'saving';
     updateSaveStatus();
     
-    // Save current snippet to Drive if active
-    if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
-      try {
-        const snippet = state.snippets[state.project.activeSnippetId];
-        // Update snippet body from editor
-        snippet.body = document.getElementById('editorContent').textContent || document.getElementById('editorContent').innerText || '';
-        
-        // If Drive file is being created in background, wait a bit for it to complete
-        // This prevents duplicate file creation
-        if (snippet._creatingDriveFile && !snippet.driveFileId) {
-          // Wait up to 2 seconds for background creation to complete
-          let waited = 0;
-          while (snippet._creatingDriveFile && waited < 2000) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            waited += 100;
-          }
-        }
-        
-        // Save to Drive (will create file if driveFileId is null, or update if it exists)
-        await saveSnippetToDrive(snippet);
-        
-        // Clear the background creation flag if it was set
-        if (snippet._creatingDriveFile) {
-          snippet._creatingDriveFile = false;
-        }
-      } catch (error) {
-        console.error('Error saving snippet to Drive:', error);
-      }
+    // Use the centralized save function
+    try {
+      await saveCurrentEditorToDrive();
+      
+      state.project.editing.savingState = 'saved';
+      state.project.editing.lastSavedAt = new Date().toISOString();
+      updateSaveStatus();
+    } catch (error) {
+      // Error already logged in saveCurrentEditorToDrive
+      // Still mark as saved since in-memory state is updated
+      state.project.editing.savingState = 'saved';
+      state.project.editing.lastSavedAt = new Date().toISOString();
+      updateSaveStatus();
     }
-    
-    state.project.editing.savingState = 'saved';
-    state.project.editing.lastSavedAt = new Date().toISOString();
-    updateSaveStatus();
     
     // Restore sidebars after 400ms idle
     setTimeout(() => {
@@ -905,27 +991,17 @@ async function saveStoryDataToDrive() {
   try {
     const files = await window.driveAPI.list(state.drive.storyFolderId);
     
-    // Save data.json
+    // Save data.json - all snippets unified (chapter snippets have groupId, People/Places/Things have kind)
     const storyData = {
       snippets: state.snippets,
       groups: state.groups,
+      // Legacy notes structure for backward compatibility (empty - all moved to snippets)
       notes: {
         people: {},
         places: {},
         things: {}
       },
     };
-    
-    // Organize notes by kind
-    Object.values(state.notes).forEach(note => {
-      if (note.kind === 'person') {
-        storyData.notes.people[note.id] = note;
-      } else if (note.kind === 'place') {
-        storyData.notes.places[note.id] = note;
-      } else if (note.kind === 'thing') {
-        storyData.notes.things[note.id] = note;
-      }
-    });
     
     const dataFile = files.files.find(f => f.name === 'data.json');
     await window.driveAPI.write(
@@ -966,87 +1042,93 @@ async function saveStoryDataToDrive() {
 window.addSnippetToGroup = addSnippetToGroup;
 
 // ============================================
-// Notes Management
+// Snippets Management (People/Places/Things)
 // ============================================
 
-// Create a new note based on the active tab
-async function createNewNote() {
+// Create a new snippet (People/Places/Things) based on the active tab
+async function createNewSnippet() {
   const activeTab = state.project.activeRightTab;
   
-  // Map tab names to note kinds
+  // Map tab names to snippet kinds
   const kindMap = {
     'people': 'person',
     'places': 'place',
     'things': 'thing'
   };
   
-  const noteKind = kindMap[activeTab] || 'person';
+  const snippetKind = kindMap[activeTab] || 'person';
   
-  // Count existing notes of this kind to generate a unique numbered title
-  const existingNotes = state.project.noteIds
-    .map(id => state.notes[id])
-    .filter(note => note && note.kind === noteKind);
+  // Count existing snippets of this kind to generate a unique numbered title
+  const existingSnippets = state.project.snippetIds
+    .map(id => state.snippets[id])
+    .filter(snippet => snippet && snippet.kind === snippetKind);
   
-  const noteNumber = existingNotes.length + 1;
+  const snippetNumber = existingSnippets.length + 1;
   
   // Generate title based on kind
   const titleMap = {
-    'person': `Person ${noteNumber}`,
-    'place': `Place ${noteNumber}`,
-    'thing': `Thing ${noteNumber}`
+    'person': `Person ${snippetNumber}`,
+    'place': `Place ${snippetNumber}`,
+    'thing': `Thing ${snippetNumber}`
   };
   
-  const noteTitle = titleMap[noteKind];
+  const snippetTitle = titleMap[snippetKind];
   
-  const noteId = 'note_' + Date.now();
-  const newNote = {
-    id: noteId,
+  const snippetId = 'snippet_' + Date.now();
+  const newSnippet = {
+    id: snippetId,
     projectId: 'default',
-    kind: noteKind,
-    title: noteTitle,
+    kind: snippetKind,
+    title: snippetTitle,
     body: '',
-    position: existingNotes.length,
-    driveFileId: null
+    words: 0,
+    chars: 0,
+    position: existingSnippets.length,
+    updatedAt: new Date().toISOString(),
+    version: 1,
+    driveFileId: null,
+    _creatingDriveFile: false
   };
   
-  state.notes[noteId] = newNote;
-  state.project.noteIds.push(noteId);
-  state.project.activeNoteId = noteId;
+  state.snippets[snippetId] = newSnippet;
+  state.project.snippetIds.push(snippetId);
+  state.project.activeSnippetId = snippetId;
   
   // Render UI immediately
-  renderNotesList();
-  renderNoteEditor();
+  renderSnippetsList();
+  renderEditor();
+  updateFooter();
   
-  // Focus the note editor
-  const textEl = document.getElementById('noteEditorText');
-  if (textEl) {
-    textEl.focus();
+  // Focus the main editor
+  const editorEl = document.getElementById('editorContent');
+  if (editorEl) {
+    editorEl.focus();
   }
   
   // Save to Drive in the background
   (async () => {
     try {
-      // Check if the appropriate folder exists for this note kind
+      // Check if the appropriate folder exists for this snippet kind
       const folderMap = {
         'person': 'people',
         'place': 'places',
         'thing': 'things'
       };
-      const folderKey = folderMap[noteKind];
+      const folderKey = folderMap[snippetKind];
       
       if (state.drive.folderIds[folderKey]) {
-        await saveNoteToDrive(newNote);
+        await saveSnippetToDriveByKind(newSnippet);
         await saveStoryDataToDrive();
       }
     } catch (error) {
-      console.error('Error creating note in Drive:', error);
-      // Don't show error to user - note will be saved on first edit
+      console.error('Error creating snippet in Drive:', error);
+      // Don't show error to user - snippet will be saved on first edit
     }
   })();
 }
 
 // Export for global access
-window.createNewNote = createNewNote;
+window.createNewSnippet = createNewSnippet;
 
 // ============================================
 // Color Picker
@@ -1197,11 +1279,6 @@ function openRenameModal() {
     if (!snippet) return;
     currentTitle = snippet.title;
     itemType = 'Snippet';
-  } else if (currentContextType === 'note') {
-    const note = state.notes[currentContextId];
-    if (!note) return;
-    currentTitle = note.title;
-    itemType = 'Note';
   } else {
     return;
   }
@@ -1255,18 +1332,21 @@ async function saveRename() {
       // Re-render
       renderStoryList();
     } else if (currentContextType === 'snippet') {
+      // Handle both chapter snippets and People/Places/Things snippets
       const snippet = state.snippets[currentContextId];
       if (!snippet) return;
       
       snippet.title = newName;
       
-      // Update Drive file name
+      // Update Drive file name based on snippet type
       if (snippet.driveFileId) {
         try {
-          // Rename the Drive file
-          await window.driveAPI.rename(snippet.driveFileId, `${newName}.doc`);
+          const extension = snippet.kind ? '.txt' : '.doc';
+          await window.driveAPI.rename(snippet.driveFileId, `${newName}${extension}`);
           // Also save content to ensure it's up to date
-          if (state.drive.folderIds.chapters) {
+          if (snippet.kind) {
+            await saveSnippetToDriveByKind(snippet);
+          } else if (state.drive.folderIds.chapters) {
             await saveSnippetToDrive(snippet);
           }
         } catch (error) {
@@ -1278,47 +1358,17 @@ async function saveRename() {
       // Save story data
       await saveStoryDataToDrive();
       
-      // Re-render
-      renderStoryList();
+      // Re-render based on snippet type
+      if (snippet.kind) {
+        renderSnippetsList();
+      } else {
+        renderStoryList();
+      }
       
       // Update editor if this is the active snippet
       if (state.project.activeSnippetId === snippet.id) {
         renderEditor();
-      }
-    } else if (currentContextType === 'note') {
-      const note = state.notes[currentContextId];
-      if (!note) return;
-      
-      note.title = newName;
-      
-      // Update Drive file name
-      if (note.driveFileId) {
-        try {
-          // Rename the Drive file (notes are .txt files)
-          await window.driveAPI.rename(note.driveFileId, `${newName}.txt`);
-        } catch (error) {
-          console.error('Error renaming note in Drive:', error);
-          // Continue even if Drive rename fails
-        }
-      }
-      
-      // Save note content to Drive (will create file if it doesn't exist)
-      try {
-        await saveNoteToDrive(note);
-      } catch (error) {
-        console.error('Error saving note to Drive:', error);
-        // Continue even if save fails
-      }
-      
-      // Save story data
-      await saveStoryDataToDrive();
-      
-      // Re-render
-      renderNotesList();
-      
-      // Update editor if this is the active note
-      if (state.project.activeNoteId === note.id) {
-        renderNoteEditor();
+        updateFooter();
       }
     }
     
@@ -1359,11 +1409,6 @@ function openDeleteModal() {
     if (!snippet) return;
     itemName = snippet.title;
     itemType = 'snippet';
-  } else if (currentContextType === 'note') {
-    const note = state.notes[currentContextId];
-    if (!note) return;
-    itemName = note.title;
-    itemType = 'note';
   } else {
     return;
   }
@@ -1425,9 +1470,7 @@ async function confirmDelete() {
       }
     } else if (currentContextType === 'snippet') {
       await deleteSnippet(currentContextId);
-    } else if (currentContextType === 'note') {
-      await deleteNote(currentContextId);
-    }
+    // Note: 'note' type removed - all are snippets now
     
     closeDeleteModal();
   } catch (error) {
@@ -1481,40 +1524,56 @@ async function deleteSnippet(snippetId) {
   renderStoryList();
 }
 
-async function deleteNote(noteId) {
-  const note = state.notes[noteId];
-  if (!note) return;
+async function deleteSnippet(snippetId) {
+  const snippet = state.snippets[snippetId];
+  if (!snippet) return;
   
   // Delete from Drive (move to trash)
-  if (note.driveFileId) {
+  if (snippet.driveFileId) {
     try {
-      await window.driveAPI.delete(note.driveFileId);
+      await window.driveAPI.delete(snippet.driveFileId);
     } catch (error) {
-      console.error('Error deleting note from Drive:', error);
+      console.error('Error deleting snippet from Drive:', error);
       // Continue with local deletion even if Drive deletion fails
     }
   }
   
-  // Remove from state
-  delete state.notes[noteId];
-  
-  // Remove from project noteIds
-  const noteIndex = state.project.noteIds.indexOf(noteId);
-  if (noteIndex > -1) {
-    state.project.noteIds.splice(noteIndex, 1);
+  // Remove from group if it's a chapter snippet
+  if (snippet.groupId) {
+    const group = state.groups[snippet.groupId];
+    if (group) {
+      const snippetIndex = group.snippetIds.indexOf(snippetId);
+      if (snippetIndex > -1) {
+        group.snippetIds.splice(snippetIndex, 1);
+      }
+    }
   }
   
-  // Clear active note if it was this one
-  if (state.project.activeNoteId === noteId) {
-    state.project.activeNoteId = null;
-    renderNoteEditor();
+  // Remove from state
+  delete state.snippets[snippetId];
+  
+  // Remove from project snippetIds
+  const snippetIndex = state.project.snippetIds.indexOf(snippetId);
+  if (snippetIndex > -1) {
+    state.project.snippetIds.splice(snippetIndex, 1);
+  }
+  
+  // Clear active snippet if it was this one
+  if (state.project.activeSnippetId === snippetId) {
+    state.project.activeSnippetId = null;
+    renderEditor();
+    updateFooter();
   }
   
   // Save to Drive
   await saveStoryDataToDrive();
   
   // Re-render
-  renderNotesList();
+  if (snippet.kind) {
+    renderSnippetsList();
+  } else {
+    renderStoryList();
+  }
 }
 
 // Export for global access
@@ -1527,7 +1586,7 @@ window.confirmDelete = confirmDelete;
 
 window.switchNotesTab = function(tab) {
   state.project.activeRightTab = tab;
-  state.project.activeNoteId = null;
+  state.project.activeSnippetId = null; // Clear active snippet when switching tabs
   
   // Update tab buttons
   document.querySelectorAll('.notes-tab').forEach(btn => {
@@ -1537,8 +1596,9 @@ window.switchNotesTab = function(tab) {
     }
   });
 
-  renderNotesList();
-  renderNoteEditor();
+  renderSnippetsList();
+  renderEditor(); // Clear editor when switching tabs
+  updateFooter();
 };
 
 // ============================================
@@ -1867,43 +1927,43 @@ async function saveSnippetToDrive(snippet) {
   }
 }
 
-// Save note to Drive
-async function saveNoteToDrive(note) {
+// Save snippet (People/Places/Things) to Drive by kind
+async function saveSnippetToDriveByKind(snippet) {
   let folderId = null;
   
-  // Determine which folder based on note kind
-  if (note.kind === 'person') {
+  // Determine which folder based on snippet kind
+  if (snippet.kind === 'person') {
     folderId = state.drive.folderIds.people;
-  } else if (note.kind === 'place') {
+  } else if (snippet.kind === 'place') {
     folderId = state.drive.folderIds.places;
-  } else if (note.kind === 'thing') {
+  } else if (snippet.kind === 'thing') {
     folderId = state.drive.folderIds.things;
   }
   
   if (!folderId) {
-    console.warn('Folder not found for note kind:', note.kind);
+    console.warn('Folder not found for snippet kind:', snippet.kind);
     return;
   }
   
   try {
-    const fileName = `${note.title}.txt`;
-    const content = note.body || '';
+    const fileName = `${snippet.title}.txt`;
+    const content = snippet.body || '';
     const result = await window.driveAPI.write(
       fileName,
       content,
-      note.driveFileId || null,
+      snippet.driveFileId || null,
       folderId,
       'text/plain'
     );
     
-    // Store Drive file ID in note
-    if (!note.driveFileId) {
-      note.driveFileId = result.id;
+    // Store Drive file ID in snippet
+    if (!snippet.driveFileId) {
+      snippet.driveFileId = result.id;
     }
     
     return result;
   } catch (error) {
-    console.error('Error saving note to Drive:', error);
+    console.error('Error saving snippet to Drive:', error);
     throw error;
   }
 }
@@ -1941,7 +2001,6 @@ async function loadStoryFromDrive(storyFolderId) {
     // Clear existing state first
     state.snippets = {};
     state.groups = {};
-    state.notes = {};
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
     try {
@@ -1955,9 +2014,7 @@ async function loadStoryFromDrive(storyFolderId) {
           
           // Load groups and structure from data.json
           if (parsed.groups) {
-            // Only keep groups that have snippets or are valid
             state.groups = parsed.groups;
-            // Update project groupIds to match what we have
             state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
               return (state.groups[a].position || 0) - (state.groups[b].position || 0);
             });
@@ -1968,18 +2025,21 @@ async function loadStoryFromDrive(storyFolderId) {
             state.snippets = parsed.snippets;
           }
           
+          // Merge legacy notes into snippets (for backward compatibility)
           if (parsed.notes) {
-            // Merge notes by kind
             if (parsed.notes.people) {
-              Object.assign(state.notes, parsed.notes.people);
+              Object.assign(state.snippets, parsed.notes.people);
             }
             if (parsed.notes.places) {
-              Object.assign(state.notes, parsed.notes.places);
+              Object.assign(state.snippets, parsed.notes.places);
             }
             if (parsed.notes.things) {
-              Object.assign(state.notes, parsed.notes.things);
+              Object.assign(state.snippets, parsed.notes.things);
             }
           }
+          
+          // Update snippetIds to include all snippets
+          state.project.snippetIds = Object.keys(state.snippets);
         }
       }
     } catch (error) {
@@ -2190,7 +2250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Render UI with loaded data
       renderStoryList();
       renderEditor();
-      renderNotesList();
+      renderSnippetsList();
+      // Ensure noteEditor textarea is hidden (notes now open in main editor)
+      document.getElementById('noteEditor').classList.add('hidden');
       updateFooter();
       updateGoalMeter();
       updateSaveStatus(); // Initialize save status and logout button warning
@@ -2203,6 +2265,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     // No story loaded, use sample data
     initializeState();
+    // Ensure noteEditor textarea is hidden (notes now open in main editor)
+    document.getElementById('noteEditor').classList.add('hidden');
     updateSaveStatus(); // Initialize save status and logout button warning
   }
 
