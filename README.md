@@ -37,10 +37,13 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Search**: Full-text search across all snippets and chapters
 - **Tags**: Create and apply tags to snippets for better organization
 - **Tag Filtering**: Filter snippets by selected tags
-- **Notes System**: Three types of notes:
-  - **People**: Character notes and details
-  - **Places**: Location and setting notes
-  - **Things**: Object and item notes
+- **Snippets System**: All content is organized as snippets:
+  - **Chapter Snippets**: Writing snippets within chapters (stored in Chapters folder)
+  - **People Snippets**: Character notes and details (stored in People folder)
+  - **Places Snippets**: Location and setting notes (stored in Places folder)
+  - **Things Snippets**: Object and item notes (stored in Things folder)
+- **Unified Editor**: All snippets open in the main editor window for consistent editing experience
+- **Background Autosave**: Changes are automatically saved when switching between snippets
 - **Word Count Tracking**: Real-time word and character counts
 - **Goal Tracking**: Set word count goals with visual progress indicator
 - **Auto-Save**: Automatic saving to Google Drive as you write
@@ -231,12 +234,12 @@ yarny-app/
 1. All stories are stored as folders in a `Yarny` folder in Google Drive
 2. The `Yarny` folder is automatically created on first story creation
 3. Each story contains organized subfolders:
-   - `Snippets`: Individual writing snippets
-   - `Chapters`: Chapter/group metadata
-   - `People`, `Places`, `Things`: Note folders
+   - `Chapters`: Chapter snippets stored as Google Docs
+   - `People`, `Places`, `Things`: Snippets stored as text files
 4. Story data is stored as JSON files within each story folder
-5. Snippet content is stored as Google Docs for rich text support
-6. Stories can be deleted from the UI (with optional Drive deletion)
+5. Chapter snippets are stored as Google Docs for rich text support
+6. People/Places/Things snippets are stored as text files
+7. Stories can be deleted from the UI (with optional Drive deletion)
 
 ### Editor Features
 
@@ -248,9 +251,10 @@ yarny-app/
 6. **Search**: Searches across snippet titles and content
 7. **Tags**: Create tags and apply to snippets for organization
 8. **Tag Filtering**: Show only snippets matching selected tags
-9. **Notes**: Three-tab note system (People, Places, Things)
-10. **Auto-Save**: Changes are automatically saved to Drive
-11. **Word Count**: Real-time tracking with goal progress indicator
+9. **Snippets**: Unified snippet system - all content (chapters, people, places, things) uses snippets
+10. **Background Autosave**: Changes automatically save when switching between snippets
+11. **Auto-Save**: Changes are automatically saved to Drive
+12. **Word Count**: Real-time tracking with goal progress indicator
 
 ## Development
 
