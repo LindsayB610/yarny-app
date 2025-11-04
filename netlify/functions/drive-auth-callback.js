@@ -129,15 +129,16 @@ exports.handler = async (event) => {
   // Use email from state parameter (not from session cookie)
   // This allows OAuth to work even if session cookie isn't sent due to SameSite=Strict
 
-  // Determine redirect URI
+  // Determine redirect URI - must match exactly what's configured in Google Cloud Console
   const host = event.headers.host || event.headers['x-forwarded-host'];
   const protocol = host?.includes('localhost') ? 'http' : 'https';
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 
+  const redirectUri = process.env.GDRIVE_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || 
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
 
   console.log('Callback received - Redirect URI:', redirectUri);
   console.log('Host:', host);
   console.log('Protocol:', protocol);
+  console.log('Expected redirect URI (must match Google Cloud Console):', redirectUri);
 
   // Exchange code for tokens
   const oauth2Client = new OAuth2Client(
@@ -149,6 +150,7 @@ exports.handler = async (event) => {
   try {
     console.log('Attempting token exchange...');
     console.log('Redirect URI:', redirectUri);
+    console.log('Client ID (first 20 chars):', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
     console.log('Code present:', !!code);
     console.log('Code length:', code?.length);
     
@@ -179,20 +181,28 @@ exports.handler = async (event) => {
         'Location': '/stories.html?drive_auth_success=true'
       }
     };
-  } catch (error) {
-    console.error('Token exchange error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error response:', error.response?.data);
-    
-    // More detailed error message
-    let errorMessage = 'Token exchange failed';
-    if (error.message) {
-      errorMessage += ': ' + error.message;
-    }
-    if (error.response?.data?.error_description) {
-      errorMessage += ' - ' + error.response.data.error_description;
-    }
+         } catch (error) {
+         console.error('Token exchange error:', error);
+         console.error('Error message:', error.message);
+         console.error('Error code:', error.code);
+         console.error('Error response:', error.response?.data);
+         console.error('Full error object:', JSON.stringify(error, null, 2));
+         
+         // More detailed error message
+         let errorMessage = 'Token exchange failed';
+         if (error.message) {
+           errorMessage += ': ' + error.message;
+         }
+         if (error.response?.data?.error_description) {
+           errorMessage += ' - ' + error.response.data.error_description;
+         }
+         if (error.response?.data?.error === 'invalid_client') {
+           errorMessage += '\n\nTroubleshooting:';
+           errorMessage += '\n1. Verify GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET in Netlify env vars';
+           errorMessage += '\n2. Check redirect URI matches Google Cloud Console exactly: ' + redirectUri;
+           errorMessage += '\n3. Ensure Google Drive API is enabled for this OAuth client\'s project';
+           errorMessage += '\n4. Verify the OAuth client exists and is active in Google Cloud Console';
+         }
     
     return {
       statusCode: 302,

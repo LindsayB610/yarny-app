@@ -53,11 +53,14 @@ exports.handler = async (event) => {
   // Use SameSite=Lax to allow cookie to be sent on OAuth redirects
   const stateCookie = `drive_auth_state=${randomState}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`;
   
-  // Determine redirect URI
+  // Determine redirect URI - must match exactly what's configured in Google Cloud Console
   const host = event.headers.host || event.headers['x-forwarded-host'];
   const protocol = host?.includes('localhost') ? 'http' : 'https';
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 
+  const redirectUri = process.env.GDRIVE_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || 
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
+  
+  console.log('Drive auth initiated - Redirect URI:', redirectUri);
+  console.log('Using Client ID (first 20 chars):', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
 
   // Create OAuth2 client
   const oauth2Client = new OAuth2Client(
