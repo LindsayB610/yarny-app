@@ -15,7 +15,7 @@ async function getUserEmailFromSession(event) {
   }
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -28,7 +28,7 @@ exports.handler = async (event) => {
   console.log('Drive list - looking for tokens for email:', email);
 
   try {
-    const drive = await getAuthenticatedDriveClient(email);
+    const drive = await getAuthenticatedDriveClient(email, context);
     
     const { folderId, pageToken } = event.queryStringParameters || {};
     

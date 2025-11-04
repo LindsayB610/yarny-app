@@ -15,7 +15,7 @@ async function getUserEmailFromSession(event) {
   }
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -31,7 +31,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'fileId required' }) };
     }
 
-    const drive = await getAuthenticatedDriveClient(email);
+    const drive = await getAuthenticatedDriveClient(email, context);
     
     // Get file metadata first
     const fileMetadata = await drive.files.get({

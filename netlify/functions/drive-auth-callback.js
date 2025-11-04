@@ -73,7 +73,7 @@ async function getUserEmailFromSession(event) {
   }
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -241,7 +241,7 @@ exports.handler = async (event) => {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date
-    });
+    }, context);
     
     console.log('Tokens saved successfully for:', email);
 

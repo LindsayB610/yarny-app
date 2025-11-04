@@ -15,7 +15,7 @@ async function getUserEmailFromSession(event) {
   }
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const drive = await getAuthenticatedDriveClient(email);
+    const drive = await getAuthenticatedDriveClient(email, context);
     const YARNY_STORIES_FOLDER = 'yarny-stories';
     
     // Search for yarny-stories folder

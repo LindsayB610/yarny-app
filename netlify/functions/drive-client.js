@@ -32,10 +32,12 @@ function validateClientSecret(clientSecret) {
   return { valid: true };
 }
 
-async function getTokens(email) {
+async function getTokens(email, context = {}) {
   try {
     const store = getStore({
-      name: 'drive-tokens'
+      name: 'drive-tokens',
+      siteID: context.site?.id || process.env.SITE_ID,
+      token: context.netlify?.authlifyToken || process.env.NETLIFY_BLOBS_TOKEN
     });
     
     let allTokens = {};
@@ -60,10 +62,12 @@ async function getTokens(email) {
   }
 }
 
-async function saveTokens(email, tokens) {
+async function saveTokens(email, tokens, context = {}) {
   try {
     const store = getStore({
-      name: 'drive-tokens'
+      name: 'drive-tokens',
+      siteID: context.site?.id || process.env.SITE_ID,
+      token: context.netlify?.authlifyToken || process.env.NETLIFY_BLOBS_TOKEN
     });
     
     let allTokens = {};
@@ -113,7 +117,7 @@ async function refreshAccessToken(email, refreshToken) {
   return credentials;
 }
 
-async function getAuthenticatedDriveClient(email) {
+async function getAuthenticatedDriveClient(email, context = {}) {
   if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
     throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
   }
@@ -128,7 +132,7 @@ async function getAuthenticatedDriveClient(email) {
     throw new Error(`Invalid credentials format: ${errors.join('; ')}`);
   }
 
-  let tokens = await getTokens(email);
+  let tokens = await getTokens(email, context);
   
   if (!tokens) {
     throw new Error('No Drive tokens found. Please authorize Drive access.');
@@ -153,7 +157,7 @@ async function getAuthenticatedDriveClient(email) {
       expiry_date: newTokens.expiry_date
     };
     
-    await saveTokens(email, tokens);
+    await saveTokens(email, tokens, context);
   }
 
   // Create OAuth2 client with current tokens

@@ -15,7 +15,7 @@ async function getUserEmailFromSession(event) {
   }
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -35,7 +35,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const drive = await getAuthenticatedDriveClient(email);
+    const drive = await getAuthenticatedDriveClient(email, context);
     const fileBuffer = Buffer.from(content, 'utf8');
 
     if (fileId) {
