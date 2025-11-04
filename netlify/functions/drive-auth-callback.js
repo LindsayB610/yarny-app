@@ -48,10 +48,11 @@ exports.handler = async (event) => {
 
   console.log('Drive OAuth credentials check:');
   console.log('Client ID present:', !!GDRIVE_CLIENT_ID);
-  console.log('Client ID length:', GDRIVE_CLIENT_ID?.length);
+  console.log('Client ID length (after trim):', GDRIVE_CLIENT_ID?.length);
   console.log('Client ID prefix:', GDRIVE_CLIENT_ID?.substring(0, 20) + '...');
+  console.log('Client ID suffix:', '...' + GDRIVE_CLIENT_ID?.substring(GDRIVE_CLIENT_ID.length - 10));
   console.log('Client Secret present:', !!GDRIVE_CLIENT_SECRET);
-  console.log('Client Secret length:', GDRIVE_CLIENT_SECRET?.length);
+  console.log('Client Secret length (after trim):', GDRIVE_CLIENT_SECRET?.length);
 
   const { code, state, error } = event.queryStringParameters || {};
 
