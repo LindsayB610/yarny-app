@@ -378,31 +378,36 @@ if (urlParams.get('drive_auth_success') === 'true') {
 }
 
 // Logout function
-window.logout = function() {
+window.logout = async function() {
   // Disable Google auto-select if available
   if (window.google && window.google.accounts && window.google.accounts.id) {
     window.google.accounts.id.disableAutoSelect();
   }
   
-  // Clear all auth data
+  // Clear all auth data from localStorage
   localStorage.removeItem('yarny_auth');
   localStorage.removeItem('yarny_user');
   localStorage.removeItem('yarny_current_story');
   
-  // Clear cookies with proper flags to ensure they're deleted
-  // Need to match the flags used when setting (Secure, SameSite=Strict)
-  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict';
+  // Call server-side logout to clear HttpOnly cookies
+  try {
+    await fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include' // Important: include cookies in the request
+    });
+  } catch (error) {
+    console.error('Logout request failed:', error);
+    // Continue with logout anyway
+  }
+  
+  // Clear client-side cookies as backup
+  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
   document.cookie = 'session=' + cookieOptions;
   document.cookie = 'auth=' + cookieOptions;
   document.cookie = 'drive_auth_state=' + cookieOptions;
   
-  // Also try clearing without flags (for http/localhost)
-  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-  document.cookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-  
-  // Force redirect to login page
-  window.location.href = '/';
+  // Force redirect to login page with a flag to prevent auto-redirect
+  window.location.href = '/?logout=true';
 };
 
 // Export for global access

@@ -31,6 +31,14 @@ function isTokenExpired(token) {
 
 // Check if already authenticated
 function checkAuth() {
+  // Don't auto-redirect if this is a logout action
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('logout') === 'true') {
+    // Clean up the URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return; // Stay on login page
+  }
+  
   // Check localStorage first (faster)
   const localStorageAuth = localStorage.getItem('yarny_auth');
   
@@ -63,6 +71,10 @@ function checkAuth() {
       document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
   }
+  
+  // Check for HttpOnly session cookie by making a request to verify
+  // If session cookie exists and is valid, it will redirect
+  // If not, we'll stay on the login page
 }
 
 // Show/hide forms
@@ -226,9 +238,36 @@ window.signInWithGoogle = function() {
 };
 
 // Logout function
-window.logout = function() {
-  google.accounts.id.disableAutoSelect();
-  showLogin();
+window.logout = async function() {
+  // Disable Google auto-select
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+  
+  // Clear all auth data from localStorage
+  localStorage.removeItem('yarny_auth');
+  localStorage.removeItem('yarny_user');
+  localStorage.removeItem('yarny_current_story');
+  
+  // Call server-side logout to clear HttpOnly cookies
+  try {
+    await fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include' // Important: include cookies in the request
+    });
+  } catch (error) {
+    console.error('Logout request failed:', error);
+    // Continue with logout anyway
+  }
+  
+  // Clear client-side cookies as backup
+  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+  document.cookie = 'session=' + cookieOptions;
+  document.cookie = 'auth=' + cookieOptions;
+  document.cookie = 'drive_auth_state=' + cookieOptions;
+  
+  // Redirect to login page with a flag to prevent auto-redirect
+  window.location.href = '/?logout=true';
 };
 
 // Initialize when page loads

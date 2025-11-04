@@ -953,18 +953,37 @@ function checkStorySelected() {
 }
 
 // Logout function
-window.logout = function() {
-  // Clear all auth data
+window.logout = async function() {
+  // Disable Google auto-select if available
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+  
+  // Clear all auth data from localStorage
   localStorage.removeItem('yarny_auth');
   localStorage.removeItem('yarny_user');
   localStorage.removeItem('yarny_current_story');
   
-  // Clear cookies
-  document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  // Call server-side logout to clear HttpOnly cookies
+  const API_BASE = '/.netlify/functions';
+  try {
+    await fetch(`${API_BASE}/logout`, {
+      method: 'POST',
+      credentials: 'include' // Important: include cookies in the request
+    });
+  } catch (error) {
+    console.error('Logout request failed:', error);
+    // Continue with logout anyway
+  }
   
-  // Redirect to login
-  window.location.href = '/';
+  // Clear client-side cookies as backup
+  const cookieOptions = '; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+  document.cookie = 'session=' + cookieOptions;
+  document.cookie = 'auth=' + cookieOptions;
+  document.cookie = 'drive_auth_state=' + cookieOptions;
+  
+  // Force redirect to login page with a flag to prevent auto-redirect
+  window.location.href = '/?logout=true';
 };
 
 // Get current story info
