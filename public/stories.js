@@ -122,12 +122,37 @@ function checkAuth() {
 
 // Check Drive authorization status
 async function checkDriveAuth() {
+  // Wait for driveAPI to be available
+  if (!window.driveAPI) {
+    console.log('driveAPI not loaded yet, waiting...');
+    // Wait up to 2 seconds for driveAPI to load
+    for (let i = 0; i < 20; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (window.driveAPI) break;
+    }
+    if (!window.driveAPI) {
+      console.error('driveAPI failed to load');
+      return false;
+    }
+  }
+  
   try {
     const isAuthorized = await window.driveAPI.checkAuth();
+    console.log('Drive auth check result:', isAuthorized);
     isDriveAuthorized = isAuthorized;
     return isAuthorized;
   } catch (error) {
     console.error('Error checking Drive auth:', error);
+    // If error contains tokens or authorization, assume not authorized
+    if (error.message && (
+      error.message.includes('No Drive tokens') || 
+      error.message.includes('authorize') ||
+      error.message.includes('401') ||
+      error.message.includes('Not authenticated')
+    )) {
+      return false;
+    }
+    // For other errors, still return false to show prompt
     return false;
   }
 }

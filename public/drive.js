@@ -103,14 +103,54 @@ async function writeDriveFile(fileName, content, fileId = null, parentFolderId =
 // Check if Drive is authorized
 async function checkDriveAuth() {
   try {
-    // Try to list files - if it fails with auth error, not authorized
-    await listDriveFiles();
-    return true;
-  } catch (error) {
-    if (error.message.includes('No Drive tokens') || error.message.includes('authorize')) {
+    // Try to call a simple Drive API endpoint - if it fails with auth error, not authorized
+    const response = await fetch('/.netlify/functions/drive-list', {
+      method: 'GET',
+      credentials: 'include'
+    });
+    
+    if (response.status === 401) {
+      console.log('Drive not authorized: 401 Unauthorized');
       return false;
     }
-    throw error; // Re-throw other errors
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || response.statusText;
+      
+      // Check if error indicates missing authorization
+      if (
+        errorMessage.includes('No Drive tokens') || 
+        errorMessage.includes('authorize') ||
+        errorMessage.includes('Not authenticated') ||
+        errorMessage.includes('401')
+      ) {
+        console.log('Drive not authorized:', errorMessage);
+        return false;
+      }
+      
+      // Other errors might mean we're authorized but something else went wrong
+      // In that case, return true since we got past auth check
+      console.log('Drive API error (but past auth):', errorMessage);
+      return true;
+    }
+    
+    // If we get here, we successfully called the API
+    console.log('Drive is authorized');
+    return true;
+  } catch (error) {
+    console.log('Drive auth check error:', error.message);
+    // Check error message for auth-related keywords
+    if (
+      error.message.includes('No Drive tokens') || 
+      error.message.includes('authorize') ||
+      error.message.includes('Not authenticated') ||
+      error.message.includes('401')
+    ) {
+      return false;
+    }
+    // For network errors, assume not authorized to be safe
+    return false;
   }
 }
 
