@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const DOCS_SCOPE = 'https://www.googleapis.com/auth/documents';
 
 // Validate client ID format
 function validateClientId(clientId) {
@@ -149,9 +150,10 @@ exports.handler = async (event) => {
   );
 
   // Generate authorization URL
+  // Include both Drive and Docs API scopes since we create/edit Google Docs
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Required to get refresh token
-    scope: [DRIVE_SCOPE],
+    scope: [DRIVE_SCOPE, DOCS_SCOPE],
     state: state,
     prompt: 'consent' // Force consent screen to get refresh token
   });
