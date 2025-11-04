@@ -1332,29 +1332,42 @@ async function loadStoryFromDrive(storyFolderId) {
           }
         }
         
-        // Update state with loaded snippets
-        state.snippets = loadedSnippets;
+        // Merge loaded snippets from Google Docs with snippets from data.json
+        // This ensures snippets show up even if Google Doc creation failed
+        const mergedSnippets = { ...state.snippets };
         
-        // Ensure groups are created for all snippets, even if they don't have matching Google Docs yet
-        // This preserves the structure from data.json if Google Docs are still being created
+        // Add or update snippets from Google Docs
+        Object.keys(loadedSnippets).forEach(snippetId => {
+          mergedSnippets[snippetId] = loadedSnippets[snippetId];
+        });
+        
+        // If no Google Docs were loaded but we have snippets in data.json, keep them
+        if (Object.keys(loadedSnippets).length === 0 && Object.keys(state.snippets).length > 0) {
+          console.log('No Google Docs found, but data.json has snippets - keeping snippets from data.json');
+          // Keep all snippets from data.json
+          Object.keys(state.snippets).forEach(snippetId => {
+            mergedSnippets[snippetId] = state.snippets[snippetId];
+          });
+        }
+        
+        state.snippets = mergedSnippets;
+        
+        // Ensure groups are created for all snippets
         const validGroupIds = new Set();
-        Object.values(loadedSnippets).forEach(snippet => {
+        Object.values(mergedSnippets).forEach(snippet => {
           if (snippet.groupId) {
             validGroupIds.add(snippet.groupId);
           }
         });
         
-        // Also include groups from data.json that should exist (like Chapter 1)
-        // This ensures we show the structure even if Google Docs aren't loaded yet
+        // Build groups from data.json structure
         Object.keys(state.groups).forEach(groupId => {
           const group = state.groups[groupId];
-          // Include group if it has snippets in loadedSnippets OR if it's in project.groupIds
-          // (meaning it should exist according to data.json)
+          // Include group if it has snippets in mergedSnippets OR if it's in project.groupIds
           if (validGroupIds.has(groupId) || state.project.groupIds.includes(groupId)) {
-            // Filter snippetIds to only include loaded snippets
-            const validSnippetIds = group.snippetIds.filter(sid => loadedSnippets[sid]);
-            // Only include group if it has valid snippets or if it's the first group (Chapter 1)
-            // This ensures Chapter 1 shows up even if the snippet hasn't loaded yet
+            // Filter snippetIds to only include snippets that exist
+            const validSnippetIds = group.snippetIds.filter(sid => mergedSnippets[sid]);
+            // Include group if it has valid snippets or if it's the first group (Chapter 1)
             if (validSnippetIds.length > 0 || groupId === state.project.groupIds[0]) {
               group.snippetIds = validSnippetIds;
               loadedGroups[groupId] = group;
@@ -1368,14 +1381,11 @@ async function loadStoryFromDrive(storyFolderId) {
           return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
         });
         
-        // If we have groups but no snippets loaded, ensure the first group structure is preserved
-        if (state.project.groupIds.length > 0 && Object.keys(loadedSnippets).length === 0) {
-          // Keep the first group even without snippets - it will be populated when Google Doc loads
-          const firstGroupId = state.project.groupIds[0];
-          if (state.groups[firstGroupId]) {
-            state.groups[firstGroupId].snippetIds = [];
-          }
-        }
+        console.log('Final state after loading:', {
+          snippets: Object.keys(state.snippets),
+          groups: Object.keys(state.groups),
+          groupIds: state.project.groupIds
+        });
       } catch (error) {
         console.warn('Could not load chapter files:', error);
       }
