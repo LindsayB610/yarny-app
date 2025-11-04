@@ -256,7 +256,32 @@ exports.handler = async (event, context) => {
             if (error.response) {
               console.error('Error response:', error.response.data);
             }
-            // Re-throw so the error is visible
+            
+            // Check if this is a scope/authentication issue
+            if (error.status === 401 || error.code === 401) {
+              // This likely means the OAuth tokens don't have the Google Docs API scope
+              // Clear tokens so user needs to re-authorize with new scopes
+              const { getTokens, saveTokens } = require('./drive-client');
+              const tokens = await getTokens(email);
+              if (tokens) {
+                // Delete tokens to force re-authorization
+                await saveTokens(email, null);
+                console.log('Cleared tokens due to missing Docs API scope - user needs to re-authorize');
+              }
+              
+              // Return a specific error that the frontend can handle
+              return {
+                statusCode: 403,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  error: 'MISSING_DOCS_SCOPE',
+                  message: 'OAuth tokens are missing Google Docs API scope. Please re-authorize Drive access to enable Google Docs creation.',
+                  requiresReauth: true
+                })
+              };
+            }
+            
+            // Re-throw other errors
             throw error;
           }
         }

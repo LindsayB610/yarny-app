@@ -495,7 +495,18 @@ async function initializeStoryStructure(storyFolderId) {
     } catch (error) {
       console.error('Error creating opening scene Google Doc:', error);
       console.error('Error details:', error.message, error.stack);
+      
+      // Check if this is a scope issue
+      if (error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.message?.includes('MISSING_DOCS_SCOPE')) {
+        // Show user-friendly error and prompt re-authorization
+        alert('Your Drive authorization needs to be updated to support Google Docs. Please re-authorize Drive access.');
+        // Redirect to authorize Drive again
+        window.location.href = '/.netlify/functions/drive-auth';
+        return { folders: createdFolders, projectData, initialState };
+      }
+      
       // Continue anyway - the data.json has the content
+      console.warn('Continuing without Google Doc - data.json has the content');
     }
 
     return { folders: createdFolders, projectData, initialState };
