@@ -293,6 +293,13 @@ async function initialize() {
     return;
   }
   
+  // Setup logout button (always available in header)
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn && !logoutBtn.dataset.listenerAttached) {
+    logoutBtn.addEventListener('click', window.logout);
+    logoutBtn.dataset.listenerAttached = 'true';
+  }
+  
   // Check Drive authorization
   const driveAuthorized = await checkDriveAuth();
   
@@ -324,12 +331,6 @@ async function initialize() {
   } catch (error) {
     console.error('Error loading stories:', error);
     alert('Failed to load stories: ' + error.message);
-  }
-  
-  // Logout button
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', window.logout);
   }
   
   // New story button
