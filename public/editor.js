@@ -348,31 +348,55 @@ function renderNotesList() {
 
   if (notes.length === 0) {
     listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #6B7280; font-size: 13px;">No notes yet</div>';
-    return;
-  }
+  } else {
+    notes.forEach(note => {
+      const noteEl = document.createElement('div');
+      noteEl.className = `note-item ${note.id === state.project.activeNoteId ? 'active' : ''}`;
+      noteEl.dataset.noteId = note.id;
+      noteEl.innerHTML = `
+        <div class="note-title">${escapeHtml(note.title)}</div>
+        <div class="note-excerpt">${escapeHtml(note.body.substring(0, 60))}${note.body.length > 60 ? '...' : ''}</div>
+      `;
 
-  notes.forEach(note => {
-    const noteEl = document.createElement('div');
-    noteEl.className = `note-item ${note.id === state.project.activeNoteId ? 'active' : ''}`;
-    noteEl.dataset.noteId = note.id;
-    noteEl.innerHTML = `
-      <div class="note-title">${escapeHtml(note.title)}</div>
-      <div class="note-excerpt">${escapeHtml(note.body.substring(0, 60))}${note.body.length > 60 ? '...' : ''}</div>
-    `;
+      noteEl.addEventListener('click', () => {
+        state.project.activeNoteId = note.id;
+        renderNotesList();
+        renderNoteEditor();
+      });
 
-    noteEl.addEventListener('click', () => {
-      state.project.activeNoteId = note.id;
-      renderNotesList();
-      renderNoteEditor();
+      listEl.appendChild(noteEl);
     });
-
-    listEl.appendChild(noteEl);
+  }
+  
+  // Add "New Note" button at the bottom
+  const newNoteBtn = document.createElement('button');
+  newNoteBtn.className = 'new-note-btn';
+  newNoteBtn.textContent = '+ New Note';
+  newNoteBtn.addEventListener('click', async () => {
+    await createNewNote();
   });
+  listEl.appendChild(newNoteBtn);
 }
+
+// Store the current save timeout and event listener to avoid duplicates
+let noteSaveTimeout = null;
+let noteSaveHandler = null;
 
 function renderNoteEditor() {
   const editorEl = document.getElementById('noteEditor');
   const textEl = document.getElementById('noteEditorText');
+  
+  // Remove previous event listener if it exists
+  if (noteSaveHandler && textEl) {
+    textEl.removeEventListener('input', noteSaveHandler);
+    noteSaveHandler = null;
+  }
+  
+  // Clear any pending save timeout
+  if (noteSaveTimeout) {
+    clearTimeout(noteSaveTimeout);
+    noteSaveTimeout = null;
+  }
   
   if (state.project.activeNoteId) {
     const note = state.notes[state.project.activeNoteId];
@@ -381,10 +405,9 @@ function renderNoteEditor() {
       textEl.value = note.body;
       
       // Auto-save on change
-      let saveTimeout;
-      textEl.addEventListener('input', () => {
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(async () => {
+      noteSaveHandler = () => {
+        clearTimeout(noteSaveTimeout);
+        noteSaveTimeout = setTimeout(async () => {
           note.body = textEl.value;
           renderNotesList();
           
@@ -395,7 +418,9 @@ function renderNoteEditor() {
             console.error('Error saving note to Drive:', error);
           }
         }, 500);
-      });
+      };
+      
+      textEl.addEventListener('input', noteSaveHandler);
     }
   } else {
     editorEl.classList.add('hidden');
@@ -1023,6 +1048,89 @@ async function saveStoryDataToDrive() {
 
 // Export for global access
 window.addSnippetToGroup = addSnippetToGroup;
+
+// ============================================
+// Notes Management
+// ============================================
+
+// Create a new note based on the active tab
+async function createNewNote() {
+  const activeTab = state.project.activeRightTab;
+  
+  // Map tab names to note kinds
+  const kindMap = {
+    'people': 'person',
+    'places': 'place',
+    'things': 'thing'
+  };
+  
+  const noteKind = kindMap[activeTab] || 'person';
+  
+  // Count existing notes of this kind to generate a unique numbered title
+  const existingNotes = state.project.noteIds
+    .map(id => state.notes[id])
+    .filter(note => note && note.kind === noteKind);
+  
+  const noteNumber = existingNotes.length + 1;
+  
+  // Generate title based on kind
+  const titleMap = {
+    'person': `Person ${noteNumber}`,
+    'place': `Place ${noteNumber}`,
+    'thing': `Thing ${noteNumber}`
+  };
+  
+  const noteTitle = titleMap[noteKind];
+  
+  const noteId = 'note_' + Date.now();
+  const newNote = {
+    id: noteId,
+    projectId: 'default',
+    kind: noteKind,
+    title: noteTitle,
+    body: '',
+    position: existingNotes.length,
+    driveFileId: null
+  };
+  
+  state.notes[noteId] = newNote;
+  state.project.noteIds.push(noteId);
+  state.project.activeNoteId = noteId;
+  
+  // Render UI immediately
+  renderNotesList();
+  renderNoteEditor();
+  
+  // Focus the note editor
+  const textEl = document.getElementById('noteEditorText');
+  if (textEl) {
+    textEl.focus();
+  }
+  
+  // Save to Drive in the background
+  (async () => {
+    try {
+      // Check if the appropriate folder exists for this note kind
+      const folderMap = {
+        'person': 'people',
+        'place': 'places',
+        'thing': 'things'
+      };
+      const folderKey = folderMap[noteKind];
+      
+      if (state.drive.folderIds[folderKey]) {
+        await saveNoteToDrive(newNote);
+        await saveStoryDataToDrive();
+      }
+    } catch (error) {
+      console.error('Error creating note in Drive:', error);
+      // Don't show error to user - note will be saved on first edit
+    }
+  })();
+}
+
+// Export for global access
+window.createNewNote = createNewNote;
 
 // ============================================
 // Tag Palette

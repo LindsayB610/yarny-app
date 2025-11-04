@@ -411,6 +411,7 @@ body {
 .notes-tabs {
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .notes-tab {
@@ -432,6 +433,27 @@ body {
   color: var(--color-text-primary);
   border-bottom-color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
+}
+
+.add-note-btn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 120ms ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.add-note-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #333;
+  opacity: 1;
 }
 
 .notes-list {
@@ -496,6 +518,26 @@ body {
 
 .note-editor-text:focus {
   border-color: rgba(0, 0, 0, 0.2);
+}
+
+.new-note-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  background-color: #FFFFFF;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 120ms ease;
+  text-align: center;
+}
+
+.new-note-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.3);
+  color: #333;
 }
 
 /* ============================================
