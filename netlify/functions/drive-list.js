@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
   console.log('Drive list - looking for tokens for email:', email);
 
   try {
-    const drive = await getAuthenticatedDriveClient(email, context);
+    const drive = await getAuthenticatedDriveClient(email);
     
     const { folderId, pageToken } = event.queryStringParameters || {};
     

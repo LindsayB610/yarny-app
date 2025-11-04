@@ -32,13 +32,10 @@ function validateClientSecret(clientSecret) {
   return { valid: true };
 }
 
-async function getTokens(email, context = {}) {
+async function getTokens(email) {
   try {
-    const store = getStore({
-      name: 'drive-tokens',
-      siteID: context.site?.id || process.env.SITE_ID,
-      token: context.netlify?.authlifyToken || process.env.NETLIFY_BLOBS_TOKEN
-    });
+    // Try to get store - if Blobs is enabled, this will work automatically
+    const store = getStore('drive-tokens');
     
     let allTokens = {};
     try {
@@ -58,17 +55,15 @@ async function getTokens(email, context = {}) {
     return tokens;
   } catch (error) {
     console.log('getTokens - error:', error.message);
+    // If Blobs isn't configured, fall back to null
     return null;
   }
 }
 
-async function saveTokens(email, tokens, context = {}) {
+async function saveTokens(email, tokens) {
   try {
-    const store = getStore({
-      name: 'drive-tokens',
-      siteID: context.site?.id || process.env.SITE_ID,
-      token: context.netlify?.authlifyToken || process.env.NETLIFY_BLOBS_TOKEN
-    });
+    // Try to get store - if Blobs is enabled, this will work automatically
+    const store = getStore('drive-tokens');
     
     let allTokens = {};
     try {
@@ -117,7 +112,7 @@ async function refreshAccessToken(email, refreshToken) {
   return credentials;
 }
 
-async function getAuthenticatedDriveClient(email, context = {}) {
+async function getAuthenticatedDriveClient(email) {
   if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
     throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
   }
@@ -132,7 +127,7 @@ async function getAuthenticatedDriveClient(email, context = {}) {
     throw new Error(`Invalid credentials format: ${errors.join('; ')}`);
   }
 
-  let tokens = await getTokens(email, context);
+  let tokens = await getTokens(email);
   
   if (!tokens) {
     throw new Error('No Drive tokens found. Please authorize Drive access.');
@@ -157,7 +152,7 @@ async function getAuthenticatedDriveClient(email, context = {}) {
       expiry_date: newTokens.expiry_date
     };
     
-    await saveTokens(email, tokens, context);
+    await saveTokens(email, tokens);
   }
 
   // Create OAuth2 client with current tokens

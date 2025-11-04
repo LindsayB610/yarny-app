@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const drive = await getAuthenticatedDriveClient(email, context);
+    const drive = await getAuthenticatedDriveClient(email);
     const YARNY_STORIES_FOLDER = 'yarny-stories';
     
     // Search for yarny-stories folder

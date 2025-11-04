@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const drive = await getAuthenticatedDriveClient(email, context);
+    const drive = await getAuthenticatedDriveClient(email);
     
     // Check if folder already exists
     const query = parentFolderId

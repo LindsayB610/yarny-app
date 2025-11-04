@@ -241,7 +241,7 @@ exports.handler = async (event, context) => {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date
-    }, context);
+    });
     
     console.log('Tokens saved successfully for:', email);
 

@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const drive = await getAuthenticatedDriveClient(email, context);
+    const drive = await getAuthenticatedDriveClient(email);
     const fileBuffer = Buffer.from(content, 'utf8');
 
     if (fileId) {

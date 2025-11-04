@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'fileId required' }) };
     }
 
-    const drive = await getAuthenticatedDriveClient(email, context);
+    const drive = await getAuthenticatedDriveClient(email);
     
     // Get file metadata first
     const fileMetadata = await drive.files.get({
