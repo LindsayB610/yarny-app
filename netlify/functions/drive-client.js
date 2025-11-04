@@ -227,7 +227,26 @@ async function getAuthenticatedDriveClient(email) {
   }
   
   console.log('Drive client created - _auth attached:', !!driveClient._auth);
-  return driveClient;
+  
+  // Return both drive client and auth client for use in other APIs
+  // Wrap in an object so we can access both
+  const clientWrapper = {
+    drive: driveClient,
+    auth: oauth2Client,
+    // Also expose _auth for backward compatibility
+    get _auth() { return oauth2Client; }
+  };
+  
+  // Also attach _auth to the drive client itself for backward compatibility
+  if (!driveClient._auth) {
+    driveClient._auth = oauth2Client;
+  }
+  
+  // Return the wrapper, but also make driveClient accessible directly
+  // This allows existing code to work while also providing explicit access
+  Object.setPrototypeOf(clientWrapper, driveClient);
+  
+  return driveClient; // Return drive client for backward compatibility
 }
 
 module.exports = {

@@ -40,37 +40,51 @@ exports.handler = async (event, context) => {
     const drive = await getAuthenticatedDriveClient(email);
     const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
     
-    // Verify the auth client is attached and has credentials
+    // For Google Docs, we need the OAuth client to use the Docs API
+    // Get it from getAuthenticatedDriveClient or create a new one
+    let oauth2Client = null;
     if (isGoogleDoc) {
-      // Check if _auth exists - it should be attached by getAuthenticatedDriveClient
-      if (!drive._auth) {
-        console.error('drive._auth is undefined');
-        console.error('drive client keys:', Object.keys(drive));
-        console.error('drive client type:', typeof drive);
-        console.error('drive client constructor:', drive.constructor?.name);
+      // Try to get auth from drive._auth (should be attached by getAuthenticatedDriveClient)
+      if (drive._auth) {
+        oauth2Client = drive._auth;
+        console.log('Using auth client from drive._auth');
+      } else {
+        // Fallback: recreate the OAuth client from stored tokens
+        console.log('drive._auth not found, creating new OAuth client from tokens');
+        const { getTokens } = require('./drive-client');
+        const { OAuth2Client } = require('google-auth-library');
+        const tokens = await getTokens(email);
         
-        // Try to get auth from the drive client's internal auth property
-        // The googleapis drive client might store auth differently
-        const possibleAuth = drive.context?.auth || drive.auth || null;
-        if (possibleAuth) {
-          console.log('Found auth via alternative path, attaching to _auth');
-          drive._auth = possibleAuth;
-        } else {
-          throw new Error('Authentication client not properly initialized - drive._auth is undefined and no alternative auth found');
+        if (!tokens || !tokens.access_token) {
+          throw new Error('No tokens available for Google Docs API');
         }
+        
+        oauth2Client = new OAuth2Client(
+          process.env.GDRIVE_CLIENT_ID?.trim(),
+          process.env.GDRIVE_CLIENT_SECRET?.trim()
+        );
+        oauth2Client.setCredentials({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token
+        });
+        
+        // Attach to drive for future use
+        drive._auth = oauth2Client;
+        console.log('Created and attached new OAuth client');
       }
+    }
       
       // Check if credentials are set
-      let credentials = drive._auth.credentials;
+      let credentials = oauth2Client.credentials;
       if (!credentials || !credentials.access_token) {
         console.log('Credentials missing or expired, attempting to get access token...');
         // Try to get/refresh access token
         try {
-          const authCredentials = await drive._auth.getAccessToken();
+          const authCredentials = await oauth2Client.getAccessToken();
           if (authCredentials && authCredentials.token) {
             console.log('Successfully retrieved access token');
             // Credentials should now be set by getAccessToken
-            credentials = drive._auth.credentials;
+            credentials = oauth2Client.credentials;
             if (!credentials || !credentials.access_token) {
               throw new Error('Access token retrieved but credentials not set');
             }
@@ -83,7 +97,7 @@ exports.handler = async (event, context) => {
         }
       }
       
-      console.log('Auth client verified - has credentials:', !!drive._auth.credentials?.access_token);
+      console.log('Auth client verified - has credentials:', !!oauth2Client.credentials?.access_token);
     }
 
     if (fileId) {
@@ -100,9 +114,8 @@ exports.handler = async (event, context) => {
           // Clear existing content and insert new content
           // Use Google Docs API to update content
           const { google } = require('googleapis');
-          // Get the auth from the drive client
-          const auth = drive._auth;
-          const docs = google.docs({ version: 'v1', auth: auth });
+          // Use the oauth2Client we verified earlier
+          const docs = google.docs({ version: 'v1', auth: oauth2Client });
           
           // Get current document
           const doc = await docs.documents.get({ documentId: fileId });
@@ -211,10 +224,8 @@ exports.handler = async (event, context) => {
         // Add content to the Google Doc
         if (content && content.trim()) {
           const { google } = require('googleapis');
-          // Get the auth from the drive client
-          // The drive client should already have fresh tokens from getAuthenticatedDriveClient
-          const auth = drive._auth;
-          const docs = google.docs({ version: 'v1', auth: auth });
+          // Use the oauth2Client we verified earlier
+          const docs = google.docs({ version: 'v1', auth: oauth2Client });
           
           // Small delay to ensure the document is fully initialized
           await new Promise(resolve => setTimeout(resolve, 1000));
