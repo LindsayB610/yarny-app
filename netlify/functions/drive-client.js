@@ -213,13 +213,22 @@ async function getAuthenticatedDriveClient(email) {
   // Wrap the drive client in a Proxy to allow accessing _auth without modifying the object
   // The driveClient object is not extensible, so we can't attach properties directly
   const driveClientProxy = new Proxy(driveClient, {
-    get: function(target, prop) {
+    get: function(target, prop, receiver) {
       // If accessing _auth, return the oauth2Client
       if (prop === '_auth') {
         return oauth2Client;
       }
       // Otherwise, forward all other property accesses to the original driveClient
-      return target[prop];
+      const value = target[prop];
+      // If it's a function, bind it to the original target to preserve 'this' context
+      if (typeof value === 'function') {
+        return value.bind(target);
+      }
+      // If it's an object, wrap it in a Proxy too to ensure _auth access works on nested objects
+      if (value && typeof value === 'object') {
+        return value; // Return the object as-is (it won't have _auth but that's fine for nested objects)
+      }
+      return value;
     },
     set: function(target, prop, value) {
       // Allow setting _auth (though it will only exist on the proxy, not the original object)
@@ -228,9 +237,15 @@ async function getAuthenticatedDriveClient(email) {
         // The proxy will handle returning oauth2Client when _auth is accessed
         return true;
       }
-      // For other properties, try to set on the original object
-      target[prop] = value;
-      return true;
+      // For other properties, try to set on the original object (may fail if not extensible)
+      try {
+        target[prop] = value;
+        return true;
+      } catch (e) {
+        // If setting fails (object not extensible), just return true anyway
+        // The property won't be set but we won't throw an error
+        return true;
+      }
     },
     has: function(target, prop) {
       // Check if property exists on target or if it's _auth
