@@ -41,9 +41,36 @@ exports.handler = async (event, context) => {
     const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
     
     // Verify the auth client is attached and has credentials
-    if (isGoogleDoc && (!drive._auth || !drive._auth.credentials || !drive._auth.credentials.access_token)) {
-      console.error('Auth client missing or invalid - drive._auth:', !!drive._auth);
-      throw new Error('Authentication client not properly initialized');
+    if (isGoogleDoc) {
+      if (!drive._auth) {
+        console.error('drive._auth is undefined - drive client:', Object.keys(drive));
+        throw new Error('Authentication client not properly initialized - drive._auth is undefined');
+      }
+      
+      // Check if credentials are set
+      const credentials = drive._auth.credentials;
+      if (!credentials) {
+        console.error('drive._auth.credentials is undefined');
+        // Try to get credentials from the auth client
+        const authCredentials = await drive._auth.getAccessToken();
+        if (!authCredentials || !authCredentials.token) {
+          throw new Error('Authentication client not properly initialized - no credentials available');
+        }
+        // Set credentials if they were retrieved
+        drive._auth.setCredentials({
+          access_token: authCredentials.token,
+          refresh_token: credentials?.refresh_token
+        });
+      } else if (!credentials.access_token) {
+        console.error('drive._auth.credentials.access_token is missing');
+        // Try to refresh
+        const authCredentials = await drive._auth.getAccessToken();
+        if (!authCredentials || !authCredentials.token) {
+          throw new Error('Authentication client not properly initialized - access token missing and refresh failed');
+        }
+      }
+      
+      console.log('Auth client verified - has credentials:', !!drive._auth.credentials?.access_token);
     }
 
     if (fileId) {
