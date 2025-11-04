@@ -47,7 +47,8 @@ exports.handler = async (event) => {
   const state = crypto.randomBytes(32).toString('hex');
   
   // Store state in cookie (short-lived, 10 minutes)
-  const stateCookie = `drive_auth_state=${state}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=600`;
+  // Use SameSite=Lax to allow cookie to be sent on OAuth redirects
+  const stateCookie = `drive_auth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`;
   
   // Determine redirect URI
   const host = event.headers.host || event.headers['x-forwarded-host'];

@@ -69,14 +69,17 @@ exports.handler = async (event) => {
   const stateCookie = cookies.find(c => c.trim().startsWith('drive_auth_state='));
   
   if (!stateCookie) {
+    console.error('State cookie not found. Available cookies:', cookies.map(c => c.trim()));
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'State cookie not found' })
     };
   }
 
-  const cookieState = stateCookie.split('=')[1].trim();
+  // Extract cookie value (handle potential attributes after the value)
+  const cookieState = stateCookie.split('=')[1].split(';')[0].trim();
   if (cookieState !== state) {
+    console.error('State mismatch. Expected:', state, 'Got:', cookieState);
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'Invalid state parameter' })
@@ -115,8 +118,8 @@ exports.handler = async (event) => {
       expiry_date: tokens.expiry_date
     });
 
-    // Clear state cookie
-    const clearStateCookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Clear state cookie (with SameSite=Lax to match original cookie)
+    const clearStateCookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;';
 
     return {
       statusCode: 302,
