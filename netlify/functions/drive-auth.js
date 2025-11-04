@@ -5,6 +5,59 @@ const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
+// Validate client ID format
+function validateClientId(clientId) {
+  if (!clientId) return { valid: false, error: 'Client ID is empty' };
+  
+  // Check for invalid characters (should only contain alphanumeric, hyphens, dots, underscores)
+  const invalidChars = /[^a-zA-Z0-9._-]/.exec(clientId);
+  if (invalidChars) {
+    return { 
+      valid: false, 
+      error: `Client ID contains invalid character: "${invalidChars[0]}" at position ${invalidChars.index}` 
+    };
+  }
+  
+  // Google client IDs should end with .apps.googleusercontent.com
+  if (!clientId.endsWith('.apps.googleusercontent.com')) {
+    console.warn('Client ID does not end with .apps.googleusercontent.com - may not be a valid Google OAuth client ID');
+  }
+  
+  // Check for common issues
+  if (clientId.includes(' ')) {
+    return { valid: false, error: 'Client ID contains spaces (should be trimmed)' };
+  }
+  
+  return { valid: true };
+}
+
+// Validate client secret format
+function validateClientSecret(clientSecret) {
+  if (!clientSecret) return { valid: false, error: 'Client Secret is empty' };
+  
+  // Check for invalid characters (should be alphanumeric or base64-like)
+  // Google secrets are typically alphanumeric, may contain dashes
+  const invalidChars = /[^a-zA-Z0-9_-]/.exec(clientSecret);
+  if (invalidChars) {
+    return { 
+      valid: false, 
+      error: `Client Secret contains invalid character: "${invalidChars[0]}" at position ${invalidChars.index}` 
+    };
+  }
+  
+  // Check for common issues
+  if (clientSecret.includes(' ')) {
+    return { valid: false, error: 'Client Secret contains spaces (should be trimmed)' };
+  }
+  
+  // Typical Google client secrets are 24-40 characters
+  if (clientSecret.length < 20 || clientSecret.length > 100) {
+    console.warn(`Client Secret length (${clientSecret.length}) is unusual - typical range is 24-40 characters`);
+  }
+  
+  return { valid: true };
+}
+
 async function getUserEmailFromSession(event) {
   const cookies = event.headers.cookie?.split(';') || [];
   const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
@@ -31,6 +84,28 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Server configuration error: Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.' })
+    };
+  }
+
+  // Validate client ID format
+  const clientIdValidation = validateClientId(GDRIVE_CLIENT_ID);
+  if (!clientIdValidation.valid) {
+    console.error('Invalid Client ID:', clientIdValidation.error);
+    console.error('Client ID value (first/last 20 chars):', GDRIVE_CLIENT_ID.substring(0, 20) + '...' + GDRIVE_CLIENT_ID.substring(GDRIVE_CLIENT_ID.length - 20));
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: `Invalid Client ID format: ${clientIdValidation.error}` })
+    };
+  }
+
+  // Validate client secret format
+  const clientSecretValidation = validateClientSecret(GDRIVE_CLIENT_SECRET);
+  if (!clientSecretValidation.valid) {
+    console.error('Invalid Client Secret:', clientSecretValidation.error);
+    console.error('Client Secret length:', GDRIVE_CLIENT_SECRET.length);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: `Invalid Client Secret format: ${clientSecretValidation.error}` })
     };
   }
 

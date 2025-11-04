@@ -7,6 +7,32 @@ const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || '').trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || '').trim();
 const STORAGE_PATH = '/tmp/drive_tokens.json';
 
+// Validate client ID format (shared validation)
+function validateClientId(clientId) {
+  if (!clientId) return { valid: false, error: 'Client ID is empty' };
+  const invalidChars = /[^a-zA-Z0-9._-]/.exec(clientId);
+  if (invalidChars) {
+    return { valid: false, error: `Client ID contains invalid character: "${invalidChars[0]}"` };
+  }
+  if (clientId.includes(' ')) {
+    return { valid: false, error: 'Client ID contains spaces' };
+  }
+  return { valid: true };
+}
+
+// Validate client secret format (shared validation)
+function validateClientSecret(clientSecret) {
+  if (!clientSecret) return { valid: false, error: 'Client Secret is empty' };
+  const invalidChars = /[^a-zA-Z0-9_-]/.exec(clientSecret);
+  if (invalidChars) {
+    return { valid: false, error: `Client Secret contains invalid character: "${invalidChars[0]}"` };
+  }
+  if (clientSecret.includes(' ')) {
+    return { valid: false, error: 'Client Secret contains spaces' };
+  }
+  return { valid: true };
+}
+
 async function getTokens(email) {
   try {
     const data = await fs.readFile(STORAGE_PATH, 'utf8');
@@ -33,6 +59,16 @@ async function refreshAccessToken(email, refreshToken) {
   if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
     throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
   }
+  
+  // Validate credentials format
+  const clientIdValidation = validateClientId(GDRIVE_CLIENT_ID);
+  const clientSecretValidation = validateClientSecret(GDRIVE_CLIENT_SECRET);
+  if (!clientIdValidation.valid || !clientSecretValidation.valid) {
+    const errors = [];
+    if (!clientIdValidation.valid) errors.push(`Client ID: ${clientIdValidation.error}`);
+    if (!clientSecretValidation.valid) errors.push(`Client Secret: ${clientSecretValidation.error}`);
+    throw new Error(`Invalid credentials format: ${errors.join('; ')}`);
+  }
 
   const oauth2Client = new OAuth2Client(
     GDRIVE_CLIENT_ID,
@@ -50,6 +86,16 @@ async function refreshAccessToken(email, refreshToken) {
 async function getAuthenticatedDriveClient(email) {
   if (!GDRIVE_CLIENT_ID || !GDRIVE_CLIENT_SECRET) {
     throw new Error('Missing Drive OAuth credentials. Please configure GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET.');
+  }
+  
+  // Validate credentials format
+  const clientIdValidation = validateClientId(GDRIVE_CLIENT_ID);
+  const clientSecretValidation = validateClientSecret(GDRIVE_CLIENT_SECRET);
+  if (!clientIdValidation.valid || !clientSecretValidation.valid) {
+    const errors = [];
+    if (!clientIdValidation.valid) errors.push(`Client ID: ${clientIdValidation.error}`);
+    if (!clientSecretValidation.valid) errors.push(`Client Secret: ${clientSecretValidation.error}`);
+    throw new Error(`Invalid credentials format: ${errors.join('; ')}`);
   }
 
   let tokens = await getTokens(email);
