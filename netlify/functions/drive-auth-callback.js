@@ -128,6 +128,10 @@ exports.handler = async (event) => {
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || 
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
 
+  console.log('Callback received - Redirect URI:', redirectUri);
+  console.log('Host:', host);
+  console.log('Protocol:', protocol);
+
   // Exchange code for tokens
   const oauth2Client = new OAuth2Client(
     GOOGLE_CLIENT_ID,
