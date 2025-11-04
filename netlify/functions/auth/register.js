@@ -20,8 +20,9 @@ exports.handler = async (event) => {
       };
     }
 
-    // Only allow the whitelisted email
-    if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+    // Only allow whitelisted emails (supports multiple emails separated by commas)
+    const allowedEmails = ALLOWED_EMAIL.split(',').map(e => e.trim().toLowerCase());
+    if (!allowedEmails.includes(email.toLowerCase())) {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Access denied. This application is private.' })
