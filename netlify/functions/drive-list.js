@@ -38,7 +38,7 @@ exports.handler = async (event, context) => {
     
     const response = await drive.files.list({
       q: query,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, trashed)',
       pageSize: 100,
       pageToken: pageToken || undefined,
       orderBy: 'modifiedTime desc'

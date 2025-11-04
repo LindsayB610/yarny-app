@@ -206,9 +206,10 @@ async function listStories() {
     
     const stories = await window.driveAPI.list(yarnyStoriesFolderId);
     
-    // Filter to only show folders (stories are directories)
-    const storyFolders = stories.files.filter(file => 
-      file.mimeType === 'application/vnd.google-apps.folder'
+    // Filter to only show folders (stories are directories) and exclude trashed items
+    const storyFolders = (stories.files || []).filter(file => 
+      file.mimeType === 'application/vnd.google-apps.folder' && 
+      !file.trashed
     );
     
     return storyFolders;
@@ -595,9 +596,30 @@ async function confirmDeleteStory() {
     await deleteStory(storyId, deleteFromDrive);
     closeDeleteStoryModal();
     
+    // Force refresh by clearing the folder ID cache and reloading
+    // This ensures we get the latest list from Drive
+    yarnyStoriesFolderId = null;
+    
+    // Small delay to ensure Drive has processed the deletion
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Reload stories list
     const stories = await listStories();
     renderStories(stories);
+    
+    // Show success message briefly
+    const successEl = document.getElementById('modalError');
+    if (successEl) {
+      successEl.textContent = 'Story deleted successfully';
+      successEl.classList.remove('hidden');
+      successEl.style.background = '#efe';
+      successEl.style.color = '#3c3';
+      setTimeout(() => {
+        successEl.classList.add('hidden');
+        successEl.style.background = '';
+        successEl.style.color = '';
+      }, 2000);
+    }
   } catch (error) {
     showError('Failed to delete story: ' + error.message);
     btn.disabled = false;
