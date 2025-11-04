@@ -48,25 +48,25 @@ exports.handler = async (event, context) => {
       }
       
       // Check if credentials are set
-      const credentials = drive._auth.credentials;
-      if (!credentials) {
-        console.error('drive._auth.credentials is undefined');
-        // Try to get credentials from the auth client
-        const authCredentials = await drive._auth.getAccessToken();
-        if (!authCredentials || !authCredentials.token) {
-          throw new Error('Authentication client not properly initialized - no credentials available');
-        }
-        // Set credentials if they were retrieved
-        drive._auth.setCredentials({
-          access_token: authCredentials.token,
-          refresh_token: credentials?.refresh_token
-        });
-      } else if (!credentials.access_token) {
-        console.error('drive._auth.credentials.access_token is missing');
-        // Try to refresh
-        const authCredentials = await drive._auth.getAccessToken();
-        if (!authCredentials || !authCredentials.token) {
-          throw new Error('Authentication client not properly initialized - access token missing and refresh failed');
+      let credentials = drive._auth.credentials;
+      if (!credentials || !credentials.access_token) {
+        console.log('Credentials missing or expired, attempting to get access token...');
+        // Try to get/refresh access token
+        try {
+          const authCredentials = await drive._auth.getAccessToken();
+          if (authCredentials && authCredentials.token) {
+            console.log('Successfully retrieved access token');
+            // Credentials should now be set by getAccessToken
+            credentials = drive._auth.credentials;
+            if (!credentials || !credentials.access_token) {
+              throw new Error('Access token retrieved but credentials not set');
+            }
+          } else {
+            throw new Error('Failed to get access token');
+          }
+        } catch (tokenError) {
+          console.error('Error getting access token:', tokenError);
+          throw new Error('Authentication client not properly initialized - failed to get access token: ' + tokenError.message);
         }
       }
       
