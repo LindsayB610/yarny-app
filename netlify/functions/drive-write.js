@@ -162,27 +162,65 @@ exports.handler = async (event, context) => {
         });
 
         // Add content to the Google Doc
-        if (content) {
+        if (content && content.trim()) {
           const { google } = require('googleapis');
           // Get the auth from the drive client
           const auth = drive._auth;
           const docs = google.docs({ version: 'v1', auth: auth });
           
-          await docs.documents.batchUpdate({
-            documentId: response.data.id,
-            requestBody: {
-              requests: [
-                {
-                  insertText: {
-                    location: {
-                      index: 1
-                    },
-                    text: content
-                  }
-                }
-              ]
+          // For new Google Docs, we need to get the document structure first
+          // Then replace all content with our new content
+          try {
+            // Get the document to find the end index
+            const doc = await docs.documents.get({ documentId: response.data.id });
+            
+            // Find the end of the document body
+            let endIndex = 1;
+            if (doc.data.body && doc.data.body.content && doc.data.body.content.length > 0) {
+              const lastElement = doc.data.body.content[doc.data.body.content.length - 1];
+              endIndex = lastElement.endIndex - 1;
             }
-          });
+            
+            // If the document has content (more than just the initial paragraph break), delete it
+            if (endIndex > 1) {
+              await docs.documents.batchUpdate({
+                documentId: response.data.id,
+                requestBody: {
+                  requests: [
+                    {
+                      deleteContentRange: {
+                        range: {
+                          startIndex: 1,
+                          endIndex: endIndex
+                        }
+                      }
+                    }
+                  ]
+                }
+              });
+            }
+            
+            // Insert the new content at index 1 (start of first paragraph)
+            await docs.documents.batchUpdate({
+              documentId: response.data.id,
+              requestBody: {
+                requests: [
+                  {
+                    insertText: {
+                      location: {
+                        index: 1
+                      },
+                      text: content
+                    }
+                  }
+                ]
+              }
+            });
+          } catch (error) {
+            console.error('Error inserting text into Google Doc:', error);
+            // Re-throw so the error is visible
+            throw error;
+          }
         }
 
         return {
