@@ -402,6 +402,43 @@ async function initialize() {
     logoutBtn.dataset.listenerAttached = 'true';
   }
   
+  // Check for manual force auth parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('force_drive_auth') === 'true') {
+    console.log('Force Drive auth requested');
+    // Show Drive auth prompt regardless of check result
+    const driveAuthPrompt = document.getElementById('driveAuthPrompt');
+    const storiesContent = document.getElementById('storiesContent');
+    
+    if (driveAuthPrompt) {
+      driveAuthPrompt.classList.remove('hidden');
+    }
+    if (storiesContent) {
+      storiesContent.classList.add('hidden');
+    }
+    
+    // Setup Connect Drive button
+    const connectBtn = document.getElementById('connectDriveBtn');
+    if (connectBtn) {
+      const newConnectBtn = connectBtn.cloneNode(true);
+      connectBtn.parentNode.replaceChild(newConnectBtn, connectBtn);
+      
+      newConnectBtn.addEventListener('click', async () => {
+        console.log('Connect Drive button clicked (forced)');
+        try {
+          await window.driveAPI.authorize();
+        } catch (error) {
+          console.error('Failed to authorize Drive:', error);
+          alert('Failed to connect to Drive: ' + error.message);
+        }
+      });
+    }
+    
+    // Clean up URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+  
   // Check Drive authorization
   const driveAuthorized = await checkDriveAuth();
   
