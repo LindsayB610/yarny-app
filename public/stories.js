@@ -315,6 +315,49 @@ async function listStories() {
   }
 }
 
+// Refresh stories list from Drive (removes stories that no longer exist)
+async function refreshStoriesFromDrive() {
+  const refreshBtn = document.getElementById('refreshBtn');
+  const loadingState = document.getElementById('loadingState');
+  const listEl = document.getElementById('storiesList');
+  
+  // Show loading state
+  if (refreshBtn) {
+    refreshBtn.classList.add('refreshing');
+    refreshBtn.disabled = true;
+  }
+  loadingState.classList.remove('hidden');
+  listEl.innerHTML = '';
+  
+  try {
+    // Re-fetch stories from Drive - this will only return stories that currently exist
+    const stories = await listStories();
+    
+    // Re-render with the fresh list from Drive
+    // This automatically removes any stories that were deleted from Drive
+    renderStories(stories);
+    
+    console.log(`Refreshed: ${stories.length} story(ies) found in Drive`);
+  } catch (error) {
+    console.error('Error refreshing stories:', error);
+    alert('Failed to refresh stories: ' + error.message);
+    // Try to restore the list even if refresh failed
+    try {
+      const stories = await listStories();
+      renderStories(stories);
+    } catch (fallbackError) {
+      console.error('Failed to restore stories list:', fallbackError);
+    }
+  } finally {
+    // Restore button state
+    if (refreshBtn) {
+      refreshBtn.classList.remove('refreshing');
+      refreshBtn.disabled = false;
+    }
+    loadingState.classList.add('hidden');
+  }
+}
+
 // Render stories list
 function renderStories(stories) {
   const listEl = document.getElementById('storiesList');
@@ -956,6 +999,12 @@ async function initialize() {
   } catch (error) {
     console.error('Error loading stories:', error);
     alert('Failed to load stories: ' + error.message);
+  }
+  
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', refreshStoriesFromDrive);
   }
   
   // New story button
