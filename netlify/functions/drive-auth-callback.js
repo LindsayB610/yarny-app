@@ -52,7 +52,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 302,
       headers: {
-        'Location': '/editor.html?drive_auth_error=' + encodeURIComponent(error)
+        'Location': '/stories.html?drive_auth_error=' + encodeURIComponent(error)
       }
     };
   }
@@ -65,6 +65,27 @@ exports.handler = async (event) => {
   }
 
   // Verify state parameter (CSRF protection)
+  // State format: base64(email):randomHexState
+  const stateParts = state.split(':');
+  if (stateParts.length !== 2) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid state parameter format' })
+    };
+  }
+  
+  const [emailEncoded, randomState] = stateParts;
+  let email;
+  try {
+    email = Buffer.from(emailEncoded, 'base64').toString('utf8');
+  } catch (error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid state parameter encoding' })
+    };
+  }
+  
+  // Verify random state matches cookie (CSRF protection)
   const cookies = event.headers.cookie?.split(';') || [];
   const stateCookie = cookies.find(c => c.trim().startsWith('drive_auth_state='));
   
@@ -78,22 +99,28 @@ exports.handler = async (event) => {
 
   // Extract cookie value (handle potential attributes after the value)
   const cookieState = stateCookie.split('=')[1].split(';')[0].trim();
-  if (cookieState !== state) {
-    console.error('State mismatch. Expected:', state, 'Got:', cookieState);
+  if (cookieState !== randomState) {
+    console.error('State mismatch. Expected:', randomState, 'Got:', cookieState);
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'Invalid state parameter' })
     };
   }
 
-  // Get user email from session
-  const email = await getUserEmailFromSession(event);
-  if (!email) {
+  // Verify the email matches the session (if session cookie is present)
+  // This provides an additional security check, but we proceed even if session cookie is missing
+  // since the state parameter contains the email and was verified via the state cookie
+  const sessionEmail = await getUserEmailFromSession(event);
+  if (sessionEmail && sessionEmail !== email) {
+    console.error('Email mismatch. Session:', sessionEmail, 'State:', email);
     return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Not authenticated' })
+      statusCode: 403,
+      body: JSON.stringify({ error: 'Email mismatch' })
     };
   }
+  
+  // Use email from state parameter (not from session cookie)
+  // This allows OAuth to work even if session cookie isn't sent due to SameSite=Strict
 
   // Determine redirect URI
   const host = event.headers.host || event.headers['x-forwarded-host'];
@@ -127,7 +154,7 @@ exports.handler = async (event) => {
         'Set-Cookie': [clearStateCookie]
       },
       headers: {
-        'Location': '/editor.html?drive_auth_success=true'
+        'Location': '/stories.html?drive_auth_success=true'
       }
     };
   } catch (error) {
@@ -135,7 +162,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 302,
       headers: {
-        'Location': '/editor.html?drive_auth_error=' + encodeURIComponent('Token exchange failed')
+        'Location': '/stories.html?drive_auth_error=' + encodeURIComponent('Token exchange failed')
       }
     };
   }

@@ -44,11 +44,14 @@ exports.handler = async (event) => {
   }
 
   // Generate state parameter for CSRF protection
-  const state = crypto.randomBytes(32).toString('hex');
+  // Encode email in state so we can retrieve it on callback without relying on session cookie
+  const randomState = crypto.randomBytes(32).toString('hex');
+  const emailEncoded = Buffer.from(email).toString('base64');
+  const state = `${emailEncoded}:${randomState}`;
   
-  // Store state in cookie (short-lived, 10 minutes)
+  // Store state in cookie (short-lived, 10 minutes) - just for CSRF verification
   // Use SameSite=Lax to allow cookie to be sent on OAuth redirects
-  const stateCookie = `drive_auth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`;
+  const stateCookie = `drive_auth_state=${randomState}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`;
   
   // Determine redirect URI
   const host = event.headers.host || event.headers['x-forwarded-host'];
