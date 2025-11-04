@@ -42,8 +42,22 @@ var API_BASE = window.API_BASE || '/.netlify/functions';
   const originalError = console.error;
   console.error = function(...args) {
     originalError.apply(console, args);
-    if (args[0] && typeof args[0] === 'string' && args[0].includes('Error')) {
-      logError('console.error', args[0], args[1] || null);
+    // Capture any error-like messages
+    const message = args[0]?.toString() || '';
+    const errorObj = args.find(arg => arg instanceof Error) || args[1] || null;
+    
+    if (message.includes('Error') || message.includes('Failed') || errorObj) {
+      logError('console.error', message, errorObj);
+    }
+  };
+  
+  // Also capture console.warn for important warnings
+  const originalWarn = console.warn;
+  console.warn = function(...args) {
+    originalWarn.apply(console, args);
+    const message = args[0]?.toString() || '';
+    if (message.includes('Error') || message.includes('Failed') || message.includes('Warning')) {
+      logError('console.warn', message, null);
     }
   };
   
@@ -61,7 +75,14 @@ var API_BASE = window.API_BASE || '/.netlify/functions';
   window.viewYarnyErrors = function() {
     const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
     console.log('=== Yarny Error Log ===');
+    if (errors.length === 0) {
+      console.log('No errors logged yet.');
+      return errors;
+    }
+    console.log(`Found ${errors.length} error(s):`);
     console.table(errors);
+    console.log('\n📋 Full error details (expand to see):', errors);
+    console.log('\n💡 Tip: Expand the array above to see full error details including stack traces and response data.');
     return errors;
   };
   
@@ -70,6 +91,15 @@ var API_BASE = window.API_BASE || '/.netlify/functions';
     localStorage.removeItem(ERROR_KEY);
     console.log('Error log cleared');
   };
+  
+  // Log a persistent message on page load
+  window.addEventListener('load', () => {
+    const errors = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]');
+    if (errors.length > 0) {
+      console.log('%c⚠️ Errors were logged during your session. Run viewYarnyErrors() to see them.', 'color: orange; font-weight: bold; font-size: 14px;');
+      console.log(`Total errors: ${errors.length}. Most recent: ${errors[0]?.message || 'N/A'}`);
+    }
+  });
 })();
 
 // Force logout handler - check URL parameter first
@@ -564,27 +594,35 @@ async function initializeStoryStructure(storyFolderId) {
       console.error('Error stack:', error.stack);
       console.error('Error response:', error.response?.data);
       
-      // Log to persistent error log
+      // Log to persistent error log with full details
       try {
         const errors = JSON.parse(localStorage.getItem('yarny_error_log') || '[]');
-        errors.unshift({
+        const errorEntry = {
           timestamp: new Date().toISOString(),
           type: 'Opening Scene Doc Creation',
-          message: error.message,
+          message: error.message || 'Unknown error',
           error: {
             message: error.message,
             stack: error.stack,
+            name: error.name,
+            code: error.code,
             response: error.response ? {
               status: error.response.status,
+              statusText: error.response.statusText,
               data: error.response.data
             } : null,
-            code: error.code
+            request: error.request ? {
+              url: error.request.responseURL || error.config?.url,
+              method: error.config?.method
+            } : null
           }
-        });
+        };
+        errors.unshift(errorEntry);
         if (errors.length > 50) errors.pop();
         localStorage.setItem('yarny_error_log', JSON.stringify(errors));
+        console.log('Error logged to localStorage. Use viewYarnyErrors() to view all errors.');
       } catch (e) {
-        console.error('Failed to log error:', e);
+        console.error('Failed to log error to localStorage:', e);
       }
       
       // Check if this is a scope issue
@@ -947,6 +985,13 @@ async function initialize() {
           createBtn.disabled = false;
           createBtn.textContent = 'Create Story';
           return;
+        }
+        
+        // Check for errors before navigating
+        const errors = JSON.parse(localStorage.getItem('yarny_error_log') || '[]');
+        if (errors.length > 0) {
+          console.warn('⚠️ Errors occurred during story creation. Run viewYarnyErrors() to see details.');
+          console.warn('Recent errors:', errors.slice(0, 5).map(e => e.message));
         }
         
         closeNewStoryModal();
