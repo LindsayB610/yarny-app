@@ -262,11 +262,27 @@ exports.handler = async (event, context) => {
               // This likely means the OAuth tokens don't have the Google Docs API scope
               // Clear tokens so user needs to re-authorize with new scopes
               const { getTokens, saveTokens } = require('./drive-client');
-              const tokens = await getTokens(email);
-              if (tokens) {
-                // Delete tokens to force re-authorization
-                await saveTokens(email, null);
-                console.log('Cleared tokens due to missing Docs API scope - user needs to re-authorize');
+              const { getStore } = require('@netlify/blobs');
+              const STORAGE_KEY = 'drive_tokens.json';
+              
+              try {
+                const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+                const token = process.env.NETLIFY_AUTH_TOKEN;
+                
+                const storeOptions = { name: 'drive-tokens' };
+                if (siteID) storeOptions.siteID = siteID;
+                if (token) storeOptions.token = token;
+                
+                const store = getStore(storeOptions);
+                const data = await store.get(STORAGE_KEY);
+                if (data) {
+                  const allTokens = JSON.parse(data);
+                  delete allTokens[email]; // Remove this user's tokens
+                  await store.set(STORAGE_KEY, JSON.stringify(allTokens, null, 2));
+                  console.log('Cleared tokens due to missing Docs API scope - user needs to re-authorize');
+                }
+              } catch (clearError) {
+                console.error('Error clearing tokens:', clearError);
               }
               
               // Return a specific error that the frontend can handle
