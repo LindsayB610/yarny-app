@@ -396,7 +396,56 @@ async function listStories() {
       !file.trashed
     );
     
-    return storyFolders;
+    // Enrich stories with updatedAt from project.json
+    // This gives us the actual last modified time (when files were saved), not just folder modifiedTime
+    const enrichedStories = await Promise.all(storyFolders.map(async (story) => {
+      try {
+        // List files in story folder to find project.json
+        const files = await window.driveAPI.list(story.id);
+        const fileMap = {};
+        (files.files || []).forEach(file => {
+          fileMap[file.name] = file.id;
+        });
+        
+        // Read project.json to get updatedAt
+        if (fileMap['project.json']) {
+          try {
+            const projectData = await window.driveAPI.read(fileMap['project.json']);
+            if (projectData.content) {
+              const project = JSON.parse(projectData.content);
+              // Use updatedAt from project.json as the actual last modified time
+              // Fall back to folder modifiedTime if project.json doesn't have updatedAt
+              story.updatedAt = project.updatedAt || story.modifiedTime;
+            } else {
+              // If project.json exists but has no content, use folder modifiedTime
+              story.updatedAt = story.modifiedTime;
+            }
+          } catch (error) {
+            console.warn(`Failed to read project.json for story ${story.name}:`, error);
+            // Fall back to folder modifiedTime if we can't read project.json
+            story.updatedAt = story.modifiedTime;
+          }
+        } else {
+          // No project.json yet, use folder modifiedTime
+          story.updatedAt = story.modifiedTime;
+        }
+      } catch (error) {
+        console.warn(`Failed to list files for story ${story.name}:`, error);
+        // Fall back to folder modifiedTime if we can't list files
+        story.updatedAt = story.modifiedTime;
+      }
+      
+      return story;
+    }));
+    
+    // Sort by updatedAt (most recent first)
+    enrichedStories.sort((a, b) => {
+      const timeA = new Date(a.updatedAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || 0).getTime();
+      return timeB - timeA; // Descending order (most recent first)
+    });
+    
+    return enrichedStories;
   } catch (error) {
     console.error('Error listing stories:', error);
     throw error;
@@ -616,7 +665,7 @@ async function renderStories(stories, skipLoadingState = false) {
     
     contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
-      <p class="story-modified">Last modified: ${formatDate(story.modifiedTime)}</p>
+      <p class="story-modified">Last modified: ${formatDate(story.updatedAt || story.modifiedTime)}</p>
       ${progressHtml}
     `;
     
