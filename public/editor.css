@@ -62,8 +62,13 @@ body {
 }
 
 .back-to-stories-link:hover {
-  background-color: var(--color-gray-100);
+  background-color: var(--color-gray-200);
   color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.back-to-stories-link:hover i {
+  text-decoration: none;
 }
 
 .rail-title {

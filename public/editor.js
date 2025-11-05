@@ -2917,6 +2917,15 @@ async function loadStoryFromDrive(storyFolderId) {
                     // Store last known Drive modifiedTime for conflict detection
                     snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
                     loadedSnippets[snippet.id] = snippet;
+                    
+                    // CRITICAL: Ensure snippet is in group's snippetIds array
+                    if (!group.snippetIds) {
+                      group.snippetIds = [];
+                    }
+                    if (!group.snippetIds.includes(snippet.id)) {
+                      group.snippetIds.push(snippet.id);
+                      console.log(`Added existing snippet ${snippet.id} to group ${group.id} snippetIds`);
+                    }
                     console.log(`Updated snippet ${snippet.id} with content`);
                   } else {
                     // Create new snippet from Google Doc
@@ -2955,6 +2964,16 @@ async function loadStoryFromDrive(storyFolderId) {
                       lastKnownDriveModifiedTime: docContent.modifiedTime || file.modifiedTime || new Date().toISOString()
                     };
                     loadedSnippets[snippetId] = snippet;
+                    
+                    // CRITICAL: Add snippet to group's snippetIds array
+                    // This ensures the snippet is associated with the group for display
+                    if (!group.snippetIds) {
+                      group.snippetIds = [];
+                    }
+                    if (!group.snippetIds.includes(snippetId)) {
+                      group.snippetIds.push(snippetId);
+                      console.log(`Added snippet ${snippetId} to group ${group.id} snippetIds`);
+                    }
                   }
                 } catch (error) {
                   console.warn('Could not load content from Google Doc:', file.name, error);
@@ -3250,6 +3269,20 @@ async function loadStoryFromDrive(storyFolderId) {
     // Build groups from data.json structure
     const loadedGroups = {};
     console.log('Processing groups - state.groups:', Object.keys(state.groups), 'state.project.groupIds:', state.project.groupIds);
+    
+    // CRITICAL: First, rebuild snippetIds for all groups from mergedSnippets
+    // This ensures groups include all snippets that were loaded from Google Docs
+    Object.keys(state.groups).forEach(groupId => {
+      const group = state.groups[groupId];
+      // Find all snippets in mergedSnippets that belong to this group
+      const snippetsInGroup = Object.values(mergedSnippets).filter(s => s.groupId === groupId);
+      if (snippetsInGroup.length > 0) {
+        // Rebuild snippetIds from mergedSnippets
+        group.snippetIds = snippetsInGroup.map(s => s.id);
+        console.log(`Rebuilt group ${groupId} snippetIds from mergedSnippets:`, group.snippetIds);
+      }
+    });
+    
     Object.keys(state.groups).forEach(groupId => {
       const group = state.groups[groupId];
       console.log(`Processing group ${groupId}:`, group);
