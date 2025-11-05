@@ -83,6 +83,14 @@ async function writeDriveFile(fileName, content, fileId = null, parentFolderId =
       throw scopeError;
     }
     
+    // Check if file was deleted (404 error)
+    if (error.response?.status === 404 || error.response?.data?.error === 'FILE_NOT_FOUND') {
+      const fileNotFoundError = new Error(error.response?.data?.message || 'File was deleted or does not exist');
+      fileNotFoundError.code = 'FILE_NOT_FOUND';
+      fileNotFoundError.fileId = error.response?.data?.fileId;
+      throw fileNotFoundError;
+    }
+    
     const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to write file';
     throw new Error(errorMessage);
   }

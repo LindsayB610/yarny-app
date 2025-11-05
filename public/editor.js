@@ -2066,13 +2066,30 @@ async function saveStoryDataToDrive() {
     
     console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${fileIdToUse || 'NEW'} (folder: ${state.drive.storyFolderId})`);
     
-    const writeResult = await window.driveAPI.write(
-      'data.json',
-      jsonString,
-      fileIdToUse,
-      state.drive.storyFolderId,
-      'text/plain'
-    );
+    let writeResult;
+    try {
+      writeResult = await window.driveAPI.write(
+        'data.json',
+        jsonString,
+        fileIdToUse,
+        state.drive.storyFolderId,
+        'text/plain'
+      );
+    } catch (error) {
+      // If data.json was deleted, retry without fileId to create new one
+      if (error.code === 'FILE_NOT_FOUND') {
+        console.warn('data.json was deleted, creating new file');
+        writeResult = await window.driveAPI.write(
+          'data.json',
+          jsonString,
+          null,
+          state.drive.storyFolderId,
+          'text/plain'
+        );
+      } else {
+        throw error;
+      }
+    }
     
     console.log(`data.json write completed. File ID: ${writeResult?.id || 'unknown'}, result:`, writeResult);
     
@@ -2091,13 +2108,30 @@ async function saveStoryDataToDrive() {
     };
     
     const projectFile = files.files.find(f => f.name === 'project.json');
-    await window.driveAPI.write(
-      'project.json',
-      JSON.stringify(projectData, null, 2),
-      projectFile ? projectFile.id : null,
-      state.drive.storyFolderId,
-      'text/plain'
-    );
+    let projectFileId = projectFile ? projectFile.id : null;
+    try {
+      await window.driveAPI.write(
+        'project.json',
+        JSON.stringify(projectData, null, 2),
+        projectFileId,
+        state.drive.storyFolderId,
+        'text/plain'
+      );
+    } catch (error) {
+      // If project.json was deleted, retry without fileId to create new one
+      if (error.code === 'FILE_NOT_FOUND') {
+        console.warn('project.json was deleted, creating new file');
+        await window.driveAPI.write(
+          'project.json',
+          JSON.stringify(projectData, null, 2),
+          null,
+          state.drive.storyFolderId,
+          'text/plain'
+        );
+      } else {
+        throw error;
+      }
+    }
     
     // Save goal.json if goal is set
     // Note: We don't write today's words to ledger here - that only happens on midnight rollover
@@ -3585,13 +3619,32 @@ async function saveSnippetToDrive(snippet) {
   try {
     const fileName = `${snippet.title}.doc`;
     // If driveFileId exists, update the existing file; otherwise create a new one
-    const result = await window.driveAPI.write(
-      fileName,
-      snippet.body,
-      snippet.driveFileId || null,
-      targetFolderId,
-      'application/vnd.google-apps.document'
-    );
+    let result;
+    try {
+      result = await window.driveAPI.write(
+        fileName,
+        snippet.body,
+        snippet.driveFileId || null,
+        targetFolderId,
+        'application/vnd.google-apps.document'
+      );
+    } catch (error) {
+      // If file was deleted, clear the driveFileId and retry as a new file
+      if (error.code === 'FILE_NOT_FOUND') {
+        console.warn(`File for snippet ${snippet.id} (${snippet.title}) was deleted, creating new file`);
+        delete snippet.driveFileId;
+        // Retry without fileId to create a new file
+        result = await window.driveAPI.write(
+          fileName,
+          snippet.body,
+          null,
+          targetFolderId,
+          'application/vnd.google-apps.document'
+        );
+      } else {
+        throw error;
+      }
+    }
     
     // Always store Drive file ID in snippet (update if it exists, set if it doesn't)
     if (result && result.id) {
@@ -3634,13 +3687,32 @@ async function saveSnippetToDriveByKind(snippet) {
   try {
     const fileName = `${snippet.title}.txt`;
     const content = snippet.body || '';
-    const result = await window.driveAPI.write(
-      fileName,
-      content,
-      snippet.driveFileId || null,
-      folderId,
-      'text/plain'
-    );
+    let result;
+    try {
+      result = await window.driveAPI.write(
+        fileName,
+        content,
+        snippet.driveFileId || null,
+        folderId,
+        'text/plain'
+      );
+    } catch (error) {
+      // If file was deleted, clear the driveFileId and retry as a new file
+      if (error.code === 'FILE_NOT_FOUND') {
+        console.warn(`File for snippet ${snippet.id} (${snippet.title}) was deleted, creating new file`);
+        delete snippet.driveFileId;
+        // Retry without fileId to create a new file
+        result = await window.driveAPI.write(
+          fileName,
+          content,
+          null,
+          folderId,
+          'text/plain'
+        );
+      } else {
+        throw error;
+      }
+    }
     
     // Always store Drive file ID in snippet (update if it exists, set if it doesn't)
     if (result && result.id) {

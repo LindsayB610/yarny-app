@@ -129,9 +129,47 @@ exports.handler = async (event, context) => {
 
     if (fileId) {
       // Update existing file
+      // First check if the file exists - if not, we'll need to create a new one
+      let fileExists = false;
+      try {
+        const existingFile = await drive.files.get({
+          fileId: fileId,
+          fields: 'mimeType, trashed'
+        });
+        // Check if file is trashed
+        if (existingFile.data.trashed) {
+          fileExists = false;
+        } else {
+          fileExists = true;
+        }
+      } catch (error) {
+        // File not found (404) or other error - treat as if file doesn't exist
+        const errorCode = error.code || error.response?.status;
+        if (errorCode === 404 || error.message?.includes('not found') || error.message?.includes('does not exist')) {
+          fileExists = false;
+          console.log(`File ${fileId} not found or deleted, will create new file`);
+        } else {
+          // Re-throw other errors
+          throw error;
+        }
+      }
+      
+      if (!fileExists) {
+        // File was deleted, return error code indicating we should create new file
+        return {
+          statusCode: 404,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            error: 'FILE_NOT_FOUND',
+            message: 'File was deleted or does not exist',
+            fileId: fileId
+          })
+        };
+      }
+      
       if (isGoogleDoc) {
         // For Google Docs, we need to use batchUpdate to replace content
-        // Get current document to check if it exists
+        // Get current document to check if it exists (we already verified it exists above)
         const existingFile = await drive.files.get({
           fileId: fileId,
           fields: 'mimeType'
