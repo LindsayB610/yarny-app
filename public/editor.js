@@ -439,8 +439,56 @@ function renderEditor() {
     : null;
 
   if (activeSnippet) {
-    setEditorTextContent(editorEl, activeSnippet.body);
+    // Check if content is loaded (for lazy loading optimization)
+    if (activeSnippet._contentLoaded === false && activeSnippet.driveFileId && !activeSnippet.body) {
+      // Content is still loading - show a subtle loading indicator
+      // Don't replace the editor, just show a small indicator
+      const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
+      if (!loadingIndicator) {
+        const indicator = document.createElement('div');
+        indicator.className = 'content-loading-indicator';
+        indicator.style.cssText = `
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        `;
+        indicator.innerHTML = `
+          <div style="
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          "></div>
+          Loading content...
+        `;
+        editorEl.style.position = 'relative';
+        editorEl.appendChild(indicator);
+      }
+      // Keep existing content or show empty
+      if (!editorEl.textContent.trim()) {
+        setEditorTextContent(editorEl, '');
+      }
+    } else {
+      // Content is loaded, remove loading indicator if present
+      const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
+      if (loadingIndicator) {
+        loadingIndicator.remove();
+      }
+      setEditorTextContent(editorEl, activeSnippet.body || '');
+    }
   } else {
+    // Remove loading indicator if present
+    const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
+    if (loadingIndicator) {
+      loadingIndicator.remove();
+    }
     setEditorTextContent(editorEl, '');
   }
 
@@ -2720,10 +2768,51 @@ async function ensureSnippetContentLoaded(snippetId) {
 // Load story data from Drive
 async function loadStoryFromDrive(storyFolderId) {
   try {
-    // Show loading indicator
+    // Show prominent loading indicator - make it visible immediately
     const editorContent = document.getElementById('editorContent');
     if (editorContent) {
-      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading story...</div>';
+      editorContent.innerHTML = `
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 400px;
+          padding: 40px;
+          text-align: center;
+        ">
+          <div style="
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 16px;
+          ">Loading story...</div>
+          <div style="
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: 24px;
+          ">Fetching your content from Google Drive</div>
+          <div style="
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          "></div>
+        </div>
+        <style>
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+      `;
+    }
+    
+    // Also show loading in sidebar
+    const storyList = document.getElementById('storyList');
+    if (storyList) {
+      storyList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading...</div>';
     }
     
     // Load project.json and list story folder in parallel
@@ -3479,40 +3568,53 @@ async function loadStoryFromDrive(storyFolderId) {
       mergedSnippetsCount: Object.keys(mergedSnippets).length
     });
     
+    // OPTIMIZATION: Show UI structure immediately after metadata is loaded
+    // This makes the UI appear much faster, even before content is fully loaded
+    // We'll update word counts and content as they load in the background
+    if (typeof renderStoryList === 'function' && typeof renderSnippetsList === 'function') {
+      renderStoryList();
+      renderSnippetsList();
+      updateFooter();
+      updateGoalMeter();
+    }
+    
     // Verify state.snippets === mergedSnippets (should be same object reference now)
     if (state.snippets !== mergedSnippets) {
       console.error('ERROR: state.snippets is not the same as mergedSnippets!');
     }
     
     // CRITICAL: Save data.json with updated word counts after loading from Google Docs
+    // OPTIMIZATION: Do this in the background - don't block UI rendering
     // This ensures word counts in data.json match the actual content in Google Docs
     // Must happen AFTER state.snippets is updated with merged snippets
-    try {
-      console.log('Saving data.json with updated word counts after loading...');
-      const totalWordsBeforeSave = window.calculateStoryWordCount(state.snippets, state.groups);
-      console.log(`Word count before save: ${totalWordsBeforeSave}`);
-      console.log(`state.snippets has ${Object.keys(state.snippets).length} snippets before save`);
-      
-      await saveStoryDataToDrive();
-      
-      // Verify the save worked by checking what we saved
-      const totalWordsAfterSave = window.calculateStoryWordCount(state.snippets, state.groups);
-      console.log(`Word count after save: ${totalWordsAfterSave}`);
-      console.log('data.json saved successfully with updated word counts after loading');
-    } catch (error) {
-      console.error('ERROR saving data.json after loading - this is critical!', error);
-      // This is actually critical - word counts won't match between editor and stories page
-      // Try again after a short delay
-      setTimeout(async () => {
-        try {
-          console.log('Retrying save data.json after loading...');
-          await saveStoryDataToDrive();
-          console.log('data.json saved successfully on retry');
-        } catch (retryError) {
-          console.error('Failed to save data.json on retry:', retryError);
-        }
-      }, 1000);
-    }
+    (async () => {
+      try {
+        console.log('Saving data.json with updated word counts after loading (background)...');
+        const totalWordsBeforeSave = window.calculateStoryWordCount(state.snippets, state.groups);
+        console.log(`Word count before save: ${totalWordsBeforeSave}`);
+        console.log(`state.snippets has ${Object.keys(state.snippets).length} snippets before save`);
+        
+        await saveStoryDataToDrive();
+        
+        // Verify the save worked by checking what we saved
+        const totalWordsAfterSave = window.calculateStoryWordCount(state.snippets, state.groups);
+        console.log(`Word count after save: ${totalWordsAfterSave}`);
+        console.log('data.json saved successfully with updated word counts after loading');
+      } catch (error) {
+        console.error('ERROR saving data.json after loading - this is critical!', error);
+        // This is actually critical - word counts won't match between editor and stories page
+        // Try again after a short delay
+        setTimeout(async () => {
+          try {
+            console.log('Retrying save data.json after loading...');
+            await saveStoryDataToDrive();
+            console.log('data.json saved successfully on retry');
+          } catch (retryError) {
+            console.error('Failed to save data.json on retry:', retryError);
+          }
+        }, 1000);
+      }
+    })();
     
     // Ensure activeSnippetId is valid after loading
     // If activeSnippetId is not set or doesn't exist, open the most recently edited snippet
@@ -3608,9 +3710,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           storyTitleEl.textContent = currentStory.name;
         }
       }
-      // Render UI with loaded data
+      // OPTIMIZATION: Render UI structure immediately with metadata
+      // This makes the UI appear instantly, even if content is still loading
       renderStoryList();
-      renderEditor();
       renderSnippetsList();
       // Ensure noteEditor textarea is hidden (notes now open in main editor)
       document.getElementById('noteEditor').classList.add('hidden');
@@ -3618,10 +3720,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateGoalMeter();
       updateSaveStatus(); // Initialize save status and logout button warning
       
-      // Ensure the most recently edited snippet's content is loaded
+      // Render editor with placeholder or loading state
+      renderEditor();
+      
+      // Load active snippet content in background (non-blocking)
+      // This allows UI to be interactive immediately
       if (state.project.activeSnippetId) {
-        await ensureSnippetContentLoaded(state.project.activeSnippetId);
-        renderEditor(); // Re-render with loaded content
+        ensureSnippetContentLoaded(state.project.activeSnippetId).then(() => {
+          // Re-render with loaded content when it's ready
+          renderEditor();
+          updateWordCount();
+          updateGoalMeter();
+        }).catch(err => {
+          console.error('Error loading active snippet content:', err);
+        });
       }
     } catch (error) {
       console.error('Error loading story from Drive, using sample data:', error);
