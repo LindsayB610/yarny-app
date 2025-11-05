@@ -6,6 +6,15 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 
 **Access**: Yarny requires an invitation. To request access, please email [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) with your Google account email address.
 
+## System Requirements
+
+Yarny is designed for **desktop and laptop computers**. Mobile devices (phones and tablets) are not supported. If you attempt to access the editor from a mobile device, you will be redirected with a message to use a computer instead.
+
+**Recommended:**
+- Desktop or laptop computer
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- Internet connection for Google Drive sync
+
 ## Features
 
 ### Authentication & Security

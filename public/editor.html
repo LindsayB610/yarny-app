@@ -9,6 +9,51 @@
   <link rel="stylesheet" href="/editor.css">
 </head>
 <body>
+  <script>
+    // Mobile device detection - runs immediately on page load
+    (function() {
+      function isMobileDevice() {
+        // Check user agent for mobile devices
+        const mobileUserAgents = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        if (mobileUserAgents.test(navigator.userAgent)) {
+          return true;
+        }
+        
+        // Check for touch capabilities (primary indicator)
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+          // But allow tablets in landscape mode or large screens
+          // iPad Pro and similar tablets have larger screens
+          if (window.innerWidth >= 1024 && window.innerHeight >= 768) {
+            return false;
+          }
+          return true;
+        }
+        
+        // Check screen size as additional check
+        if (window.innerWidth < 768) {
+          return true;
+        }
+        
+        return false;
+      }
+      
+      // Run detection as soon as possible
+      if (isMobileDevice()) {
+        // Add class to body to style mobile warning
+        document.body.classList.add('mobile-detected');
+      }
+    })();
+  </script>
+  <div id="mobileWarning" class="mobile-warning hidden">
+    <div class="mobile-warning-content">
+      <i class="material-icons" style="font-size: 48px; color: var(--color-primary); margin-bottom: 16px;">computer</i>
+      <h1>Please Use a Computer</h1>
+      <p>Yarny is designed for desktop and laptop computers. For the best writing experience, please access this editor from a computer.</p>
+      <p style="margin-top: 16px; font-size: 14px; color: var(--color-text-secondary);">
+        <a href="/stories.html" style="color: var(--color-primary); text-decoration: underline;">Back to Stories</a>
+      </p>
+    </div>
+  </div>
   <div id="editorShell" class="editor-shell">
     <!-- Left Rail: Story -->
     <aside id="leftRail" class="left-rail">
@@ -416,6 +461,24 @@
     </div>
   </div>
 
+  <script>
+    // Show mobile warning if mobile device was detected
+    (function() {
+      if (document.body.classList.contains('mobile-detected')) {
+        document.addEventListener('DOMContentLoaded', function() {
+          const mobileWarning = document.getElementById('mobileWarning');
+          const editorShell = document.getElementById('editorShell');
+          
+          if (mobileWarning) {
+            mobileWarning.classList.remove('hidden');
+          }
+          if (editorShell) {
+            editorShell.classList.add('mobile-hidden');
+          }
+        });
+      }
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
   <script src="/drive.js"></script>
   <script src="/editor.js"></script>

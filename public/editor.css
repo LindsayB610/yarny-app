@@ -1202,3 +1202,44 @@ body {
   background-color: #FEE;
   color: var(--color-error);
 }
+
+/* ============================================
+   Mobile Warning
+   ============================================ */
+
+.mobile-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: var(--space-lg);
+}
+
+.mobile-warning-content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.mobile-warning-content h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--color-text-primary);
+}
+
+.mobile-warning-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.editor-shell.mobile-hidden {
+  display: none;
+}
