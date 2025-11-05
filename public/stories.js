@@ -335,7 +335,7 @@ async function refreshStoriesFromDrive() {
     
     // Re-render with the fresh list from Drive
     // This automatically removes any stories that were deleted from Drive
-    renderStories(stories);
+    await renderStories(stories);
     
     console.log(`Refreshed: ${stories.length} story(ies) found in Drive`);
   } catch (error) {
@@ -344,7 +344,7 @@ async function refreshStoriesFromDrive() {
     // Try to restore the list even if refresh failed
     try {
       const stories = await listStories();
-      renderStories(stories);
+      await renderStories(stories);
     } catch (fallbackError) {
       console.error('Failed to restore stories list:', fallbackError);
     }
@@ -358,8 +358,68 @@ async function refreshStoriesFromDrive() {
   }
 }
 
+// Fetch story progress data (word count and goal)
+async function fetchStoryProgress(storyFolderId) {
+  try {
+    // List files in the story folder
+    const files = await window.driveAPI.list(storyFolderId);
+    const fileMap = {};
+    (files.files || []).forEach(file => {
+      fileMap[file.name] = file.id;
+    });
+    
+    let wordGoal = 3000; // Default goal
+    let totalWords = 0;
+    
+    // Read project.json to get word goal
+    if (fileMap['project.json']) {
+      try {
+        const projectData = await window.driveAPI.read(fileMap['project.json']);
+        if (projectData.content) {
+          const project = JSON.parse(projectData.content);
+          wordGoal = project.wordGoal || 3000;
+        }
+      } catch (error) {
+        console.warn(`Failed to read project.json for story ${storyFolderId}:`, error);
+      }
+    }
+    
+    // Read data.json to calculate word count from chapter snippets
+    if (fileMap['data.json']) {
+      try {
+        const dataContent = await window.driveAPI.read(fileMap['data.json']);
+        if (dataContent.content) {
+          const data = JSON.parse(dataContent.content);
+          // Calculate total words from chapter snippets only (those with groupId, not People/Places/Things)
+          if (data.snippets) {
+            Object.values(data.snippets).forEach(snippet => {
+              // Only count snippets that have a groupId (chapter snippets)
+              if (snippet.groupId && snippet.words !== undefined) {
+                totalWords += snippet.words || 0;
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
+      }
+    }
+    
+    const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
+    
+    return {
+      wordGoal,
+      totalWords,
+      percentage
+    };
+  } catch (error) {
+    console.warn(`Failed to fetch progress for story ${storyFolderId}:`, error);
+    return null;
+  }
+}
+
 // Render stories list
-function renderStories(stories) {
+async function renderStories(stories) {
   const listEl = document.getElementById('storiesList');
   const emptyState = document.getElementById('emptyState');
   const loadingState = document.getElementById('loadingState');
@@ -375,15 +435,25 @@ function renderStories(stories) {
   emptyState.classList.add('hidden');
   listEl.innerHTML = '';
   
-  stories.forEach(story => {
+  // Create story cards first (without progress data)
+  const storyCards = stories.map(story => {
     const storyCard = document.createElement('div');
     storyCard.className = 'story-card';
+    storyCard.dataset.storyId = story.id;
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'story-card-content';
     contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
-      <p>Last modified: ${formatDate(story.modifiedTime)}</p>
+      <p class="story-modified">Last modified: ${formatDate(story.modifiedTime)}</p>
+      <div class="story-progress-container">
+        <div class="story-progress-info">
+          <span class="story-progress-text">Loading progress...</span>
+        </div>
+        <div class="story-progress-bar-container">
+          <div class="story-progress-bar" style="width: 0%"></div>
+        </div>
+      </div>
     `;
     
     const deleteBtn = document.createElement('button');
@@ -409,7 +479,31 @@ function renderStories(stories) {
     });
     
     listEl.appendChild(storyCard);
+    return { story, card: storyCard };
   });
+  
+  // Fetch progress data for all stories in parallel
+  const progressPromises = storyCards.map(async ({ story, card }) => {
+    const progress = await fetchStoryProgress(story.id);
+    if (progress) {
+      const progressText = card.querySelector('.story-progress-text');
+      const progressBar = card.querySelector('.story-progress-bar');
+      
+      if (progressText && progressBar) {
+        progressText.textContent = `${progress.totalWords.toLocaleString()} / ${progress.wordGoal.toLocaleString()} words`;
+        progressBar.style.width = `${progress.percentage}%`;
+      }
+    } else {
+      // Hide progress if we couldn't fetch it
+      const progressContainer = card.querySelector('.story-progress-container');
+      if (progressContainer) {
+        progressContainer.style.display = 'none';
+      }
+    }
+  });
+  
+  // Wait for all progress data to load (but don't block if some fail)
+  await Promise.allSettled(progressPromises);
 }
 
 // Array of opening sentences to randomly choose from
@@ -823,7 +917,7 @@ async function confirmDeleteStory() {
     
     // Reload stories list
     const stories = await listStories();
-    renderStories(stories);
+    await renderStories(stories);
     
     // Show success message briefly
     const successEl = document.getElementById('modalError');
@@ -1003,7 +1097,7 @@ async function initialize() {
   // Load stories
   try {
     const stories = await listStories();
-    renderStories(stories);
+    await renderStories(stories);
   } catch (error) {
     console.error('Error loading stories:', error);
     alert('Failed to load stories: ' + error.message);
