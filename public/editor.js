@@ -280,9 +280,28 @@ function renderStoryList() {
         
         // Capture ID of previous snippet before switching
         const previousSnippetId = state.project.activeSnippetId;
+        const targetSnippetId = snippet.id;
+        
+        // Check for conflicts in the target snippet BEFORE switching
+        const conflict = await checkSnippetConflict(targetSnippetId);
+        if (conflict) {
+          // Show conflict resolution modal
+          const resolution = await showConflictResolutionModal(conflict);
+          
+          if (resolution.action === 'cancel') {
+            // User canceled, don't switch snippets
+            return;
+          } else if (resolution.action === 'useLocal') {
+            // User chose to keep local version, it will be saved to Drive below
+            // Continue with switch
+          } else if (resolution.action === 'useDrive') {
+            // Drive content already loaded into snippet by resolveConflictWithDrive
+            // Continue with switch
+          }
+        }
         
         // If switching from a different snippet, save it to Drive in background
-        if (previousSnippetId && previousSnippetId !== snippet.id) {
+        if (previousSnippetId && previousSnippetId !== targetSnippetId) {
           // Fire-and-forget save - don't block UI
           // Use the saved in-memory state, not the editor (which will change)
           (async () => {
@@ -294,8 +313,20 @@ function renderStoryList() {
           })();
         }
         
+        // If user chose local version in conflict, save it to Drive now
+        if (conflict && conflictResolutionPromise === null) {
+          // Conflict was resolved with local version
+          (async () => {
+            try {
+              await saveItemToDriveById(targetSnippetId, null);
+            } catch (error) {
+              console.error('Failed to save local version after conflict resolution:', error);
+            }
+          })();
+        }
+        
         // Switch immediately (responsive UI)
-        state.project.activeSnippetId = snippet.id;
+        state.project.activeSnippetId = targetSnippetId;
         renderStoryList();
         renderEditor();
         updateFooter();
@@ -403,9 +434,28 @@ function renderSnippetsList() {
         
         // Capture ID of previous snippet before switching
         const previousSnippetId = state.project.activeSnippetId;
+        const targetSnippetId = snippet.id;
+        
+        // Check for conflicts in the target snippet BEFORE switching
+        const conflict = await checkSnippetConflict(targetSnippetId);
+        if (conflict) {
+          // Show conflict resolution modal
+          const resolution = await showConflictResolutionModal(conflict);
+          
+          if (resolution.action === 'cancel') {
+            // User canceled, don't switch snippets
+            return;
+          } else if (resolution.action === 'useLocal') {
+            // User chose to keep local version, it will be saved to Drive below
+            // Continue with switch
+          } else if (resolution.action === 'useDrive') {
+            // Drive content already loaded into snippet by resolveConflictWithDrive
+            // Continue with switch
+          }
+        }
         
         // If switching from a different snippet, save it to Drive in background
-        if (previousSnippetId && previousSnippetId !== snippet.id) {
+        if (previousSnippetId && previousSnippetId !== targetSnippetId) {
           // Fire-and-forget save - don't block UI
           (async () => {
             try {
@@ -416,12 +466,24 @@ function renderSnippetsList() {
           })();
         }
         
+        // If user chose local version in conflict, save it to Drive now
+        if (conflict && conflictResolutionAction === 'useLocal') {
+          // Conflict was resolved with local version - save it to Drive
+          (async () => {
+            try {
+              await saveItemToDriveById(targetSnippetId, null);
+            } catch (error) {
+              console.error('Failed to save local version after conflict resolution:', error);
+            }
+          })();
+        }
+        
         // Switch immediately (responsive UI)
-        state.project.activeSnippetId = snippet.id;
+        state.project.activeSnippetId = targetSnippetId;
         renderSnippetsList();
         renderEditor();
         updateFooter();
-      });
+              });
       
       // Right-click context menu
       snippetEl.addEventListener('contextmenu', (e) => {
@@ -594,6 +656,192 @@ function saveCurrentEditorContent() {
     }
   }
 }
+
+// ============================================
+// Conflict Detection
+// ============================================
+
+// Check if a snippet has been modified in Drive since we last loaded it
+async function checkSnippetConflict(snippetId) {
+  const snippet = state.snippets[snippetId];
+  if (!snippet || !snippet.driveFileId) {
+    // No conflict possible if snippet doesn't have a Drive file yet
+    return null;
+  }
+  
+  try {
+    // Get current file metadata from Drive
+    // We need to list the parent folder to get metadata
+    let parentFolderId = null;
+    if (snippet.groupId && state.groups[snippet.groupId]) {
+      parentFolderId = state.groups[snippet.groupId].driveFolderId;
+    } else if (snippet.kind === 'person') {
+      parentFolderId = state.drive.folderIds.people;
+    } else if (snippet.kind === 'place') {
+      parentFolderId = state.drive.folderIds.places;
+    } else if (snippet.kind === 'thing') {
+      parentFolderId = state.drive.folderIds.things;
+    }
+    
+    if (!parentFolderId) {
+      return null; // Can't check without parent folder
+    }
+    
+    const files = await window.driveAPI.list(parentFolderId);
+    const driveFile = files.files?.find(f => f.id === snippet.driveFileId);
+    
+    if (!driveFile || !driveFile.modifiedTime) {
+      // File not found or no modifiedTime, no conflict to check
+      return null;
+    }
+    
+    const driveModifiedTime = driveFile.modifiedTime;
+    const lastKnownTime = snippet.lastKnownDriveModifiedTime;
+    
+    // If we don't have a last known time, load it now (first time checking this snippet)
+    if (!lastKnownTime) {
+      // Load the file to get its current modifiedTime
+      const fileData = await window.driveAPI.read(snippet.driveFileId);
+      if (fileData.modifiedTime) {
+        snippet.lastKnownDriveModifiedTime = fileData.modifiedTime;
+      }
+      return null; // First check, no conflict yet
+    }
+    
+    // Compare timestamps
+    if (driveModifiedTime && lastKnownTime) {
+      const driveTime = new Date(driveModifiedTime).getTime();
+      const lastKnownTimeMs = new Date(lastKnownTime).getTime();
+      
+      // If Drive version is newer, check if content actually differs
+      if (driveTime > lastKnownTimeMs) {
+        // Get the Drive content to compare
+        const driveData = await window.driveAPI.read(snippet.driveFileId);
+        const driveContent = (driveData.content || '').trim();
+        const localContent = (snippet.body || '').trim();
+        
+        // Only report conflict if content actually differs
+        if (driveContent !== localContent) {
+          return {
+            snippet: snippet,
+            driveContent: driveContent,
+            driveModifiedTime: driveModifiedTime,
+            localContent: localContent,
+            localModifiedTime: snippet.updatedAt || lastKnownTime
+          };
+        } else {
+          // Content is the same, just update the timestamp
+          snippet.lastKnownDriveModifiedTime = driveModifiedTime;
+        }
+      }
+    }
+    
+    return null; // No conflict
+  } catch (error) {
+    console.error('Error checking snippet conflict:', error);
+    // Don't block user if conflict check fails
+    return null;
+  }
+}
+
+// Show conflict resolution modal
+let conflictResolutionPromise = null;
+let conflictResolutionAction = null;
+
+function showConflictResolutionModal(conflict) {
+  return new Promise((resolve) => {
+    conflictResolutionPromise = resolve;
+    conflictResolutionAction = null;
+    
+    const modal = document.getElementById('snippetConflictModal');
+    const titleEl = document.getElementById('conflictTitle');
+    const localPreviewEl = document.getElementById('conflictLocalPreview');
+    const drivePreviewEl = document.getElementById('conflictDrivePreview');
+    const localTimeEl = document.getElementById('conflictLocalTime');
+    const driveTimeEl = document.getElementById('conflictDriveTime');
+    
+    titleEl.textContent = `Conflict: ${escapeHtml(conflict.snippet.title)}`;
+    
+    // Format timestamps
+    const localDate = new Date(conflict.localModifiedTime);
+    const driveDate = new Date(conflict.driveModifiedTime);
+    localTimeEl.textContent = `Last modified in Yarny: ${localDate.toLocaleString()}`;
+    driveTimeEl.textContent = `Last modified in Google Docs: ${driveDate.toLocaleString()}`;
+    
+    // Show previews (first 500 chars)
+    const localPreview = conflict.localContent.substring(0, 500);
+    const drivePreview = conflict.driveContent.substring(0, 500);
+    localPreviewEl.textContent = localPreview + (conflict.localContent.length > 500 ? '...' : '');
+    drivePreviewEl.textContent = drivePreview + (conflict.driveContent.length > 500 ? '...' : '');
+    
+    // Store conflict data on modal for button handlers
+    modal.dataset.conflictSnippetId = conflict.snippet.id;
+    modal.dataset.conflictDriveContent = conflict.driveContent;
+    modal.dataset.conflictDriveTime = conflict.driveModifiedTime;
+    
+    modal.classList.remove('hidden');
+  });
+}
+
+function resolveConflictWithLocal() {
+  const modal = document.getElementById('snippetConflictModal');
+  const snippetId = modal.dataset.conflictSnippetId;
+  const snippet = state.snippets[snippetId];
+  
+  if (snippet && conflictResolutionPromise) {
+    // Update lastKnownDriveModifiedTime to current Drive time so we don't show conflict again
+    // But keep local content (user chose local)
+    snippet.lastKnownDriveModifiedTime = modal.dataset.conflictDriveTime;
+    conflictResolutionAction = 'useLocal';
+    conflictResolutionPromise({ action: 'useLocal', snippetId: snippetId });
+  }
+  
+  modal.classList.add('hidden');
+  conflictResolutionPromise = null;
+}
+
+function resolveConflictWithDrive() {
+  const modal = document.getElementById('snippetConflictModal');
+  const snippetId = modal.dataset.conflictSnippetId;
+  const snippet = state.snippets[snippetId];
+  
+  if (snippet && conflictResolutionPromise) {
+    // Load Drive content into snippet
+    const driveContent = modal.dataset.conflictDriveContent || '';
+    snippet.body = driveContent;
+    snippet.words = driveContent.split(/\s+/).filter(w => w.length > 0).length;
+    snippet.chars = driveContent.length;
+    snippet.lastKnownDriveModifiedTime = modal.dataset.conflictDriveTime;
+    snippet.updatedAt = modal.dataset.conflictDriveTime;
+    
+    // Refresh editor if this is the active snippet
+    if (state.project.activeSnippetId === snippetId) {
+      renderEditor();
+      updateFooter();
+    }
+    
+    conflictResolutionAction = 'useDrive';
+    conflictResolutionPromise({ action: 'useDrive', snippetId: snippetId });
+  }
+  
+  modal.classList.add('hidden');
+  conflictResolutionPromise = null;
+}
+
+function cancelConflictResolution() {
+  const modal = document.getElementById('snippetConflictModal');
+  modal.classList.add('hidden');
+  if (conflictResolutionPromise) {
+    conflictResolutionAction = 'cancel';
+    conflictResolutionPromise({ action: 'cancel' });
+  }
+  conflictResolutionPromise = null;
+}
+
+// Expose conflict resolution functions globally
+window.resolveConflictWithLocal = resolveConflictWithLocal;
+window.resolveConflictWithDrive = resolveConflictWithDrive;
+window.cancelConflictResolution = cancelConflictResolution;
 
 // Save current editor content to Drive (async, non-blocking)
 // Returns a promise that resolves when save completes
@@ -2027,6 +2275,11 @@ async function saveSnippetToDrive(snippet) {
       snippet.driveFileId = result.id;
     }
     
+    // Update lastKnownDriveModifiedTime after successful save
+    // Note: We use current time since Drive API doesn't return modifiedTime yet
+    // This prevents false conflicts. A future improvement would read file metadata after save.
+    snippet.lastKnownDriveModifiedTime = new Date().toISOString();
+    
     return result;
   } catch (error) {
     console.error('Error saving snippet to Drive:', error);
@@ -2067,6 +2320,11 @@ async function saveSnippetToDriveByKind(snippet) {
     if (!snippet.driveFileId) {
       snippet.driveFileId = result.id;
     }
+    
+    // Update lastKnownDriveModifiedTime after successful save
+    // Note: We use current time since Drive API doesn't return modifiedTime yet
+    // This prevents false conflicts. A future improvement would read file metadata after save.
+    snippet.lastKnownDriveModifiedTime = new Date().toISOString();
     
     return result;
   } catch (error) {
@@ -2215,6 +2473,8 @@ async function loadStoryFromDrive(storyFolderId) {
                     snippet.body = snippetBody;
                     snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
                     snippet.chars = snippetBody.length;
+                    // Store last known Drive modifiedTime for conflict detection
+                    snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
                     loadedSnippets[snippet.id] = snippet;
                     console.log(`Updated snippet ${snippet.id} with content`);
                   } else {
@@ -2248,7 +2508,8 @@ async function loadStoryFromDrive(storyFolderId) {
                       chars: snippetBody.length,
                       updatedAt: file.modifiedTime || new Date().toISOString(),
                       version: 1,
-                      driveFileId: file.id
+                      driveFileId: file.id,
+                      lastKnownDriveModifiedTime: docContent.modifiedTime || file.modifiedTime || new Date().toISOString()
                     };
                     loadedSnippets[snippetId] = snippet;
                   }
@@ -2263,6 +2524,10 @@ async function loadStoryFromDrive(storyFolderId) {
                     if (snippetId) {
                       snippet = state.snippets[snippetId];
                       snippet.driveFileId = file.id;
+                      // Try to get modifiedTime if available
+                      if (file.modifiedTime) {
+                        snippet.lastKnownDriveModifiedTime = file.modifiedTime;
+                      }
                       loadedSnippets[snippetId] = snippet;
                     }
                   }
@@ -2309,6 +2574,7 @@ async function loadStoryFromDrive(storyFolderId) {
                   snippet.body = snippetBody;
                   snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
                   snippet.chars = snippetBody.length;
+                  snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
                   loadedSnippets[snippet.id] = snippet;
                 } catch (error) {
                   console.warn('Could not load content from Google Doc:', file.name, error);

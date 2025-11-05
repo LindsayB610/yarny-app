@@ -246,6 +246,44 @@
         </div>
       </div>
     </div>
+
+    <!-- Snippet Conflict Resolution Modal -->
+    <div id="snippetConflictModal" class="modal hidden">
+      <div class="modal-overlay" onclick="cancelConflictResolution()"></div>
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2 id="conflictTitle">Content Conflict</h2>
+          <button class="modal-close" onclick="cancelConflictResolution()">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 20px; color: var(--color-text-secondary);">
+            This snippet has been modified both in Yarny and in Google Docs. Choose which version to keep.
+          </p>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="border: 2px solid var(--color-primary); border-radius: var(--radius-lg); padding: 16px; background: var(--color-gray-50);">
+              <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: var(--color-primary);">Yarny Version</h3>
+              <p id="conflictLocalTime" style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px;"></p>
+              <div id="conflictLocalPreview" style="font-size: 13px; line-height: 1.5; color: var(--color-text-primary); white-space: pre-wrap; max-height: 300px; overflow-y: auto; padding: 12px; background: white; border-radius: var(--radius-sm); border: 1px solid var(--color-border);"></div>
+              <button type="button" class="btn-primary" style="width: 100%; margin-top: 12px;" onclick="resolveConflictWithLocal()">Use Yarny Version</button>
+            </div>
+            
+            <div style="border: 2px solid #4285F4; border-radius: var(--radius-lg); padding: 16px; background: #F8F9FA;">
+              <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #4285F4;">Google Docs Version</h3>
+              <p id="conflictDriveTime" style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px;"></p>
+              <div id="conflictDrivePreview" style="font-size: 13px; line-height: 1.5; color: var(--color-text-primary); white-space: pre-wrap; max-height: 300px; overflow-y: auto; padding: 12px; background: white; border-radius: var(--radius-sm); border: 1px solid var(--color-border);"></div>
+              <button type="button" class="btn-primary" style="width: 100%; margin-top: 12px; background: #4285F4;" onclick="resolveConflictWithDrive()">Use Google Docs Version</button>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="cancelConflictResolution()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>

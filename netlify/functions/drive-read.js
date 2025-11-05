@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
     // Get file metadata first
     const fileMetadata = await drive.files.get({
       fileId: fileId,
-      fields: 'id, name, mimeType'
+      fields: 'id, name, mimeType, modifiedTime'
     });
 
     let content = '';
@@ -84,6 +84,7 @@ exports.handler = async (event, context) => {
         id: fileMetadata.data.id,
         name: fileMetadata.data.name,
         mimeType: fileMetadata.data.mimeType,
+        modifiedTime: fileMetadata.data.modifiedTime,
         content: content
       })
     };
