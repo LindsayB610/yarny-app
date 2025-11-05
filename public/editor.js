@@ -5019,34 +5019,45 @@ let isSavingDataJson = false;
 async function saveDataJsonBeforeNavigation() {
   if (!state.drive.storyFolderId) return;
   
-  // If already saving, wait for it
+  // If already saving, wait for it to complete
   if (isSavingDataJson) {
     console.log('Waiting for existing data.json save to complete...');
-    // Wait up to 2 seconds for save to complete
-    for (let i = 0; i < 20; i++) {
+    // Wait up to 3 seconds for save to complete
+    for (let i = 0; i < 30; i++) {
       await new Promise(resolve => setTimeout(resolve, 100));
       if (!isSavingDataJson) break;
     }
-    return;
+    // Continue to save again after waiting - word counts may have been updated by background loading
   }
   
   // Ensure current editor content is saved to state
   // This updates word count for the active snippet
   saveCurrentEditorContent();
   
-  // Trust that updateWordCount() and saveCurrentEditorContent() keep counts accurate
-  // Only fix missing word counts (shouldn't happen, but safety check)
+  // CRITICAL: Recalculate ALL word counts from body before saving
+  // This ensures we save the latest word counts even if background loading updated them
+  console.log('Recalculating word counts for all snippets before navigation save...');
   Object.values(state.snippets).forEach(snippet => {
-    if (snippet.words === undefined || snippet.words === null) {
-      snippet.words = countWords(snippet.body || '');
+    if (snippet.body !== undefined && snippet.body !== null) {
+      const recalculatedWords = countWords(snippet.body);
+      if (snippet.words !== recalculatedWords) {
+        console.log(`Updating word count for snippet ${snippet.id}: ${snippet.words} -> ${recalculatedWords}`);
+        snippet.words = recalculatedWords;
+      }
+    } else if (snippet.words === undefined || snippet.words === null) {
+      snippet.words = 0;
     }
   });
   
-  // Save data.json
+  const totalWordsBeforeNavigationSave = window.calculateStoryWordCount(state.snippets, state.groups);
+  console.log(`Total words before navigation save: ${totalWordsBeforeNavigationSave}`);
+  
+  // Save data.json with recalculated word counts
   isSavingDataJson = true;
   try {
     await saveStoryDataToDrive();
-    console.log('data.json saved before navigation');
+    const totalWordsAfterNavigationSave = window.calculateStoryWordCount(state.snippets, state.groups);
+    console.log(`data.json saved before navigation with ${totalWordsAfterNavigationSave} total words`);
   } catch (error) {
     console.error('Error saving data.json before navigation:', error);
     // Don't block navigation, but log the error
