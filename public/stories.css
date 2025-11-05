@@ -56,6 +56,12 @@ body {
   transition: all var(--transition-fast);
   font-family: var(--font-family-base);
   backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-height: 36px;
+  box-sizing: border-box;
 }
 
 .logout-button:hover {
