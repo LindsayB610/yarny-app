@@ -183,6 +183,10 @@ body {
   cursor: not-allowed;
 }
 
+.refresh-btn.refreshing .material-icons {
+  animation: spin 1s linear infinite;
+}
+
 .new-story-btn {
   background: var(--color-primary);
   color: var(--color-white);

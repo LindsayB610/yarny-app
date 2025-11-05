@@ -335,7 +335,8 @@ async function refreshStoriesFromDrive() {
     
     // Re-render with the fresh list from Drive
     // This automatically removes any stories that were deleted from Drive
-    await renderStories(stories);
+    // Pass skipLoadingState=true so we can control the loading state ourselves
+    await renderStories(stories, true);
     
     console.log(`Refreshed: ${stories.length} story(ies) found in Drive`);
   } catch (error) {
@@ -344,7 +345,7 @@ async function refreshStoriesFromDrive() {
     // Try to restore the list even if refresh failed
     try {
       const stories = await listStories();
-      await renderStories(stories);
+      await renderStories(stories, true);
     } catch (fallbackError) {
       console.error('Failed to restore stories list:', fallbackError);
     }
@@ -446,12 +447,14 @@ async function fetchStoryProgress(storyFolderId) {
 }
 
 // Render stories list
-async function renderStories(stories) {
+async function renderStories(stories, skipLoadingState = false) {
   const listEl = document.getElementById('storiesList');
   const emptyState = document.getElementById('emptyState');
   const loadingState = document.getElementById('loadingState');
   
-  loadingState.classList.add('hidden');
+  if (!skipLoadingState) {
+    loadingState.classList.add('hidden');
+  }
   
   if (stories.length === 0) {
     listEl.innerHTML = '';
