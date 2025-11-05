@@ -313,6 +313,21 @@ body {
   border-radius: 3px;
 }
 
+.story-today-progress-bar-container {
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: var(--space-xs);
+}
+
+.story-today-progress-bar {
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.6);
+  transition: width var(--transition-base);
+  border-radius: 2px;
+}
+
 .story-delete-btn {
   background: none;
   border: none;

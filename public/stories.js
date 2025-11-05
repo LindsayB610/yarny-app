@@ -580,13 +580,47 @@ function calculateDailyGoalInfo(goal, totalWords) {
   const remainingDays = countWritingDaysForGoal(today, deadline, goal);
   
   if (remainingDays <= 0) {
-    return { todayWords: Math.max(0, todayWords), remaining: 0 };
+    return { 
+      todayWords: Math.max(0, todayWords), 
+      remaining: 0,
+      target: 0,
+      wordsRemaining: Math.max(0, goal.target - totalWords)
+    };
   }
   
-  return {
-    todayWords: Math.max(0, todayWords),
-    remaining: remainingDays
-  };
+  // Calculate remaining words needed
+  const wordsRemaining = Math.max(0, goal.target - totalWords);
+  
+  if (goal.mode === 'elastic') {
+    // Elastic: recalculate daily target based on remaining words and days
+    const dailyTarget = Math.ceil(wordsRemaining / remainingDays);
+    return {
+      target: dailyTarget,
+      todayWords: Math.max(0, todayWords),
+      remaining: remainingDays,
+      wordsRemaining: wordsRemaining,
+      isAhead: todayWords > dailyTarget,
+      isBehind: todayWords < dailyTarget
+    };
+  } else {
+    // Strict: fixed daily target (calculate from original target and total days from start to deadline)
+    const startDate = goal.startDate || goal.lastCalculatedDate || today;
+    const totalWritingDays = countWritingDaysForGoal(
+      startDate.split('T')[0],
+      deadline,
+      goal
+    );
+    const fixedDailyTarget = totalWritingDays > 0 ? Math.ceil(goal.target / totalWritingDays) : 0;
+    
+    return {
+      target: fixedDailyTarget,
+      todayWords: Math.max(0, todayWords),
+      remaining: remainingDays,
+      wordsRemaining: wordsRemaining,
+      isAhead: todayWords > fixedDailyTarget,
+      isBehind: todayWords < fixedDailyTarget
+    };
+  }
 }
 
 // Fetch story progress data (word count and goal)
@@ -748,15 +782,22 @@ async function renderStories(stories, skipLoadingState = false) {
         : 0;
       
       // Add today badge if goal exists
-      if (cachedProgress.dailyInfo) {
+      if (cachedProgress.dailyInfo && cachedProgress.dailyInfo.target !== undefined) {
         const todayWords = cachedProgress.dailyInfo.todayWords || 0;
+        const todayTarget = cachedProgress.dailyInfo.target || 0;
         const daysLeft = cachedProgress.dailyInfo.remaining || 0;
+        const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
         todayBadgeHtml = `
           <div class="story-today-badge">
             <span class="story-today-label">Today</span>
-            <span class="story-today-count">${todayWords.toLocaleString()}</span>
+            <span class="story-today-count">${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}</span>
             ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
           </div>
+          ${todayTarget > 0 ? `
+            <div class="story-today-progress-bar-container">
+              <div class="story-today-progress-bar" style="width: ${todayPercentage}%"></div>
+            </div>
+          ` : ''}
         `;
       }
       
@@ -837,28 +878,60 @@ async function renderStories(stories, skipLoadingState = false) {
           console.warn(`Could not find progress elements for story ${story.name}`);
         }
         
-        // Update or add today badge
-        if (progressInfo) {
-          let todayBadge = progressInfo.querySelector('.story-today-badge');
-          if (progress.dailyInfo) {
+        // Update or add today badge and progress
+        const progressContainer = card.querySelector('.story-progress-container');
+        if (progressContainer) {
+          const progressInfo = progressContainer.querySelector('.story-progress-info');
+          let todayBadge = progressContainer.querySelector('.story-today-badge');
+          let todayProgressBar = progressContainer.querySelector('.story-today-progress-bar-container');
+          
+          if (progress.dailyInfo && progress.dailyInfo.target !== undefined) {
             const todayWords = progress.dailyInfo.todayWords || 0;
+            const todayTarget = progress.dailyInfo.target || 0;
             const daysLeft = progress.dailyInfo.remaining || 0;
+            const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
             
-            if (!todayBadge) {
-              // Create new badge
-              todayBadge = document.createElement('div');
-              todayBadge.className = 'story-today-badge';
-              progressInfo.appendChild(todayBadge);
+            // Create or update today badge
+            if (progressInfo) {
+              if (!todayBadge) {
+                todayBadge = document.createElement('div');
+                todayBadge.className = 'story-today-badge';
+                progressInfo.appendChild(todayBadge);
+              }
+              
+              todayBadge.innerHTML = `
+                <span class="story-today-label">Today</span>
+                <span class="story-today-count">${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}</span>
+                ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
+              `;
             }
             
-            todayBadge.innerHTML = `
-              <span class="story-today-label">Today</span>
-              <span class="story-today-count">${todayWords.toLocaleString()}</span>
-              ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
-            `;
-          } else if (todayBadge) {
-            // Remove badge if goal doesn't exist
-            todayBadge.remove();
+            // Create or update today progress bar
+            if (todayTarget > 0) {
+              if (!todayProgressBar) {
+                todayProgressBar = document.createElement('div');
+                todayProgressBar.className = 'story-today-progress-bar-container';
+                progressContainer.appendChild(todayProgressBar);
+              }
+              
+              let bar = todayProgressBar.querySelector('.story-today-progress-bar');
+              if (!bar) {
+                bar = document.createElement('div');
+                bar.className = 'story-today-progress-bar';
+                todayProgressBar.appendChild(bar);
+              }
+              bar.style.width = `${todayPercentage}%`;
+            } else if (todayProgressBar) {
+              todayProgressBar.remove();
+            }
+          } else {
+            // Remove badge and progress bar if goal doesn't exist
+            if (todayBadge) {
+              todayBadge.remove();
+            }
+            if (todayProgressBar) {
+              todayProgressBar.remove();
+            }
           }
         }
       } else {
