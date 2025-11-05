@@ -409,34 +409,44 @@ async function fetchStoryProgress(storyFolderId) {
     
     // If we have snippet file IDs, read actual content from Google Docs
     if (snippetList.length > 0) {
+      console.log(`Found ${snippetList.length} chapter snippets with Drive file IDs for story ${storyFolderId}`);
       try {
         // Read content from all chapter snippets in parallel
         const contentPromises = snippetList.map(async (snippet) => {
           try {
+            if (!snippet.driveFileId) {
+              console.warn(`Snippet ${snippet.id} (${snippet.title}) has no driveFileId, using data.json word count: ${snippet.words || 0}`);
+              return snippet.words || 0;
+            }
             const docContent = await window.driveAPI.read(snippet.driveFileId);
             const text = (docContent.content || '').trim();
             // Calculate words from actual content
             const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+            console.log(`Snippet ${snippet.id} (${snippet.title}): ${words} words from Google Doc`);
             return words;
           } catch (error) {
-            console.warn(`Failed to read snippet ${snippet.id} from Drive:`, error);
+            console.warn(`Failed to read snippet ${snippet.id} (${snippet.title}) from Drive:`, error.message);
             // Fallback to word count from data.json if available
-            return snippet.words || 0;
+            const fallbackWords = snippet.words || 0;
+            console.log(`Using fallback word count for ${snippet.id}: ${fallbackWords} words`);
+            return fallbackWords;
           }
         });
         
         const wordCounts = await Promise.all(contentPromises);
         totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
-        console.log(`Calculated ${totalWords} words from ${snippetList.length} chapter snippets (excluding People/Places/Things) for story ${storyFolderId}`);
+        console.log(`✅ Calculated ${totalWords} words from ${snippetList.length} chapter snippets (excluding People/Places/Things) for story ${storyFolderId}`);
       } catch (error) {
         console.warn(`Failed to read snippet content from Drive, falling back to data.json:`, error);
         // Fallback to data.json word counts
         snippetList.forEach(snippet => {
           totalWords += snippet.words || 0;
         });
+        console.log(`Using fallback: ${totalWords} words from data.json`);
       }
     } else {
       // Fallback: use word counts from data.json if we couldn't get snippet list
+      console.log(`No snippet list with Drive file IDs found, falling back to data.json word counts`);
       if (fileMap['data.json']) {
         try {
           const dataContent = await window.driveAPI.read(fileMap['data.json']);
@@ -451,9 +461,12 @@ async function fetchStoryProgress(storyFolderId) {
               });
             }
           }
+          console.log(`Using fallback: ${totalWords} words from data.json`);
         } catch (error) {
           console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
         }
+      } else {
+        console.warn(`No data.json file found for story ${storyFolderId}`);
       }
     }
     
@@ -536,17 +549,31 @@ async function renderStories(stories) {
   
   // Fetch progress data for all stories in parallel
   const progressPromises = storyCards.map(async ({ story, card }) => {
-    const progress = await fetchStoryProgress(story.id);
-    if (progress) {
-      const progressText = card.querySelector('.story-progress-text');
-      const progressBar = card.querySelector('.story-progress-bar');
-      
-      if (progressText && progressBar) {
-        progressText.textContent = `${progress.totalWords.toLocaleString()} / ${progress.wordGoal.toLocaleString()} words`;
-        progressBar.style.width = `${progress.percentage}%`;
+    try {
+      console.log(`Fetching progress for story: ${story.name} (${story.id})`);
+      const progress = await fetchStoryProgress(story.id);
+      if (progress) {
+        console.log(`Progress for ${story.name}: ${progress.totalWords} / ${progress.wordGoal} words (${progress.percentage}%)`);
+        const progressText = card.querySelector('.story-progress-text');
+        const progressBar = card.querySelector('.story-progress-bar');
+        
+        if (progressText && progressBar) {
+          progressText.textContent = `${progress.totalWords.toLocaleString()} / ${progress.wordGoal.toLocaleString()} words`;
+          progressBar.style.width = `${progress.percentage}%`;
+        } else {
+          console.warn(`Could not find progress elements for story ${story.name}`);
+        }
+      } else {
+        console.warn(`No progress data returned for story ${story.name}`);
+        // Hide progress if we couldn't fetch it
+        const progressContainer = card.querySelector('.story-progress-container');
+        if (progressContainer) {
+          progressContainer.style.display = 'none';
+        }
       }
-    } else {
-      // Hide progress if we couldn't fetch it
+    } catch (error) {
+      console.error(`Error fetching progress for story ${story.name}:`, error);
+      // Hide progress on error
       const progressContainer = card.querySelector('.story-progress-container');
       if (progressContainer) {
         progressContainer.style.display = 'none';
@@ -1258,3 +1285,41 @@ if (urlParams.get('drive_auth_success') === 'true') {
 
 // Export for global access
 window.closeNewStoryModal = closeNewStoryModal;
+
+// Refresh stories when page becomes visible or when window gains focus
+// This helps update word counts when navigating back from the editor
+function refreshStoriesOnReturn() {
+  if (window.location.pathname === '/stories.html' || window.location.pathname === '/stories.html') {
+    console.log('Refreshing stories on page return...');
+    // Small delay to ensure Drive API is ready
+    setTimeout(async () => {
+      try {
+        const stories = await listStories();
+        await renderStories(stories);
+      } catch (error) {
+        console.error('Error refreshing stories on return:', error);
+      }
+    }, 300);
+  }
+}
+
+// Listen for visibility changes (when tab becomes visible)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    refreshStoriesOnReturn();
+  }
+});
+
+// Listen for window focus (when user switches back to the tab)
+window.addEventListener('focus', refreshStoriesOnReturn);
+
+// Also refresh on page load if coming from editor (checking referrer)
+window.addEventListener('load', () => {
+  // Small delay to ensure everything is initialized
+  setTimeout(() => {
+    if (document.referrer && document.referrer.includes('editor.html')) {
+      console.log('Page loaded from editor, refreshing stories...');
+      refreshStoriesOnReturn();
+    }
+  }, 1000);
+});
