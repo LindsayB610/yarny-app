@@ -490,34 +490,58 @@ function getEditorTextContent(element) {
   // - <div> or <p> elements (paragraph breaks)
   // - Actual newline characters in textContent
   
-  // Simple approach: use a temporary element to normalize
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = element.innerHTML || '';
-  
-  // Convert <br> tags to newlines
-  tempDiv.querySelectorAll('br').forEach(br => {
-    br.replaceWith(document.createTextNode('\n'));
-  });
-  
-  // Convert block elements (div, p) to newlines
-  // When a block element ends, add a newline before its content
-  tempDiv.querySelectorAll('div, p').forEach(block => {
-    // Insert a newline at the start of the block
-    if (block.firstChild) {
-      block.insertBefore(document.createTextNode('\n'), block.firstChild);
-    } else {
-      block.appendChild(document.createTextNode('\n'));
+  // Walk the DOM tree to extract text properly
+  // Only add newlines for top-level blocks (direct children of element), not nested ones
+  function walkNode(node, parts, isTopLevel = false) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      parts.push(node.textContent || '');
+      return;
     }
-    // Replace the block with its content (now including the newline)
-    const parent = block.parentNode;
-    while (block.firstChild) {
-      parent.insertBefore(block.firstChild, block);
+    
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return;
     }
-    parent.removeChild(block);
-  });
+    
+    const tagName = node.tagName?.toLowerCase();
+    
+    // Handle <br> tags as single line breaks
+    if (tagName === 'br') {
+      parts.push('\n');
+      return;
+    }
+    
+    // Handle block elements (div, p) - only top-level blocks become line breaks
+    const isBlock = tagName === 'div' || tagName === 'p';
+    const isTopLevelBlock = isTopLevel && isBlock;
+    
+    // Track if we've added content from this block
+    const contentStartIndex = parts.length;
+    
+    // Process children (they are not top-level)
+    for (let i = 0; i < node.childNodes.length; i++) {
+      walkNode(node.childNodes[i], parts, false);
+    }
+    
+    // Add newline after top-level block elements to represent paragraph break
+    // Only add if the block had some content (text or other elements)
+    if (isTopLevelBlock) {
+      const hadContent = parts.length > contentStartIndex;
+      if (hadContent) {
+        parts.push('\n');
+      }
+    }
+  }
   
-  // Get text content which will now have newlines
-  let text = tempDiv.textContent || '';
+  const parts = [];
+  // Process direct children as top-level
+  for (let i = 0; i < element.childNodes.length; i++) {
+    const node = element.childNodes[i];
+    const isBlock = node.nodeType === Node.ELEMENT_NODE && 
+                    (node.tagName?.toLowerCase() === 'div' || node.tagName?.toLowerCase() === 'p');
+    walkNode(node, parts, isBlock);
+  }
+  
+  let text = parts.join('');
   
   // Normalize line endings (CRLF -> LF, CR -> LF)
   text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -525,6 +549,9 @@ function getEditorTextContent(element) {
   // Clean up excessive newlines (more than 2 consecutive) but preserve intentional line breaks
   // This prevents issues from empty paragraphs
   text = text.replace(/\n{3,}/g, '\n\n');
+  
+  // Remove leading/trailing whitespace
+  text = text.trim();
   
   return text;
 }
