@@ -3243,38 +3243,12 @@ async function loadStoryFromDrive(storyFolderId) {
             }
           }
           
-          // Load content for remaining snippets in parallel (but don't block UI)
-          // This happens in the background after the UI is ready
-          if (allFilesToProcess.length > 1) {
-            const remainingSnippets = allFilesToProcess.filter(f => f !== snippetToLoadNow);
-            // Load in batches of 5 to avoid overwhelming the API
-            const batchSize = 5;
-            for (let i = 0; i < remainingSnippets.length; i += batchSize) {
-              const batch = remainingSnippets.slice(i, i + batchSize);
-              Promise.all(batch.map(async ({ file, snippet }) => {
-                try {
-                  const docContent = await window.driveAPI.read(file.id);
-                  const snippetBody = (docContent.content || '').trim();
-                  snippet.body = snippetBody;
-                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-                  snippet.chars = snippetBody.length;
-                  snippet._contentLoaded = true;
-                  snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
-                  // Update word count in UI when each batch completes
-                  if (i + batchSize >= remainingSnippets.length) {
-                    updateWordCount();
-                    updateGoalMeter();
-                  }
-                } catch (error) {
-                  console.warn(`Could not load content from Google Doc: ${file.name}`, error);
-                }
-              })).catch(err => console.warn('Batch load error:', err));
-              
-              // Small delay between batches to avoid rate limiting
-              if (i + batchSize < remainingSnippets.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-              }
-            }
+          // OPTIMIZATION: Don't load remaining snippets during initial load - load lazily when clicked
+          // This dramatically speeds up initial page load
+          // Content will be loaded on-demand via ensureSnippetContentLoaded() when user clicks a snippet
+          const remainingSnippets = allFilesToProcess.filter(f => f !== snippetToLoadNow);
+          if (remainingSnippets.length > 0) {
+            console.log(`Deferring content load for ${remainingSnippets.length} snippets - will load on-demand when clicked`);
           }
         } else {
           // Fallback: if no chapter folders exist, try loading from main Chapters folder (backward compatibility)
@@ -3283,6 +3257,8 @@ async function loadStoryFromDrive(storyFolderId) {
           console.log('Chapter files found:', chapterFiles.files?.length || 0);
           
           // Process files similar to above but without group filtering
+          // OPTIMIZATION: Only load metadata, defer content loading
+          const activeSnippetId = state.project.activeSnippetId;
           for (const file of chapterFiles.files || []) {
             if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
               const fileName = file.name.replace(/\.docx?$/i, '').trim();
@@ -3310,19 +3286,26 @@ async function loadStoryFromDrive(storyFolderId) {
               }
               
               if (snippet) {
-                try {
-                  const docContent = await window.driveAPI.read(file.id);
-                  const snippetBody = (docContent.content || '').trim();
-                  snippet.driveFileId = file.id;
-                  snippet.body = snippetBody;
-                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-                  snippet.chars = snippetBody.length;
-                  snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
-                  snippet._contentLoaded = true;
-                  loadedSnippets[snippet.id] = snippet;
-                } catch (error) {
-                  console.warn('Could not load content from Google Doc:', file.name, error);
+                snippet.driveFileId = file.id;
+                snippet.lastKnownDriveModifiedTime = file.modifiedTime || new Date().toISOString();
+                snippet._contentLoaded = false; // Defer content loading
+                
+                // Only load content immediately if this is the active snippet
+                if (snippet.id === activeSnippetId) {
+                  try {
+                    const docContent = await window.driveAPI.read(file.id);
+                    const snippetBody = (docContent.content || '').trim();
+                    snippet.body = snippetBody;
+                    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                    snippet.chars = snippetBody.length;
+                    snippet._contentLoaded = true;
+                    snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
+                  } catch (error) {
+                    console.warn('Could not load content from Google Doc:', file.name, error);
+                  }
                 }
+                
+                loadedSnippets[snippet.id] = snippet;
               }
             }
           }
@@ -3415,30 +3398,11 @@ async function loadStoryFromDrive(storyFolderId) {
       });
     });
     
-    // Load content for People/Places/Things snippets in parallel batches (background)
+    // OPTIMIZATION: Don't load People/Places/Things content during initial load
+    // Content will be loaded lazily when user views/clicks on a snippet
+    // This significantly speeds up initial page load since these are rarely viewed immediately
     if (allPeoplePlacesThingsFiles.length > 0) {
-      const batchSize = 5;
-      for (let i = 0; i < allPeoplePlacesThingsFiles.length; i += batchSize) {
-        const batch = allPeoplePlacesThingsFiles.slice(i, i + batchSize);
-        Promise.all(batch.map(async ({ file, snippet }) => {
-          try {
-            const fileContent = await window.driveAPI.read(file.id);
-            const snippetBody = (fileContent.content || '').trim();
-            snippet.body = snippetBody;
-            snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-            snippet.chars = snippetBody.length;
-            snippet._contentLoaded = true;
-            snippet.lastKnownDriveModifiedTime = fileContent.modifiedTime || file.modifiedTime || new Date().toISOString();
-          } catch (error) {
-            console.warn(`Could not load content from ${snippet.kind} file: ${file.name}`, error);
-          }
-        })).catch(err => console.warn('Batch load error for People/Places/Things:', err));
-        
-        // Small delay between batches
-        if (i + batchSize < allPeoplePlacesThingsFiles.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
+      console.log(`Deferring content load for ${allPeoplePlacesThingsFiles.length} People/Places/Things snippets - will load on-demand`);
     }
     
     // Merge loaded snippets from Google Docs and People/Places/Things files with snippets from data.json
@@ -3683,7 +3647,9 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // Ensure activeSnippetId is valid after loading
     // If activeSnippetId is not set or doesn't exist, open the most recently edited snippet
+    let activeSnippetChanged = false;
     if (!state.project.activeSnippetId || !state.snippets[state.project.activeSnippetId]) {
+      activeSnippetChanged = true;
       const mostRecentSnippet = findMostRecentlyEditedSnippet();
       
       if (mostRecentSnippet) {
@@ -3730,6 +3696,18 @@ async function loadStoryFromDrive(storyFolderId) {
         } else {
           console.warn('No groupIds in state.project.groupIds');
         }
+      }
+    }
+    
+    // OPTIMIZATION: Load active snippet content if it wasn't already loaded
+    // This ensures the editor shows content immediately even if activeSnippetId changed
+    if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
+      const activeSnippet = state.snippets[state.project.activeSnippetId];
+      if (!activeSnippet._contentLoaded && activeSnippet.driveFileId) {
+        // Load content in background (non-blocking) - UI is already rendered
+        ensureSnippetContentLoaded(state.project.activeSnippetId).catch(err => {
+          console.error('Error loading active snippet content:', err);
+        });
       }
     }
     
