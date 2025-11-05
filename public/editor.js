@@ -2073,14 +2073,18 @@ async function saveStoryDataToDrive() {
         return;
       }
       
-      // Ensure word count is accurate - only recalculate if missing or body exists without words
-      // Trust that updateWordCount() and saveCurrentEditorContent() keep counts accurate
-      if (snippet.words === undefined || snippet.words === null) {
-        // Word count missing, calculate from body
-        snippet.words = countWords(snippet.body || '');
-      } else if (snippet.body && snippet.words === 0 && countWords(snippet.body) > 0) {
-        // Word count is 0 but body has content - recalculate to fix stale data
-        snippet.words = countWords(snippet.body);
+      // Always recalculate word count from body to ensure accuracy
+      // This is critical because background loading may update word counts after initial save
+      // We always recalculate here to ensure data.json has the most accurate counts
+      if (snippet.body !== undefined && snippet.body !== null) {
+        const recalculatedWords = countWords(snippet.body);
+        // Only update if different to avoid unnecessary state mutations
+        if (snippet.words !== recalculatedWords) {
+          snippet.words = recalculatedWords;
+        }
+      } else if (snippet.words === undefined || snippet.words === null) {
+        // No body and no words, set to 0
+        snippet.words = 0;
       }
       
       snippetsToSave[snippetId] = {
@@ -2097,13 +2101,17 @@ async function saveStoryDataToDrive() {
       const group = s.groupId ? state.groups[s.groupId] : null;
       return !!group;
     });
-    console.log(`About to save data.json with ${Object.keys(snippetsToSave).length} total snippets:`, {
+    // Calculate total words from what we're about to save
+    const totalWordsToSave = chapterSnippetsToSave.reduce((sum, s) => sum + (s.words || 0), 0);
+    console.log(`About to save data.json with ${Object.keys(snippetsToSave).length} total snippets, ${totalWordsToSave} total words:`, {
       totalSnippets: Object.keys(snippetsToSave).length,
       chapterSnippets: chapterSnippetsToSave.length,
+      totalWords: totalWordsToSave,
       chapterSnippetDetails: chapterSnippetsToSave.map(s => ({
         id: s.id,
         title: s.title,
         words: s.words,
+        bodyLength: s.body ? s.body.length : 0,
         groupId: s.groupId,
         hasGroup: !!state.groups[s.groupId]
       })),
@@ -2169,8 +2177,9 @@ async function saveStoryDataToDrive() {
       const group = s.groupId ? parsedForVerification.groups?.[s.groupId] : null;
       return !!group;
     });
-    console.log(`About to write data.json with ${Object.keys(parsedForVerification.snippets || {}).length} total snippets, ${chapterSnippetsInJson.length} chapter snippets:`, 
-      chapterSnippetsInJson.map(s => ({ id: s.id, title: s.title, words: s.words }))
+    const totalWordsInJson = chapterSnippetsInJson.reduce((sum, s) => sum + (s.words || 0), 0);
+    console.log(`About to write data.json with ${Object.keys(parsedForVerification.snippets || {}).length} total snippets, ${chapterSnippetsInJson.length} chapter snippets, ${totalWordsInJson} total words:`, 
+      chapterSnippetsInJson.map(s => ({ id: s.id, title: s.title, words: s.words, bodyLength: s.body ? s.body.length : 0 }))
     );
     
     console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${fileIdToUse || 'NEW'} (folder: ${state.drive.storyFolderId})`);
