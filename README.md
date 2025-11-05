@@ -11,7 +11,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 ### Authentication & Security
 - **Google Sign-In Authentication**: Secure authentication using Google Identity Services
 - **Multi-User Support**: Configure allowed users via environment variables
-- **Session Management**: HttpOnly cookies for secure session handling
+- **Session Management**: HttpOnly cookies for secure session handling (48-hour session duration)
 - **CSRF Protection**: OAuth state parameter verification
 
 ### Google Drive Integration
@@ -36,8 +36,6 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Drag & Drop**: Reorder chapters and snippets by dragging - changes are automatically saved to Google Drive
 - **Chapter Collapse/Expand**: Minimize chapters you're not working on to focus on specific sections
 - **Search**: Full-text search across all snippets and chapters
-- **Tags**: Create and apply tags to snippets for better organization
-- **Tag Filtering**: Filter snippets by selected tags
 - **Snippets System**: All content is organized as snippets:
   - **Chapter Snippets**: Writing snippets within chapters (stored in chapter-specific subfolders within the Chapters folder)
   - **People Snippets**: Character notes and details (stored in People folder)
@@ -54,7 +52,6 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 ### Keyboard Shortcuts
 - `Cmd/Ctrl + N`: Create new snippet
 - `Cmd/Ctrl + Shift + N`: Create new chapter/group
-- `Cmd/Ctrl + K`: Open tag palette
 - `Cmd/Ctrl + F`: Focus search input
 - `Esc`: Toggle focus mode (hide sidebars)
 
@@ -68,6 +65,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
   - Google Docs API with `https://www.googleapis.com/auth/documents` scope
   - Netlify Blobs for OAuth token storage (multi-user support)
 - **Deployment**: Netlify
+- **Analytics**: Plausible (privacy-friendly analytics)
 
 ## Setup Instructions
 
@@ -125,6 +123,8 @@ In your Netlify dashboard, go to **Site settings > Environment variables** and a
 #### Optional:
 - `GDRIVE_REDIRECT_URI`: Full callback URL (auto-detected if not set)
   - Production: `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback`
+- `GOOGLE_REDIRECT_URI`: Alternative redirect URI variable (fallback, same as `GDRIVE_REDIRECT_URI`)
+- `SITE_ID`: Alternative Netlify Site ID variable (fallback for `NETLIFY_SITE_ID`)
 
 ### 4. Create GitHub Repository
 
@@ -192,6 +192,8 @@ yarny-app/
 │   │   ├── drive-write.js                 # Write/update files (supports Google Docs)
 │   │   ├── drive-create-folder.js         # Create folders
 │   │   ├── drive-delete-story.js          # Delete story folders
+│   │   ├── drive-delete-file.js           # Delete individual files (moves to trash)
+│   │   ├── drive-rename-file.js           # Rename files
 │   │   └── drive-get-or-create-yarny-stories.js  # Manage Yarny stories folder
 │   └── netlify.toml                       # Netlify configuration
 ├── public/
@@ -201,7 +203,7 @@ yarny-app/
 │   ├── docs.html                           # User guide/documentation
 │   ├── app.js                              # Login/authentication logic
 │   ├── stories.js                          # Stories management (list, create, delete, refresh)
-│   ├── editor.js                            # Editor functionality (snippets, tags, notes, color picker, etc.)
+│   ├── editor.js                            # Editor functionality (snippets, notes, color picker, etc.)
 │   ├── drive.js                            # Drive API frontend wrapper
 │   ├── global.css                           # Global design system and CSS variables
 │   ├── stories.css                          # Stories page styles
@@ -218,7 +220,7 @@ yarny-app/
 1. User clicks "Sign in with Google" on the login page
 2. Google Identity Services handles the sign-in
 3. Backend verifies the Google ID token via `verify-google` function
-4. Session cookie is set for authenticated requests
+4. Session cookie is set for authenticated requests (valid for 48 hours)
 5. User is redirected to the stories page
 
 ### Drive Integration
@@ -252,12 +254,10 @@ yarny-app/
 5. **Drag & Drop**: Reorder chapters and snippets by dragging - order is automatically saved to Google Drive
 6. **Chapter Collapse/Expand**: Click the collapse button on any chapter header to minimize it and focus on the chapters you're working on
 7. **Search**: Searches across snippet titles and content
-8. **Tags**: Create tags and apply to snippets for organization
-9. **Tag Filtering**: Show only snippets matching selected tags
-10. **Snippets**: Unified snippet system - all content (chapters, people, places, things) uses snippets
-11. **Background Autosave**: Changes automatically save when switching between snippets
-12. **Auto-Save**: Changes are automatically saved to Drive
-13. **Word Count**: Real-time tracking with goal progress indicator
+8. **Snippets**: Unified snippet system - all content (chapters, people, places, things) uses snippets
+9. **Background Autosave**: Changes automatically save when switching between snippets
+10. **Auto-Save**: Changes are automatically saved to Drive
+11. **Word Count**: Real-time tracking with goal progress indicator
 
 ## Development
 
@@ -358,6 +358,8 @@ Each error entry includes:
 - `POST /.netlify/functions/drive-create-folder` - Create a new folder
 - `POST /.netlify/functions/drive-delete-story` - Delete a story folder (optional Drive deletion)
 - `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get or create the main Yarny stories folder
+- `POST /.netlify/functions/drive-delete-file` - Delete a file (moves to trash)
+- `POST /.netlify/functions/drive-rename-file` - Rename a file
 
 ## Security Notes
 

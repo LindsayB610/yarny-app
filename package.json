@@ -1,7 +1,7 @@
 {
   "name": "yarny-app",
   "version": "1.0.0",
-  "description": "Personal writing tool with WebAuthn authentication",
+  "description": "Personal writing tool with Google Sign-In authentication and Google Drive integration",
   "author": "Lindsay Brunner",
   "license": "MIT",
   "scripts": {

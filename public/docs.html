@@ -43,7 +43,6 @@
             <li><a href="#getting-started" class="nav-link">Getting Started</a></li>
             <li><a href="#creating-and-managing-stories" class="nav-link">Creating and Managing Stories</a></li>
             <li><a href="#writing-in-the-editor" class="nav-link">Writing in the Editor</a></li>
-            <li><a href="#using-tags" class="nav-link">Using Tags</a></li>
             <li><a href="#people-places-things" class="nav-link">People, Places, and Things</a></li>
             <li><a href="#word-count-goals" class="nav-link">Word Count and Goals</a></li>
             <li><a href="#google-drive-integration" class="nav-link">Google Drive Integration</a></li>
@@ -124,7 +123,6 @@
           <ul>
             <li><strong>Groups</strong>: Major sections or chapters of your story</li>
             <li><strong>Snippets</strong>: Individual pieces of writing within a group</li>
-            <li><strong>Tags</strong>: Organize snippets with custom tags for easy filtering</li>
           </ul>
 
           <h3>Chapter Color Coding</h3>
@@ -173,21 +171,10 @@
           <p><strong>Benefits:</strong> Collapse chapters 1, 2, and 3 while working on chapter 4 to reduce visual clutter. Your collapsed preferences are remembered when you return to the story.</p>
         </section>
 
-        <section class="docs-section" id="using-tags">
-          <h2>Using Tags</h2>
+        <section class="docs-section" id="searching">
+          <h2>Searching</h2>
           
-          <h3>Adding Tags</h3>
-          <ol>
-            <li>Click the "Tags" button in the left rail</li>
-            <li>Select tags from the palette or create new ones</li>
-            <li>Tags are automatically applied to your currently selected snippet</li>
-          </ol>
-
-          <h3>Filtering by Tags</h3>
-          <p>Selected tags appear as chips above the story list. Click the "×" on a tag chip to remove that filter.</p>
-
-          <h3>Searching</h3>
-          <p>Use the search box in the left rail to quickly find snippets by name or content.</p>
+          <p>Use the search box in the left rail to quickly find snippets by name or content. The search feature searches across all snippet titles and content, making it easy to find what you're looking for.</p>
         </section>
 
         <section class="docs-section" id="people-places-things">
@@ -217,11 +204,20 @@
           
           <p>The left rail shows your current word count progress toward your writing goal. The goal meter helps you track your daily or project writing targets.</p>
           
+          <h3>Editing Your Word Count Goal</h3>
+          <p>To change your word count goal:</p>
+          <ol>
+            <li>Click on the goal meter in the left rail (shows "X / Y" where Y is your goal)</li>
+            <li>This opens the Story Info & Settings modal</li>
+            <li>Enter your desired word count goal in the "Word Count Goal" field</li>
+            <li>Click "Save" to update your goal</li>
+          </ol>
+          <p>You can also access this by clicking the settings icon (⚙️) next to the "Story" title in the left rail.</p>
+          
           <p>The footer shows:</p>
           <ul>
-            <li>Current word count</li>
-            <li>Character count</li>
-            <li>Version history slider (for future features)</li>
+            <li>Current word count for the active snippet</li>
+            <li>Character count for the active snippet</li>
             <li>Last modified timestamp</li>
           </ul>
         </section>
@@ -342,7 +338,6 @@
           <h2>Tips and Best Practices</h2>
           
           <ul>
-            <li><strong>Use tags liberally</strong>: Tags help you organize and find content quickly</li>
             <li><strong>Color-code your chapters</strong>: Use the color picker to visually organize different story elements</li>
             <li><strong>Keep snippets updated</strong>: Regular snippet creation helps maintain consistency in your writing</li>
             <li><strong>Use groups for major sections</strong>: Organize your story into logical chapters or parts</li>
@@ -357,7 +352,19 @@
 
         <section class="docs-section" id="getting-help">
           <h2>Getting Help</h2>
-          <p>If you need additional help or encounter issues not covered in this guide, please check the troubleshooting section above or contact support.</p>
+          <p>If you need additional help or encounter issues not covered in this guide:</p>
+          <ul>
+            <li>Check the troubleshooting section above for common issues</li>
+            <li>Use the error logging feature (see "Error Codes and Debugging" section) to gather information about any errors</li>
+            <li>Contact support at <a href="mailto:lb@lindsaybrunner.com">lb@lindsaybrunner.com</a> for assistance</li>
+          </ul>
+          <p>When reporting issues, please include:</p>
+          <ul>
+            <li>Description of the problem</li>
+            <li>Steps to reproduce (if applicable)</li>
+            <li>Error log output from <code>viewYarnyErrors()</code> if available</li>
+            <li>Browser and operating system information</li>
+          </ul>
         </section>
       </div>
     </main>
