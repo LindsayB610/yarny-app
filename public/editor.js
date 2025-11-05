@@ -3112,15 +3112,33 @@ async function loadStoryFromDrive(storyFolderId) {
       mergedSnippetsCount: Object.keys(mergedSnippets).length
     });
     
-    // Save data.json with updated word counts after loading from Google Docs
+    // CRITICAL: Save data.json with updated word counts after loading from Google Docs
     // This ensures word counts in data.json match the actual content in Google Docs
+    // Must happen AFTER state.snippets is updated with merged snippets
     try {
       console.log('Saving data.json with updated word counts after loading...');
+      const totalWordsBeforeSave = window.calculateStoryWordCount(state.snippets, state.groups);
+      console.log(`Word count before save: ${totalWordsBeforeSave}`);
+      
       await saveStoryDataToDrive();
+      
+      // Verify the save worked by checking what we saved
+      const totalWordsAfterSave = window.calculateStoryWordCount(state.snippets, state.groups);
+      console.log(`Word count after save: ${totalWordsAfterSave}`);
       console.log('data.json saved successfully with updated word counts after loading');
     } catch (error) {
-      console.warn('Error saving data.json after loading (non-critical):', error);
-      // Don't throw - this is non-critical, word counts are correct in memory
+      console.error('ERROR saving data.json after loading - this is critical!', error);
+      // This is actually critical - word counts won't match between editor and stories page
+      // Try again after a short delay
+      setTimeout(async () => {
+        try {
+          console.log('Retrying save data.json after loading...');
+          await saveStoryDataToDrive();
+          console.log('data.json saved successfully on retry');
+        } catch (retryError) {
+          console.error('Failed to save data.json on retry:', retryError);
+        }
+      }, 1000);
     }
     
     // Ensure activeSnippetId is valid after loading
@@ -3181,6 +3199,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (currentStory && currentStory.id) {
     try {
       await loadStoryFromDrive(currentStory.id);
+      // Update story name in UI
+      if (currentStory.name) {
+        const storyTitleEl = document.querySelector('.rail-title');
+        if (storyTitleEl) {
+          storyTitleEl.textContent = currentStory.name;
+        }
+      }
       // Render UI with loaded data
       renderStoryList();
       renderEditor();
