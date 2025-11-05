@@ -26,7 +26,6 @@ After signing in for the first time:
 - **Color Coding**: Click the color chip next to a chapter to choose from 12 accent colors
 - **Snippets**: Add writing snippets to chapters - they appear instantly so you can start typing right away
 - **Search**: Search across all your writing
-- **Tags**: Organize snippets with tags
 - **Notes**: Keep track of people, places, and things
 - **Auto-Save**: Everything saves automatically to Google Drive
 

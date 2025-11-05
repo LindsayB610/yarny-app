@@ -718,7 +718,6 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
           body: randomOpening,
           words: randomOpening.split(/\s+/).length,
           chars: randomOpening.length,
-          tagIds: [],
           updatedAt: new Date().toISOString(),
           version: 1,
           driveFileId: null
@@ -739,8 +738,7 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
         people: {},
         places: {},
         things: {}
-      },
-      tags: []
+      }
     };
 
     await window.driveAPI.write(
