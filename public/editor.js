@@ -1506,7 +1506,19 @@ async function saveStoryDataToDrive() {
       },
     };
     
+    // CRITICAL: Use the same file ID we loaded from, not just any data.json file found
+    // This ensures we're updating the correct file, not creating a duplicate
     const dataFile = files.files.find(f => f.name === 'data.json');
+    const fileIdToUse = state.drive.dataJsonFileId || dataFile?.id || null;
+    
+    if (!fileIdToUse && dataFile) {
+      // If we don't have a stored file ID but found a data.json, use it and store it
+      state.drive.dataJsonFileId = dataFile.id;
+      console.log(`No stored dataJsonFileId, using found file: ${dataFile.id}`);
+    } else if (fileIdToUse && fileIdToUse !== dataFile?.id) {
+      console.warn(`WARNING: Stored dataJsonFileId (${fileIdToUse}) doesn't match found file (${dataFile?.id}). Using stored ID.`);
+    }
+    
     const jsonString = JSON.stringify(storyData, null, 2);
     
     // CRITICAL: Verify what's actually in the JSON we're about to save
@@ -1519,12 +1531,12 @@ async function saveStoryDataToDrive() {
       chapterSnippetsInJson.map(s => ({ id: s.id, title: s.title, words: s.words }))
     );
     
-    console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${dataFile?.id || 'NEW'}`);
+    console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${fileIdToUse || 'NEW'} (folder: ${state.drive.storyFolderId})`);
     
     const writeResult = await window.driveAPI.write(
       'data.json',
       jsonString,
-      dataFile ? dataFile.id : null,
+      fileIdToUse,
       state.drive.storyFolderId,
       'text/plain'
     );
@@ -2394,6 +2406,7 @@ function getCurrentStory() {
 async function loadStoryFolders(storyFolderId, savedFolderIds = null) {
   try {
     state.drive.storyFolderId = storyFolderId;
+    state.drive.dataJsonFileId = null; // Reset when loading a new story
     
     // List folders in the story directory
     const files = await window.driveAPI.list(storyFolderId);
@@ -2626,11 +2639,16 @@ async function loadStoryFromDrive(storyFolderId) {
     state.groups = {};
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
+    // CRITICAL: Store the data.json file ID so we save to the same file
+    let dataJsonFileId = null;
     try {
       const dataFiles = await window.driveAPI.list(storyFolderId);
       const dataFile = dataFiles.files.find(f => f.name === 'data.json');
       
       if (dataFile) {
+        dataJsonFileId = dataFile.id; // Store the file ID we loaded from
+        state.drive.dataJsonFileId = dataFile.id; // Store in state so save function uses the same file
+        console.log(`Loaded data.json from file ID: ${dataJsonFileId} in folder ${storyFolderId}`);
         const dataContent = await window.driveAPI.read(dataFile.id);
         if (dataContent.content) {
           const parsed = JSON.parse(dataContent.content);
