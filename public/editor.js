@@ -98,6 +98,38 @@ const ACCENT_COLORS = [
   { name: 'fuchsia', value: '#D946EF' }
 ];
 
+// ============================================
+// Word Count Utilities
+// ============================================
+
+/**
+ * Count words in text string
+ * Centralized function to ensure consistency across the codebase
+ * @param {string} text - Text to count words in
+ * @returns {number} Word count
+ */
+function countWords(text) {
+  if (!text || typeof text !== 'string') return 0;
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(w => w.length > 0).length;
+}
+
+/**
+ * Update word count for a snippet from its body
+ * @param {Object} snippet - Snippet object to update
+ * @returns {number} The calculated word count
+ */
+function updateSnippetWordCount(snippet) {
+  if (!snippet) return 0;
+  const words = countWords(snippet.body);
+  snippet.words = words;
+  return words;
+}
+
+// Export countWords for potential use in other files (though currently only used in editor.js)
+window.countWords = countWords;
+
 // State Management
 const state = {
   project: {
@@ -864,7 +896,7 @@ function updateFooter() {
 
   if (activeSnippet) {
     // Calculate word and char count if not already set (for People/Places/Things snippets)
-    const words = activeSnippet.words || (activeSnippet.body ? activeSnippet.body.trim().split(/\s+/).filter(w => w.length > 0).length : 0);
+    const words = activeSnippet.words !== undefined ? activeSnippet.words : countWords(activeSnippet.body);
     const chars = activeSnippet.chars || (activeSnippet.body ? activeSnippet.body.length : 0);
     document.getElementById('wordCount').textContent = `Words: ${words}`;
     document.getElementById('charCount').textContent = `Characters: ${chars}`;
@@ -1000,7 +1032,7 @@ function updateLogoutButtonWarning() {
   }
 }
 
-// Update word count display in sidebar for a specific snippet
+    // Update word count display in sidebar for a specific snippet
 // @param {string} snippetId - The snippet ID to update (optional, defaults to active snippet)
 function updateSnippetWordCountInSidebar(snippetId = null) {
   const targetSnippetId = snippetId || state.project.activeSnippetId;
@@ -1014,8 +1046,7 @@ function updateSnippetWordCountInSidebar(snippetId = null) {
     const wordCountEl = snippetEl.querySelector('.snippet-word-count');
     if (wordCountEl) {
       // Use snippet.words if available, otherwise calculate from body
-      const words = snippet.words !== undefined ? snippet.words : 
-        (snippet.body ? snippet.body.trim().split(/\s+/).filter(w => w.length > 0).length : 0);
+      const words = snippet.words !== undefined ? snippet.words : countWords(snippet.body);
       wordCountEl.textContent = `${words} words`;
     }
     // Also update excerpt for People/Places/Things snippets
@@ -1029,7 +1060,7 @@ function updateSnippetWordCountInSidebar(snippetId = null) {
 function updateWordCount() {
   const editorEl = document.getElementById('editorContent');
   const text = getEditorTextContent(editorEl);
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const words = countWords(text);
   const chars = text.length;
 
   if (state.project.activeSnippetId) {
@@ -1059,7 +1090,7 @@ function saveCurrentEditorContent() {
     const snippet = state.snippets[state.project.activeSnippetId];
     if (snippet) {
       snippet.body = text;
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const words = countWords(text);
       const chars = text.length;
       snippet.words = words;
       snippet.chars = chars;
@@ -1260,7 +1291,7 @@ function resolveConflictWithDrive() {
     // Load Drive content into snippet
     const driveContent = modal.dataset.conflictDriveContent || '';
     snippet.body = driveContent;
-    snippet.words = driveContent.split(/\s+/).filter(w => w.length > 0).length;
+    snippet.words = countWords(driveContent);
     snippet.chars = driveContent.length;
     snippet.lastKnownDriveModifiedTime = modal.dataset.conflictDriveTime;
     snippet.updatedAt = modal.dataset.conflictDriveTime;
@@ -1513,10 +1544,9 @@ function handleTypingStop() {
           const editorEl = document.getElementById('editorContent');
           if (editorEl) {
             const text = getEditorTextContent(editorEl);
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            snippet.words = words;
+            snippet.words = countWords(text);
             snippet.chars = text.length;
-            console.log(`Updated word count for snippet ${snippet.id}: ${words} words`);
+            console.log(`Updated word count for snippet ${snippet.id}: ${snippet.words} words`);
           }
           
           // Ensure driveFileId is set (it should be set by saveCurrentEditorToDrive, but double-check)
@@ -2008,6 +2038,13 @@ async function saveStoryDataToDrive() {
     return;
   }
   
+  // Track saving state to prevent duplicate saves
+  if (isSavingDataJson) {
+    console.log('saveStoryDataToDrive already in progress, skipping...');
+    return;
+  }
+  
+  isSavingDataJson = true;
   try {
     const files = await window.driveAPI.list(state.drive.storyFolderId);
     
@@ -2025,6 +2062,7 @@ async function saveStoryDataToDrive() {
     
     // Ensure all snippets have their driveFileId saved (create a deep copy to avoid modifying state during save)
     // CRITICAL: Save ALL snippets from state.snippets - this should match mergedSnippets exactly
+    // CRITICAL: Recalculate word counts from snippet.body to ensure they're accurate
     const snippetsToSave = {};
     const snippetIds = Object.keys(state.snippets);
     console.log(`saveStoryDataToDrive: state.snippets has ${snippetIds.length} snippets:`, snippetIds);
@@ -2034,8 +2072,20 @@ async function saveStoryDataToDrive() {
         console.warn(`Snippet ${snippetId} is null/undefined in state.snippets!`);
         return;
       }
+      
+      // Ensure word count is accurate - only recalculate if missing or body exists without words
+      // Trust that updateWordCount() and saveCurrentEditorContent() keep counts accurate
+      if (snippet.words === undefined || snippet.words === null) {
+        // Word count missing, calculate from body
+        snippet.words = countWords(snippet.body || '');
+      } else if (snippet.body && snippet.words === 0 && countWords(snippet.body) > 0) {
+        // Word count is 0 but body has content - recalculate to fix stale data
+        snippet.words = countWords(snippet.body);
+      }
+      
       snippetsToSave[snippetId] = {
         ...snippet,
+        words: snippet.words,
         // Ensure driveFileId is included
         driveFileId: snippet.driveFileId || null
       };
@@ -2152,6 +2202,11 @@ async function saveStoryDataToDrive() {
     
     console.log(`data.json write completed. File ID: ${writeResult?.id || 'unknown'}, result:`, writeResult);
     
+    // Update stored file ID if we got a new one
+    if (writeResult?.id) {
+      state.drive.dataJsonFileId = writeResult.id;
+    }
+    
     // Save project.json
     const projectData = {
       name: state.project.title || 'New Project',
@@ -2201,6 +2256,9 @@ async function saveStoryDataToDrive() {
   } catch (error) {
     console.error('Error saving story data to Drive:', error);
     throw error;
+  } finally {
+    // Always reset saving state, even if there was an error
+    isSavingDataJson = false;
   }
 }
 
@@ -3857,7 +3915,7 @@ async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
     const snippetBody = (docContent.content || '').trim();
     
     snippet.body = snippetBody;
-    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+    snippet.words = countWords(snippetBody);
     snippet.chars = snippetBody.length;
     snippet._contentLoaded = true;
     
@@ -4444,7 +4502,7 @@ async function loadStoryFromDrive(storyFolderId) {
               const docContent = await window.driveAPI.read(snippetToLoadNow.file.id);
               const snippetBody = (docContent.content || '').trim();
               snippetToLoadNow.snippet.body = snippetBody;
-              snippetToLoadNow.snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+              snippetToLoadNow.snippet.words = countWords(snippetBody);
               snippetToLoadNow.snippet.chars = snippetBody.length;
               snippetToLoadNow.snippet._contentLoaded = true;
               snippetToLoadNow.snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || snippetToLoadNow.file.modifiedTime || new Date().toISOString();
@@ -4507,7 +4565,7 @@ async function loadStoryFromDrive(storyFolderId) {
                     const docContent = await window.driveAPI.read(file.id);
                     const snippetBody = (docContent.content || '').trim();
                     snippet.body = snippetBody;
-                    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                    snippet.words = countWords(snippetBody);
                     snippet.chars = snippetBody.length;
                     snippet._contentLoaded = true;
                     snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
@@ -4945,6 +5003,65 @@ async function loadStoryFromDrive(storyFolderId) {
 // Event Listeners
 // ============================================
 
+// Track if we're currently saving data.json to avoid duplicate saves
+let isSavingDataJson = false;
+
+// Save data.json before navigation (synchronous if possible)
+async function saveDataJsonBeforeNavigation() {
+  if (!state.drive.storyFolderId) return;
+  
+  // If already saving, wait for it
+  if (isSavingDataJson) {
+    console.log('Waiting for existing data.json save to complete...');
+    // Wait up to 2 seconds for save to complete
+    for (let i = 0; i < 20; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (!isSavingDataJson) break;
+    }
+    return;
+  }
+  
+  // Ensure current editor content is saved to state
+  // This updates word count for the active snippet
+  saveCurrentEditorContent();
+  
+  // Trust that updateWordCount() and saveCurrentEditorContent() keep counts accurate
+  // Only fix missing word counts (shouldn't happen, but safety check)
+  Object.values(state.snippets).forEach(snippet => {
+    if (snippet.words === undefined || snippet.words === null) {
+      snippet.words = countWords(snippet.body || '');
+    }
+  });
+  
+  // Save data.json
+  isSavingDataJson = true;
+  try {
+    await saveStoryDataToDrive();
+    console.log('data.json saved before navigation');
+  } catch (error) {
+    console.error('Error saving data.json before navigation:', error);
+    // Don't block navigation, but log the error
+  } finally {
+    isSavingDataJson = false;
+  }
+  
+  // Clear story progress cache so stories page fetches fresh data
+  if (state.drive.storyFolderId) {
+    try {
+      const CACHE_KEY_STORY_PROGRESS = 'yarny_story_progress';
+      const cached = localStorage.getItem(CACHE_KEY_STORY_PROGRESS);
+      if (cached) {
+        const progressCache = JSON.parse(cached);
+        delete progressCache[state.drive.storyFolderId];
+        localStorage.setItem(CACHE_KEY_STORY_PROGRESS, JSON.stringify(progressCache));
+        console.log('Cleared story progress cache for story:', state.drive.storyFolderId);
+      }
+    } catch (e) {
+      console.warn('Error clearing story progress cache:', e);
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Check authentication first
   checkAuth();
@@ -4964,6 +5081,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Clean up URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
+  
+  // Intercept back-to-stories link clicks to save before navigation
+  const backToStoriesLink = document.querySelector('.back-to-stories-link');
+  if (backToStoriesLink) {
+    backToStoriesLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await saveDataJsonBeforeNavigation();
+      window.location.href = '/stories.html';
+    });
+  }
+  
+  // Save data.json before page unload (when user navigates away or closes tab)
+  window.addEventListener('beforeunload', (e) => {
+    // Note: Modern browsers don't allow async operations in beforeunload
+    // So we use sendBeacon or a flag to indicate we need to save
+    // For now, we'll ensure word counts are at least updated in state
+    saveCurrentEditorContent();
+    
+    // Only fix missing word counts (trust that updateWordCount() keeps active snippet accurate)
+    Object.values(state.snippets).forEach(snippet => {
+      if (snippet.words === undefined || snippet.words === null) {
+        snippet.words = countWords(snippet.body || '');
+      }
+    });
+    
+    // Set a flag that we need to save (stories page can check this)
+    if (state.drive.storyFolderId) {
+      localStorage.setItem('yarny_pending_save', JSON.stringify({
+        storyId: state.drive.storyFolderId,
+        timestamp: Date.now()
+      }));
+      
+      // Clear story progress cache
+      try {
+        const CACHE_KEY_STORY_PROGRESS = 'yarny_story_progress';
+        const cached = localStorage.getItem(CACHE_KEY_STORY_PROGRESS);
+        if (cached) {
+          const progressCache = JSON.parse(cached);
+          delete progressCache[state.drive.storyFolderId];
+          localStorage.setItem(CACHE_KEY_STORY_PROGRESS, JSON.stringify(progressCache));
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  });
   
   // Load story from Drive if available
   const currentStory = getCurrentStory();

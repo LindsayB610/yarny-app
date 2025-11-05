@@ -1615,13 +1615,17 @@ window.closeNewStoryModal = closeNewStoryModal;
 function refreshStoriesOnReturn() {
   if (window.location.pathname === '/stories.html' || window.location.pathname === '/stories.html') {
     console.log('Refreshing stories on page return...');
-    // Clear progress cache to get fresh data after editing
+    // Always clear progress cache to get fresh data after editing
+    // This ensures word counts are always up-to-date
     try {
       localStorage.removeItem(CACHE_KEY_STORY_PROGRESS);
+      console.log('Cleared story progress cache');
     } catch (e) {
       console.warn('Error clearing progress cache:', e);
     }
-    // Small delay to ensure Drive API is ready
+    // Delay to ensure Drive API is ready and data.json saves have completed
+    // Longer delay when coming from editor to allow data.json save to finish
+    const delay = document.referrer && document.referrer.includes('editor.html') ? 1500 : 500;
     setTimeout(async () => {
       try {
         const stories = await listStories();
@@ -1629,7 +1633,7 @@ function refreshStoriesOnReturn() {
       } catch (error) {
         console.error('Error refreshing stories on return:', error);
       }
-    }, 300);
+    }, delay);
   }
 }
 
@@ -1645,11 +1649,33 @@ window.addEventListener('focus', refreshStoriesOnReturn);
 
 // Also refresh on page load if coming from editor (checking referrer)
 window.addEventListener('load', () => {
-  // Small delay to ensure everything is initialized
+  // Check if we're coming from editor
+  const comingFromEditor = document.referrer && document.referrer.includes('editor.html');
+  
+  // Check for pending save flag (indicates editor had unsaved data)
+  let pendingSaveDelay = 0;
+  try {
+    const pendingSave = localStorage.getItem('yarny_pending_save');
+    if (pendingSave) {
+      const pendingData = JSON.parse(pendingSave);
+      // If pending save is recent (within last 5 seconds), add extra delay
+      if (Date.now() - pendingData.timestamp < 5000) {
+        pendingSaveDelay = 2000; // Wait 2 seconds for data.json save to complete
+        console.log('Pending save detected, adding extra delay for data.json save');
+      }
+      // Clear the pending save flag
+      localStorage.removeItem('yarny_pending_save');
+    }
+  } catch (e) {
+    console.warn('Error checking pending save:', e);
+  }
+  
+  // Delay to ensure everything is initialized and data.json saves complete
+  const totalDelay = comingFromEditor ? 1500 + pendingSaveDelay : 500;
   setTimeout(() => {
-    if (document.referrer && document.referrer.includes('editor.html')) {
+    if (comingFromEditor) {
       console.log('Page loaded from editor, refreshing stories...');
       refreshStoriesOnReturn();
     }
-  }, 1000);
+  }, totalDelay);
 });
