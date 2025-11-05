@@ -1493,7 +1493,8 @@ async function confirmDelete() {
       }
     } else if (currentContextType === 'snippet') {
       await deleteSnippet(currentContextId);
-    // Note: 'note' type removed - all are snippets now
+      // Note: 'note' type removed - all are snippets now
+    }
     
     closeDeleteModal();
   } catch (error) {
