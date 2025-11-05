@@ -334,6 +334,8 @@ body {
   min-height: 300px;
   outline: none;
   font-family: var(--font-family-base);
+  white-space: pre-wrap; /* Preserve line breaks and wrap text */
+  word-wrap: break-word; /* Break long words if needed */
 }
 
 .editor-content:focus {

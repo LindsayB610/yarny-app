@@ -376,6 +376,59 @@ function renderStoryList() {
   listEl.appendChild(newChapterBtn);
 }
 
+// Helper function to get text content from contenteditable preserving line breaks
+function getEditorTextContent(element) {
+  // In contenteditable, line breaks can be represented as:
+  // - <br> tags (line breaks)
+  // - <div> or <p> elements (paragraph breaks)
+  // - Actual newline characters in textContent
+  
+  // Simple approach: use a temporary element to normalize
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = element.innerHTML || '';
+  
+  // Convert <br> tags to newlines
+  tempDiv.querySelectorAll('br').forEach(br => {
+    br.replaceWith(document.createTextNode('\n'));
+  });
+  
+  // Convert block elements (div, p) to newlines
+  // When a block element ends, add a newline before its content
+  tempDiv.querySelectorAll('div, p').forEach(block => {
+    // Insert a newline at the start of the block
+    if (block.firstChild) {
+      block.insertBefore(document.createTextNode('\n'), block.firstChild);
+    } else {
+      block.appendChild(document.createTextNode('\n'));
+    }
+    // Replace the block with its content (now including the newline)
+    const parent = block.parentNode;
+    while (block.firstChild) {
+      parent.insertBefore(block.firstChild, block);
+    }
+    parent.removeChild(block);
+  });
+  
+  // Get text content which will now have newlines
+  let text = tempDiv.textContent || '';
+  
+  // Normalize line endings (CRLF -> LF, CR -> LF)
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Clean up excessive newlines (more than 2 consecutive) but preserve intentional line breaks
+  // This prevents issues from empty paragraphs
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  return text;
+}
+
+// Helper function to set text content preserving line breaks
+function setEditorTextContent(element, text) {
+  // Use textContent which will preserve \n as actual line breaks
+  // With white-space: pre-wrap CSS, these will be displayed correctly
+  element.textContent = text || '';
+}
+
 function renderEditor() {
   const editorEl = document.getElementById('editorContent');
   const activeSnippet = state.project.activeSnippetId 
@@ -383,9 +436,9 @@ function renderEditor() {
     : null;
 
   if (activeSnippet) {
-    editorEl.textContent = activeSnippet.body;
+    setEditorTextContent(editorEl, activeSnippet.body);
   } else {
-    editorEl.textContent = '';
+    setEditorTextContent(editorEl, '');
   }
 
   // Update save status
@@ -601,7 +654,7 @@ function updateLogoutButtonWarning() {
 
 function updateWordCount() {
   const editorEl = document.getElementById('editorContent');
-  const text = editorEl.textContent || '';
+  const text = getEditorTextContent(editorEl);
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   const chars = text.length;
 
@@ -637,7 +690,7 @@ function updateWordCount() {
 // This ensures no data loss when switching between snippets
 function saveCurrentEditorContent() {
   const editorEl = document.getElementById('editorContent');
-  const text = editorEl.textContent || '';
+  const text = getEditorTextContent(editorEl);
   
   if (state.project.activeSnippetId) {
     const snippet = state.snippets[state.project.activeSnippetId];
