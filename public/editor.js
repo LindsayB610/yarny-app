@@ -2640,16 +2640,42 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
     // CRITICAL: Store the data.json file ID so we save to the same file
+    // Also handle duplicate data.json files by keeping only the most recent one
     let dataJsonFileId = null;
     try {
       const dataFiles = await window.driveAPI.list(storyFolderId);
-      const dataFile = dataFiles.files.find(f => f.name === 'data.json');
+      const allDataJsonFiles = (dataFiles.files || []).filter(f => f.name === 'data.json' && !f.trashed);
       
-      if (dataFile) {
-        dataJsonFileId = dataFile.id; // Store the file ID we loaded from
-        state.drive.dataJsonFileId = dataFile.id; // Store in state so save function uses the same file
-        console.log(`Loaded data.json from file ID: ${dataJsonFileId} in folder ${storyFolderId}`);
-        const dataContent = await window.driveAPI.read(dataFile.id);
+      if (allDataJsonFiles.length > 1) {
+        // Multiple data.json files found - this is a problem! Keep the most recent one
+        console.warn(`WARNING: Found ${allDataJsonFiles.length} data.json files in story folder. Keeping the most recent one and deleting duplicates.`);
+        // Sort by modifiedTime, most recent first
+        allDataJsonFiles.sort((a, b) => {
+          const timeA = new Date(a.modifiedTime || 0).getTime();
+          const timeB = new Date(b.modifiedTime || 0).getTime();
+          return timeB - timeA; // Most recent first
+        });
+        
+        const primaryDataFile = allDataJsonFiles[0];
+        const duplicateFiles = allDataJsonFiles.slice(1);
+        
+        console.log(`Keeping data.json file ID: ${primaryDataFile.id} (modified: ${primaryDataFile.modifiedTime})`);
+        console.log(`Deleting ${duplicateFiles.length} duplicate data.json file(s):`, duplicateFiles.map(f => ({ id: f.id, modified: f.modifiedTime })));
+        
+        // Delete duplicate files
+        for (const duplicate of duplicateFiles) {
+          try {
+            await window.driveAPI.delete(duplicate.id);
+            console.log(`Deleted duplicate data.json: ${duplicate.id}`);
+          } catch (error) {
+            console.error(`Failed to delete duplicate data.json ${duplicate.id}:`, error);
+          }
+        }
+        
+        dataJsonFileId = primaryDataFile.id;
+        state.drive.dataJsonFileId = primaryDataFile.id;
+        console.log(`Using data.json file ID: ${dataJsonFileId} in folder ${storyFolderId}`);
+        const dataContent = await window.driveAPI.read(primaryDataFile.id);
         if (dataContent.content) {
           const parsed = JSON.parse(dataContent.content);
           
