@@ -263,7 +263,8 @@ html {
   flex: 1;
   margin-left: 280px;
   padding: var(--space-5xl) var(--space-4xl);
-  max-width: calc(100% - 280px);
+  max-width: calc(100vw - 280px);
+  box-sizing: border-box;
 }
 
 .docs-section {
@@ -466,7 +467,8 @@ html {
   display: block;
 }
 
-@media (max-width: 1024px) {
+/* Only trigger mobile styles on actual mobile/tablet screens */
+@media (max-width: 900px) {
   .docs-sidebar {
     transform: translateX(-100%);
     transition: transform var(--transition-base);
@@ -483,6 +485,10 @@ html {
     margin-left: 0;
     max-width: 100%;
     padding: var(--space-5xl) var(--space-lg);
+  }
+
+  .docs-header {
+    margin-left: 0; /* Ensure header spans full width on mobile */
   }
 
   .docs-header-content {
@@ -503,6 +509,12 @@ html {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-md);
+    padding: 0 var(--space-lg) 0 calc(var(--space-lg) + 40px);
+  }
+
+  .docs-nav {
+    margin-left: 0; /* Remove auto margin on small screens */
+    width: 100%;
   }
 
   .docs-section {
