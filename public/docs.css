@@ -52,12 +52,14 @@ html {
 }
 
 .docs-header-content {
+  width: 100%;
   max-width: none;
   margin: 0;
   padding: 0 var(--space-lg) 0 calc(280px + var(--space-lg)); /* Account for sidebar width */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .docs-header h1 {
@@ -76,6 +78,7 @@ html {
   display: flex;
   gap: var(--space-md);
   align-items: center;
+  margin-left: auto; /* Push to the right */
 }
 
 .docs-nav .btn-secondary {
@@ -118,8 +121,8 @@ html {
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   position: fixed;
   left: 0;
-  top: 80px; /* Start below header */
-  height: calc(100vh - 80px); /* Full height minus header */
+  top: 100px; /* Start below header - increased to ensure no overlap */
+  height: calc(100vh - 100px); /* Full height minus header */
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
