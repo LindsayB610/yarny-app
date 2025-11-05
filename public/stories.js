@@ -814,21 +814,22 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       { name: 'Things', description: 'Things notes' }
     ];
 
+    // OPTIMIZATION: Create all main folders in parallel for faster story creation
+    const folderPromises = folders.map(folder => 
+      createDriveFolder(folder.name, storyFolderId).then(result => ({ name: folder.name, id: result.id }))
+    );
+    const folderResults = await Promise.all(folderPromises);
     const createdFolders = {};
-    for (const folder of folders) {
-      const folderResult = await createDriveFolder(folder.name, storyFolderId);
-      createdFolders[folder.name] = folderResult.id;
-    }
+    folderResults.forEach(({ name, id }) => {
+      createdFolders[name] = id;
+    });
 
     // Create a sample chapter (group) and snippet with random opening sentence
     const randomOpening = getRandomOpeningSentence();
     const groupId = 'group_' + Date.now();
     const snippetId = 'snippet_' + Date.now();
     
-    // Create a folder for Chapter 1 inside the Chapters folder
-    const chapter1Folder = await createDriveFolder('Chapter 1', createdFolders['Chapters']);
-    
-    // Create initial project.json file with sample data
+    // Create initial project.json file data (can be created early)
     const projectData = {
       name: 'New Project',
       createdAt: new Date().toISOString(),
@@ -840,12 +841,17 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       genre: metadata.genre || ''
     };
 
-    await window.driveAPI.write(
-      'project.json',
-      JSON.stringify(projectData, null, 2),
-      null,
-      storyFolderId
-    );
+    // OPTIMIZATION: Create Chapter 1 folder and project.json in parallel
+    // Chapter 1 folder depends on Chapters folder, but project.json doesn't depend on anything
+    const [chapter1Folder] = await Promise.all([
+      createDriveFolder('Chapter 1', createdFolders['Chapters']),
+      window.driveAPI.write(
+        'project.json',
+        JSON.stringify(projectData, null, 2),
+        null,
+        storyFolderId
+      )
+    ]);
 
     // Create initial data.json file with sample snippet and group (only Chapter 1 with Opening Scene)
     const initialState = {
@@ -881,31 +887,34 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       }
     };
 
-    await window.driveAPI.write(
-      'data.json',
-      JSON.stringify(initialState, null, 2),
-      null,
-      storyFolderId
-    );
-
-    // Create the opening scene as a Google Doc in the Chapter 1 folder
+    // OPTIMIZATION: Create data.json and Opening Scene doc in parallel
+    // Both depend on chapter1Folder, but are independent of each other
     try {
       if (chapter1Folder && chapter1Folder.id) {
         console.log('Creating Opening Scene Google Doc with content:', randomOpening.substring(0, 50) + '...');
-        const docResult = await window.driveAPI.write(
-          'Opening Scene.doc',
-          randomOpening,
-          null,
-          chapter1Folder.id,
-          'application/vnd.google-apps.document'
-        );
+        
+        const [docResult] = await Promise.all([
+          window.driveAPI.write(
+            'Opening Scene.doc',
+            randomOpening,
+            null,
+            chapter1Folder.id,
+            'application/vnd.google-apps.document'
+          ),
+          window.driveAPI.write(
+            'data.json',
+            JSON.stringify(initialState, null, 2),
+            null,
+            storyFolderId
+          )
+        ]);
         
         console.log('Opening Scene Google Doc created:', docResult.id);
         
         // Update the snippet with the Drive file ID
         initialState.snippets[snippetId].driveFileId = docResult.id;
         
-        // Update data.json with the file ID
+        // Update data.json with the file ID (must happen after doc creation)
         await window.driveAPI.write(
           'data.json',
           JSON.stringify(initialState, null, 2),
@@ -916,6 +925,13 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
         console.log('data.json updated with snippet structure');
       } else {
         console.error('Chapters folder ID not found');
+        // Still create data.json even if chapter folder creation failed
+        await window.driveAPI.write(
+          'data.json',
+          JSON.stringify(initialState, null, 2),
+          null,
+          storyFolderId
+        );
       }
     } catch (error) {
       console.error('Error creating opening scene Google Doc:', error);

@@ -356,7 +356,7 @@ function renderStoryList() {
         const targetSnippetId = snippet.id;
         
         // OPTIMIZATION: Ensure content is loaded for target snippet before switching
-        await ensureSnippetContentLoaded(targetSnippetId);
+        await ensureSnippetContentLoaded(targetSnippetId, true);
         
         // Check for conflicts in the target snippet BEFORE switching
         const conflict = await checkSnippetConflict(targetSnippetId);
@@ -571,9 +571,10 @@ function renderEditor() {
 
   if (activeSnippet) {
     // Check if content is loaded (for lazy loading optimization)
+    // CRITICAL: Only show content if it's actually loaded to prevent flashing wrong content
     if (activeSnippet._contentLoaded === false && activeSnippet.driveFileId && !activeSnippet.body) {
-      // Content is still loading - show a subtle loading indicator
-      // Don't replace the editor, just show a small indicator
+      // Content is still loading - show loading message and clear editor
+      // This prevents showing old/wrong content from a previous snippet
       const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
       if (!loadingIndicator) {
         const indicator = document.createElement('div');
@@ -587,6 +588,7 @@ function renderEditor() {
           display: flex;
           align-items: center;
           gap: 6px;
+          z-index: 10;
         `;
         indicator.innerHTML = `
           <div style="
@@ -602,12 +604,17 @@ function renderEditor() {
         editorEl.style.position = 'relative';
         editorEl.appendChild(indicator);
       }
-      // Keep existing content or show empty
-      if (!editorEl.textContent.trim()) {
-        setEditorTextContent(editorEl, '');
+      // Clear editor content to prevent showing wrong content
+      setEditorTextContent(editorEl, '');
+    } else if (activeSnippet._contentLoaded && activeSnippet.body !== undefined) {
+      // Content is loaded, remove loading indicator if present and show content
+      const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
+      if (loadingIndicator) {
+        loadingIndicator.remove();
       }
+      setEditorTextContent(editorEl, activeSnippet.body || '');
     } else {
-      // Content is loaded, remove loading indicator if present
+      // Snippet exists but no content yet (shouldn't happen, but handle gracefully)
       const loadingIndicator = editorEl.querySelector('.content-loading-indicator');
       if (loadingIndicator) {
         loadingIndicator.remove();
@@ -699,7 +706,7 @@ function renderSnippetsList() {
         const targetSnippetId = snippet.id;
         
         // OPTIMIZATION: Ensure content is loaded for target snippet before switching
-        await ensureSnippetContentLoaded(targetSnippetId);
+        await ensureSnippetContentLoaded(targetSnippetId, true);
         
         // Check for conflicts in the target snippet BEFORE switching
         const conflict = await checkSnippetConflict(targetSnippetId);
@@ -3128,7 +3135,9 @@ function findMostRecentlyEditedSnippet() {
 }
 
 // Lazy load snippet content from Drive if not already loaded
-async function ensureSnippetContentLoaded(snippetId) {
+// @param {string} snippetId - The snippet ID to load
+// @param {boolean} isActiveSnippet - If true, shows loading indicator in editor and updates UI. If false, loads silently in background.
+async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
   const snippet = state.snippets[snippetId];
   if (!snippet) {
     console.warn(`Snippet ${snippetId} not found in state`);
@@ -3147,10 +3156,12 @@ async function ensureSnippetContentLoaded(snippetId) {
   }
   
   try {
-    // Show loading indicator in editor
-    const editorContent = document.getElementById('editorContent');
-    if (editorContent) {
-      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading content...</div>';
+    // Only show loading indicator if this is the active snippet
+    if (isActiveSnippet) {
+      const editorContent = document.getElementById('editorContent');
+      if (editorContent) {
+        editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading content...</div>';
+      }
     }
     
     // Determine mimeType based on snippet type
@@ -3173,20 +3184,63 @@ async function ensureSnippetContentLoaded(snippetId) {
       }
     }
     
-    console.log(`Lazy loaded content for snippet: ${snippet.title}`);
+    if (isActiveSnippet) {
+      console.log(`Loaded content for active snippet: ${snippet.title}`);
+    } else {
+      console.log(`Background loaded content for snippet: ${snippet.title}`);
+    }
     
-    // Update UI
-    renderEditor();
-    updateWordCount();
-    updateGoalMeter();
+    // Update UI - only if this is the active snippet or if word count needs updating
+    if (isActiveSnippet) {
+      renderEditor();
+      updateWordCount();
+      updateGoalMeter();
+    } else {
+      // For background loading, just update word count and progress meter
+      // Don't re-render editor since it would show wrong content
+      updateGoalMeter();
+      // Update word count in sidebar if this snippet is visible
+      updateWordCount();
+    }
   } catch (error) {
     console.error(`Error lazy loading content for snippet ${snippetId}:`, error);
-    // Show error in editor
-    const editorContent = document.getElementById('editorContent');
-    if (editorContent) {
-      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-danger);">Error loading content. Please try again.</div>';
+    // Only show error in editor if this is the active snippet
+    if (isActiveSnippet) {
+      const editorContent = document.getElementById('editorContent');
+      if (editorContent) {
+        editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-danger);">Error loading content. Please try again.</div>';
+      }
     }
   }
+}
+
+// Load all remaining snippets in the background (for word count calculation)
+async function loadAllRemainingSnippetsInBackground() {
+  const snippetsToLoad = Object.values(state.snippets).filter(snippet => {
+    return snippet.driveFileId && !snippet._contentLoaded && !snippet.body;
+  });
+  
+  if (snippetsToLoad.length === 0) {
+    return;
+  }
+  
+  console.log(`Loading ${snippetsToLoad.length} remaining snippets in background for word count...`);
+  
+  // Load snippets in batches to avoid overwhelming the API
+  const batchSize = 5;
+  for (let i = 0; i < snippetsToLoad.length; i += batchSize) {
+    const batch = snippetsToLoad.slice(i, i + batchSize);
+    await Promise.allSettled(
+      batch.map(snippet => ensureSnippetContentLoaded(snippet.id, false))
+    );
+    
+    // Update progress meter after each batch
+    updateGoalMeter();
+  }
+  
+  console.log(`Finished loading all ${snippetsToLoad.length} snippets in background`);
+  // Final update
+  updateGoalMeter();
 }
 
 // Load story data from Drive
@@ -3604,12 +3658,12 @@ async function loadStoryFromDrive(storyFolderId) {
             }
           }
           
-          // OPTIMIZATION: Don't load remaining snippets during initial load - load lazily when clicked
-          // This dramatically speeds up initial page load
-          // Content will be loaded on-demand via ensureSnippetContentLoaded() when user clicks a snippet
+          // OPTIMIZATION: Load remaining snippets in background after active snippet is loaded
+          // This ensures word counts are available for the progress meter
+          // Content will be loaded in background via loadAllRemainingSnippetsInBackground()
           const remainingSnippets = allFilesToProcess.filter(f => f !== snippetToLoadNow);
           if (remainingSnippets.length > 0) {
-            console.log(`Deferring content load for ${remainingSnippets.length} snippets - will load on-demand when clicked`);
+            console.log(`Will load ${remainingSnippets.length} remaining snippets in background after active snippet loads`);
           }
         } else {
           // Fallback: if no chapter folders exist, try loading from main Chapters folder (backward compatibility)
@@ -3759,11 +3813,11 @@ async function loadStoryFromDrive(storyFolderId) {
       });
     });
     
-    // OPTIMIZATION: Don't load People/Places/Things content during initial load
-    // Content will be loaded lazily when user views/clicks on a snippet
-    // This significantly speeds up initial page load since these are rarely viewed immediately
+    // OPTIMIZATION: Load People/Places/Things content in background after active snippet loads
+    // This ensures word counts are available for the progress meter
+    // Content will be loaded in background via loadAllRemainingSnippetsInBackground()
     if (allPeoplePlacesThingsFiles.length > 0) {
-      console.log(`Deferring content load for ${allPeoplePlacesThingsFiles.length} People/Places/Things snippets - will load on-demand`);
+      console.log(`Will load ${allPeoplePlacesThingsFiles.length} People/Places/Things snippets in background after active snippet loads`);
     }
     
     // Merge loaded snippets from Google Docs and People/Places/Things files with snippets from data.json
@@ -4070,8 +4124,18 @@ async function loadStoryFromDrive(storyFolderId) {
       const activeSnippet = state.snippets[state.project.activeSnippetId];
       if (!activeSnippet._contentLoaded && activeSnippet.driveFileId) {
         // Load content in background (non-blocking) - UI is already rendered
-        ensureSnippetContentLoaded(state.project.activeSnippetId).catch(err => {
+        ensureSnippetContentLoaded(state.project.activeSnippetId, true).then(() => {
+          // After active snippet loads, load all remaining snippets in background
+          loadAllRemainingSnippetsInBackground().catch(err => {
+            console.error('Error loading remaining snippets in background:', err);
+          });
+        }).catch(err => {
           console.error('Error loading active snippet content:', err);
+        });
+      } else {
+        // Active snippet already loaded, just load remaining snippets in background
+        loadAllRemainingSnippetsInBackground().catch(err => {
+          console.error('Error loading remaining snippets in background:', err);
         });
       }
     }
@@ -4134,13 +4198,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Load active snippet content in background (non-blocking)
       // This allows UI to be interactive immediately
       if (state.project.activeSnippetId) {
-        ensureSnippetContentLoaded(state.project.activeSnippetId).then(() => {
+        ensureSnippetContentLoaded(state.project.activeSnippetId, true).then(() => {
           // Re-render with loaded content when it's ready
           renderEditor();
           updateWordCount();
           updateGoalMeter();
+          
+          // After active snippet loads, load all remaining snippets in background
+          loadAllRemainingSnippetsInBackground().catch(err => {
+            console.error('Error loading remaining snippets in background:', err);
+          });
         }).catch(err => {
           console.error('Error loading active snippet content:', err);
+        });
+      } else {
+        // No active snippet, just load all snippets in background
+        loadAllRemainingSnippetsInBackground().catch(err => {
+          console.error('Error loading remaining snippets in background:', err);
         });
       }
     } catch (error) {
