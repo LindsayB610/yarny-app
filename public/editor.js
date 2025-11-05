@@ -149,6 +149,18 @@ const state = {
 // Initialize with empty state (should only be used as fallback)
 // Real stories should load from Drive via loadStoryFromDrive()
 function initializeState() {
+  // Reset background loading flags
+  _backgroundLoadingStarted = false;
+  _backgroundLoadingInProgress = false;
+  if (_goalMeterUpdateTimeout) {
+    clearTimeout(_goalMeterUpdateTimeout);
+    _goalMeterUpdateTimeout = null;
+  }
+  if (_backgroundLoadStartTimeout) {
+    clearTimeout(_backgroundLoadStartTimeout);
+    _backgroundLoadStartTimeout = null;
+  }
+  
   // Clear all state
   state.groups = {};
   state.snippets = {};
@@ -353,7 +365,7 @@ function renderStoryList() {
       snippetEl.title = 'Drag to reorder snippets';
       snippetEl.innerHTML = `
         <span class="snippet-title">${escapeHtml(snippet.title)}</span>
-        <span class="snippet-word-count">${snippet.words} words</span>
+        <span class="snippet-word-count">${snippet.words !== undefined ? snippet.words : 0} words</span>
       `;
       
       snippetEl.addEventListener('click', async () => {
@@ -968,6 +980,32 @@ function updateLogoutButtonWarning() {
   }
 }
 
+// Update word count display in sidebar for a specific snippet
+// @param {string} snippetId - The snippet ID to update (optional, defaults to active snippet)
+function updateSnippetWordCountInSidebar(snippetId = null) {
+  const targetSnippetId = snippetId || state.project.activeSnippetId;
+  if (!targetSnippetId) return;
+  
+  const snippet = state.snippets[targetSnippetId];
+  if (!snippet) return;
+  
+  const snippetEl = document.querySelector(`[data-snippet-id="${snippet.id}"]`);
+  if (snippetEl) {
+    const wordCountEl = snippetEl.querySelector('.snippet-word-count');
+    if (wordCountEl) {
+      // Use snippet.words if available, otherwise calculate from body
+      const words = snippet.words !== undefined ? snippet.words : 
+        (snippet.body ? snippet.body.trim().split(/\s+/).filter(w => w.length > 0).length : 0);
+      wordCountEl.textContent = `${words} words`;
+    }
+    // Also update excerpt for People/Places/Things snippets
+    const excerptEl = snippetEl.querySelector('.note-excerpt');
+    if (excerptEl && snippet.body) {
+      excerptEl.textContent = `${escapeHtml(snippet.body.substring(0, 60))}${snippet.body.length > 60 ? '...' : ''}`;
+    }
+  }
+}
+
 function updateWordCount() {
   const editorEl = document.getElementById('editorContent');
   const text = getEditorTextContent(editorEl);
@@ -985,19 +1023,8 @@ function updateWordCount() {
       updateFooter();
       updateGoalMeter();
       
-      // Update snippet in list if visible (check both chapter and People/Places/Things snippets)
-      const snippetEl = document.querySelector(`[data-snippet-id="${snippet.id}"]`);
-      if (snippetEl) {
-        const wordCountEl = snippetEl.querySelector('.snippet-word-count');
-        if (wordCountEl) {
-          wordCountEl.textContent = `${words} words`;
-        }
-        // Also update excerpt for People/Places/Things snippets
-        const excerptEl = snippetEl.querySelector('.note-excerpt');
-        if (excerptEl) {
-          excerptEl.textContent = `${escapeHtml(snippet.body.substring(0, 60))}${snippet.body.length > 60 ? '...' : ''}`;
-        }
-      }
+      // Update snippet in list if visible
+      updateSnippetWordCountInSidebar(state.project.activeSnippetId);
     }
   }
 }
@@ -3835,12 +3862,35 @@ async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
       renderEditor();
       updateWordCount();
       updateGoalMeter();
+      
+      // After active snippet loads, trigger background loading of all remaining snippets
+      // This ensures word counts are available for all snippets in the story
+      // Use a small delay to avoid interfering with rapid snippet switching
+      // Only start background loading if we haven't already started it for this story session
+      if (!_backgroundLoadingStarted) {
+        // Cancel any pending background load start timeout (in case user switches snippets rapidly)
+        if (_backgroundLoadStartTimeout) {
+          clearTimeout(_backgroundLoadStartTimeout);
+        }
+        // Small delay to allow UI to settle after active snippet loads
+        _backgroundLoadStartTimeout = setTimeout(() => {
+          _backgroundLoadStartTimeout = null;
+          loadAllRemainingSnippetsInBackground().catch(err => {
+            console.error('Error loading remaining snippets in background:', err);
+          });
+        }, 300); // 300ms delay - allows UI to render before starting background work
+      }
     } else {
       // For background loading, just update word count and progress meter
       // Don't re-render editor since it would show wrong content
-      updateGoalMeter();
-      // Update word count in sidebar if this snippet is visible
-      updateWordCount();
+      // Use throttled update during background loading to improve performance
+      if (_backgroundLoadingInProgress) {
+        updateGoalMeterThrottled();
+      } else {
+        updateGoalMeter();
+      }
+      // Update word count in sidebar for this specific snippet
+      updateSnippetWordCountInSidebar(snippetId);
     }
   } catch (error) {
     console.error(`Error lazy loading content for snippet ${snippetId}:`, error);
@@ -3854,8 +3904,33 @@ async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
   }
 }
 
+// Flag to prevent multiple simultaneous background loading operations
+let _backgroundLoadingInProgress = false;
+let _backgroundLoadingStarted = false; // Track if we've started background loading for this story session
+let _goalMeterUpdateTimeout = null; // For throttling updateGoalMeter during background loading
+let _backgroundLoadStartTimeout = null; // For delaying background load start
+
+// Throttled version of updateGoalMeter for use during background loading
+// This prevents excessive DOM updates while batches are loading
+function updateGoalMeterThrottled() {
+  if (_goalMeterUpdateTimeout) {
+    clearTimeout(_goalMeterUpdateTimeout);
+  }
+  // Update after a short delay to batch multiple updates
+  _goalMeterUpdateTimeout = setTimeout(() => {
+    updateGoalMeter();
+    _goalMeterUpdateTimeout = null;
+  }, 200); // 200ms throttle - balances responsiveness with performance
+}
+
 // Load all remaining snippets in the background (for word count calculation)
 async function loadAllRemainingSnippetsInBackground() {
+  // Prevent duplicate background loading
+  if (_backgroundLoadingInProgress) {
+    console.log('Background loading already in progress, skipping...');
+    return;
+  }
+  
   const snippetsToLoad = Object.values(state.snippets).filter(snippet => {
     return snippet.driveFileId && !snippet._contentLoaded && !snippet.body;
   });
@@ -3864,27 +3939,50 @@ async function loadAllRemainingSnippetsInBackground() {
     return;
   }
   
+  _backgroundLoadingInProgress = true;
+  _backgroundLoadingStarted = true;
   console.log(`Loading ${snippetsToLoad.length} remaining snippets in background for word count...`);
   
-  // Load snippets in batches to avoid overwhelming the API
-  const batchSize = 5;
-  for (let i = 0; i < snippetsToLoad.length; i += batchSize) {
-    const batch = snippetsToLoad.slice(i, i + batchSize);
-    await Promise.allSettled(
-      batch.map(snippet => ensureSnippetContentLoaded(snippet.id, false))
-    );
+  try {
+    // Load snippets in batches to avoid overwhelming the API
+    const batchSize = 5;
+    for (let i = 0; i < snippetsToLoad.length; i += batchSize) {
+      const batch = snippetsToLoad.slice(i, i + batchSize);
+      await Promise.allSettled(
+        batch.map(snippet => ensureSnippetContentLoaded(snippet.id, false))
+      );
+      
+      // Use throttled update to avoid excessive DOM manipulation
+      // This is better for performance when loading many snippets
+      updateGoalMeterThrottled();
+    }
     
-    // Update progress meter after each batch
+    console.log(`Finished loading all ${snippetsToLoad.length} snippets in background`);
+    // Final update (immediate, not throttled) to ensure accurate final state
+    if (_goalMeterUpdateTimeout) {
+      clearTimeout(_goalMeterUpdateTimeout);
+      _goalMeterUpdateTimeout = null;
+    }
     updateGoalMeter();
+  } finally {
+    _backgroundLoadingInProgress = false;
   }
-  
-  console.log(`Finished loading all ${snippetsToLoad.length} snippets in background`);
-  // Final update
-  updateGoalMeter();
 }
 
 // Load story data from Drive
 async function loadStoryFromDrive(storyFolderId) {
+  // Reset background loading flags for new story
+  _backgroundLoadingStarted = false;
+  _backgroundLoadingInProgress = false;
+  if (_goalMeterUpdateTimeout) {
+    clearTimeout(_goalMeterUpdateTimeout);
+    _goalMeterUpdateTimeout = null;
+  }
+  if (_backgroundLoadStartTimeout) {
+    clearTimeout(_backgroundLoadStartTimeout);
+    _backgroundLoadStartTimeout = null;
+  }
+  
   try {
     // Show prominent loading indicator - make it visible immediately
     const editorContent = document.getElementById('editorContent');
@@ -4786,20 +4884,17 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // OPTIMIZATION: Load active snippet content if it wasn't already loaded
     // This ensures the editor shows content immediately even if activeSnippetId changed
+    // Background loading of remaining snippets will be triggered automatically after active snippet loads
     if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
       const activeSnippet = state.snippets[state.project.activeSnippetId];
       if (!activeSnippet._contentLoaded && activeSnippet.driveFileId) {
         // Load content in background (non-blocking) - UI is already rendered
-        ensureSnippetContentLoaded(state.project.activeSnippetId, true).then(() => {
-          // After active snippet loads, load all remaining snippets in background
-          loadAllRemainingSnippetsInBackground().catch(err => {
-            console.error('Error loading remaining snippets in background:', err);
-          });
-        }).catch(err => {
+        // Background loading of remaining snippets will be triggered automatically
+        ensureSnippetContentLoaded(state.project.activeSnippetId, true).catch(err => {
           console.error('Error loading active snippet content:', err);
         });
-      } else {
-        // Active snippet already loaded, just load remaining snippets in background
+      } else if (activeSnippet._contentLoaded) {
+        // Active snippet already loaded, trigger background loading of remaining snippets
         loadAllRemainingSnippetsInBackground().catch(err => {
           console.error('Error loading remaining snippets in background:', err);
         });
@@ -4864,17 +4959,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Load active snippet content in background (non-blocking)
       // This allows UI to be interactive immediately
+      // Background loading of remaining snippets will be triggered automatically after active snippet loads
       if (state.project.activeSnippetId) {
         ensureSnippetContentLoaded(state.project.activeSnippetId, true).then(() => {
           // Re-render with loaded content when it's ready
           renderEditor();
           updateWordCount();
           updateGoalMeter();
-          
-          // After active snippet loads, load all remaining snippets in background
-          loadAllRemainingSnippetsInBackground().catch(err => {
-            console.error('Error loading remaining snippets in background:', err);
-          });
+          // Background loading of remaining snippets is triggered automatically by ensureSnippetContentLoaded
         }).catch(err => {
           console.error('Error loading active snippet content:', err);
         });
