@@ -38,7 +38,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Tags**: Create and apply tags to snippets for better organization
 - **Tag Filtering**: Filter snippets by selected tags
 - **Snippets System**: All content is organized as snippets:
-  - **Chapter Snippets**: Writing snippets within chapters (stored in Chapters folder)
+  - **Chapter Snippets**: Writing snippets within chapters (stored in chapter-specific subfolders within the Chapters folder)
   - **People Snippets**: Character notes and details (stored in People folder)
   - **Places Snippets**: Location and setting notes (stored in Places folder)
   - **Things Snippets**: Object and item notes (stored in Things folder)
@@ -234,10 +234,10 @@ yarny-app/
 1. All stories are stored as folders in a `Yarny` folder in Google Drive
 2. The `Yarny` folder is automatically created on first story creation
 3. Each story contains organized subfolders:
-   - `Chapters`: Chapter snippets stored as Google Docs
+   - `Chapters`: Contains chapter-specific subfolders (e.g., "Chapter 1", "Chapter 2") with snippets stored as Google Docs
    - `People`, `Places`, `Things`: Snippets stored as text files
 4. Story data is stored as JSON files within each story folder
-5. Chapter snippets are stored as Google Docs for rich text support
+5. Chapter snippets are stored as Google Docs for rich text support, organized in chapter subfolders
 6. People/Places/Things snippets are stored as text files
 7. Stories can be deleted from the UI (with optional Drive deletion)
 
