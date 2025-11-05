@@ -169,7 +169,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 8px 8px 28px; /* Extra left padding for drag handle */
   cursor: grab;
   user-select: none;
   border-radius: 6px;
@@ -186,10 +186,10 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.group-header::after {
+.group-header::before {
   content: '⋮⋮';
   position: absolute;
-  right: 36px; /* Position before the add button */
+  left: 4px;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.25);
   line-height: 1;
@@ -198,9 +198,11 @@ body {
   opacity: 0;
   transition: opacity 120ms ease;
   font-weight: bold;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.group-header:hover::after {
+.group-header:hover::before {
   opacity: 1;
 }
 
