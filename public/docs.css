@@ -139,31 +139,48 @@ html {
   z-index: 10;
 }
 
-.sidebar-brand {
+.status-indicator {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   color: var(--color-white);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
-.brand-icon {
-  width: 8px;
-  height: 8px;
-  background: var(--color-primary);
+.status-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
-  /* Hide any text content */
-  text-indent: -9999px;
-  overflow: hidden;
-  font-size: 0;
-  line-height: 0;
+  background: #6B7280; /* Gray default */
+  transition: background-color var(--transition-base);
 }
 
-.brand-text {
-  color: var(--color-white);
+.status-dot.status-green {
+  background: #10B981; /* Green */
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.status-yellow {
+  background: #F59E0B; /* Yellow/Amber */
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.status-dot.status-red {
+  background: #EF4444; /* Red */
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.status-dot.status-gray {
+  background: #6B7280; /* Gray */
+}
+
+.status-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
 }
 
 .sidebar-nav {

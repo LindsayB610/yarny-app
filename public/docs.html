@@ -33,9 +33,9 @@
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
         <div class="sidebar-header">
-          <div class="sidebar-brand">
-            <span class="brand-icon"></span>
-            <span class="brand-text">Yarny</span>
+          <div class="status-indicator" id="statusIndicator">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">Checking status...</span>
           </div>
         </div>
         <nav class="sidebar-nav">
@@ -429,6 +429,42 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Check auth status on page load
       checkAuthStatus();
+      
+      // Fetch and display Uptime Robot status
+      async function fetchStatus() {
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        
+        try {
+          const response = await fetch('/.netlify/functions/uptime-status');
+          const data = await response.json();
+          
+          // Update dot color
+          statusDot.className = 'status-dot';
+          if (data.status === 'up') {
+            statusDot.classList.add('status-green');
+            statusText.textContent = 'All Systems Operational';
+          } else if (data.status === 'warning') {
+            statusDot.classList.add('status-yellow');
+            statusText.textContent = 'Possible Issues';
+          } else if (data.status === 'down') {
+            statusDot.classList.add('status-red');
+            statusText.textContent = 'Service Down';
+          } else {
+            statusDot.classList.add('status-gray');
+            statusText.textContent = data.label || 'Status Unknown';
+          }
+        } catch (error) {
+          console.error('Error fetching status:', error);
+          statusDot.className = 'status-dot status-gray';
+          statusText.textContent = 'Status Unavailable';
+        }
+      }
+      
+      // Fetch status on load and every 5 minutes
+      fetchStatus();
+      setInterval(fetchStatus, 5 * 60 * 1000);
+      
       const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
       const sections = document.querySelectorAll('.docs-section[id]');
       const sidebar = document.querySelector('.docs-sidebar');

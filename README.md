@@ -125,6 +125,7 @@ In your Netlify dashboard, go to **Site settings > Environment variables** and a
   - Production: `https://yarny.lindsaybrunner.com/.netlify/functions/drive-auth-callback`
 - `GOOGLE_REDIRECT_URI`: Alternative redirect URI variable (fallback, same as `GDRIVE_REDIRECT_URI`)
 - `SITE_ID`: Alternative Netlify Site ID variable (fallback for `NETLIFY_SITE_ID`)
+- `UPTIME_ROBOT_API_KEY`: Uptime Robot API key for status monitoring (see "Status Monitoring" section below)
 
 ### 4. Create GitHub Repository
 
@@ -194,7 +195,8 @@ yarny-app/
 │   │   ├── drive-delete-story.js          # Delete story folders
 │   │   ├── drive-delete-file.js           # Delete individual files (moves to trash)
 │   │   ├── drive-rename-file.js           # Rename files
-│   │   └── drive-get-or-create-yarny-stories.js  # Manage Yarny stories folder
+│   │   ├── drive-get-or-create-yarny-stories.js  # Manage Yarny stories folder
+│   │   └── uptime-status.js               # Uptime Robot status checker
 │   └── netlify.toml                       # Netlify configuration
 ├── public/
 │   ├── index.html                         # Login page
@@ -361,6 +363,9 @@ Each error entry includes:
 - `POST /.netlify/functions/drive-delete-file` - Delete a file (moves to trash)
 - `POST /.netlify/functions/drive-rename-file` - Rename a file
 
+### Status Monitoring
+- `GET /.netlify/functions/uptime-status?monitorId=<id>` - Get Uptime Robot status (optional monitorId parameter)
+
 ## Security Notes
 
 - **Multi-User Support**: Supports multiple users via `ALLOWED_EMAIL` environment variable (comma-separated emails)
@@ -378,6 +383,42 @@ To allow a new user to access the app:
 2. Find `ALLOWED_EMAIL`
 3. Add the new email address (comma-separated): `existing@email.com,new@email.com`
 4. Save and redeploy (or the next deployment will pick it up)
+
+## Status Monitoring
+
+Yarny includes integration with Uptime Robot to display real-time availability status on the documentation page. The status indicator appears at the top of the left sidebar in the docs page, replacing the "Yarny" brand.
+
+### Setup
+
+1. **Create an Uptime Robot Account** (if you don't have one)
+   - Sign up at [Uptime Robot](https://uptimerobot.com/)
+   - Add a monitor for `yarny.lindsaybrunner.com`
+
+2. **Get Your API Key**
+   - Go to Uptime Robot dashboard → My Settings → API Settings
+   - Copy your **Main API Key** (or create a monitor-specific API key)
+   - The API key looks like: `ur1234567-abcdefghijklmnopqrstuvwxyz`
+
+3. **Configure Environment Variable**
+   - In Netlify dashboard, go to Site settings → Environment variables
+   - Add: `UPTIME_ROBOT_API_KEY` = your API key
+   - The status indicator will automatically appear on the docs page
+
+### Status Colors
+
+- **Green**: All systems operational (status: up)
+- **Yellow**: Possible issues (status: seems down)
+- **Red**: Service down (status: down)
+- **Gray**: Status unknown or unavailable
+
+The status updates automatically every 5 minutes. You can also specify a specific monitor ID by adding `?monitorId=<id>` to the function URL if you have multiple monitors.
+
+### Technical Details
+
+- Status is fetched via Netlify function: `/.netlify/functions/uptime-status`
+- Uses Uptime Robot API v2 (`getMonitors` endpoint)
+- Status is cached for 1 minute to reduce API calls
+- Falls back gracefully if API key is not configured
 
 ## Recent Improvements
 
