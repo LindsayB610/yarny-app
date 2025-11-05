@@ -145,6 +145,86 @@ if (window.driveAPI && !window.driveAPI.createFolder) {
 let yarnyStoriesFolderId = null;
 let isDriveAuthorized = false;
 
+// Cache keys
+const CACHE_KEY_YARNY_FOLDER = 'yarny_stories_folder_id';
+const CACHE_KEY_STORY_PROGRESS = 'yarny_story_progress';
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache
+
+// Get cached Yarny folder ID
+function getCachedYarnyFolderId() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_YARNY_FOLDER);
+    if (cached) {
+      const { folderId, timestamp } = JSON.parse(cached);
+      // Cache is valid for 24 hours
+      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+        return folderId;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading cached folder ID:', e);
+  }
+  return null;
+}
+
+// Cache Yarny folder ID
+function cacheYarnyFolderId(folderId) {
+  try {
+    localStorage.setItem(CACHE_KEY_YARNY_FOLDER, JSON.stringify({
+      folderId,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.warn('Error caching folder ID:', e);
+  }
+}
+
+// Get cached story progress
+function getCachedStoryProgress(storyId) {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_STORY_PROGRESS);
+    if (cached) {
+      const progressCache = JSON.parse(cached);
+      const storyProgress = progressCache[storyId];
+      if (storyProgress && Date.now() - storyProgress.timestamp < CACHE_DURATION_MS) {
+        return storyProgress.data;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading cached progress:', e);
+  }
+  return null;
+}
+
+// Cache story progress
+function cacheStoryProgress(storyId, progress) {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_STORY_PROGRESS);
+    const progressCache = cached ? JSON.parse(cached) : {};
+    progressCache[storyId] = {
+      data: progress,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CACHE_KEY_STORY_PROGRESS, JSON.stringify(progressCache));
+  } catch (e) {
+    console.warn('Error caching progress:', e);
+  }
+}
+
+// Clear cached progress for a story (when it's modified)
+function clearCachedStoryProgress(storyId) {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_STORY_PROGRESS);
+    if (cached) {
+      const progressCache = JSON.parse(cached);
+      delete progressCache[storyId];
+      localStorage.setItem(CACHE_KEY_STORY_PROGRESS, JSON.stringify(progressCache));
+    }
+  } catch (e) {
+    console.warn('Error clearing cached progress:', e);
+  }
+}
+
 // Logout function - MUST be defined early, before initialize()
 window.logout = async function(e) {
   if (e) {
@@ -261,12 +341,20 @@ async function checkDriveAuth() {
 
 // Get or create Yarny folder
 async function getOrCreateYarnyStoriesFolder() {
+  // Check cache first
+  const cached = getCachedYarnyFolderId();
+  if (cached) {
+    yarnyStoriesFolderId = cached;
+    return cached;
+  }
+  
   try {
     const response = await axios.get(`${API_BASE}/drive-get-or-create-yarny-stories`, {
       withCredentials: true
     });
     
     yarnyStoriesFolderId = response.data.id;
+    cacheYarnyFolderId(response.data.id);
     return response.data.id;
   } catch (error) {
     console.error('Error getting Yarny folder:', error);
@@ -330,6 +418,13 @@ async function refreshStoriesFromDrive() {
   listEl.innerHTML = '';
   
   try {
+    // Clear cache to force fresh data
+    try {
+      localStorage.removeItem(CACHE_KEY_STORY_PROGRESS);
+    } catch (e) {
+      console.warn('Error clearing progress cache:', e);
+    }
+    
     // Re-fetch stories from Drive - this will only return stories that currently exist
     const stories = await listStories();
     
@@ -360,7 +455,15 @@ async function refreshStoriesFromDrive() {
 }
 
 // Fetch story progress data (word count and goal)
-async function fetchStoryProgress(storyFolderId) {
+async function fetchStoryProgress(storyFolderId, useCache = true) {
+  // Check cache first
+  if (useCache) {
+    const cached = getCachedStoryProgress(storyFolderId);
+    if (cached) {
+      return cached;
+    }
+  }
+  
   try {
     // List files in the story folder
     const files = await window.driveAPI.list(storyFolderId);
@@ -435,11 +538,16 @@ async function fetchStoryProgress(storyFolderId) {
     
     const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
     
-    return {
+    const progress = {
       wordGoal,
       totalWords,
       percentage
     };
+    
+    // Cache the result
+    cacheStoryProgress(storyFolderId, progress);
+    
+    return progress;
   } catch (error) {
     console.warn(`Failed to fetch progress for story ${storyFolderId}:`, error);
     return null;
@@ -465,25 +573,51 @@ async function renderStories(stories, skipLoadingState = false) {
   emptyState.classList.add('hidden');
   listEl.innerHTML = '';
   
-  // Create story cards first (without progress data)
+  // Create story cards first, showing cached progress immediately if available
   const storyCards = stories.map(story => {
     const storyCard = document.createElement('div');
     storyCard.className = 'story-card';
     storyCard.dataset.storyId = story.id;
     
+    // Try to get cached progress for immediate display
+    const cachedProgress = getCachedStoryProgress(story.id);
+    
     const contentDiv = document.createElement('div');
     contentDiv.className = 'story-card-content';
+    
+    // Show cached progress if available, otherwise show loading
+    let progressHtml = '';
+    if (cachedProgress) {
+      const percentage = cachedProgress.wordGoal > 0 
+        ? Math.min(100, Math.round((cachedProgress.totalWords / cachedProgress.wordGoal) * 100)) 
+        : 0;
+      progressHtml = `
+        <div class="story-progress-container">
+          <div class="story-progress-info">
+            <span class="story-progress-text">${cachedProgress.totalWords.toLocaleString()} / ${cachedProgress.wordGoal.toLocaleString()} words</span>
+          </div>
+          <div class="story-progress-bar-container">
+            <div class="story-progress-bar" style="width: ${percentage}%"></div>
+          </div>
+        </div>
+      `;
+    } else {
+      progressHtml = `
+        <div class="story-progress-container">
+          <div class="story-progress-info">
+            <span class="story-progress-text">Loading progress...</span>
+          </div>
+          <div class="story-progress-bar-container">
+            <div class="story-progress-bar" style="width: 0%"></div>
+          </div>
+        </div>
+      `;
+    }
+    
     contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
       <p class="story-modified">Last modified: ${formatDate(story.modifiedTime)}</p>
-      <div class="story-progress-container">
-        <div class="story-progress-info">
-          <span class="story-progress-text">Loading progress...</span>
-        </div>
-        <div class="story-progress-bar-container">
-          <div class="story-progress-bar" style="width: 0%"></div>
-        </div>
-      </div>
+      ${progressHtml}
     `;
     
     const deleteBtn = document.createElement('button');
@@ -509,16 +643,17 @@ async function renderStories(stories, skipLoadingState = false) {
     });
     
     listEl.appendChild(storyCard);
-    return { story, card: storyCard };
+    return { story, card: storyCard, hasCachedProgress: !!cachedProgress };
   });
   
-  // Fetch progress data for all stories in parallel
-  const progressPromises = storyCards.map(async ({ story, card }) => {
+  // Fetch fresh progress data in the background (skip cache to get latest)
+  // Only fetch if we don't have cached data or if cache is stale
+  const progressPromises = storyCards.map(async ({ story, card, hasCachedProgress }) => {
+    // If we have cached data, still fetch fresh but don't wait for it
+    // If we don't have cached data, fetch is already in progress
     try {
-      console.log(`Fetching progress for story: ${story.name} (${story.id})`);
-      const progress = await fetchStoryProgress(story.id);
+      const progress = await fetchStoryProgress(story.id, false); // false = don't use cache, get fresh data
       if (progress) {
-        console.log(`Progress for ${story.name}: ${progress.totalWords} / ${progress.wordGoal} words (${progress.percentage}%)`);
         const progressText = card.querySelector('.story-progress-text');
         const progressBar = card.querySelector('.story-progress-bar');
         
@@ -540,16 +675,21 @@ async function renderStories(stories, skipLoadingState = false) {
       }
     } catch (error) {
       console.error(`Error fetching progress for story ${story.name}:`, error);
-      // Hide progress on error
-      const progressContainer = card.querySelector('.story-progress-container');
-      if (progressContainer) {
-        progressContainer.style.display = 'none';
+      // Only hide progress if we don't have cached data showing
+      if (!hasCachedProgress) {
+        const progressContainer = card.querySelector('.story-progress-container');
+        if (progressContainer) {
+          progressContainer.style.display = 'none';
+        }
       }
     }
   });
   
-  // Wait for all progress data to load (but don't block if some fail)
-  await Promise.allSettled(progressPromises);
+  // Don't wait for progress - let it load in background after cards are shown
+  // This allows the page to be interactive immediately
+  Promise.allSettled(progressPromises).catch(() => {
+    // Ignore errors - they're already handled in individual promises
+  });
 }
 
 // Array of opening sentences to randomly choose from
@@ -955,6 +1095,7 @@ async function confirmDeleteStory() {
     // Force refresh by clearing the folder ID cache and reloading
     // This ensures we get the latest list from Drive
     yarnyStoriesFolderId = null;
+    clearCachedStoryProgress(storyId);
     
     // Small delay to ensure Drive has processed the deletion
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -1138,6 +1279,12 @@ async function initialize() {
   document.getElementById('driveAuthPrompt').classList.add('hidden');
   document.getElementById('storiesContent').classList.remove('hidden');
   
+  // Initialize folder ID from cache if available (faster than API call)
+  const cachedFolderId = getCachedYarnyFolderId();
+  if (cachedFolderId) {
+    yarnyStoriesFolderId = cachedFolderId;
+  }
+  
   // Load stories
   try {
     const stories = await listStories();
@@ -1256,6 +1403,12 @@ window.closeNewStoryModal = closeNewStoryModal;
 function refreshStoriesOnReturn() {
   if (window.location.pathname === '/stories.html' || window.location.pathname === '/stories.html') {
     console.log('Refreshing stories on page return...');
+    // Clear progress cache to get fresh data after editing
+    try {
+      localStorage.removeItem(CACHE_KEY_STORY_PROGRESS);
+    } catch (e) {
+      console.warn('Error clearing progress cache:', e);
+    }
     // Small delay to ensure Drive API is ready
     setTimeout(async () => {
       try {
