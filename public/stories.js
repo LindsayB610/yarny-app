@@ -806,49 +806,52 @@ async function renderStories(stories, skipLoadingState = false) {
         ? Math.min(100, Math.round((cachedProgress.totalWords / cachedProgress.wordGoal) * 100)) 
         : 0;
       
-      // Add today badge if goal exists
+      const exceedsGoal = cachedProgress.wordGoal > 0 && cachedProgress.totalWords > cachedProgress.wordGoal;
+      const exceedsClass = exceedsGoal ? ' exceeds-goal' : '';
+      
+      // Build today progress section if goal exists
+      let todaySectionHtml = '';
       if (cachedProgress.dailyInfo && cachedProgress.dailyInfo.target !== undefined) {
         const todayWords = cachedProgress.dailyInfo.todayWords || 0;
         const todayTarget = cachedProgress.dailyInfo.target || 0;
         const daysLeft = cachedProgress.dailyInfo.remaining || 0;
         const todayExceedsGoal = todayTarget > 0 && todayWords > todayTarget;
         const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
-        const exceedsClass = todayExceedsGoal ? ' exceeds-goal' : '';
-        todayBadgeHtml = `
-          <div class="story-today-badge">
-            <span class="story-today-label">Today</span>
-            <span class="story-today-count">${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}</span>
-            ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
-          </div>
-          ${todayTarget > 0 ? `
-            <div class="story-today-progress-bar-container">
-              <div class="story-today-progress-bar${exceedsClass}" style="width: ${todayPercentage}%"></div>
+        const todayExceedsClass = todayExceedsGoal ? ' exceeds-goal' : '';
+        
+        todaySectionHtml = `
+          <div class="story-progress-row">
+            <div class="story-progress-text">
+              <span class="story-today-label">Today</span> ${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}${daysLeft > 0 ? ` <span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
             </div>
-          ` : ''}
+            ${todayTarget > 0 ? `
+              <div class="story-progress-bar-container">
+                <div class="story-progress-bar${todayExceedsClass}" style="width: ${todayPercentage}%"></div>
+              </div>
+            ` : ''}
+          </div>
         `;
       }
       
-      const exceedsGoal = cachedProgress.wordGoal > 0 && cachedProgress.totalWords > cachedProgress.wordGoal;
-      const exceedsClass = exceedsGoal ? ' exceeds-goal' : '';
       progressHtml = `
         <div class="story-progress-container">
-          <div class="story-progress-info">
-            <span class="story-progress-text">${cachedProgress.totalWords.toLocaleString()} / ${cachedProgress.wordGoal.toLocaleString()} words</span>
-            ${todayBadgeHtml}
+          <div class="story-progress-row">
+            <div class="story-progress-text">${cachedProgress.totalWords.toLocaleString()} / ${cachedProgress.wordGoal.toLocaleString()} words</div>
+            <div class="story-progress-bar-container">
+              <div class="story-progress-bar${exceedsClass}" style="width: ${percentage}%"></div>
+            </div>
           </div>
-          <div class="story-progress-bar-container">
-            <div class="story-progress-bar${exceedsClass}" style="width: ${percentage}%"></div>
-          </div>
+          ${todaySectionHtml}
         </div>
       `;
     } else {
       progressHtml = `
         <div class="story-progress-container">
-          <div class="story-progress-info">
-            <span class="story-progress-text">Loading progress...</span>
-          </div>
-          <div class="story-progress-bar-container">
-            <div class="story-progress-bar" style="width: 0%"></div>
+          <div class="story-progress-row">
+            <div class="story-progress-text">Loading progress...</div>
+            <div class="story-progress-bar-container">
+              <div class="story-progress-bar" style="width: 0%"></div>
+            </div>
           </div>
         </div>
       `;
@@ -894,90 +897,96 @@ async function renderStories(stories, skipLoadingState = false) {
     try {
       const progress = await fetchStoryProgress(story.id, false); // false = don't use cache, get fresh data
       if (progress) {
-        const progressText = card.querySelector('.story-progress-text');
-        const progressBar = card.querySelector('.story-progress-bar');
-        const progressInfo = card.querySelector('.story-progress-info');
-        
-        // Update overall progress bar
-        if (progressText && progressBar) {
-          window.updateProgressMeter(progressText, progressBar, progress.totalWords, progress.wordGoal);
-          // Add "words" suffix for story cards (editor shows just numbers)
-          progressText.textContent += ' words';
-          
-          // Handle overflow - add exceeds-goal class if progress exceeds goal
-          const exceedsGoal = progress.wordGoal > 0 && progress.totalWords > progress.wordGoal;
-          if (exceedsGoal) {
-            progressBar.classList.add('exceeds-goal');
-          } else {
-            progressBar.classList.remove('exceeds-goal');
-          }
-        } else {
-          console.warn(`Could not find progress elements for story ${story.name}`);
+        // Update progress display
+        const progressContainer = card.querySelector('.story-progress-container');
+        if (!progressContainer) {
+          console.warn(`Could not find progress container for story ${story.name}`);
+          return;
         }
         
-        // Update or add today badge and progress
-        const progressContainer = card.querySelector('.story-progress-container');
-        if (progressContainer) {
-          const progressInfo = progressContainer.querySelector('.story-progress-info');
-          let todayBadge = progressContainer.querySelector('.story-today-badge');
-          let todayProgressBar = progressContainer.querySelector('.story-today-progress-bar-container');
+        // Update overall progress row
+        const overallRow = progressContainer.querySelector('.story-progress-row');
+        if (overallRow) {
+          const overallText = overallRow.querySelector('.story-progress-text');
+          const overallBar = overallRow.querySelector('.story-progress-bar');
           
-          if (progress.dailyInfo && progress.dailyInfo.target !== undefined) {
-            const todayWords = progress.dailyInfo.todayWords || 0;
-            const todayTarget = progress.dailyInfo.target || 0;
-            const daysLeft = progress.dailyInfo.remaining || 0;
-            const todayExceedsGoal = todayTarget > 0 && todayWords > todayTarget;
-            const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
+          if (overallText && overallBar) {
+            overallText.textContent = `${progress.totalWords.toLocaleString()} / ${progress.wordGoal.toLocaleString()} words`;
             
-            // Create or update today badge
-            if (progressInfo) {
-              if (!todayBadge) {
-                todayBadge = document.createElement('div');
-                todayBadge.className = 'story-today-badge';
-                progressInfo.appendChild(todayBadge);
-              }
-              
-              todayBadge.innerHTML = `
-                <span class="story-today-label">Today</span>
-                <span class="story-today-count">${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}</span>
-                ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
-              `;
-            }
+            const percentage = progress.wordGoal > 0 
+              ? Math.min(100, Math.round((progress.totalWords / progress.wordGoal) * 100)) 
+              : 0;
+            overallBar.style.width = `${percentage}%`;
             
-            // Create or update today progress bar
-            if (todayTarget > 0) {
-              if (!todayProgressBar) {
-                todayProgressBar = document.createElement('div');
-                todayProgressBar.className = 'story-today-progress-bar-container';
-                progressContainer.appendChild(todayProgressBar);
-              }
-              
-              let bar = todayProgressBar.querySelector('.story-today-progress-bar');
-              if (!bar) {
-                bar = document.createElement('div');
-                bar.className = 'story-today-progress-bar';
-                todayProgressBar.appendChild(bar);
-              }
-              bar.style.width = `${todayPercentage}%`;
-              
-              // Handle overflow - add exceeds-goal class if progress exceeds goal
-              if (todayExceedsGoal) {
-                bar.classList.add('exceeds-goal');
-              } else {
-                bar.classList.remove('exceeds-goal');
-              }
-            } else if (todayProgressBar) {
-              todayProgressBar.remove();
-            }
-          } else {
-            // Remove badge and progress bar if goal doesn't exist
-            if (todayBadge) {
-              todayBadge.remove();
-            }
-            if (todayProgressBar) {
-              todayProgressBar.remove();
+            // Handle overflow - add exceeds-goal class if progress exceeds goal
+            const exceedsGoal = progress.wordGoal > 0 && progress.totalWords > progress.wordGoal;
+            if (exceedsGoal) {
+              overallBar.classList.add('exceeds-goal');
+            } else {
+              overallBar.classList.remove('exceeds-goal');
             }
           }
+        }
+        
+        // Update or create today progress row
+        let todayRow = progressContainer.querySelectorAll('.story-progress-row')[1];
+        if (progress.dailyInfo && progress.dailyInfo.target !== undefined) {
+          const todayWords = progress.dailyInfo.todayWords || 0;
+          const todayTarget = progress.dailyInfo.target || 0;
+          const daysLeft = progress.dailyInfo.remaining || 0;
+          const todayExceedsGoal = todayTarget > 0 && todayWords > todayTarget;
+          const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
+          
+          if (!todayRow) {
+            // Create new today row
+            todayRow = document.createElement('div');
+            todayRow.className = 'story-progress-row';
+            progressContainer.appendChild(todayRow);
+          }
+          
+          const todayText = todayRow.querySelector('.story-progress-text');
+          const todayBarContainer = todayRow.querySelector('.story-progress-bar-container');
+          
+          // Update today text
+          if (todayText) {
+            todayText.innerHTML = `<span class="story-today-label">Today</span> ${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}${daysLeft > 0 ? ` <span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}`;
+          } else {
+            const textDiv = document.createElement('div');
+            textDiv.className = 'story-progress-text';
+            textDiv.innerHTML = `<span class="story-today-label">Today</span> ${todayWords.toLocaleString()} / ${todayTarget.toLocaleString()}${daysLeft > 0 ? ` <span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}`;
+            todayRow.appendChild(textDiv);
+          }
+          
+          // Update today progress bar
+          if (todayTarget > 0) {
+            let barContainer = todayBarContainer;
+            if (!barContainer) {
+              barContainer = document.createElement('div');
+              barContainer.className = 'story-progress-bar-container';
+              todayRow.appendChild(barContainer);
+            }
+            
+            let bar = barContainer.querySelector('.story-progress-bar');
+            if (!bar) {
+              bar = document.createElement('div');
+              bar.className = 'story-progress-bar';
+              barContainer.appendChild(bar);
+            }
+            
+            bar.style.width = `${todayPercentage}%`;
+            
+            // Handle overflow - add exceeds-goal class if progress exceeds goal
+            if (todayExceedsGoal) {
+              bar.classList.add('exceeds-goal');
+            } else {
+              bar.classList.remove('exceeds-goal');
+            }
+          } else if (todayBarContainer) {
+            todayBarContainer.remove();
+          }
+        } else if (todayRow) {
+          // Remove today row if goal doesn't exist
+          todayRow.remove();
         }
       } else {
         console.warn(`No progress data returned for story ${story.name}`);
