@@ -1468,6 +1468,24 @@ async function saveStoryDataToDrive() {
       };
     });
     
+    // Debug: Log what we're about to save
+    const chapterSnippetsToSave = Object.values(snippetsToSave).filter(s => {
+      const group = s.groupId ? state.groups[s.groupId] : null;
+      return !!group;
+    });
+    console.log(`About to save data.json with ${Object.keys(snippetsToSave).length} total snippets:`, {
+      totalSnippets: Object.keys(snippetsToSave).length,
+      chapterSnippets: chapterSnippetsToSave.length,
+      chapterSnippetDetails: chapterSnippetsToSave.map(s => ({
+        id: s.id,
+        title: s.title,
+        words: s.words,
+        groupId: s.groupId,
+        hasGroup: !!state.groups[s.groupId]
+      })),
+      allSnippetIds: Object.keys(snippetsToSave)
+    });
+    
     // Save data.json - all snippets unified (chapter snippets have groupId, People/Places/Things have kind)
     const storyData = {
       snippets: snippetsToSave,
@@ -1481,13 +1499,18 @@ async function saveStoryDataToDrive() {
     };
     
     const dataFile = files.files.find(f => f.name === 'data.json');
-    await window.driveAPI.write(
+    const jsonString = JSON.stringify(storyData, null, 2);
+    console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${dataFile?.id || 'NEW'}`);
+    
+    const writeResult = await window.driveAPI.write(
       'data.json',
-      JSON.stringify(storyData, null, 2),
+      jsonString,
       dataFile ? dataFile.id : null,
       state.drive.storyFolderId,
       'text/plain'
     );
+    
+    console.log(`data.json write completed. File ID: ${writeResult?.id || 'unknown'}, result:`, writeResult);
     
     // Save project.json
     const projectData = {
@@ -2957,6 +2980,7 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // First, add all snippets loaded from Drive folders (chapters and People/Places/Things)
     // These are the source of truth - only files that exist in the current story's folders
+    console.log(`Merging snippets: ${Object.keys(loadedSnippets).length} loaded from Drive, ${Object.keys(peoplePlacesThingsSnippets).length} People/Places/Things, ${Object.keys(originalSnippets).length} from data.json`);
     Object.keys(loadedSnippets).forEach(snippetId => {
       mergedSnippets[snippetId] = loadedSnippets[snippetId];
     });
@@ -2978,6 +3002,7 @@ async function loadStoryFromDrive(storyFolderId) {
     chapterFileIdsInCurrentStory.forEach(fileId => {
       driveFileIdsFromCurrentStory.add(fileId);
     });
+    console.log(`driveFileIdsFromCurrentStory:`, Array.from(driveFileIdsFromCurrentStory));
     
     Object.keys(originalSnippets).forEach(snippetId => {
       const snippet = originalSnippets[snippetId];
