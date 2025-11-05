@@ -307,9 +307,9 @@ body {
   grid-area: center;
   background-color: #E9E9EB;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 40px 64px;
+  padding: 40px 64px 0 64px;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 640px;
@@ -319,11 +319,12 @@ body {
   width: 100%;
   max-width: 100%;
   background-color: var(--color-white);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow-xs);
-  padding: var(--space-5xl) var(--space-6xl);
+  padding: var(--space-5xl) var(--space-6xl) calc(var(--space-5xl) + 1000px) var(--space-6xl);
   position: relative;
-  min-height: 400px;
+  min-height: calc(100vh + 1000px);
+  margin-bottom: 0;
 }
 
 .editor-content {
