@@ -1073,8 +1073,8 @@ function handleTypingStop() {
       state.project.editing.lastSavedAt = new Date().toISOString();
       updateSaveStatus();
       
-      // Save data.json immediately to update word counts for stories page
-      // This ensures word counts are persisted right away
+      // Save data.json immediately to update word counts and driveFileId for stories page
+      // This ensures word counts and file IDs are persisted right away
       // Don't debounce - save immediately after snippet content is saved
       try {
         // Double-check word count is updated before saving
@@ -1088,11 +1088,16 @@ function handleTypingStop() {
             snippet.chars = text.length;
             console.log(`Updated word count for snippet ${snippet.id}: ${words} words`);
           }
+          
+          // Ensure driveFileId is set (it should be set by saveCurrentEditorToDrive, but double-check)
+          if (!snippet.driveFileId) {
+            console.warn(`Snippet ${snippet.id} (${snippet.title}) has no driveFileId after save - this should be set by saveSnippetToDrive`);
+          }
         }
         
-        console.log('Saving data.json with updated word counts...');
+        console.log('Saving data.json with updated word counts and driveFileIds...');
         await saveStoryDataToDrive();
-        console.log('data.json saved successfully with updated word counts');
+        console.log('data.json saved successfully with updated word counts and driveFileIds');
       } catch (error) {
         console.error('Error saving data.json after content update:', error);
         // Schedule a retry after a short delay
@@ -1456,11 +1461,25 @@ async function saveStoryDataToDrive() {
     chapterSnippets.forEach(snippet => {
       totalWords += snippet.words || 0;
     });
-    console.log(`Saving data.json: ${chapterSnippets.length} chapter snippets, ${totalWords} total words`);
+    
+    // Count how many snippets have driveFileId set
+    const snippetsWithDriveId = Object.values(state.snippets).filter(s => s.driveFileId).length;
+    console.log(`Saving data.json: ${chapterSnippets.length} chapter snippets, ${totalWords} total words, ${snippetsWithDriveId}/${Object.keys(state.snippets).length} snippets have driveFileId`);
+    
+    // Ensure all snippets have their driveFileId saved (create a deep copy to avoid modifying state during save)
+    const snippetsToSave = {};
+    Object.keys(state.snippets).forEach(snippetId => {
+      const snippet = state.snippets[snippetId];
+      snippetsToSave[snippetId] = {
+        ...snippet,
+        // Ensure driveFileId is included
+        driveFileId: snippet.driveFileId || null
+      };
+    });
     
     // Save data.json - all snippets unified (chapter snippets have groupId, People/Places/Things have kind)
     const storyData = {
-      snippets: state.snippets,
+      snippets: snippetsToSave,
       groups: state.groups,
       // Legacy notes structure for backward compatibility (empty - all moved to snippets)
       notes: {
@@ -2463,9 +2482,12 @@ async function saveSnippetToDrive(snippet) {
       'application/vnd.google-apps.document'
     );
     
-    // Store Drive file ID in snippet if it wasn't set before
-    if (!snippet.driveFileId && result && result.id) {
+    // Always store Drive file ID in snippet (update if it exists, set if it doesn't)
+    if (result && result.id) {
       snippet.driveFileId = result.id;
+      console.log(`Updated driveFileId for snippet ${snippet.id} (${snippet.title}): ${result.id}`);
+    } else {
+      console.warn(`No file ID returned from Drive write for snippet ${snippet.id} (${snippet.title})`);
     }
     
     // Update lastKnownDriveModifiedTime after successful save
@@ -2509,9 +2531,12 @@ async function saveSnippetToDriveByKind(snippet) {
       'text/plain'
     );
     
-    // Store Drive file ID in snippet
-    if (!snippet.driveFileId) {
+    // Always store Drive file ID in snippet (update if it exists, set if it doesn't)
+    if (result && result.id) {
       snippet.driveFileId = result.id;
+      console.log(`Updated driveFileId for snippet ${snippet.id} (${snippet.title}): ${result.id}`);
+    } else {
+      console.warn(`No file ID returned from Drive write for snippet ${snippet.id} (${snippet.title})`);
     }
     
     // Update lastKnownDriveModifiedTime after successful save
