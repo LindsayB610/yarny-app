@@ -262,7 +262,7 @@ function renderStoryList() {
     colorChip.title = 'Click to change color';
     colorChip.addEventListener('click', (e) => {
       e.stopPropagation();
-      openColorPicker(group.id, colorChip);
+      openColorPicker(group.id, null, colorChip);
     });
     
     const titleSpan = document.createElement('span');
@@ -655,10 +655,36 @@ function renderSnippetsList() {
       snippetEl.dataset.snippetId = snippet.id;
       snippetEl.draggable = true;
       snippetEl.title = 'Drag to reorder snippets';
-      snippetEl.innerHTML = `
-        <div class="note-title">${escapeHtml(snippet.title)}</div>
-        <div class="note-excerpt">${escapeHtml(snippet.body ? (snippet.body.substring(0, 60) + (snippet.body.length > 60 ? '...' : '')) : 'Loading...')}</div>
-      `;
+      
+      // Create color chip
+      const colorChip = document.createElement('div');
+      colorChip.className = 'snippet-color-chip';
+      // Assign default color if not set - use a different default color for each kind
+      const defaultColors = {
+        'person': '#EF4444', // red
+        'place': '#10B981', // emerald
+        'thing': '#6366F1'  // indigo
+      };
+      colorChip.style.backgroundColor = snippet.color || defaultColors[snippet.kind] || '#3B82F6';
+      colorChip.title = 'Click to change color';
+      colorChip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openColorPicker(null, snippet.id, colorChip);
+      });
+      
+      // Create title and excerpt elements
+      const titleEl = document.createElement('div');
+      titleEl.className = 'note-title';
+      titleEl.textContent = escapeHtml(snippet.title);
+      
+      const excerptEl = document.createElement('div');
+      excerptEl.className = 'note-excerpt';
+      excerptEl.textContent = escapeHtml(snippet.body ? (snippet.body.substring(0, 60) + (snippet.body.length > 60 ? '...' : '')) : 'Loading...');
+      
+      // Append color chip, title, and excerpt
+      snippetEl.appendChild(colorChip);
+      snippetEl.appendChild(titleEl);
+      snippetEl.appendChild(excerptEl);
 
       snippetEl.addEventListener('click', async () => {
         // Cancel any pending autosave timeout (we'll save manually)
@@ -1968,6 +1994,14 @@ async function createNewSnippet() {
   const snippetTitle = titleMap[snippetKind];
   
   const snippetId = 'snippet_' + Date.now();
+  
+  // Assign default colors based on kind
+  const defaultColors = {
+    'person': '#EF4444', // red
+    'place': '#10B981', // emerald
+    'thing': '#6366F1'  // indigo
+  };
+  
   const newSnippet = {
     id: snippetId,
     projectId: 'default',
@@ -1977,6 +2011,7 @@ async function createNewSnippet() {
     words: 0,
     chars: 0,
     position: existingSnippets.length,
+    color: defaultColors[snippetKind] || '#3B82F6',
     updatedAt: new Date().toISOString(),
     version: 1,
     driveFileId: null,
@@ -2028,17 +2063,29 @@ window.createNewSnippet = createNewSnippet;
 // ============================================
 
 let currentColorPickerGroupId = null;
+let currentColorPickerSnippetId = null;
 let currentColorPickerChip = null;
 
-function openColorPicker(groupId, colorChip) {
+function openColorPicker(groupId, snippetId, colorChip) {
   const picker = document.getElementById('colorPicker');
   const grid = picker.querySelector('.color-picker-grid');
   
   currentColorPickerGroupId = groupId;
+  currentColorPickerSnippetId = snippetId;
   currentColorPickerChip = colorChip;
   
   // Clear previous colors
   grid.innerHTML = '';
+  
+  // Determine current color
+  let currentColor = null;
+  if (groupId) {
+    const group = state.groups[groupId];
+    currentColor = group ? group.color : null;
+  } else if (snippetId) {
+    const snippet = state.snippets[snippetId];
+    currentColor = snippet ? snippet.color : null;
+  }
   
   // Render color options
   ACCENT_COLORS.forEach(color => {
@@ -2050,14 +2097,13 @@ function openColorPicker(groupId, colorChip) {
     colorOption.setAttribute('data-color-name', color.name);
     
     // Check if this is the current color
-    const group = state.groups[groupId];
-    if (group && group.color === color.value) {
+    if (currentColor === color.value) {
       colorOption.classList.add('selected');
     }
     
     colorOption.addEventListener('click', (e) => {
       e.stopPropagation();
-      selectColor(groupId, color.value, color.name);
+      selectColor(groupId, snippetId, color.value, color.name);
     });
     
     grid.appendChild(colorOption);
@@ -2070,12 +2116,19 @@ function openColorPicker(groupId, colorChip) {
   picker.classList.remove('hidden');
 }
 
-function selectColor(groupId, colorValue, colorName) {
-  const group = state.groups[groupId];
-  if (!group) return;
-  
-  // Update group color
-  group.color = colorValue;
+function selectColor(groupId, snippetId, colorValue, colorName) {
+  // Update group or snippet color
+  if (groupId) {
+    const group = state.groups[groupId];
+    if (!group) return;
+    group.color = colorValue;
+  } else if (snippetId) {
+    const snippet = state.snippets[snippetId];
+    if (!snippet) return;
+    snippet.color = colorValue;
+  } else {
+    return;
+  }
   
   // Update the color chip
   if (currentColorPickerChip) {
@@ -2107,6 +2160,7 @@ function closeColorPicker() {
   const picker = document.getElementById('colorPicker');
   picker.classList.add('hidden');
   currentColorPickerGroupId = null;
+  currentColorPickerSnippetId = null;
   currentColorPickerChip = null;
 }
 
@@ -4069,9 +4123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Close color picker on outside click
   document.addEventListener('click', (e) => {
     const colorPicker = document.getElementById('colorPicker');
-    const colorChip = e.target.closest('.group-color-chip');
+    const groupColorChip = e.target.closest('.group-color-chip');
+    const snippetColorChip = e.target.closest('.snippet-color-chip');
     
-    if (!colorPicker.contains(e.target) && !colorChip && !colorPicker.classList.contains('hidden')) {
+    if (!colorPicker.contains(e.target) && !groupColorChip && !snippetColorChip && !colorPicker.classList.contains('hidden')) {
       closeColorPicker();
     }
   });
