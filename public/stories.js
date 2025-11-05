@@ -384,24 +384,72 @@ async function fetchStoryProgress(storyFolderId) {
       }
     }
     
-    // Read data.json to calculate word count from chapter snippets
+    // Try to read actual content from Google Docs for accurate word counts
+    // First, get structure from data.json to know which snippets to read
+    let snippetList = [];
     if (fileMap['data.json']) {
       try {
         const dataContent = await window.driveAPI.read(fileMap['data.json']);
         if (dataContent.content) {
           const data = JSON.parse(dataContent.content);
-          // Calculate total words from chapter snippets only (those with groupId, not People/Places/Things)
+          // Get chapter snippets (those with groupId) and their Drive file IDs
           if (data.snippets) {
-            Object.values(data.snippets).forEach(snippet => {
-              // Only count snippets that have a groupId (chapter snippets)
-              if (snippet.groupId && snippet.words !== undefined) {
-                totalWords += snippet.words || 0;
-              }
-            });
+            snippetList = Object.values(data.snippets).filter(snippet => 
+              snippet.groupId && snippet.driveFileId
+            );
           }
         }
       } catch (error) {
         console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
+      }
+    }
+    
+    // If we have snippet file IDs, read actual content from Google Docs
+    if (snippetList.length > 0) {
+      try {
+        // Read content from all chapter snippets in parallel
+        const contentPromises = snippetList.map(async (snippet) => {
+          try {
+            const docContent = await window.driveAPI.read(snippet.driveFileId);
+            const text = (docContent.content || '').trim();
+            // Calculate words from actual content
+            const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+            return words;
+          } catch (error) {
+            console.warn(`Failed to read snippet ${snippet.id} from Drive:`, error);
+            // Fallback to word count from data.json if available
+            return snippet.words || 0;
+          }
+        });
+        
+        const wordCounts = await Promise.all(contentPromises);
+        totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
+        console.log(`Calculated ${totalWords} words from ${snippetList.length} Google Docs for story ${storyFolderId}`);
+      } catch (error) {
+        console.warn(`Failed to read snippet content from Drive, falling back to data.json:`, error);
+        // Fallback to data.json word counts
+        snippetList.forEach(snippet => {
+          totalWords += snippet.words || 0;
+        });
+      }
+    } else {
+      // Fallback: use word counts from data.json if we couldn't get snippet list
+      if (fileMap['data.json']) {
+        try {
+          const dataContent = await window.driveAPI.read(fileMap['data.json']);
+          if (dataContent.content) {
+            const data = JSON.parse(dataContent.content);
+            if (data.snippets) {
+              Object.values(data.snippets).forEach(snippet => {
+                if (snippet.groupId && snippet.words !== undefined) {
+                  totalWords += snippet.words || 0;
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
+        }
       }
     }
     
@@ -1097,10 +1145,35 @@ async function initialize() {
   // Load stories
   try {
     const stories = await listStories();
-    await renderStories(stories);
+    if (stories && stories.length >= 0) {
+      await renderStories(stories);
+    } else {
+      console.warn('No stories returned from listStories');
+      // Show empty state
+      document.getElementById('storiesList').innerHTML = '';
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('loadingState').classList.add('hidden');
+    }
   } catch (error) {
     console.error('Error loading stories:', error);
-    alert('Failed to load stories: ' + error.message);
+    // Show error state but don't block the page
+    const listEl = document.getElementById('storiesList');
+    const loadingState = document.getElementById('loadingState');
+    if (listEl && loadingState) {
+      listEl.innerHTML = '';
+      loadingState.classList.add('hidden');
+      const errorEl = document.createElement('div');
+      errorEl.className = 'error-message';
+      errorEl.textContent = 'Failed to load stories: ' + error.message;
+      errorEl.style.margin = '20px';
+      errorEl.style.padding = '12px';
+      errorEl.style.background = '#fee';
+      errorEl.style.color = '#c33';
+      errorEl.style.borderRadius = '4px';
+      listEl.appendChild(errorEl);
+    } else {
+      alert('Failed to load stories: ' + error.message);
+    }
   }
   
   // Refresh button
