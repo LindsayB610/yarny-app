@@ -439,6 +439,11 @@
           const response = await fetch('/.netlify/functions/uptime-status');
           const data = await response.json();
           
+          // Log for debugging
+          if (data.error || data.status === 'unknown') {
+            console.log('Status check result:', data);
+          }
+          
           // Update dot color
           statusDot.className = 'status-dot';
           if (data.status === 'up') {
