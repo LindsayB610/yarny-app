@@ -1548,6 +1548,10 @@ function showContextMenu(event, type, id) {
   
   // Close menu on outside click
   const closeMenu = (e) => {
+    // Don't close if clicking on a context menu item
+    if (e.target.closest('.context-menu-item')) {
+      return;
+    }
     if (!menu.contains(e.target)) {
       menu.classList.add('hidden');
       document.removeEventListener('click', closeMenu);
@@ -1696,6 +1700,7 @@ async function saveRename() {
 
 // Export for global access
 window.closeRenameModal = closeRenameModal;
+window.openRenameModal = openRenameModal;
 window.saveRename = saveRename;
 
 // ============================================
@@ -2810,8 +2815,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Context menu button handlers
-  document.getElementById('contextMenuRename').addEventListener('click', openRenameModal);
-  document.getElementById('contextMenuDelete').addEventListener('click', openDeleteModal);
+  document.getElementById('contextMenuRename').addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    openRenameModal();
+  });
+  document.getElementById('contextMenuDelete').addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    openDeleteModal();
+  });
   
   // Rename modal keyboard shortcuts
   document.getElementById('renameInput').addEventListener('keydown', (e) => {
