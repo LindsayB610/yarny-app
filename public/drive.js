@@ -73,7 +73,21 @@ async function writeDriveFile(fileName, content, fileId = null, parentFolderId =
     
     return response.data;
   } catch (error) {
-    console.error('Drive write error:', error);
+    // Log error with details for debugging (this is the lowest level, so we keep it)
+    // But make it less verbose - higher levels will log with more context
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.error('Drive write error (auth):', {
+        status: error.response?.status,
+        error: error.response?.data?.error,
+        message: error.response?.data?.message || error.message
+      });
+    } else {
+      console.error('Drive write error:', {
+        status: error.response?.status,
+        error: error.response?.data?.error,
+        message: error.response?.data?.message || error.message
+      });
+    }
     
     // Check if this is a missing scope error
     if (error.response?.data?.error === 'MISSING_DOCS_SCOPE' || error.response?.data?.requiresReauth) {

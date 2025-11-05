@@ -409,7 +409,17 @@ function renderStoryList() {
             try {
               await saveItemToDriveById(previousSnippetId, null);
             } catch (error) {
-              console.error('Background save failed (non-critical):', error);
+              // Log full error details for debugging
+              const errorDetails = {
+                message: error.message,
+                code: error.code,
+                response: error.response?.data,
+                stack: error.stack
+              };
+              console.error('Background save failed (non-critical):', {
+                snippetId: previousSnippetId,
+                error: errorDetails
+              });
             }
           })();
         }
@@ -758,7 +768,17 @@ function renderSnippetsList() {
             try {
               await saveItemToDriveById(previousSnippetId, null);
             } catch (error) {
-              console.error('Background save failed (non-critical):', error);
+              // Log full error details for debugging
+              const errorDetails = {
+                message: error.message,
+                code: error.code,
+                response: error.response?.data,
+                stack: error.stack
+              };
+              console.error('Background save failed (non-critical):', {
+                snippetId: previousSnippetId,
+                error: errorDetails
+              });
             }
           })();
         }
@@ -1361,7 +1381,18 @@ async function saveCurrentEditorToDrive() {
         snippet._creatingDriveFile = false;
       }
     } catch (error) {
-      console.error('Error saving snippet to Drive:', error);
+      // Log error with context since this is a user-initiated save (not background)
+      const errorDetails = {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        stack: error.stack
+      };
+      console.error('Error saving snippet to Drive:', {
+        snippetId: snippet.id,
+        snippetTitle: snippet.title,
+        error: errorDetails
+      });
       throw error;
     }
   }
@@ -1415,7 +1446,8 @@ async function saveItemToDriveById(snippetId, noteId) {
         }, 2000);
       }
     } catch (error) {
-      console.error('Error saving snippet to Drive:', error);
+      // Don't log here - error will be logged by the caller (background save handler)
+      // This prevents duplicate error logs
       throw error;
     }
   }
@@ -3688,7 +3720,8 @@ async function saveSnippetToDrive(snippet) {
     
     return result;
   } catch (error) {
-    console.error('Error saving snippet to Drive:', error);
+    // Don't log here - error will be logged by the caller
+    // This prevents duplicate error logs
     throw error;
   }
 }
@@ -3756,7 +3789,8 @@ async function saveSnippetToDriveByKind(snippet) {
     
     return result;
   } catch (error) {
-    console.error('Error saving snippet to Drive:', error);
+    // Don't log here - error will be logged by the caller
+    // This prevents duplicate error logs
     throw error;
   }
 }
