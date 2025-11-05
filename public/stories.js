@@ -526,8 +526,8 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
   try {
     // Create initial folder structure
     // Folder names match UI labels for better organization
+    // Note: Snippets folder removed - it was unused. Chapter snippets are organized in chapter subfolders.
     const folders = [
-      { name: 'Snippets', description: 'Story snippets and content' },
       { name: 'Chapters', description: 'Story chapters' },
       { name: 'People', description: 'People notes' },
       { name: 'Places', description: 'Places notes' },
@@ -544,6 +544,9 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
     const randomOpening = getRandomOpeningSentence();
     const groupId = 'group_' + Date.now();
     const snippetId = 'snippet_' + Date.now();
+    
+    // Create a folder for Chapter 1 inside the Chapters folder
+    const chapter1Folder = await createDriveFolder('Chapter 1', createdFolders['Chapters']);
     
     // Create initial project.json file with sample data
     const projectData = {
@@ -588,7 +591,8 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
           title: 'Chapter 1',
           color: '#E57A24',
           position: 0,
-          snippetIds: [snippetId]
+          snippetIds: [snippetId],
+          driveFolderId: chapter1Folder.id // Store the chapter's folder ID
         }
       },
       notes: {
@@ -606,16 +610,15 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       storyFolderId
     );
 
-    // Create the opening scene as a Google Doc in the Chapters folder
+    // Create the opening scene as a Google Doc in the Chapter 1 folder
     try {
-      const chaptersFolderId = createdFolders['Chapters'];
-      if (chaptersFolderId) {
+      if (chapter1Folder && chapter1Folder.id) {
         console.log('Creating Opening Scene Google Doc with content:', randomOpening.substring(0, 50) + '...');
         const docResult = await window.driveAPI.write(
           'Opening Scene.doc',
           randomOpening,
           null,
-          chaptersFolderId,
+          chapter1Folder.id,
           'application/vnd.google-apps.document'
         );
         

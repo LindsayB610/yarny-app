@@ -916,6 +916,34 @@ async function createNewSnippet() {
   await addSnippetToGroup(activeGroupId);
 }
 
+// Helper function to create a folder in Drive
+async function createDriveFolder(folderName, parentFolderId) {
+  try {
+    const API_BASE = window.API_BASE || '/.netlify/functions';
+    const response = await fetch(`${API_BASE}/drive-create-folder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        folderName: folderName,
+        parentFolderId: parentFolderId
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to create folder' }));
+      throw new Error(errorData.error || 'Failed to create folder');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating folder:', error);
+    throw error;
+  }
+}
+
 async function createNewGroup() {
   const groupId = 'group_' + Date.now();
   // Use the 12 accent colors, cycling through them
@@ -925,13 +953,26 @@ async function createNewGroup() {
   const chapterNumber = state.project.groupIds.length + 1;
   const title = `Chapter ${chapterNumber}`;
   
+  // Create a folder for this chapter inside the Chapters folder
+  let chapterFolderId = null;
+  if (state.drive.folderIds.chapters) {
+    try {
+      const folderResult = await createDriveFolder(title, state.drive.folderIds.chapters);
+      chapterFolderId = folderResult.id;
+    } catch (error) {
+      console.error('Error creating chapter folder:', error);
+      // Continue without folder - snippets will still work, just won't be organized
+    }
+  }
+  
   const newGroup = {
     id: groupId,
     projectId: 'default',
     title: title,
     color: defaultColor,
     position: state.project.groupIds.length,
-    snippetIds: []
+    snippetIds: [],
+    driveFolderId: chapterFolderId // Store the chapter's folder ID
   };
 
   state.groups[groupId] = newGroup;
@@ -1921,10 +1962,52 @@ async function loadStoryFolders(storyFolderId) {
   }
 }
 
+// Map chapter subfolders to groups by matching folder names to group titles
+async function mapChapterFoldersToGroups(chaptersFolderId) {
+  try {
+    const chapterFolders = await window.driveAPI.list(chaptersFolderId);
+    
+    // Find all subfolders (these are the chapter folders)
+    const subfolders = (chapterFolders.files || []).filter(
+      file => file.mimeType === 'application/vnd.google-apps.folder' && !file.trashed
+    );
+    
+    // Match subfolders to groups by name
+    subfolders.forEach(folder => {
+      const folderName = folder.name.trim();
+      // Find a group with a matching title
+      const matchingGroup = Object.values(state.groups).find(
+        group => group.title && group.title.trim() === folderName
+      );
+      
+      if (matchingGroup) {
+        // Store the folder ID in the group
+        matchingGroup.driveFolderId = folder.id;
+        console.log(`Mapped chapter folder "${folderName}" (${folder.id}) to group ${matchingGroup.id}`);
+      }
+    });
+  } catch (error) {
+    console.error('Error mapping chapter folders to groups:', error);
+    // Don't throw - this is a nice-to-have feature, not critical
+  }
+}
+
 // Save snippet to Drive as Google Doc
 async function saveSnippetToDrive(snippet) {
-  if (!state.drive.folderIds.chapters) {
-    console.warn('Chapters folder not loaded, skipping Drive save');
+  // Get the chapter folder ID from the snippet's group
+  let targetFolderId = null;
+  
+  if (snippet.groupId && state.groups[snippet.groupId]) {
+    const group = state.groups[snippet.groupId];
+    // Use the chapter's specific folder if it exists, otherwise fall back to chapters folder
+    targetFolderId = group.driveFolderId || state.drive.folderIds.chapters;
+  } else {
+    // Fallback to chapters folder if no group is found
+    targetFolderId = state.drive.folderIds.chapters;
+  }
+  
+  if (!targetFolderId) {
+    console.warn('Chapter folder not available, skipping Drive save');
     return;
   }
   
@@ -1935,7 +2018,7 @@ async function saveSnippetToDrive(snippet) {
       fileName,
       snippet.body,
       snippet.driveFileId || null,
-      state.drive.folderIds.chapters,
+      targetFolderId,
       'application/vnd.google-apps.document'
     );
     
@@ -2076,105 +2159,159 @@ async function loadStoryFromDrive(storyFolderId) {
       console.warn('Could not load data.json:', error);
     }
     
-    // Load individual files from Chapters folder - this is the source of truth
+    // Map chapter subfolders to groups (after groups are loaded)
+    if (state.drive.folderIds.chapters && Object.keys(state.groups).length > 0) {
+      await mapChapterFoldersToGroups(state.drive.folderIds.chapters);
+    }
+    
+    // Load individual files from chapter subfolders - this is the source of truth
     // Google Docs content overrides data.json content
     const loadedSnippets = {};
     if (state.drive.folderIds.chapters) {
       try {
-        console.log('Loading chapter files from folder:', state.drive.folderIds.chapters);
-        const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
-        console.log('Chapter files found:', chapterFiles.files?.length || 0);
-        if (chapterFiles.files && chapterFiles.files.length > 0) {
-          console.log('Chapter files:', chapterFiles.files.map(f => ({ name: f.name, id: f.id, mimeType: f.mimeType })));
-        } else {
-          console.warn('No chapter files found! This means the Opening Scene Google Doc was not created.');
-          console.warn('State snippets:', Object.keys(state.snippets));
-          console.warn('State groups:', Object.keys(state.groups));
-        }
-        console.log('Current state.snippets:', Object.keys(state.snippets));
-        console.log('Current state.groups:', Object.keys(state.groups));
-        console.log('Current state.project.groupIds:', state.project.groupIds);
+        // Load files from each chapter's subfolder
+        const groupsWithFolders = state.project.groupIds
+          .map(id => state.groups[id])
+          .filter(group => group && group.driveFolderId);
         
-        // Build structure from Google Docs - this is the source of truth
-        // Only show snippets that exist as Google Docs in the Chapters folder
-        for (const file of chapterFiles.files || []) {
-          if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
-            // Remove .doc or .docx extension from filename
-            const fileName = file.name.replace(/\.docx?$/i, '').trim();
+        if (groupsWithFolders.length > 0) {
+          // Load from chapter subfolders
+          for (const group of groupsWithFolders) {
+            console.log(`Loading files from chapter folder: ${group.title} (${group.driveFolderId})`);
+            const chapterFiles = await window.driveAPI.list(group.driveFolderId);
+            console.log('Chapter files found:', chapterFiles.files?.length || 0);
+            if (chapterFiles.files && chapterFiles.files.length > 0) {
+              console.log('Chapter files:', chapterFiles.files.map(f => ({ name: f.name, id: f.id, mimeType: f.mimeType })));
+            } else {
+              console.warn(`No chapter files found in ${group.title}!`);
+            }
             
-            // Try to find matching snippet in existing state
-            // Match by title (case-insensitive) or driveFileId
-            let snippet = Object.values(state.snippets).find(s => {
-              const snippetTitle = (s.title || '').trim();
-              return snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id;
-            });
-            
-            console.log(`Processing file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
-            
-            // Load content from Google Doc
-            try {
-              const docContent = await window.driveAPI.read(file.id);
-              const snippetBody = (docContent.content || '').trim();
-              console.log(`Loaded content from ${file.name}, length: ${snippetBody.length}, first 50: ${snippetBody.substring(0, 50)}`);
+            // Build structure from Google Docs - this is the source of truth
+            // Only show snippets that exist as Google Docs in the chapter folder
+            for (const file of chapterFiles.files || []) {
+              if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+                // Remove .doc or .docx extension from filename
+                const fileName = file.name.replace(/\.docx?$/i, '').trim();
+                
+                // Try to find matching snippet in existing state
+                // Match by title (case-insensitive) or driveFileId, and ensure it belongs to this group
+                let snippet = Object.values(state.snippets).find(s => {
+                  const snippetTitle = (s.title || '').trim();
+                  return (s.groupId === group.id) && 
+                         (snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id);
+                });
+                
+                console.log(`Processing file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
+                
+                // Load content from Google Doc
+                try {
+                  const docContent = await window.driveAPI.read(file.id);
+                  const snippetBody = (docContent.content || '').trim();
+                  console.log(`Loaded content from ${file.name}, length: ${snippetBody.length}, first 50: ${snippetBody.substring(0, 50)}`);
+                  
+                  if (snippet) {
+                    // Update existing snippet with Google Doc content
+                    snippet.driveFileId = file.id;
+                    snippet.body = snippetBody;
+                    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                    snippet.chars = snippetBody.length;
+                    loadedSnippets[snippet.id] = snippet;
+                    console.log(`Updated snippet ${snippet.id} with content`);
+                  } else {
+                    // Create new snippet from Google Doc
+                    // Use the snippet ID from data.json if we can find it by group membership
+                    // Otherwise generate a new ID
+                    let snippetId = null;
+                    // Try to find snippet ID from data.json that might not have been matched
+                    if (group.snippetIds) {
+                      // Check if any snippet in this group matches
+                      for (const sid of group.snippetIds) {
+                        const existingSnippet = state.snippets[sid];
+                        if (existingSnippet && existingSnippet.title === fileName) {
+                          snippetId = sid;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    if (!snippetId) {
+                      snippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    }
+                    
+                    snippet = {
+                      id: snippetId,
+                      projectId: 'default',
+                      groupId: group.id,
+                      title: fileName,
+                      body: snippetBody,
+                      words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
+                      chars: snippetBody.length,
+                      updatedAt: file.modifiedTime || new Date().toISOString(),
+                      version: 1,
+                      driveFileId: file.id
+                    };
+                    loadedSnippets[snippetId] = snippet;
+                  }
+                } catch (error) {
+                  console.warn('Could not load content from Google Doc:', file.name, error);
+                  // Still create snippet entry even if content load fails
+                  if (!snippet) {
+                    const snippetId = Object.keys(state.snippets).find(sid => {
+                      const s = state.snippets[sid];
+                      return s && s.groupId === group.id && (s.title === fileName || s.driveFileId === file.id);
+                    });
+                    if (snippetId) {
+                      snippet = state.snippets[snippetId];
+                      snippet.driveFileId = file.id;
+                      loadedSnippets[snippetId] = snippet;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          // Fallback: if no chapter folders exist, try loading from main Chapters folder (backward compatibility)
+          console.log('No chapter folders found, trying to load from main Chapters folder (backward compatibility)');
+          const chapterFiles = await window.driveAPI.list(state.drive.folderIds.chapters);
+          console.log('Chapter files found:', chapterFiles.files?.length || 0);
+          
+          // Process files similar to above but without group filtering
+          for (const file of chapterFiles.files || []) {
+            if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+              const fileName = file.name.replace(/\.docx?$/i, '').trim();
+              let snippet = Object.values(state.snippets).find(s => {
+                const snippetTitle = (s.title || '').trim();
+                return snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id;
+              });
               
-              if (snippet) {
-                // Update existing snippet with Google Doc content
-                snippet.driveFileId = file.id;
-                snippet.body = snippetBody;
-                snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-                snippet.chars = snippetBody.length;
-                loadedSnippets[snippet.id] = snippet;
-                console.log(`Updated snippet ${snippet.id} with content`);
-              } else {
-                // Create new snippet from Google Doc
-                // Use the snippet ID from data.json if we can find it by group membership
-                // Otherwise generate a new ID
-                let snippetId = null;
-                // Try to find snippet ID from data.json that might not have been matched
+              if (!snippet) {
+                // Try to find by matching to first group
                 if (state.project.groupIds.length > 0) {
                   const firstGroup = state.groups[state.project.groupIds[0]];
                   if (firstGroup && firstGroup.snippetIds) {
-                    // Check if any snippet in this group matches
                     for (const sid of firstGroup.snippetIds) {
                       const existingSnippet = state.snippets[sid];
                       if (existingSnippet && existingSnippet.title === fileName) {
-                        snippetId = sid;
+                        snippet = existingSnippet;
                         break;
                       }
                     }
                   }
                 }
-                
-                if (!snippetId) {
-                  snippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                }
-                
-                snippet = {
-                  id: snippetId,
-                  projectId: 'default',
-                  groupId: state.project.groupIds[0] || null,
-                  title: fileName,
-                  body: snippetBody,
-                  words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
-                  chars: snippetBody.length,
-                  updatedAt: file.modifiedTime || new Date().toISOString(),
-                  version: 1,
-                  driveFileId: file.id
-                };
-                loadedSnippets[snippetId] = snippet;
               }
-            } catch (error) {
-              console.warn('Could not load content from Google Doc:', file.name, error);
-              // Still create snippet entry even if content load fails
-              if (!snippet) {
-                const snippetId = Object.keys(state.snippets).find(sid => {
-                  const s = state.snippets[sid];
-                  return s && (s.title === fileName || s.driveFileId === file.id);
-                });
-                if (snippetId) {
-                  snippet = state.snippets[snippetId];
+              
+              if (snippet) {
+                try {
+                  const docContent = await window.driveAPI.read(file.id);
+                  const snippetBody = (docContent.content || '').trim();
                   snippet.driveFileId = file.id;
-                  loadedSnippets[snippetId] = snippet;
+                  snippet.body = snippetBody;
+                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                  snippet.chars = snippetBody.length;
+                  loadedSnippets[snippet.id] = snippet;
+                } catch (error) {
+                  console.warn('Could not load content from Google Doc:', file.name, error);
                 }
               }
             }
