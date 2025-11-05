@@ -48,6 +48,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Goal Tracking**: Set word count goals with visual progress indicator
 - **Auto-Save**: Automatic saving to Google Drive as you write
 - **Save Status**: Visual indicator showing save state (idle/saving/saved)
+- **Resume Where You Left Off**: Editor automatically opens to the most recently edited snippet (chapters or People/Places/Things) when you return to a story
 
 ### Keyboard Shortcuts
 - `Cmd/Ctrl + N`: Create new snippet

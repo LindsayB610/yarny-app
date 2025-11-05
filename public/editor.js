@@ -2692,6 +2692,15 @@ async function ensureSnippetContentLoaded(snippetId) {
     snippet._contentLoaded = true;
     snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || snippet.lastKnownDriveModifiedTime || new Date().toISOString();
     
+    // Update updatedAt if Drive file is newer
+    if (docContent.modifiedTime) {
+      const driveTime = new Date(docContent.modifiedTime).getTime();
+      const currentUpdatedAt = snippet.updatedAt ? new Date(snippet.updatedAt).getTime() : 0;
+      if (driveTime > currentUpdatedAt) {
+        snippet.updatedAt = docContent.modifiedTime;
+      }
+    }
+    
     console.log(`Lazy loaded content for snippet: ${snippet.title}`);
     
     // Update UI
@@ -3032,6 +3041,15 @@ async function loadStoryFromDrive(storyFolderId) {
                     snippet.driveFileId = file.id;
                     snippet.lastKnownDriveModifiedTime = file.modifiedTime || new Date().toISOString();
                     snippet._contentLoaded = false; // Mark as needing content load
+                    
+                    // Update updatedAt if Drive file is newer
+                    if (file.modifiedTime) {
+                      const driveTime = new Date(file.modifiedTime).getTime();
+                      const currentUpdatedAt = snippet.updatedAt ? new Date(snippet.updatedAt).getTime() : 0;
+                      if (driveTime > currentUpdatedAt) {
+                        snippet.updatedAt = file.modifiedTime;
+                      }
+                    }
                   }
                   
                   // Ensure snippet is in group's snippetIds array
@@ -3226,6 +3244,15 @@ async function loadStoryFromDrive(storyFolderId) {
             snippet.driveFileId = file.id;
             snippet.lastKnownDriveModifiedTime = file.modifiedTime || new Date().toISOString();
             snippet._contentLoaded = false;
+            
+            // Update updatedAt if Drive file is newer
+            if (file.modifiedTime) {
+              const driveTime = new Date(file.modifiedTime).getTime();
+              const currentUpdatedAt = snippet.updatedAt ? new Date(snippet.updatedAt).getTime() : 0;
+              if (driveTime > currentUpdatedAt) {
+                snippet.updatedAt = file.modifiedTime;
+              }
+            }
           }
           
           allPeoplePlacesThingsFiles.push({ file, snippet, kind });
@@ -3488,25 +3515,54 @@ async function loadStoryFromDrive(storyFolderId) {
     }
     
     // Ensure activeSnippetId is valid after loading
-    // If activeSnippetId is not set or doesn't exist, set it to the first snippet of the first group
+    // If activeSnippetId is not set or doesn't exist, open the most recently edited snippet
     if (!state.project.activeSnippetId || !state.snippets[state.project.activeSnippetId]) {
-      if (state.project.groupIds.length > 0) {
-        const firstGroup = state.groups[state.project.groupIds[0]];
-        console.log('First group:', firstGroup);
-        if (firstGroup && firstGroup.snippetIds && firstGroup.snippetIds.length > 0) {
-          const firstSnippetId = firstGroup.snippetIds[0];
-          console.log('First snippet ID:', firstSnippetId, 'exists:', !!state.snippets[firstSnippetId]);
-          if (state.snippets[firstSnippetId]) {
-            state.project.activeSnippetId = firstSnippetId;
-            console.log('Set activeSnippetId to first snippet:', firstSnippetId);
-          } else {
-            console.warn('First snippet not found in state.snippets:', firstSnippetId);
+      const mostRecentSnippet = findMostRecentlyEditedSnippet();
+      
+      if (mostRecentSnippet) {
+        state.project.activeSnippetId = mostRecentSnippet.id;
+        console.log('Set activeSnippetId to most recently edited snippet:', mostRecentSnippet.id, mostRecentSnippet.title);
+        
+        // If the snippet is a People/Places/Things snippet, switch to the appropriate tab
+        if (mostRecentSnippet.kind) {
+          const tabMap = {
+            'person': 'people',
+            'place': 'places',
+            'thing': 'things'
+          };
+          const targetTab = tabMap[mostRecentSnippet.kind];
+          if (targetTab) {
+            state.project.activeRightTab = targetTab;
+            // Update tab buttons
+            document.querySelectorAll('.notes-tab').forEach(btn => {
+              btn.classList.remove('active');
+              if (btn.dataset.tab === targetTab) {
+                btn.classList.add('active');
+              }
+            });
+            console.log('Switched to tab:', targetTab);
           }
-        } else {
-          console.warn('First group has no snippetIds:', firstGroup);
         }
       } else {
-        console.warn('No groupIds in state.project.groupIds');
+        // Fallback: set to first snippet of first group if no snippets have timestamps
+        if (state.project.groupIds.length > 0) {
+          const firstGroup = state.groups[state.project.groupIds[0]];
+          console.log('First group:', firstGroup);
+          if (firstGroup && firstGroup.snippetIds && firstGroup.snippetIds.length > 0) {
+            const firstSnippetId = firstGroup.snippetIds[0];
+            console.log('First snippet ID:', firstSnippetId, 'exists:', !!state.snippets[firstSnippetId]);
+            if (state.snippets[firstSnippetId]) {
+              state.project.activeSnippetId = firstSnippetId;
+              console.log('Set activeSnippetId to first snippet (fallback):', firstSnippetId);
+            } else {
+              console.warn('First snippet not found in state.snippets:', firstSnippetId);
+            }
+          } else {
+            console.warn('First group has no snippetIds:', firstGroup);
+          }
+        } else {
+          console.warn('No groupIds in state.project.groupIds');
+        }
       }
     }
     
@@ -3561,6 +3617,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateFooter();
       updateGoalMeter();
       updateSaveStatus(); // Initialize save status and logout button warning
+      
+      // Ensure the most recently edited snippet's content is loaded
+      if (state.project.activeSnippetId) {
+        await ensureSnippetContentLoaded(state.project.activeSnippetId);
+        renderEditor(); // Re-render with loaded content
+      }
     } catch (error) {
       console.error('Error loading story from Drive, using sample data:', error);
       // Fallback to sample data
