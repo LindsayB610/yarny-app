@@ -134,6 +134,82 @@ body {
   transition: width var(--transition-base);
 }
 
+.today-chip {
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.today-chip:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: var(--color-primary);
+}
+
+.today-chip.hidden {
+  display: none;
+}
+
+.today-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.today-count {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.today-progress-container {
+  flex: 1;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 1px;
+  overflow: hidden;
+  max-width: 60px;
+}
+
+.today-progress-bar {
+  height: 100%;
+  background-color: var(--color-primary);
+  width: 0%;
+  transition: width var(--transition-base), background-color var(--transition-fast);
+}
+
+.writing-days-checkboxes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
 .search-container {
   margin-bottom: 12px;
 }

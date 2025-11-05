@@ -130,7 +130,19 @@ const state = {
       people: null,
       places: null,
       things: null
-    }
+    },
+    goalJsonFileId: null
+  },
+  // Goals tracking
+  goal: {
+    target: null, // Word count target
+    deadline: null, // ISO date string
+    startDate: null, // ISO date string - when goal was first set (for strict mode)
+    writingDays: [true, true, true, true, true, true, true], // Mon-Sun, default all days
+    daysOff: [], // Array of ISO date strings
+    mode: 'elastic', // 'elastic' | 'strict'
+    ledger: {}, // { date: 'YYYY-MM-DD', words: number }
+    lastCalculatedDate: null // Last date we calculated daily target for (YYYY-MM-DD)
   }
 };
 
@@ -846,6 +858,56 @@ function updateGoalMeter() {
   const textEl = document.getElementById('goalText');
   const barEl = document.getElementById('goalProgressBar');
   window.updateProgressMeter(textEl, barEl, totalWords, goal);
+  
+  // Update today chip if goal is set
+  updateTodayChip();
+}
+
+// Update the "Today" chip with daily progress
+function updateTodayChip() {
+  const todayChip = document.getElementById('todayChip');
+  const todayCount = document.getElementById('todayCount');
+  const todayProgressBar = document.getElementById('todayProgressBar');
+  
+  if (!state.goal.target || !state.goal.deadline) {
+    // No goal set, hide chip
+    todayChip.classList.add('hidden');
+    return;
+  }
+  
+  // Show chip
+  todayChip.classList.remove('hidden');
+  
+  // Calculate daily target
+  const dailyInfo = calculateDailyTarget();
+  
+  if (!dailyInfo) {
+    todayCount.textContent = '—';
+    todayProgressBar.style.width = '0%';
+    return;
+  }
+  
+  // Update count
+  todayCount.textContent = dailyInfo.todayWords !== undefined ? dailyInfo.todayWords : '0';
+  
+  // Update progress bar
+  const progress = dailyInfo.target > 0 
+    ? Math.min(100, Math.round((dailyInfo.todayWords / dailyInfo.target) * 100))
+    : 0;
+  todayProgressBar.style.width = `${progress}%`;
+  
+  // Add visual feedback for ahead/behind in strict mode
+  if (state.goal.mode === 'strict') {
+    if (dailyInfo.isAhead) {
+      todayProgressBar.style.backgroundColor = '#10B981'; // green
+    } else if (dailyInfo.isBehind) {
+      todayProgressBar.style.backgroundColor = '#EF4444'; // red
+    } else {
+      todayProgressBar.style.backgroundColor = 'var(--color-primary)';
+    }
+  } else {
+    todayProgressBar.style.backgroundColor = 'var(--color-primary)';
+  }
 }
 
 function updateSaveStatus() {
@@ -2013,10 +2075,265 @@ async function saveStoryDataToDrive() {
       state.drive.storyFolderId,
       'text/plain'
     );
+    
+    // Save goal.json if goal is set
+    // Note: We don't write today's words to ledger here - that only happens on midnight rollover
+    // The ledger is updated via handleMidnightRollover(), not on every save
+    if (state.goal.target !== null) {
+      await saveGoalToDrive(files);
+    }
   } catch (error) {
     console.error('Error saving story data to Drive:', error);
     throw error;
   }
+}
+
+// Load goal data from Drive
+async function loadGoalFromDrive(storyFolderId, filesList = null) {
+  try {
+    const files = filesList || await window.driveAPI.list(storyFolderId);
+    const goalFile = files.files?.find(f => f.name === 'goal.json');
+    
+    if (goalFile) {
+      const goalData = await window.driveAPI.read(goalFile.id);
+      if (goalData.content) {
+        const parsed = JSON.parse(goalData.content);
+        // Merge with defaults
+        state.goal = {
+          target: parsed.target ?? null,
+          deadline: parsed.deadline ?? null,
+          startDate: parsed.startDate ?? null,
+          writingDays: parsed.writingDays ?? [true, true, true, true, true, true, true],
+          daysOff: parsed.daysOff ?? [],
+          mode: parsed.mode ?? 'elastic',
+          ledger: parsed.ledger ?? {},
+          lastCalculatedDate: parsed.lastCalculatedDate ?? null
+        };
+        state.drive.goalJsonFileId = goalFile.id;
+        console.log('Loaded goal.json:', state.goal);
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.warn('Could not load goal.json:', error);
+    return false;
+  }
+}
+
+// Save goal data to Drive
+async function saveGoalToDrive(filesList = null) {
+  if (!state.drive.storyFolderId) {
+    console.warn('Story folder ID not set, cannot save goal to Drive');
+    return;
+  }
+  
+  try {
+    const files = filesList || await window.driveAPI.list(state.drive.storyFolderId);
+    const goalFile = files.files?.find(f => f.name === 'goal.json');
+    
+    const goalData = {
+      target: state.goal.target,
+      deadline: state.goal.deadline,
+      startDate: state.goal.startDate,
+      writingDays: state.goal.writingDays,
+      daysOff: state.goal.daysOff,
+      mode: state.goal.mode,
+      ledger: state.goal.ledger,
+      lastCalculatedDate: state.goal.lastCalculatedDate
+    };
+    
+    await window.driveAPI.write(
+      'goal.json',
+      JSON.stringify(goalData, null, 2),
+      goalFile ? goalFile.id : null,
+      state.drive.storyFolderId,
+      'text/plain'
+    );
+    
+    // Store file ID for future saves
+    if (!goalFile) {
+      const updatedFiles = await window.driveAPI.list(state.drive.storyFolderId);
+      const newGoalFile = updatedFiles.files?.find(f => f.name === 'goal.json');
+      if (newGoalFile) {
+        state.drive.goalJsonFileId = newGoalFile.id;
+      }
+    } else {
+      state.drive.goalJsonFileId = goalFile.id;
+    }
+    
+    console.log('Saved goal.json');
+  } catch (error) {
+    console.error('Error saving goal to Drive:', error);
+    throw error;
+  }
+}
+
+// Get current date in US Pacific time (for testing - will be configurable later)
+function getPacificDate() {
+  const now = new Date();
+  // Use Intl.DateTimeFormat to get the date components in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  // Format returns something like "12/25/2025" or "01/05/2025"
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  
+  return `${year}-${month}-${day}`;
+}
+
+// Check if a date is a writing day (not a day off and matches weekly mask)
+function isWritingDay(dateString) {
+  const date = new Date(dateString + 'T12:00:00'); // Noon to avoid timezone issues
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  // Convert to Mon-Sun index (0 = Monday, 6 = Sunday)
+  const writingDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  
+  // Check if it's in daysOff array
+  if (state.goal.daysOff.includes(dateString)) {
+    return false;
+  }
+  
+  // Check weekly mask
+  return state.goal.writingDays[writingDayIndex] === true;
+}
+
+// Count effective writing days between two dates
+function countWritingDays(startDate, endDate) {
+  let count = 0;
+  const start = new Date(startDate + 'T12:00:00');
+  const end = new Date(endDate + 'T12:00:00');
+  
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
+    if (isWritingDay(dateStr)) {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+// Calculate daily word target
+function calculateDailyTarget() {
+  if (!state.goal.target || !state.goal.deadline) {
+    return null;
+  }
+  
+  const today = getPacificDate();
+  const deadline = state.goal.deadline.split('T')[0]; // Remove time if present
+  
+  // Calculate total words written so far (from ledger + today's progress)
+  const totalWords = window.calculateStoryWordCount(state.snippets, state.groups);
+  
+  // Calculate words already accounted for in ledger (excluding today)
+  let ledgerWords = 0;
+  Object.keys(state.goal.ledger).forEach(date => {
+    if (date !== today) {
+      ledgerWords += state.goal.ledger[date] || 0;
+    }
+  });
+  
+  // Calculate words written today (total - ledger)
+  const todayWords = totalWords - ledgerWords;
+  
+  // Count remaining writing days
+  const remainingDays = countWritingDays(today, deadline);
+  
+  if (remainingDays <= 0) {
+    return { target: 0, remaining: 0, wordsRemaining: Math.max(0, state.goal.target - totalWords) };
+  }
+  
+  // Calculate remaining words needed
+  const wordsRemaining = Math.max(0, state.goal.target - totalWords);
+  
+  if (state.goal.mode === 'elastic') {
+    // Elastic: recalculate daily target based on remaining words and days
+    const dailyTarget = Math.ceil(wordsRemaining / remainingDays);
+    return {
+      target: dailyTarget,
+      remaining: remainingDays,
+      wordsRemaining: wordsRemaining,
+      todayWords: todayWords,
+      isAhead: todayWords > dailyTarget,
+      isBehind: todayWords < dailyTarget
+    };
+  } else {
+    // Strict: fixed daily target (calculate from original target and total days from start to deadline)
+    const startDate = state.goal.startDate || state.goal.lastCalculatedDate || today;
+    const totalWritingDays = countWritingDays(
+      startDate.split('T')[0],
+      deadline
+    );
+    const fixedDailyTarget = totalWritingDays > 0 ? Math.ceil(state.goal.target / totalWritingDays) : 0;
+    
+    return {
+      target: fixedDailyTarget,
+      remaining: remainingDays,
+      wordsRemaining: wordsRemaining,
+      todayWords: todayWords,
+      isAhead: todayWords > fixedDailyTarget,
+      isBehind: todayWords < fixedDailyTarget
+    };
+  }
+}
+
+// Check if a snippet was edited externally (outside Yarny)
+function checkForExternalEdit(snippet, driveModifiedTime) {
+  if (!driveModifiedTime || !snippet.lastKnownDriveModifiedTime) {
+    return false;
+  }
+  
+  const driveTime = new Date(driveModifiedTime).getTime();
+  const lastKnownTime = new Date(snippet.lastKnownDriveModifiedTime).getTime();
+  
+  // If Drive file is newer than our last known time, it was edited externally
+  return driveTime > lastKnownTime;
+}
+
+// Handle midnight rollover - move today's count to ledger
+function handleMidnightRollover() {
+  const today = getPacificDate();
+  
+  // If we've already calculated for today, don't rollover
+  if (state.goal.lastCalculatedDate === today) {
+    return;
+  }
+  
+  // If lastCalculatedDate exists and is different from today, rollover
+  if (state.goal.lastCalculatedDate && state.goal.lastCalculatedDate !== today) {
+    // Calculate yesterday's words (total - ledger excluding yesterday)
+    const totalWords = window.calculateStoryWordCount(state.snippets, state.groups);
+    let ledgerWords = 0;
+    Object.keys(state.goal.ledger).forEach(date => {
+      if (date !== state.goal.lastCalculatedDate) {
+        ledgerWords += state.goal.ledger[date] || 0;
+      }
+    });
+    
+    const yesterdayWords = totalWords - ledgerWords;
+    
+    // Save yesterday to ledger
+    state.goal.ledger[state.goal.lastCalculatedDate] = yesterdayWords;
+    
+    console.log(`Midnight rollover: saved ${yesterdayWords} words for ${state.goal.lastCalculatedDate}`);
+  }
+  
+  // Update last calculated date
+  state.goal.lastCalculatedDate = today;
+  
+  // Save goal data (don't await - do in background to avoid blocking)
+  // This is non-critical - if it fails, we'll retry on next load
+  saveGoalToDrive().catch(err => {
+    console.warn('Error saving goal after rollover (non-critical, will retry):', err);
+  });
 }
 
 // Export for global access
@@ -2717,6 +3034,206 @@ async function saveStoryInfo() {
 window.openStoryInfoModal = openStoryInfoModal;
 window.closeStoryInfoModal = closeStoryInfoModal;
 
+// Goal Panel Modal Functions
+function openGoalPanel() {
+  const modal = document.getElementById('goalPanelModal');
+  const errorEl = document.getElementById('goalPanelError');
+  
+  // Hide error
+  if (errorEl) {
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '';
+  }
+  
+  // Populate form with current goal data
+  if (state.goal.target !== null) {
+    document.getElementById('goalTarget').value = state.goal.target;
+    document.getElementById('goalDeadline').value = state.goal.deadline ? state.goal.deadline.split('T')[0] : '';
+    document.getElementById('goalMode').value = state.goal.mode || 'elastic';
+    document.getElementById('daysOffInput').value = state.goal.daysOff.join(', ');
+    
+    // Set writing days checkboxes
+    for (let i = 0; i < 7; i++) {
+      const checkbox = document.getElementById(`writingDay${i}`);
+      if (checkbox) {
+        checkbox.checked = state.goal.writingDays[i] === true;
+      }
+    }
+  } else {
+    // Reset form
+    document.getElementById('goalTarget').value = '';
+    document.getElementById('goalDeadline').value = '';
+    document.getElementById('goalMode').value = 'elastic';
+    document.getElementById('daysOffInput').value = '';
+    // Default all days checked
+    for (let i = 0; i < 7; i++) {
+      const checkbox = document.getElementById(`writingDay${i}`);
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+    }
+  }
+  
+  modal.classList.remove('hidden');
+}
+
+function closeGoalPanel() {
+  document.getElementById('goalPanelModal').classList.add('hidden');
+  const errorEl = document.getElementById('goalPanelError');
+  if (errorEl) {
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '';
+  }
+}
+
+async function saveGoal() {
+  const errorEl = document.getElementById('goalPanelError');
+  const saveBtn = document.getElementById('saveGoalBtn');
+  
+  // Hide error
+  if (errorEl) {
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '';
+  }
+  
+  // Get form values
+  const target = parseInt(document.getElementById('goalTarget').value);
+  const deadline = document.getElementById('goalDeadline').value;
+  const mode = document.getElementById('goalMode').value;
+  const daysOffInput = document.getElementById('daysOffInput').value.trim();
+  
+  // Validate
+  if (!target || target <= 0) {
+    if (errorEl) {
+      errorEl.textContent = 'Please enter a valid word count target';
+      errorEl.classList.remove('hidden');
+    }
+    return;
+  }
+  
+  if (!deadline) {
+    if (errorEl) {
+      errorEl.textContent = 'Please select a deadline';
+      errorEl.classList.remove('hidden');
+    }
+    return;
+  }
+  
+  // Check deadline is in the future
+  const deadlineDate = new Date(deadline + 'T12:00:00');
+  const today = new Date(getPacificDate() + 'T12:00:00');
+  if (deadlineDate <= today) {
+    if (errorEl) {
+      errorEl.textContent = 'Deadline must be in the future';
+      errorEl.classList.remove('hidden');
+    }
+    return;
+  }
+  
+  // Parse writing days
+  const writingDays = [];
+  for (let i = 0; i < 7; i++) {
+    const checkbox = document.getElementById(`writingDay${i}`);
+    writingDays.push(checkbox.checked);
+  }
+  
+  // Check at least one day is selected
+  if (!writingDays.some(d => d)) {
+    if (errorEl) {
+      errorEl.textContent = 'Please select at least one writing day';
+      errorEl.classList.remove('hidden');
+    }
+    return;
+  }
+  
+  // Parse days off
+  let daysOff = [];
+  if (daysOffInput) {
+    daysOff = daysOffInput.split(',').map(d => d.trim()).filter(d => {
+      // Validate date format YYYY-MM-DD
+      return /^\d{4}-\d{2}-\d{2}$/.test(d);
+    });
+  }
+  
+  // Disable save button
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+  }
+  
+  try {
+    // Update state
+    state.goal.target = target;
+    state.goal.deadline = deadline + 'T23:59:59'; // End of day
+    state.goal.writingDays = writingDays;
+    state.goal.daysOff = daysOff;
+    state.goal.mode = mode;
+    
+    // Initialize startDate and lastCalculatedDate if not set (first time setting goal)
+    const today = getPacificDate();
+    if (!state.goal.startDate) {
+      state.goal.startDate = today;
+    }
+    if (!state.goal.lastCalculatedDate) {
+      state.goal.lastCalculatedDate = today;
+    }
+    
+    // Save to Drive
+    await saveGoalToDrive();
+    
+    // Update UI
+    updateTodayChip();
+    closeGoalPanel();
+  } catch (error) {
+    console.error('Error saving goal:', error);
+    if (errorEl) {
+      errorEl.textContent = 'Failed to save goal: ' + error.message;
+      errorEl.classList.remove('hidden');
+    }
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Goal';
+    }
+  }
+}
+
+async function clearGoal() {
+  if (!confirm('Are you sure you want to clear the writing goal? This will remove all goal tracking data.')) {
+    return;
+  }
+  
+  // Reset goal state
+  state.goal = {
+    target: null,
+    deadline: null,
+    startDate: null,
+    writingDays: [true, true, true, true, true, true, true],
+    daysOff: [],
+    mode: 'elastic',
+    ledger: {},
+    lastCalculatedDate: null
+  };
+  
+  // Delete goal.json from Drive if it exists
+  if (state.drive.goalJsonFileId && state.drive.storyFolderId) {
+    try {
+      await window.driveAPI.delete(state.drive.goalJsonFileId);
+      state.drive.goalJsonFileId = null;
+    } catch (error) {
+      console.warn('Could not delete goal.json:', error);
+    }
+  }
+  
+  // Update UI
+  updateTodayChip();
+  closeGoalPanel();
+}
+
+// Export for global access
+window.openGoalPanel = openGoalPanel;
+window.closeGoalPanel = closeGoalPanel;
+window.clearGoal = clearGoal;
+
 // ============================================
 // Utility Functions
 // ============================================
@@ -3173,6 +3690,10 @@ async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
     snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
     snippet.chars = snippetBody.length;
     snippet._contentLoaded = true;
+    
+    // Check if this snippet was edited externally (outside Yarny)
+    const wasExternallyEdited = checkForExternalEdit(snippet, docContent.modifiedTime);
+    
     snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || snippet.lastKnownDriveModifiedTime || new Date().toISOString();
     
     // Update updatedAt if Drive file is newer
@@ -3188,6 +3709,16 @@ async function ensureSnippetContentLoaded(snippetId, isActiveSnippet = false) {
       console.log(`Loaded content for active snippet: ${snippet.title}`);
     } else {
       console.log(`Background loaded content for snippet: ${snippet.title}`);
+    }
+    
+    // If externally edited, handle goal recalculation (non-blocking)
+    if (wasExternallyEdited && state.goal.target !== null) {
+      // Handle midnight rollover first (in case we crossed midnight)
+      // This is fast (synchronous calculation), so it won't block
+      handleMidnightRollover();
+      // Recalculate today's progress
+      updateGoalMeter();
+      console.log(`External edit detected for ${snippet.title} - goal totals recalculated`);
     }
     
     // Update UI - only if this is the active snippet or if word count needs updating
@@ -3328,6 +3859,19 @@ async function loadStoryFromDrive(storyFolderId) {
     } catch (error) {
       console.warn('Could not load project.json:', error);
     }
+    
+    // Load goal.json in parallel with folder loading (non-blocking)
+    // This doesn't block UI rendering since it's independent of story structure
+    loadGoalFromDrive(storyFolderId, projectFilesResult).then(() => {
+      // Handle midnight rollover if goal is set (after goal loads)
+      if (state.goal.target !== null) {
+        handleMidnightRollover();
+        // Update today chip if UI is already rendered
+        updateTodayChip();
+      }
+    }).catch(err => {
+      console.warn('Failed to load goal.json (non-critical):', err);
+    });
     
     // Load folder structure using saved IDs if available
     await loadStoryFolders(storyFolderId, savedFolderIds);
@@ -4265,14 +4809,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Goal meter click
   document.getElementById('goalMeter').addEventListener('click', openStoryInfoModal);
   
+  // Today chip click - open goal panel
+  document.getElementById('todayChip').addEventListener('click', openGoalPanel);
+  
   // Story info form
   document.getElementById('storyInfoForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     await saveStoryInfo();
   });
   
+  // Goal panel form
+  document.getElementById('goalPanelForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveGoal();
+  });
+  
   // Close modal on overlay click
   document.querySelector('#storyInfoModal .modal-overlay').addEventListener('click', closeStoryInfoModal);
+  document.querySelector('#goalPanelModal .modal-overlay').addEventListener('click', closeGoalPanel);
 
   // Close color picker on outside click
   document.addEventListener('click', (e) => {

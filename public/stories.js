@@ -503,6 +503,92 @@ async function refreshStoriesFromDrive() {
   }
 }
 
+// Get current date in US Pacific time (same as editor.js)
+function getPacificDate() {
+  const now = new Date();
+  // Use Intl.DateTimeFormat to get the date components in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  // Format returns something like "12/25/2025" or "01/05/2025"
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  
+  return `${year}-${month}-${day}`;
+}
+
+// Check if a date is a writing day (for dashboard goal calculations)
+function isWritingDayForGoal(dateString, goal) {
+  if (!goal) return false;
+  const date = new Date(dateString + 'T12:00:00');
+  const dayOfWeek = date.getDay();
+  const writingDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  
+  if (goal.daysOff && goal.daysOff.includes(dateString)) {
+    return false;
+  }
+  
+  return goal.writingDays && goal.writingDays[writingDayIndex] === true;
+}
+
+// Count effective writing days between two dates
+function countWritingDaysForGoal(startDate, endDate, goal) {
+  if (!goal) return 0;
+  let count = 0;
+  const start = new Date(startDate + 'T12:00:00');
+  const end = new Date(endDate + 'T12:00:00');
+  
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
+    if (isWritingDayForGoal(dateStr, goal)) {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+// Calculate daily goal info for a story (for dashboard)
+function calculateDailyGoalInfo(goal, totalWords) {
+  if (!goal || !goal.target || !goal.deadline) {
+    return null;
+  }
+  
+  const today = getPacificDate();
+  const deadline = goal.deadline.split('T')[0];
+  
+  // Calculate words already in ledger (excluding today)
+  let ledgerWords = 0;
+  if (goal.ledger) {
+    Object.keys(goal.ledger).forEach(date => {
+      if (date !== today) {
+        ledgerWords += goal.ledger[date] || 0;
+      }
+    });
+  }
+  
+  // Calculate today's words
+  const todayWords = totalWords - ledgerWords;
+  
+  // Count remaining writing days
+  const remainingDays = countWritingDaysForGoal(today, deadline, goal);
+  
+  if (remainingDays <= 0) {
+    return { todayWords: Math.max(0, todayWords), remaining: 0 };
+  }
+  
+  return {
+    todayWords: Math.max(0, todayWords),
+    remaining: remainingDays
+  };
+}
+
 // Fetch story progress data (word count and goal)
 async function fetchStoryProgress(storyFolderId, useCache = true) {
   // Check cache first
@@ -523,6 +609,7 @@ async function fetchStoryProgress(storyFolderId, useCache = true) {
     
     let wordGoal = 3000; // Default goal
     let totalWords = 0;
+    let goal = null;
     
     // Read project.json to get word goal
     if (fileMap['project.json']) {
@@ -534,6 +621,18 @@ async function fetchStoryProgress(storyFolderId, useCache = true) {
         }
       } catch (error) {
         console.warn(`Failed to read project.json for story ${storyFolderId}:`, error);
+      }
+    }
+    
+    // Read goal.json if it exists
+    if (fileMap['goal.json']) {
+      try {
+        const goalData = await window.driveAPI.read(fileMap['goal.json']);
+        if (goalData.content) {
+          goal = JSON.parse(goalData.content);
+        }
+      } catch (error) {
+        console.warn(`Failed to read goal.json for story ${storyFolderId}:`, error);
       }
     }
     
@@ -587,10 +686,15 @@ async function fetchStoryProgress(storyFolderId, useCache = true) {
     
     const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
     
+    // Calculate daily goal info if goal exists
+    const dailyInfo = goal ? calculateDailyGoalInfo(goal, totalWords) : null;
+    
     const progress = {
       wordGoal,
       totalWords,
-      percentage
+      percentage,
+      goal,
+      dailyInfo
     };
     
     // Cache the result
@@ -636,14 +740,31 @@ async function renderStories(stories, skipLoadingState = false) {
     
     // Show cached progress if available, otherwise show loading
     let progressHtml = '';
+    let todayBadgeHtml = '';
+    
     if (cachedProgress) {
       const percentage = cachedProgress.wordGoal > 0 
         ? Math.min(100, Math.round((cachedProgress.totalWords / cachedProgress.wordGoal) * 100)) 
         : 0;
+      
+      // Add today badge if goal exists
+      if (cachedProgress.dailyInfo) {
+        const todayWords = cachedProgress.dailyInfo.todayWords || 0;
+        const daysLeft = cachedProgress.dailyInfo.remaining || 0;
+        todayBadgeHtml = `
+          <div class="story-today-badge">
+            <span class="story-today-label">Today</span>
+            <span class="story-today-count">${todayWords.toLocaleString()}</span>
+            ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
+          </div>
+        `;
+      }
+      
       progressHtml = `
         <div class="story-progress-container">
           <div class="story-progress-info">
             <span class="story-progress-text">${cachedProgress.totalWords.toLocaleString()} / ${cachedProgress.wordGoal.toLocaleString()} words</span>
+            ${todayBadgeHtml}
           </div>
           <div class="story-progress-bar-container">
             <div class="story-progress-bar" style="width: ${percentage}%"></div>
@@ -705,6 +826,7 @@ async function renderStories(stories, skipLoadingState = false) {
       if (progress) {
         const progressText = card.querySelector('.story-progress-text');
         const progressBar = card.querySelector('.story-progress-bar');
+        const progressInfo = card.querySelector('.story-progress-info');
         
         // Use shared update function to ensure consistency with editor progress meter
         if (progressText && progressBar) {
@@ -713,6 +835,31 @@ async function renderStories(stories, skipLoadingState = false) {
           progressText.textContent += ' words';
         } else {
           console.warn(`Could not find progress elements for story ${story.name}`);
+        }
+        
+        // Update or add today badge
+        if (progressInfo) {
+          let todayBadge = progressInfo.querySelector('.story-today-badge');
+          if (progress.dailyInfo) {
+            const todayWords = progress.dailyInfo.todayWords || 0;
+            const daysLeft = progress.dailyInfo.remaining || 0;
+            
+            if (!todayBadge) {
+              // Create new badge
+              todayBadge = document.createElement('div');
+              todayBadge.className = 'story-today-badge';
+              progressInfo.appendChild(todayBadge);
+            }
+            
+            todayBadge.innerHTML = `
+              <span class="story-today-label">Today</span>
+              <span class="story-today-count">${todayWords.toLocaleString()}</span>
+              ${daysLeft > 0 ? `<span class="story-days-left">· ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>` : ''}
+            `;
+          } else if (todayBadge) {
+            // Remove badge if goal doesn't exist
+            todayBadge.remove();
+          }
         }
       } else {
         console.warn(`No progress data returned for story ${story.name}`);

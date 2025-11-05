@@ -46,6 +46,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Background Autosave**: Changes are automatically saved when switching between snippets
 - **Word Count Tracking**: Real-time word and character counts
 - **Goal Tracking**: Set word count goals with visual progress indicator
+- **Daily Writing Goals**: "Goals that think" - set project targets with deadlines, choose writing days, and track daily progress with automatic quota calculation
 - **Auto-Save**: Automatic saving to Google Drive as you write
 - **Save Status**: Visual indicator showing save state (idle/saving/saved)
 - **Resume Where You Left Off**: Editor automatically opens to the most recently edited snippet (chapters or People/Places/Things) when you return to a story
@@ -262,7 +263,8 @@ yarny-app/
 9. **Background Autosave**: Changes automatically save when switching between snippets
 10. **Auto-Save**: Changes are automatically saved to Drive
 11. **Word Count**: Real-time tracking with goal progress indicator
-12. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
+12. **Daily Writing Goals**: Set project word targets with deadlines, choose writing days (Mon-Sun), mark days off, and track daily progress. Features Elastic mode (rebalances daily targets) and Strict mode (fixed daily targets)
+13. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
 
 ## Development
 
@@ -426,6 +428,7 @@ The status updates automatically every 5 minutes. You can also specify a specifi
 
 ## Recent Improvements
 
+- **Daily Writing Goals ("Goals that think")**: Set project targets with deadlines, choose writing days, and track daily progress with automatic quota calculation. Features Elastic mode (rebalances targets) and Strict mode (fixed targets). Includes midnight rollover, external edit detection, and dashboard badges
 - **Comments/Tracked Changes Protection**: Warns users before overwriting Google Docs that contain comments or tracked changes, allowing them to cancel the save to preserve collaborative feedback
 - **Performance Optimizations**: Significantly faster editor loading with parallel file operations, lazy loading of snippet content, and optimized batch processing - UI becomes interactive almost immediately while content loads in the background
 - **Chapter Color Coding**: Interactive color picker with 12 accent colors for visual chapter organization

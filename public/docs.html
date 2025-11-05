@@ -202,24 +202,96 @@
         <section class="docs-section" id="word-count-goals">
           <h2>Word Count and Goals</h2>
           
-          <p>The left rail shows your current word count progress toward your writing goal. The goal meter helps you track your daily or project writing targets.</p>
+          <p>Yarny helps you track your writing progress with both project-level goals and daily writing targets. The left rail shows your overall progress, while the "Today" chip shows your daily progress toward your writing goal.</p>
           
-          <h3>Editing Your Word Count Goal</h3>
-          <p>To change your word count goal:</p>
+          <h3>Project Word Count Goal</h3>
+          <p>The goal meter in the left rail shows your total progress: "X / Y words" where Y is your project goal. The progress bar fills as you approach your target.</p>
+          
+          <p>To set or change your project word count goal:</p>
           <ol>
             <li>Click on the goal meter in the left rail (shows "X / Y" where Y is your goal)</li>
             <li>This opens the Story Info & Settings modal</li>
             <li>Enter your desired word count goal in the "Word Count Goal" field</li>
-            <li>Click "Save" to update your goal</li>
+            <li>Click "Save Changes" to update your goal</li>
           </ol>
           <p>You can also access this by clicking the settings icon (⚙️) next to the "Story" title in the left rail.</p>
           
+          <h3>Daily Writing Goals</h3>
+          <p>Yarny's "Goals that think" feature helps you break down your project goal into manageable daily targets. Set a deadline, choose which days you write, and Yarny automatically calculates your daily quota.</p>
+          
+          <h4>Setting Up a Daily Goal</h4>
+          <p>To set up daily goal tracking:</p>
+          <ol>
+            <li>Click the "Today" chip in the left rail (appears below the goal meter once you set a goal)</li>
+            <li>Or click on the goal meter and then click "Today" chip if it appears</li>
+            <li>In the Goal panel, enter:</li>
+            <ul>
+              <li><strong>Word Count Target</strong>: Your total project word count goal</li>
+              <li><strong>Deadline</strong>: When you want to finish your project</li>
+              <li><strong>Writing Days</strong>: Check the days of the week you typically write (Mon-Sun)</li>
+              <li><strong>Days Off</strong>: Optional comma-separated dates when you won't write (e.g., "2025-12-25, 2026-01-01")</li>
+              <li><strong>Mode</strong>: Choose between Elastic or Strict</li>
+            </ul>
+            <li>Click "Save Goal"</li>
+          </ol>
+          
+          <h4>Goal Modes</h4>
+          <p>Yarny offers two goal tracking modes:</p>
+          <ul>
+            <li><strong>Elastic Mode</strong> (default): Automatically recalculates your daily target based on remaining words and remaining writing days. If you miss a day, tomorrow's target increases. If you write more than your target, future targets become easier.</li>
+            <li><strong>Strict Mode</strong>: Uses a fixed daily target calculated from your total goal divided by total writing days. Shows "ahead" (green) or "behind" (red) status but doesn't change the target.</li>
+          </ul>
+          
+          <h4>Today Chip</h4>
+          <p>The "Today" chip in the left rail shows:</p>
+          <ul>
+            <li><strong>Today • N</strong>: Your current word count for today</li>
+            <li><strong>Micro-progress bar</strong>: Visual indicator of progress toward today's target</li>
+          </ul>
+          <p>The chip updates in real-time as you type. In Strict mode, the progress bar turns green when you're ahead and red when you're behind.</p>
+          
+          <h4>Dashboard Badge</h4>
+          <p>On the Stories page, each story card shows a badge with your daily progress:</p>
+          <ul>
+            <li><strong>Today N · X days left</strong>: Shows today's word count and remaining writing days until your deadline</li>
+          </ul>
+          <p>This badge only appears if you've set up a daily goal for that story.</p>
+          
+          <h4>Midnight Rollover</h4>
+          <p>At midnight (Pacific time), Yarny automatically:</p>
+          <ul>
+            <li>Moves today's word count to the daily ledger</li>
+            <li>Calculates tomorrow's target based on your mode and remaining work</li>
+            <li>Resets the "Today" chip for the new day</li>
+          </ul>
+          <p>If you're typing when midnight rolls over, Yarny handles the transition smoothly.</p>
+          
+          <h4>Editing Goals</h4>
+          <p>To modify your goal settings:</p>
+          <ol>
+            <li>Click the "Today" chip</li>
+            <li>Update any settings (target, deadline, writing days, mode, days off)</li>
+            <li>Click "Save Goal"</li>
+          </ol>
+          <p>Changes take effect immediately and recalculate your daily target.</p>
+          
+          <h4>Clearing Goals</h4>
+          <p>To remove daily goal tracking:</p>
+          <ol>
+            <li>Click the "Today" chip</li>
+            <li>Click "Clear Goal"</li>
+            <li>Confirm the action</li>
+          </ol>
+          <p>This removes all goal tracking data. Your project word count goal remains unchanged.</p>
+          
+          <h3>Footer Information</h3>
           <p>The footer shows:</p>
           <ul>
             <li>Current word count for the active snippet</li>
             <li>Character count for the active snippet</li>
             <li>Last modified timestamp</li>
           </ul>
+          <p>These counts update in real-time as you type.</p>
         </section>
 
         <section class="docs-section" id="google-drive-integration">

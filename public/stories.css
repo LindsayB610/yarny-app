@@ -265,12 +265,38 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-xs);
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }
 
 .story-progress-text {
   font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
   font-weight: var(--font-weight-medium);
+}
+
+.story-today-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: auto;
+}
+
+.story-today-label {
+  font-weight: var(--font-weight-medium);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.story-today-count {
+  font-weight: var(--font-weight-semibold);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.story-days-left {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-xs);
 }
 
 .story-progress-bar-container {

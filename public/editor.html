@@ -29,6 +29,13 @@
             <div id="goalProgressBar" class="goal-progress-bar"></div>
           </div>
         </div>
+        <div id="todayChip" class="today-chip hidden" style="cursor: pointer;" title="Click to set goal">
+          <span class="today-label">Today</span>
+          <span id="todayCount" class="today-count">—</span>
+          <div class="today-progress-container">
+            <div id="todayProgressBar" class="today-progress-bar"></div>
+          </div>
+        </div>
         <div class="search-container">
           <input 
             type="text" 
@@ -168,6 +175,104 @@
             <div class="form-actions">
               <button type="button" class="btn-secondary" onclick="closeStoryInfoModal()">Cancel</button>
               <button type="submit" class="btn-primary" id="saveStoryInfoBtn">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Panel Modal -->
+    <div id="goalPanelModal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Writing Goal</h2>
+          <button class="modal-close" onclick="closeGoalPanel()">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="goalPanelError" class="error-message hidden"></div>
+          <form id="goalPanelForm">
+            <div class="form-group">
+              <label for="goalTarget">Word Count Target</label>
+              <input 
+                type="number" 
+                id="goalTarget" 
+                name="goalTarget" 
+                placeholder="3000"
+                min="1"
+                autocomplete="off"
+              >
+              <small class="form-hint">Total words you want to write</small>
+            </div>
+            <div class="form-group">
+              <label for="goalDeadline">Deadline</label>
+              <input 
+                type="date" 
+                id="goalDeadline" 
+                name="goalDeadline" 
+                autocomplete="off"
+              >
+              <small class="form-hint">When do you want to finish?</small>
+            </div>
+            <div class="form-group">
+              <label>Writing Days</label>
+              <div class="writing-days-checkboxes">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay0" value="0" checked>
+                  <span>Mon</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay1" value="1" checked>
+                  <span>Tue</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay2" value="2" checked>
+                  <span>Wed</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay3" value="3" checked>
+                  <span>Thu</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay4" value="4" checked>
+                  <span>Fri</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay5" value="5" checked>
+                  <span>Sat</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay6" value="6" checked>
+                  <span>Sun</span>
+                </label>
+              </div>
+              <small class="form-hint">Which days of the week do you write?</small>
+            </div>
+            <div class="form-group">
+              <label for="goalMode">Mode</label>
+              <select id="goalMode" name="goalMode">
+                <option value="elastic">Elastic (rebalance daily targets)</option>
+                <option value="strict">Strict (fixed daily target)</option>
+              </select>
+              <small class="form-hint">Elastic adjusts targets based on progress; Strict keeps fixed targets</small>
+            </div>
+            <div class="form-group">
+              <label for="daysOffInput">Days Off (optional)</label>
+              <input 
+                type="text" 
+                id="daysOffInput" 
+                name="daysOffInput" 
+                placeholder="YYYY-MM-DD, YYYY-MM-DD, ..."
+                autocomplete="off"
+              >
+              <small class="form-hint">Comma-separated dates (e.g., 2025-12-25, 2026-01-01)</small>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeGoalPanel()">Cancel</button>
+              <button type="button" class="btn-danger" id="clearGoalBtn" onclick="clearGoal()">Clear Goal</button>
+              <button type="submit" class="btn-primary" id="saveGoalBtn">Save Goal</button>
             </div>
           </form>
         </div>
