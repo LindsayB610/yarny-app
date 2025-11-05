@@ -943,6 +943,18 @@ async function saveItemToDriveById(snippetId, noteId) {
       if (snippet._creatingDriveFile) {
         snippet._creatingDriveFile = false;
       }
+      
+      // Schedule data.json save to update word counts (debounced)
+      // This ensures word counts in data.json are updated for the stories page
+      clearTimeout(dataJsonSaveTimeout);
+      dataJsonSaveTimeout = setTimeout(async () => {
+        try {
+          await saveStoryDataToDrive();
+        } catch (error) {
+          console.error('Error saving data.json after snippet save:', error);
+          // Non-critical error - word count will update on next save
+        }
+      }, 1000); // Save data.json 1 second after snippet save
     } catch (error) {
       console.error('Error saving snippet to Drive:', error);
       throw error;
@@ -956,6 +968,7 @@ async function saveItemToDriveById(snippetId, noteId) {
 
 let typingTimeout;
 let pointerTimeout;
+let dataJsonSaveTimeout;
 
 function handleTypingStart() {
   state.project.editing.isTyping = true;
@@ -995,6 +1008,18 @@ function handleTypingStop() {
       state.project.editing.savingState = 'saved';
       state.project.editing.lastSavedAt = new Date().toISOString();
       updateSaveStatus();
+      
+      // Schedule data.json save to update word counts (debounced separately)
+      // This ensures word counts in data.json are updated for the stories page
+      clearTimeout(dataJsonSaveTimeout);
+      dataJsonSaveTimeout = setTimeout(async () => {
+        try {
+          await saveStoryDataToDrive();
+        } catch (error) {
+          console.error('Error saving data.json after content update:', error);
+          // Non-critical error - word count will update on next save
+        }
+      }, 1000); // Save data.json 1 second after snippet content save
     } catch (error) {
       // Error already logged in saveCurrentEditorToDrive
       // Still mark as saved since in-memory state is updated
@@ -1021,6 +1046,7 @@ function handlePointerMove() {
   // Clear timeouts
   clearTimeout(typingTimeout);
   clearTimeout(pointerTimeout);
+  clearTimeout(dataJsonSaveTimeout);
 }
 
 // ============================================
