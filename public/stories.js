@@ -387,11 +387,13 @@ async function fetchStoryProgress(storyFolderId) {
     // Try to read actual content from Google Docs for accurate word counts
     // First, get structure from data.json to know which snippets to read
     let snippetList = [];
+    let groups = [];
+    let data = null; // Store parsed data for use in fallback
     if (fileMap['data.json']) {
       try {
         const dataContent = await window.driveAPI.read(fileMap['data.json']);
         if (dataContent.content) {
-          const data = JSON.parse(dataContent.content);
+          data = JSON.parse(dataContent.content);
           // Get chapter snippets (those with groupId, NOT People/Places/Things which have kind)
           // Only count chapter snippets, exclude People/Places/Things snippets
           if (data.snippets) {
@@ -401,9 +403,71 @@ async function fetchStoryProgress(storyFolderId) {
               snippet.driveFileId // Has a Drive file ID to read from
             );
           }
+          // Also get groups to find chapter folders
+          if (data.groups) {
+            groups = Object.values(data.groups);
+          }
         }
       } catch (error) {
         console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
+      }
+    }
+    
+    // If no snippets with driveFileId found, try to find Google Docs by listing chapter folders
+    if (snippetList.length === 0) {
+      console.log(`No snippets with driveFileId found, trying to find Google Docs in chapter folders...`);
+      try {
+        // Find the Chapters folder first
+        const chaptersFolder = files.files.find(f => 
+          f.name === 'Chapters' && f.mimeType === 'application/vnd.google-apps.folder'
+        );
+        
+        if (chaptersFolder) {
+          // List all chapter subfolders
+          const chaptersList = await window.driveAPI.list(chaptersFolder.id);
+          const chapterFolders = (chaptersList.files || []).filter(f => 
+            f.mimeType === 'application/vnd.google-apps.folder' && !f.trashed
+          );
+          
+          console.log(`Found ${chapterFolders.length} chapter folders`);
+          
+          // For each chapter folder, find Google Docs
+          for (const chapterFolder of chapterFolders) {
+            const chapterFiles = await window.driveAPI.list(chapterFolder.id);
+            const googleDocs = (chapterFiles.files || []).filter(f => 
+              f.mimeType === 'application/vnd.google-apps.document' && !f.trashed
+            );
+            
+            console.log(`Found ${googleDocs.length} Google Docs in chapter folder: ${chapterFolder.name}`);
+            
+            // Match Google Docs to snippets from data.json by title
+            for (const doc of googleDocs) {
+              const fileName = doc.name.replace(/\.docx?$/i, '').trim();
+              // Try to find matching snippet in data.json
+              const matchingSnippet = data && data.snippets ? Object.values(data.snippets).find(s => 
+                s.groupId && !s.kind && s.title && s.title.trim().toLowerCase() === fileName.toLowerCase()
+              ) : null;
+              
+              // Always include chapter snippets (those with groupId), even if not in data.json
+              if (matchingSnippet || !data || !data.snippets) {
+                // Add to snippet list with the doc's file ID
+                snippetList.push({
+                  id: matchingSnippet?.id || `snippet_${doc.id}`,
+                  title: matchingSnippet?.title || fileName,
+                  groupId: matchingSnippet?.groupId || null,
+                  driveFileId: doc.id,
+                  words: matchingSnippet?.words || 0
+                });
+              }
+            }
+          }
+          
+          console.log(`Found ${snippetList.length} chapter snippets by listing chapter folders`);
+        } else {
+          console.warn(`Chapters folder not found in story ${storyFolderId}`);
+        }
+      } catch (error) {
+        console.warn(`Failed to list chapter folders:`, error);
       }
     }
     
