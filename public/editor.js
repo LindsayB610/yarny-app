@@ -165,7 +165,14 @@ function loadCollapsedGroups() {
     const saved = localStorage.getItem(key);
     if (saved) {
       const collapsed = JSON.parse(saved);
-      state.collapsedGroups = new Set(collapsed);
+      // Filter out any group IDs that no longer exist
+      const validCollapsed = collapsed.filter(groupId => state.groups[groupId]);
+      state.collapsedGroups = new Set(validCollapsed);
+      
+      // If we filtered out any IDs, save the cleaned-up version
+      if (validCollapsed.length !== collapsed.length) {
+        saveCollapsedGroups();
+      }
     }
   } catch (error) {
     console.error('Failed to load collapsed groups:', error);
@@ -232,6 +239,7 @@ function renderStoryList() {
     const headerEl = document.createElement('div');
     headerEl.className = 'group-header';
     headerEl.draggable = true;
+    headerEl.title = 'Drag to reorder chapters';
     
     // Collapse/expand button
     const collapseBtn = document.createElement('button');
@@ -239,7 +247,9 @@ function renderStoryList() {
     collapseBtn.title = state.collapsedGroups.has(group.id) ? 'Expand chapter' : 'Collapse chapter';
     const collapseIcon = document.createElement('i');
     collapseIcon.className = 'material-icons';
-    collapseIcon.textContent = state.collapsedGroups.has(group.id) ? 'expand_more' : 'expand_less';
+    // When expanded (snippets visible), show down arrow (to collapse)
+    // When collapsed (snippets hidden), show right arrow (to expand)
+    collapseIcon.textContent = state.collapsedGroups.has(group.id) ? 'keyboard_arrow_right' : 'keyboard_arrow_down';
     collapseBtn.appendChild(collapseIcon);
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -327,6 +337,7 @@ function renderStoryList() {
       snippetEl.className = `snippet-item ${snippet.id === state.project.activeSnippetId ? 'active' : ''}`;
       snippetEl.dataset.snippetId = snippet.id;
       snippetEl.draggable = true;
+      snippetEl.title = 'Drag to reorder snippets';
       snippetEl.innerHTML = `
         <span class="snippet-title">${escapeHtml(snippet.title)}</span>
         <span class="snippet-word-count">${snippet.words} words</span>
@@ -3047,9 +3058,7 @@ async function loadStoryFromDrive(storyFolderId) {
     state.snippets = {};
     state.groups = {};
     state.collapsedGroups = new Set(); // Reset collapsed groups
-    
-    // Load collapsed groups state for this story
-    loadCollapsedGroups();
+    // Note: loadCollapsedGroups() will be called after groups are loaded
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
     // CRITICAL: Store the data.json file ID so we save to the same file
@@ -3703,6 +3712,10 @@ async function loadStoryFromDrive(storyFolderId) {
     state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
       return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
     });
+    
+    // Load collapsed groups state now that groups are loaded
+    // This must happen after groups are in state so the IDs match
+    loadCollapsedGroups();
     
     // CRITICAL VERIFICATION: mergedSnippets should have all snippets
     const chapterSnippetsInMerged = Object.values(mergedSnippets).filter(s => {

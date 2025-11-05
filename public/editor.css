@@ -170,14 +170,38 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
   border-radius: 6px;
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+  position: relative;
+}
+
+.group-header:active {
+  cursor: grabbing;
 }
 
 .group-header:hover {
   background-color: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.group-header::after {
+  content: '⋮⋮';
+  position: absolute;
+  right: 36px; /* Position before the add button */
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.25);
+  line-height: 1;
+  letter-spacing: -2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  font-weight: bold;
+}
+
+.group-header:hover::after {
+  opacity: 1;
 }
 
 .group-header.dragging {
@@ -207,6 +231,8 @@ body {
   justify-content: center;
   width: 24px;
   height: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .collapse-btn .material-icons {
@@ -228,6 +254,8 @@ body {
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .group-color-chip:hover {
@@ -263,6 +291,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .add-snippet-btn .material-icons {
@@ -319,14 +349,38 @@ body {
   justify-content: space-between;
   padding: 8px;
   margin-bottom: 4px;
-  cursor: pointer;
+  cursor: grab;
   border-radius: 6px;
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
   user-select: none;
+  position: relative;
+}
+
+.snippet-item:active {
+  cursor: grabbing;
 }
 
 .snippet-item:hover {
   background-color: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.snippet-item::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.25);
+  line-height: 1;
+  letter-spacing: -2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  font-weight: bold;
+}
+
+.snippet-item:hover::before {
+  opacity: 1;
 }
 
 .snippet-item.active {
