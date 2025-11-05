@@ -216,6 +216,7 @@ yarny-app/
 │   ├── editor.html                         # Main editor interface
 │   ├── docs.html                           # User guide/documentation
 │   ├── app.js                              # Login/authentication logic
+│   ├── opening-sentences.js                # Collection of starter sentences for new stories
 │   ├── stories.js                          # Stories management (list, create, delete, refresh)
 │   ├── editor.js                            # Editor functionality (snippets, notes, color picker, etc.)
 │   ├── drive.js                            # Drive API frontend wrapper
