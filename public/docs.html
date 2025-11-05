@@ -23,12 +23,39 @@
           <p class="docs-subtitle">User Guide & Documentation</p>
         </div>
         <nav class="docs-nav">
-          <a href="/" class="btn-secondary">Back to Login</a>
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
         </nav>
       </div>
     </header>
 
     <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-brand">
+            <span class="brand-icon">●</span>
+            <span class="brand-text">Yarny</span>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#getting-started" class="nav-link">Getting Started</a></li>
+            <li><a href="#creating-and-managing-stories" class="nav-link">Creating and Managing Stories</a></li>
+            <li><a href="#writing-in-the-editor" class="nav-link">Writing in the Editor</a></li>
+            <li><a href="#using-tags" class="nav-link">Using Tags</a></li>
+            <li><a href="#people-places-things" class="nav-link">People, Places, and Things</a></li>
+            <li><a href="#word-count-goals" class="nav-link">Word Count and Goals</a></li>
+            <li><a href="#google-drive-integration" class="nav-link">Google Drive Integration</a></li>
+            <li><a href="#troubleshooting" class="nav-link">Troubleshooting</a></li>
+            <li><a href="#keyboard-shortcuts" class="nav-link">Keyboard Shortcuts</a></li>
+            <li><a href="#error-codes-debugging" class="nav-link">Error Codes and Debugging</a></li>
+            <li><a href="#tips-best-practices" class="nav-link">Tips and Best Practices</a></li>
+            <li><a href="#getting-help" class="nav-link">Getting Help</a></li>
+          </ul>
+        </nav>
+      </aside>
+
       <div class="docs-content">
         <section class="docs-section" style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
           <h2 style="margin-top: 0; color: #92400E; display: flex; align-items: center; gap: 8px;">
@@ -38,7 +65,7 @@
           <p style="margin-bottom: 0; color: #78350F;"><strong style="color: #78350F;">Note:</strong> Yarny is currently in alpha testing. Features may change, and there may be bugs or incomplete functionality. Please report any issues you encounter.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="getting-started">
           <h2>Getting Started</h2>
           <p>Yarny is a writing tool designed to help you organize and manage your writing projects. Your stories are automatically saved to your Google Drive, so you can access them from anywhere.</p>
 
@@ -57,7 +84,7 @@
           </ol>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="creating-and-managing-stories">
           <h2>Creating and Managing Stories</h2>
           
           <h3>Creating a New Story</h3>
@@ -80,7 +107,7 @@
           </ol>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="writing-in-the-editor">
           <h2>Writing in the Editor</h2>
           
           <h3>Editor Interface</h3>
@@ -146,7 +173,7 @@
           <p><strong>Benefits:</strong> Collapse chapters 1, 2, and 3 while working on chapter 4 to reduce visual clutter. Your collapsed preferences are remembered when you return to the story.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="using-tags">
           <h2>Using Tags</h2>
           
           <h3>Adding Tags</h3>
@@ -163,7 +190,7 @@
           <p>Use the search box in the left rail to quickly find snippets by name or content.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="people-places-things">
           <h2>People, Places, and Things Snippets</h2>
           
           <h3>Snippet Categories</h3>
@@ -185,7 +212,7 @@
           <p><strong>Note:</strong> All snippets (chapters and People/Places/Things) now open in the main editor window for a consistent editing experience. Your changes are automatically saved in the background when you switch between snippets.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="word-count-goals">
           <h2>Word Count and Goals</h2>
           
           <p>The left rail shows your current word count progress toward your writing goal. The goal meter helps you track your daily or project writing targets.</p>
@@ -199,7 +226,7 @@
           </ul>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="google-drive-integration">
           <h2>Google Drive Integration</h2>
           
           <h3>Automatic Saving</h3>
@@ -212,7 +239,7 @@
           <p>Click the "↻ Refresh" button on the Stories page to sync any changes made outside of Yarny.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="troubleshooting">
           <h2>Troubleshooting</h2>
           
           <h3>Authentication Issues</h3>
@@ -242,7 +269,7 @@
           </ul>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="keyboard-shortcuts">
           <h2>Keyboard Shortcuts</h2>
           
           <p>Yarny supports the following keyboard shortcuts to help you work more efficiently:</p>
@@ -277,7 +304,7 @@
           <p><strong>Note:</strong> On Mac, use <code>Cmd</code> instead of <code>Ctrl</code>. On Windows and Linux, use <code>Ctrl</code>.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="error-codes-debugging">
           <h2>Error Codes and Debugging</h2>
           
           <p>Yarny includes built-in error logging to help diagnose issues. If you encounter problems, you can access error logs through your browser's developer console.</p>
@@ -311,7 +338,7 @@
           <p><strong>Tip:</strong> If you're reporting a bug, include the error log output from <code>viewYarnyErrors()</code> to help developers diagnose the issue.</p>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="tips-best-practices">
           <h2>Tips and Best Practices</h2>
           
           <ul>
@@ -328,7 +355,7 @@
           </ul>
         </section>
 
-        <section class="docs-section">
+        <section class="docs-section" id="getting-help">
           <h2>Getting Help</h2>
           <p>If you need additional help or encounter issues not covered in this guide, please check the troubleshooting section above or contact support.</p>
         </section>
@@ -338,10 +365,156 @@
     <footer class="docs-footer">
       <p>&copy; 2025 Yarny. Your personal writing tool.</p>
       <nav class="docs-footer-nav">
-        <a href="/">Back to Login</a>
+        <a href="/stories.html" id="footerStoriesLink" style="display: none;">My Stories</a>
+        <a href="/" id="footerLoginLink">Back to Login</a>
       </nav>
     </footer>
   </div>
+  <script>
+    // Check if user is logged in
+    function isTokenExpired(token) {
+      if (!token) return true;
+      
+      try {
+        const decoded = atob(token);
+        const parts = decoded.split(':');
+        
+        if (parts.length !== 2) return true;
+        
+        const timestamp = parseInt(parts[1], 10);
+        if (isNaN(timestamp)) return true;
+        
+        // Check if token is within 48 hours
+        const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
+        const now = Date.now();
+        const age = now - timestamp;
+        
+        return age > SESSION_DURATION_MS;
+      } catch (error) {
+        console.error('Error checking token expiration:', error);
+        return true;
+      }
+    }
+
+    function checkAuthStatus() {
+      const authToken = localStorage.getItem('yarny_auth');
+      const isLoggedIn = authToken && !isTokenExpired(authToken);
+      
+      const storiesLink = document.getElementById('storiesNavLink');
+      const loginLink = document.getElementById('loginNavLink');
+      const footerStoriesLink = document.getElementById('footerStoriesLink');
+      const footerLoginLink = document.getElementById('footerLoginLink');
+      
+      if (isLoggedIn) {
+        if (storiesLink) storiesLink.style.display = 'inline-block';
+        if (loginLink) loginLink.style.display = 'none';
+        if (footerStoriesLink) footerStoriesLink.style.display = 'inline-block';
+        if (footerLoginLink) footerLoginLink.style.display = 'none';
+      } else {
+        if (storiesLink) storiesLink.style.display = 'none';
+        if (loginLink) loginLink.style.display = 'inline-block';
+        if (footerStoriesLink) footerStoriesLink.style.display = 'none';
+        if (footerLoginLink) footerLoginLink.style.display = 'inline-block';
+      }
+    }
+
+    // Highlight active navigation item based on scroll position
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check auth status on page load
+      checkAuthStatus();
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+      const sections = document.querySelectorAll('.docs-section[id]');
+      const sidebar = document.querySelector('.docs-sidebar');
+      const header = document.querySelector('.docs-header');
+
+      function updateActiveNav() {
+        let current = '';
+        const scrollPos = window.scrollY + 150; // Offset for header
+
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      // Mobile menu toggle
+      const menuButton = document.querySelector('.mobile-menu-toggle') || document.createElement('button');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      
+      if (!menuButton.parentNode) {
+        menuButton.className = 'mobile-menu-toggle';
+        menuButton.innerHTML = '☰';
+        menuButton.setAttribute('aria-label', 'Toggle menu');
+        header.appendChild(menuButton);
+      }
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        if (backdrop) {
+          backdrop.classList.toggle('active');
+        }
+      }
+
+      menuButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSidebar();
+      });
+
+      // Close sidebar when clicking backdrop
+      if (backdrop) {
+        backdrop.addEventListener('click', function() {
+          sidebar.classList.remove('open');
+          backdrop.classList.remove('active');
+        });
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+          if (!sidebar.contains(e.target) && !e.target.classList.contains('mobile-menu-toggle')) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        }
+      });
+
+      // Close sidebar when clicking a nav link on mobile
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          if (window.innerWidth <= 1024) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        });
+      });
+
+      window.addEventListener('scroll', updateActiveNav);
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 1024) {
+          sidebar.classList.remove('open');
+          if (backdrop) {
+            backdrop.classList.remove('active');
+          }
+        }
+      });
+
+      updateActiveNav(); // Initial call
+    });
+  </script>
 </body>
 </html>
 

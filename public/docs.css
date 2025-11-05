@@ -2,6 +2,10 @@
    Yarny Documentation Styles
    ============================================ */
 
+html {
+  scroll-behavior: smooth;
+}
+
 .docs-container {
   min-height: 100vh;
   display: flex;
@@ -28,10 +32,25 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
+.mobile-menu-toggle {
+  display: none;
+  position: absolute;
+  left: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-2xl);
+  color: var(--color-white);
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 101;
+  padding: var(--space-sm);
+}
+
 .docs-header-content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 var(--space-lg);
+  max-width: none;
+  margin: 0;
+  padding: 0 var(--space-lg) 0 300px; /* Account for sidebar */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -75,26 +94,157 @@
 }
 
 /* ============================================
-   Main Content
+   Main Content & Sidebar Layout
    ============================================ */
 
 .docs-main {
   flex: 1;
-  padding: var(--space-5xl) var(--space-lg);
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================
+   Sidebar Navigation
+   ============================================ */
+
+.docs-sidebar {
+  width: 280px;
+  background: rgba(31, 41, 55, 0.98);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: var(--space-xl) var(--space-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  background: rgba(31, 41, 55, 0.98);
+  z-index: 10;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-white);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.brand-icon {
+  width: 8px;
+  height: 8px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  color: var(--color-white);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-lg) 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.docs-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.docs-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-nav .nav-link {
+  display: block;
+  padding: var(--space-sm) var(--space-lg);
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.sidebar-nav .nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+}
+
+.sidebar-nav .nav-link.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-white);
+  border-left-color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .docs-content {
-  max-width: 900px;
-  margin: 0 auto;
+  flex: 1;
+  margin-left: 280px;
+  padding: var(--space-5xl) var(--space-4xl);
+  max-width: calc(100% - 280px);
 }
 
 .docs-section {
   background: rgba(31, 41, 55, 0.95);
   backdrop-filter: blur(10px);
-  border-radius: 0;
+  border-radius: var(--radius-lg);
   padding: var(--space-4xl);
   margin-bottom: var(--space-3xl);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  max-width: 1000px;
 }
 
 .docs-section:last-child {
@@ -121,6 +271,7 @@
 .docs-section h3:first-of-type {
   margin-top: var(--space-lg);
 }
+
 
 .docs-section p {
   color: rgba(255, 255, 255, 0.9);
@@ -267,6 +418,49 @@
 /* ============================================
    Responsive Design
    ============================================ */
+
+/* Mobile backdrop overlay */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 49;
+  backdrop-filter: blur(2px);
+}
+
+.sidebar-backdrop.active {
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  .docs-sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .docs-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .docs-content {
+    margin-left: 0;
+    max-width: 100%;
+    padding: var(--space-5xl) var(--space-lg);
+  }
+
+  .docs-header-content {
+    padding: 0 var(--space-lg) 0 calc(var(--space-lg) + 40px);
+  }
+
+  .mobile-menu-toggle {
+    display: block;
+  }
+}
 
 @media (max-width: 768px) {
   .docs-header-content {
