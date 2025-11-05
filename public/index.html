@@ -50,9 +50,7 @@
       font-weight: var(--font-weight-bold);
     }
 
-    .login-card .welcome-text .welcome-part {
-      color: var(--color-primary);
-    }
+
 
     .login-subtitle {
       color: rgba(255, 255, 255, 0.7);
@@ -81,9 +79,13 @@
     }
 
     .google-signin-btn:hover:not(:disabled) {
-      background: var(--color-primary-dark);
+      background: #12c989;
       box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.3);
       transform: translateY(-1px);
+    }
+
+    .google-signin-btn:hover:not(:disabled) .google-icon {
+      filter: brightness(1.1) saturate(1.2);
     }
 
     .google-signin-btn:active:not(:disabled) {
@@ -173,6 +175,7 @@
 
     .login-footer a .material-icons {
       font-size: 16px;
+      text-decoration: none;
     }
 
     .login-footer a:not(:has(.material-icons)) {
@@ -209,7 +212,7 @@
     <div id="loginForm" class="login-form">
       <div class="login-card">
         <h1>Yarny</h1>
-        <p class="welcome-text"><span class="welcome-part">Welcome</span> back!</p>
+        <p class="welcome-text">Welcome back!</p>
 
         <div id="error" class="alert alert-error hidden"></div>
         <div id="success" class="alert alert-success hidden"></div>

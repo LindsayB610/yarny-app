@@ -22,11 +22,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  text-align: center;
 }
 
-.header-content > div {
-  flex: 1;
+.header-content > div:first-child {
+  text-align: left;
+}
+
+.header-content > div:last-child {
+  text-align: right;
 }
 
 .stories-header h1 {

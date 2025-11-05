@@ -17,9 +17,8 @@
           <p class="subtitle">Your writing projects</p>
         </div>
         <div style="display: flex; gap: var(--space-md); align-items: center;">
-          <a href="/docs.html" class="logout-button" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" title="View User Guide">
-            <i class="material-icons" style="font-size: 16px;">menu_book</i>
-            <span>Docs</span>
+          <a href="/docs.html" class="logout-button" style="text-decoration: none;" title="View User Guide">
+            Docs
           </a>
           <button id="logoutBtn" class="logout-button" onclick="if(window.logout){window.logout();} else {localStorage.clear(); window.location.href='/?logout=true&force=true';}" title="Sign out">Sign out</button>
         </div>

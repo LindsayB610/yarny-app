@@ -91,7 +91,7 @@
 .docs-section {
   background: rgba(31, 41, 55, 0.95);
   backdrop-filter: blur(10px);
-  border-radius: var(--radius-xl);
+  border-radius: 0;
   padding: var(--space-4xl);
   margin-bottom: var(--space-3xl);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
@@ -172,7 +172,7 @@
 
 .docs-section [style*="color: #92400E"],
 .docs-section [style*="color: #78350F"] {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: #78350F !important;
 }
 
 /* ============================================
