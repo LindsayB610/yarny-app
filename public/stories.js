@@ -384,28 +384,22 @@ async function fetchStoryProgress(storyFolderId) {
       }
     }
     
-    // Try to read actual content from Google Docs for accurate word counts
-    // First, get structure from data.json to know which snippets to read
-    let snippetList = [];
-    let groups = [];
-    let data = null; // Store parsed data for use in fallback
+    // Trust data.json for word counts (editor keeps them up-to-date)
+    // Use shared calculation function to ensure consistency with editor progress meter
+    let data = null;
     if (fileMap['data.json']) {
       try {
         const dataContent = await window.driveAPI.read(fileMap['data.json']);
         if (dataContent.content) {
           data = JSON.parse(dataContent.content);
-          // Get chapter snippets (those with groupId, NOT People/Places/Things which have kind)
-          // Only count chapter snippets, exclude People/Places/Things snippets
-          if (data.snippets) {
-            snippetList = Object.values(data.snippets).filter(snippet => 
-              snippet.groupId && // Has a groupId (is a chapter snippet)
-              !snippet.kind && // Does NOT have a kind (People/Places/Things have kind: 'person', 'place', 'thing')
-              snippet.driveFileId // Has a Drive file ID to read from
-            );
-          }
-          // Also get groups to find chapter folders
-          if (data.groups) {
-            groups = Object.values(data.groups);
+          // Use shared calculation function - same logic as editor progress meter
+          if (data.snippets && data.groups) {
+            totalWords = window.calculateStoryWordCount(data.snippets, data.groups);
+            const chapterSnippetCount = Object.values(data.snippets).filter(snippet => {
+              const group = snippet.groupId ? data.groups[snippet.groupId] : null;
+              return !!group;
+            }).length;
+            console.log(`✅ Calculated ${totalWords} words from ${chapterSnippetCount} chapter snippets using data.json word counts for story ${storyFolderId}`);
           }
         }
       } catch (error) {
@@ -413,125 +407,8 @@ async function fetchStoryProgress(storyFolderId) {
       }
     }
     
-    // If no snippets with driveFileId found, try to find Google Docs by listing chapter folders
-    if (snippetList.length === 0) {
-      console.log(`No snippets with driveFileId found, trying to find Google Docs in chapter folders...`);
-      try {
-        // Find the Chapters folder first
-        const chaptersFolder = files.files.find(f => 
-          f.name === 'Chapters' && f.mimeType === 'application/vnd.google-apps.folder'
-        );
-        
-        if (chaptersFolder) {
-          // List all chapter subfolders
-          const chaptersList = await window.driveAPI.list(chaptersFolder.id);
-          const chapterFolders = (chaptersList.files || []).filter(f => 
-            f.mimeType === 'application/vnd.google-apps.folder' && !f.trashed
-          );
-          
-          console.log(`Found ${chapterFolders.length} chapter folders`);
-          
-          // For each chapter folder, find Google Docs
-          for (const chapterFolder of chapterFolders) {
-            const chapterFiles = await window.driveAPI.list(chapterFolder.id);
-            const googleDocs = (chapterFiles.files || []).filter(f => 
-              f.mimeType === 'application/vnd.google-apps.document' && !f.trashed
-            );
-            
-            console.log(`Found ${googleDocs.length} Google Docs in chapter folder: ${chapterFolder.name}`);
-            
-            // Match Google Docs to snippets from data.json by title
-            for (const doc of googleDocs) {
-              const fileName = doc.name.replace(/\.docx?$/i, '').trim();
-              // Try to find matching snippet in data.json
-              const matchingSnippet = data && data.snippets ? Object.values(data.snippets).find(s => 
-                s.groupId && !s.kind && s.title && s.title.trim().toLowerCase() === fileName.toLowerCase()
-              ) : null;
-              
-              // Always include chapter snippets (those with groupId), even if not in data.json
-              if (matchingSnippet || !data || !data.snippets) {
-                // Add to snippet list with the doc's file ID
-                snippetList.push({
-                  id: matchingSnippet?.id || `snippet_${doc.id}`,
-                  title: matchingSnippet?.title || fileName,
-                  groupId: matchingSnippet?.groupId || null,
-                  driveFileId: doc.id,
-                  words: matchingSnippet?.words || 0
-                });
-              }
-            }
-          }
-          
-          console.log(`Found ${snippetList.length} chapter snippets by listing chapter folders`);
-        } else {
-          console.warn(`Chapters folder not found in story ${storyFolderId}`);
-        }
-      } catch (error) {
-        console.warn(`Failed to list chapter folders:`, error);
-      }
-    }
-    
-    // If we have snippet file IDs, read actual content from Google Docs
-    if (snippetList.length > 0) {
-      console.log(`Found ${snippetList.length} chapter snippets with Drive file IDs for story ${storyFolderId}`);
-      try {
-        // Read content from all chapter snippets in parallel
-        const contentPromises = snippetList.map(async (snippet) => {
-          try {
-            if (!snippet.driveFileId) {
-              console.warn(`Snippet ${snippet.id} (${snippet.title}) has no driveFileId, using data.json word count: ${snippet.words || 0}`);
-              return snippet.words || 0;
-            }
-            const docContent = await window.driveAPI.read(snippet.driveFileId);
-            const text = (docContent.content || '').trim();
-            // Calculate words from actual content
-            const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
-            console.log(`Snippet ${snippet.id} (${snippet.title}): ${words} words from Google Doc`);
-            return words;
-          } catch (error) {
-            console.warn(`Failed to read snippet ${snippet.id} (${snippet.title}) from Drive:`, error.message);
-            // Fallback to word count from data.json if available
-            const fallbackWords = snippet.words || 0;
-            console.log(`Using fallback word count for ${snippet.id}: ${fallbackWords} words`);
-            return fallbackWords;
-          }
-        });
-        
-        const wordCounts = await Promise.all(contentPromises);
-        totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
-        console.log(`✅ Calculated ${totalWords} words from ${snippetList.length} chapter snippets (excluding People/Places/Things) for story ${storyFolderId}`);
-      } catch (error) {
-        console.warn(`Failed to read snippet content from Drive, falling back to data.json:`, error);
-        // Fallback to data.json word counts
-        snippetList.forEach(snippet => {
-          totalWords += snippet.words || 0;
-        });
-        console.log(`Using fallback: ${totalWords} words from data.json`);
-      }
-    } else {
-      // Fallback: use word counts from data.json if we couldn't get snippet list
-      console.log(`No snippet list with Drive file IDs found, falling back to data.json word counts`);
-      if (fileMap['data.json']) {
-        try {
-          const dataContent = await window.driveAPI.read(fileMap['data.json']);
-          if (dataContent.content) {
-            const data = JSON.parse(dataContent.content);
-            if (data.snippets) {
-              Object.values(data.snippets).forEach(snippet => {
-                // Only count chapter snippets (have groupId, NOT People/Places/Things which have kind)
-                if (snippet.groupId && !snippet.kind && snippet.words !== undefined) {
-                  totalWords += snippet.words || 0;
-                }
-              });
-            }
-          }
-          console.log(`Using fallback: ${totalWords} words from data.json`);
-        } catch (error) {
-          console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
-        }
-      } else {
-        console.warn(`No data.json file found for story ${storyFolderId}`);
-      }
+    if (!data || !data.snippets || !data.groups) {
+      console.warn(`No data.json or missing snippets/groups for story ${storyFolderId}`);
     }
     
     const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
@@ -621,9 +498,11 @@ async function renderStories(stories) {
         const progressText = card.querySelector('.story-progress-text');
         const progressBar = card.querySelector('.story-progress-bar');
         
+        // Use shared update function to ensure consistency with editor progress meter
         if (progressText && progressBar) {
-          progressText.textContent = `${progress.totalWords.toLocaleString()} / ${progress.wordGoal.toLocaleString()} words`;
-          progressBar.style.width = `${progress.percentage}%`;
+          window.updateProgressMeter(progressText, progressBar, progress.totalWords, progress.wordGoal);
+          // Add "words" suffix for story cards (editor shows just numbers)
+          progressText.textContent += ' words';
         } else {
           console.warn(`Could not find progress elements for story ${story.name}`);
         }

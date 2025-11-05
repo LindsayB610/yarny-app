@@ -164,6 +164,55 @@ async function renameDriveFile(fileId, newName) {
   }
 }
 
+// ============================================
+// Shared Progress Meter Functions
+// Used by both editor and stories page to ensure consistency
+// ============================================
+
+/**
+ * Calculate total word count from chapter snippets
+ * Uses the same logic as the editor's progress meter
+ * @param {Object} snippets - Object mapping snippet IDs to snippet objects
+ * @param {Object} groups - Object mapping group IDs to group objects
+ * @returns {number} Total word count
+ */
+window.calculateStoryWordCount = function(snippets, groups) {
+  if (!snippets || !groups) return 0;
+  
+  // Filter to only include snippets that have a groupId AND the group exists
+  // This matches the logic in updateGoalMeter
+  const chapterSnippets = Object.values(snippets).filter(snippet => {
+    const group = snippet.groupId ? groups[snippet.groupId] : null;
+    return !!group; // Only count if group exists
+  });
+  
+  // Sum word counts
+  const totalWords = chapterSnippets.reduce((sum, snippet) => {
+    return sum + (snippet.words || 0);
+  }, 0);
+  
+  return totalWords;
+};
+
+/**
+ * Update progress meter DOM elements
+ * @param {HTMLElement} textElement - Element to display text (e.g., "1,234 / 3,000")
+ * @param {HTMLElement} barElement - Element to display progress bar (sets width style)
+ * @param {number} totalWords - Current word count
+ * @param {number} wordGoal - Target word count
+ */
+window.updateProgressMeter = function(textElement, barElement, totalWords, wordGoal) {
+  if (!textElement || !barElement) return;
+  
+  const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
+  
+  // Update text
+  textElement.textContent = `${totalWords.toLocaleString()} / ${wordGoal.toLocaleString()}`;
+  
+  // Update bar width
+  barElement.style.width = `${percentage}%`;
+};
+
 // Export for use in editor
 window.driveAPI = {
   authorize: authorizeDrive,

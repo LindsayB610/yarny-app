@@ -597,24 +597,14 @@ function updateFooter() {
 }
 
 function updateGoalMeter() {
-  const visibleSnippets = Object.values(state.snippets).filter(snippet => {
-    const group = snippet.groupId ? state.groups[snippet.groupId] : null;
-    if (!group) return false;
-    
-    // Check if group is visible
-    if (state.project.filters.search) {
-      // Only count if would be visible after filtering
-      return true; // Simplified for now
-    }
-    return true;
-  });
-
-  const totalWords = visibleSnippets.reduce((sum, snippet) => sum + snippet.words, 0);
+  // Use shared calculation function to ensure consistency
+  const totalWords = window.calculateStoryWordCount(state.snippets, state.groups);
   const goal = state.project.wordGoal;
-  const percentage = goal > 0 ? Math.min((totalWords / goal) * 100, 100) : 0;
-
-  document.getElementById('goalText').textContent = `${totalWords.toLocaleString()} / ${goal.toLocaleString()}`;
-  document.getElementById('goalProgressBar').style.width = `${percentage}%`;
+  
+  // Use shared update function to ensure consistency
+  const textEl = document.getElementById('goalText');
+  const barEl = document.getElementById('goalProgressBar');
+  window.updateProgressMeter(textEl, barEl, totalWords, goal);
 }
 
 function updateSaveStatus() {
@@ -1455,11 +1445,12 @@ async function saveStoryDataToDrive() {
   try {
     const files = await window.driveAPI.list(state.drive.storyFolderId);
     
-    // Calculate total words for logging
-    let totalWords = 0;
-    const chapterSnippets = Object.values(state.snippets).filter(s => s.groupId);
-    chapterSnippets.forEach(snippet => {
-      totalWords += snippet.words || 0;
+    // Calculate total words using shared function (same logic as updateGoalMeter)
+    // This ensures data.json word counts match what's shown in the progress bar
+    const totalWords = window.calculateStoryWordCount(state.snippets, state.groups);
+    const chapterSnippets = Object.values(state.snippets).filter(snippet => {
+      const group = snippet.groupId ? state.groups[snippet.groupId] : null;
+      return !!group;
     });
     
     // Count how many snippets have driveFileId set
@@ -3120,6 +3111,17 @@ async function loadStoryFromDrive(storyFolderId) {
       loadedGroups: Object.keys(loadedGroups),
       mergedSnippetsCount: Object.keys(mergedSnippets).length
     });
+    
+    // Save data.json with updated word counts after loading from Google Docs
+    // This ensures word counts in data.json match the actual content in Google Docs
+    try {
+      console.log('Saving data.json with updated word counts after loading...');
+      await saveStoryDataToDrive();
+      console.log('data.json saved successfully with updated word counts after loading');
+    } catch (error) {
+      console.warn('Error saving data.json after loading (non-critical):', error);
+      // Don't throw - this is non-critical, word counts are correct in memory
+    }
     
     // Ensure activeSnippetId is valid after loading
     // If activeSnippetId is not set or doesn't exist, set it to the first snippet of the first group
