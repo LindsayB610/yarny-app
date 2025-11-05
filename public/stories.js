@@ -392,10 +392,13 @@ async function fetchStoryProgress(storyFolderId) {
         const dataContent = await window.driveAPI.read(fileMap['data.json']);
         if (dataContent.content) {
           const data = JSON.parse(dataContent.content);
-          // Get chapter snippets (those with groupId) and their Drive file IDs
+          // Get chapter snippets (those with groupId, NOT People/Places/Things which have kind)
+          // Only count chapter snippets, exclude People/Places/Things snippets
           if (data.snippets) {
             snippetList = Object.values(data.snippets).filter(snippet => 
-              snippet.groupId && snippet.driveFileId
+              snippet.groupId && // Has a groupId (is a chapter snippet)
+              !snippet.kind && // Does NOT have a kind (People/Places/Things have kind: 'person', 'place', 'thing')
+              snippet.driveFileId // Has a Drive file ID to read from
             );
           }
         }
@@ -424,7 +427,7 @@ async function fetchStoryProgress(storyFolderId) {
         
         const wordCounts = await Promise.all(contentPromises);
         totalWords = wordCounts.reduce((sum, count) => sum + count, 0);
-        console.log(`Calculated ${totalWords} words from ${snippetList.length} Google Docs for story ${storyFolderId}`);
+        console.log(`Calculated ${totalWords} words from ${snippetList.length} chapter snippets (excluding People/Places/Things) for story ${storyFolderId}`);
       } catch (error) {
         console.warn(`Failed to read snippet content from Drive, falling back to data.json:`, error);
         // Fallback to data.json word counts
@@ -441,7 +444,8 @@ async function fetchStoryProgress(storyFolderId) {
             const data = JSON.parse(dataContent.content);
             if (data.snippets) {
               Object.values(data.snippets).forEach(snippet => {
-                if (snippet.groupId && snippet.words !== undefined) {
+                // Only count chapter snippets (have groupId, NOT People/Places/Things which have kind)
+                if (snippet.groupId && !snippet.kind && snippet.words !== undefined) {
                   totalWords += snippet.words || 0;
                 }
               });
