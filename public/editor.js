@@ -164,7 +164,8 @@ function initializeState() {
   // Ensure noteEditor textarea is hidden (notes now open in main editor)
   document.getElementById('noteEditor').classList.add('hidden');
   updateFooter();
-  updateGoalMeter();
+  updateGoalMeter(); // This also calls updateTodayChip
+  updateTodayChip(); // Explicitly ensure chip is visible
   updateSaveStatus(); // Initialize save status and logout button warning
 }
 
@@ -869,44 +870,66 @@ function updateTodayChip() {
   const todayCount = document.getElementById('todayCount');
   const todayProgressBar = document.getElementById('todayProgressBar');
   
-  if (!state.goal.target || !state.goal.deadline) {
-    // No goal set, hide chip
-    todayChip.classList.add('hidden');
+  // If elements don't exist yet (during initial load), return early
+  if (!todayChip || !todayCount || !todayProgressBar) {
     return;
   }
   
-  // Show chip
+  // Always show chip (even when no goal is set, so user can click to set one)
   todayChip.classList.remove('hidden');
   
-  // Calculate daily target
-  const dailyInfo = calculateDailyTarget();
-  
-  if (!dailyInfo) {
+  if (!state.goal.target || !state.goal.deadline) {
+    // No goal set - show placeholder text
     todayCount.textContent = '—';
     todayProgressBar.style.width = '0%';
+    todayChip.title = 'Click to set writing goal';
     return;
   }
   
-  // Update count
-  todayCount.textContent = dailyInfo.todayWords !== undefined ? dailyInfo.todayWords : '0';
+  // Update title for when goal is set
+  todayChip.title = 'Click to edit goal';
   
-  // Update progress bar
-  const progress = dailyInfo.target > 0 
-    ? Math.min(100, Math.round((dailyInfo.todayWords / dailyInfo.target) * 100))
-    : 0;
-  todayProgressBar.style.width = `${progress}%`;
-  
-  // Add visual feedback for ahead/behind in strict mode
-  if (state.goal.mode === 'strict') {
-    if (dailyInfo.isAhead) {
-      todayProgressBar.style.backgroundColor = '#10B981'; // green
-    } else if (dailyInfo.isBehind) {
-      todayProgressBar.style.backgroundColor = '#EF4444'; // red
+  // Calculate daily target
+  try {
+    const dailyInfo = calculateDailyTarget();
+    
+    if (!dailyInfo) {
+      console.log('updateTodayChip: calculateDailyTarget returned null');
+      todayCount.textContent = '—';
+      todayProgressBar.style.width = '0%';
+      return;
+    }
+    
+    console.log('updateTodayChip: Daily info calculated:', dailyInfo);
+    
+    // Update count
+    const todayWords = dailyInfo.todayWords !== undefined ? dailyInfo.todayWords : 0;
+    todayCount.textContent = todayWords.toLocaleString();
+    
+    // Update progress bar
+    const progress = dailyInfo.target > 0 
+      ? Math.min(100, Math.round((todayWords / dailyInfo.target) * 100))
+      : 0;
+    todayProgressBar.style.width = `${progress}%`;
+    
+    console.log('updateTodayChip: Updated chip - words:', todayWords, 'target:', dailyInfo.target, 'progress:', progress + '%');
+    
+    // Add visual feedback for ahead/behind in strict mode
+    if (state.goal.mode === 'strict') {
+      if (dailyInfo.isAhead) {
+        todayProgressBar.style.backgroundColor = '#10B981'; // green
+      } else if (dailyInfo.isBehind) {
+        todayProgressBar.style.backgroundColor = '#EF4444'; // red
+      } else {
+        todayProgressBar.style.backgroundColor = 'var(--color-primary)';
+      }
     } else {
       todayProgressBar.style.backgroundColor = 'var(--color-primary)';
     }
-  } else {
-    todayProgressBar.style.backgroundColor = 'var(--color-primary)';
+  } catch (error) {
+    console.error('updateTodayChip: Error calculating daily target:', error);
+    todayCount.textContent = '—';
+    todayProgressBar.style.width = '0%';
   }
 }
 
@@ -3862,15 +3885,26 @@ async function loadStoryFromDrive(storyFolderId) {
     
     // Load goal.json in parallel with folder loading (non-blocking)
     // This doesn't block UI rendering since it's independent of story structure
-    loadGoalFromDrive(storyFolderId, projectFilesResult).then(() => {
+    loadGoalFromDrive(storyFolderId, projectFilesResult).then((goalLoaded) => {
+      console.log('Goal loading completed. Goal loaded:', goalLoaded, 'Goal state:', state.goal);
       // Handle midnight rollover if goal is set (after goal loads)
-      if (state.goal.target !== null) {
+      if (state.goal.target !== null && state.goal.deadline) {
         handleMidnightRollover();
-        // Update today chip if UI is already rendered
-        updateTodayChip();
+        console.log('Goal is set, updating today chip. Target:', state.goal.target, 'Deadline:', state.goal.deadline);
       }
+      // Always update chip after goal loads (whether goal exists or not)
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        updateTodayChip();
+        updateGoalMeter(); // Also update goal meter to ensure chip shows
+        console.log('Today chip updated after goal load');
+      });
     }).catch(err => {
       console.warn('Failed to load goal.json (non-critical):', err);
+      // Still try to update chip in case goal state changed
+      requestAnimationFrame(() => {
+        updateTodayChip();
+      });
     });
     
     // Load folder structure using saved IDs if available
@@ -4567,7 +4601,9 @@ async function loadStoryFromDrive(storyFolderId) {
       renderStoryList();
       renderSnippetsList();
       updateFooter();
-      updateGoalMeter();
+      updateGoalMeter(); // This also calls updateTodayChip
+      // Explicitly update today chip to ensure it shows if goal is already loaded
+      updateTodayChip();
     }
     
     // Verify state.snippets === mergedSnippets (should be same object reference now)
@@ -4733,7 +4769,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Ensure noteEditor textarea is hidden (notes now open in main editor)
       document.getElementById('noteEditor').classList.add('hidden');
       updateFooter();
-      updateGoalMeter();
+      updateGoalMeter(); // This also calls updateTodayChip
+      updateTodayChip(); // Explicitly call to ensure chip shows even if goal hasn't loaded yet
       updateSaveStatus(); // Initialize save status and logout button warning
       
       // Render editor with placeholder or loading state
