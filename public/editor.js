@@ -120,7 +120,6 @@ const state = {
   },
   groups: {},
   snippets: {}, // Unified: all snippets (chapters have groupId, People/Places/Things have kind)
-  previewVersion: 1,
   // Drive integration
   drive: {
     storyFolderId: null,
@@ -535,10 +534,6 @@ function updateFooter() {
     document.getElementById('charCount').textContent = 'Characters: 0';
   }
 
-  // Update version info (UI only for now)
-  const version = state.previewVersion;
-  document.getElementById('versionLabel').textContent = `Version: ${version}`;
-  
   if (activeSnippet && activeSnippet.updatedAt) {
     const date = new Date(activeSnippet.updatedAt);
     const formatted = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1962,20 +1957,6 @@ window.switchNotesTab = function(tab) {
 };
 
 // ============================================
-// Version Slider
-// ============================================
-
-function setupVersionSlider() {
-  const slider = document.getElementById('versionSlider');
-  
-  slider.addEventListener('input', (e) => {
-    const version = parseInt(e.target.value);
-    state.previewVersion = version;
-    updateFooter();
-    // In future: could show version diff here
-  });
-}
-
 // ============================================
 // Story Info Modal
 // ============================================
@@ -2869,9 +2850,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyboardShortcuts);
 
-  // Version slider
-  setupVersionSlider();
-  
   // Story info button
   document.getElementById('storyInfoBtn').addEventListener('click', openStoryInfoModal);
   
