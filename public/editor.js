@@ -997,17 +997,25 @@ async function saveItemToDriveById(snippetId, noteId) {
         snippet._creatingDriveFile = false;
       }
       
-      // Schedule data.json save to update word counts (debounced)
-      // This ensures word counts in data.json are updated for the stories page
-      clearTimeout(dataJsonSaveTimeout);
-      dataJsonSaveTimeout = setTimeout(async () => {
-        try {
-          await saveStoryDataToDrive();
-        } catch (error) {
-          console.error('Error saving data.json after snippet save:', error);
-          // Non-critical error - word count will update on next save
-        }
-      }, 1000); // Save data.json 1 second after snippet save
+      // Save data.json immediately to update word counts for stories page
+      // This ensures word counts are persisted right away
+      try {
+        console.log('Saving data.json after snippet save...');
+        await saveStoryDataToDrive();
+        console.log('data.json saved successfully after snippet save');
+      } catch (error) {
+        console.error('Error saving data.json after snippet save:', error);
+        // Schedule a retry after a short delay
+        clearTimeout(dataJsonSaveTimeout);
+        dataJsonSaveTimeout = setTimeout(async () => {
+          try {
+            await saveStoryDataToDrive();
+            console.log('data.json saved successfully on retry after snippet save');
+          } catch (retryError) {
+            console.error('Error saving data.json on retry after snippet save:', retryError);
+          }
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error saving snippet to Drive:', error);
       throw error;
@@ -1056,23 +1064,48 @@ function handleTypingStop() {
     
     // Use the centralized save function
     try {
+      // Ensure word count is updated in memory before saving
+      updateWordCount();
+      
       await saveCurrentEditorToDrive();
       
       state.project.editing.savingState = 'saved';
       state.project.editing.lastSavedAt = new Date().toISOString();
       updateSaveStatus();
       
-      // Schedule data.json save to update word counts (debounced separately)
-      // This ensures word counts in data.json are updated for the stories page
-      clearTimeout(dataJsonSaveTimeout);
-      dataJsonSaveTimeout = setTimeout(async () => {
-        try {
-          await saveStoryDataToDrive();
-        } catch (error) {
-          console.error('Error saving data.json after content update:', error);
-          // Non-critical error - word count will update on next save
+      // Save data.json immediately to update word counts for stories page
+      // This ensures word counts are persisted right away
+      // Don't debounce - save immediately after snippet content is saved
+      try {
+        // Double-check word count is updated before saving
+        if (state.project.activeSnippetId && state.snippets[state.project.activeSnippetId]) {
+          const snippet = state.snippets[state.project.activeSnippetId];
+          const editorEl = document.getElementById('editorContent');
+          if (editorEl) {
+            const text = getEditorTextContent(editorEl);
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            snippet.words = words;
+            snippet.chars = text.length;
+            console.log(`Updated word count for snippet ${snippet.id}: ${words} words`);
+          }
         }
-      }, 1000); // Save data.json 1 second after snippet content save
+        
+        console.log('Saving data.json with updated word counts...');
+        await saveStoryDataToDrive();
+        console.log('data.json saved successfully with updated word counts');
+      } catch (error) {
+        console.error('Error saving data.json after content update:', error);
+        // Schedule a retry after a short delay
+        clearTimeout(dataJsonSaveTimeout);
+        dataJsonSaveTimeout = setTimeout(async () => {
+          try {
+            await saveStoryDataToDrive();
+            console.log('data.json saved successfully on retry');
+          } catch (retryError) {
+            console.error('Error saving data.json on retry:', retryError);
+          }
+        }, 2000);
+      }
     } catch (error) {
       // Error already logged in saveCurrentEditorToDrive
       // Still mark as saved since in-memory state is updated
@@ -1416,6 +1449,14 @@ async function saveStoryDataToDrive() {
   
   try {
     const files = await window.driveAPI.list(state.drive.storyFolderId);
+    
+    // Calculate total words for logging
+    let totalWords = 0;
+    const chapterSnippets = Object.values(state.snippets).filter(s => s.groupId);
+    chapterSnippets.forEach(snippet => {
+      totalWords += snippet.words || 0;
+    });
+    console.log(`Saving data.json: ${chapterSnippets.length} chapter snippets, ${totalWords} total words`);
     
     // Save data.json - all snippets unified (chapter snippets have groupId, People/Places/Things have kind)
     const storyData = {
