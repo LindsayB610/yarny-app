@@ -1506,17 +1506,43 @@ async function saveStoryDataToDrive() {
       },
     };
     
-    // CRITICAL: Use the same file ID we loaded from, not just any data.json file found
-    // This ensures we're updating the correct file, not creating a duplicate
-    const dataFile = files.files.find(f => f.name === 'data.json');
-    const fileIdToUse = state.drive.dataJsonFileId || dataFile?.id || null;
+    // CRITICAL: Always use the stored file ID we loaded from
+    // This prevents creating duplicate data.json files
+    // If we don't have a stored file ID, find the existing one and store it
+    let fileIdToUse = state.drive.dataJsonFileId;
     
-    if (!fileIdToUse && dataFile) {
-      // If we don't have a stored file ID but found a data.json, use it and store it
-      state.drive.dataJsonFileId = dataFile.id;
-      console.log(`No stored dataJsonFileId, using found file: ${dataFile.id}`);
-    } else if (fileIdToUse && fileIdToUse !== dataFile?.id) {
-      console.warn(`WARNING: Stored dataJsonFileId (${fileIdToUse}) doesn't match found file (${dataFile?.id}). Using stored ID.`);
+    if (!fileIdToUse) {
+      // No stored file ID - find existing data.json and use it
+      const dataFiles = files.files.filter(f => f.name === 'data.json' && !f.trashed);
+      if (dataFiles.length > 1) {
+        console.warn(`WARNING: Multiple data.json files found (${dataFiles.length}). Using the most recent one.`);
+        // Sort by modifiedTime, most recent first
+        dataFiles.sort((a, b) => {
+          const timeA = new Date(a.modifiedTime || 0).getTime();
+          const timeB = new Date(b.modifiedTime || 0).getTime();
+          return timeB - timeA;
+        });
+      }
+      if (dataFiles.length > 0) {
+        fileIdToUse = dataFiles[0].id;
+        state.drive.dataJsonFileId = fileIdToUse;
+        console.log(`No stored dataJsonFileId, using existing file: ${fileIdToUse}`);
+      }
+    } else {
+      // Verify the stored file ID still exists
+      const dataFile = files.files.find(f => f.id === fileIdToUse && f.name === 'data.json');
+      if (!dataFile) {
+        console.warn(`WARNING: Stored dataJsonFileId (${fileIdToUse}) no longer exists. Looking for existing data.json...`);
+        const dataFiles = files.files.filter(f => f.name === 'data.json' && !f.trashed);
+        if (dataFiles.length > 0) {
+          fileIdToUse = dataFiles[0].id;
+          state.drive.dataJsonFileId = fileIdToUse;
+          console.log(`Using existing data.json file: ${fileIdToUse}`);
+        } else {
+          console.log('No existing data.json found, will create new one');
+          fileIdToUse = null; // Will create new file
+        }
+      }
     }
     
     const jsonString = JSON.stringify(storyData, null, 2);
@@ -2647,29 +2673,80 @@ async function loadStoryFromDrive(storyFolderId) {
       const allDataJsonFiles = (dataFiles.files || []).filter(f => f.name === 'data.json' && !f.trashed);
       
       if (allDataJsonFiles.length > 1) {
-        // Multiple data.json files found - this is a problem! Keep the most recent one
-        console.warn(`WARNING: Found ${allDataJsonFiles.length} data.json files in story folder. Keeping the most recent one and deleting duplicates.`);
-        // Sort by modifiedTime, most recent first
-        allDataJsonFiles.sort((a, b) => {
-          const timeA = new Date(a.modifiedTime || 0).getTime();
-          const timeB = new Date(b.modifiedTime || 0).getTime();
-          return timeB - timeA; // Most recent first
+        // Multiple data.json files found - read them all and keep the one with actual content
+        console.warn(`WARNING: Found ${allDataJsonFiles.length} data.json files in story folder. Analyzing content to determine which to keep.`);
+        
+        // Read all files and check their content
+        const fileContents = [];
+        for (const file of allDataJsonFiles) {
+          try {
+            const content = await window.driveAPI.read(file.id);
+            if (content.content) {
+              const parsed = JSON.parse(content.content);
+              // Count snippets with actual content
+              const snippetCount = parsed.snippets ? Object.keys(parsed.snippets).length : 0;
+              const totalWords = parsed.snippets && parsed.groups 
+                ? window.calculateStoryWordCount(parsed.snippets, parsed.groups) 
+                : 0;
+              
+              fileContents.push({
+                file: file,
+                parsed: parsed,
+                snippetCount: snippetCount,
+                totalWords: totalWords,
+                hasContent: snippetCount > 0 || totalWords > 0 || (parsed.groups && Object.keys(parsed.groups).length > 0)
+              });
+              
+              console.log(`data.json file ${file.id}: ${snippetCount} snippets, ${totalWords} words, modified: ${file.modifiedTime}`);
+            }
+          } catch (error) {
+            console.error(`Failed to read data.json file ${file.id}:`, error);
+          }
+        }
+        
+        // Determine which file to keep:
+        // 1. Prefer file with actual content (snippets/words)
+        // 2. If multiple have content, prefer the one with more words
+        // 3. If still tied, prefer most recent
+        fileContents.sort((a, b) => {
+          // First priority: files with content
+          if (a.hasContent && !b.hasContent) return -1;
+          if (!a.hasContent && b.hasContent) return 1;
+          
+          // Second priority: more words
+          if (a.totalWords !== b.totalWords) {
+            return b.totalWords - a.totalWords;
+          }
+          
+          // Third priority: more snippets
+          if (a.snippetCount !== b.snippetCount) {
+            return b.snippetCount - a.snippetCount;
+          }
+          
+          // Fourth priority: most recent
+          const timeA = new Date(a.file.modifiedTime || 0).getTime();
+          const timeB = new Date(b.file.modifiedTime || 0).getTime();
+          return timeB - timeA;
         });
         
-        const primaryDataFile = allDataJsonFiles[0];
-        const duplicateFiles = allDataJsonFiles.slice(1);
+        const primaryDataFile = fileContents[0].file;
+        const duplicateFiles = fileContents.slice(1).map(fc => fc.file);
         
-        console.log(`Keeping data.json file ID: ${primaryDataFile.id} (modified: ${primaryDataFile.modifiedTime})`);
+        console.log(`Keeping data.json file ID: ${primaryDataFile.id} (${fileContents[0].snippetCount} snippets, ${fileContents[0].totalWords} words, modified: ${primaryDataFile.modifiedTime})`);
         console.log(`Deleting ${duplicateFiles.length} duplicate data.json file(s):`, duplicateFiles.map(f => ({ id: f.id, modified: f.modifiedTime })));
         
-        // Delete duplicate files
-        for (const duplicate of duplicateFiles) {
-          try {
-            await window.driveAPI.delete(duplicate.id);
-            console.log(`Deleted duplicate data.json: ${duplicate.id}`);
-          } catch (error) {
-            console.error(`Failed to delete duplicate data.json ${duplicate.id}:`, error);
+        // Delete duplicate files (only if we're confident we're keeping the right one)
+        if (fileContents[0].hasContent || fileContents.length === 1 || fileContents[0].totalWords > 0) {
+          for (const duplicate of duplicateFiles) {
+            try {
+              await window.driveAPI.delete(duplicate.id);
+              console.log(`Deleted duplicate data.json: ${duplicate.id}`);
+            } catch (error) {
+              console.error(`Failed to delete duplicate data.json ${duplicate.id}:`, error);
+            }
           }
+        } else {
+          console.warn('⚠️ All data.json files appear empty - keeping most recent but NOT deleting others to be safe');
         }
         
         dataJsonFileId = primaryDataFile.id;
@@ -2720,9 +2797,45 @@ async function loadStoryFromDrive(storyFolderId) {
     }
     
     // Map chapter subfolders to groups (after groups are loaded)
-    // Use ID-based matching first, then fallback to name matching
-    if (state.drive.folderIds.chapters && Object.keys(state.groups).length > 0) {
-      await mapChapterFoldersToGroups(state.drive.folderIds.chapters);
+    // CRITICAL: Also create groups from folder structure if data.json is empty
+    // This ensures we can load content from Google Docs even if data.json is blank
+    if (state.drive.folderIds.chapters) {
+      if (Object.keys(state.groups).length > 0) {
+        // Match existing groups to folders
+        await mapChapterFoldersToGroups(state.drive.folderIds.chapters);
+      } else {
+        // No groups in data.json - create them from folder structure
+        console.log('No groups found in data.json, creating groups from chapter folder structure...');
+        try {
+          const chapterFolders = await window.driveAPI.list(state.drive.folderIds.chapters);
+          const subfolders = (chapterFolders.files || []).filter(
+            file => file.mimeType === 'application/vnd.google-apps.folder' && !file.trashed
+          );
+          
+          // Create a group for each chapter folder
+          subfolders.forEach((folder, index) => {
+            const groupId = `group_${Date.now()}_${index}`;
+            state.groups[groupId] = {
+              id: groupId,
+              title: folder.name.trim(),
+              position: index,
+              color: ACCENT_COLORS[index % ACCENT_COLORS.length].value,
+              driveFolderId: folder.id,
+              snippetIds: []
+            };
+            console.log(`Created group from folder: ${folder.name} (${folder.id}) -> ${groupId}`);
+          });
+          
+          // Update groupIds in state
+          state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
+            return (state.groups[a].position || 0) - (state.groups[b].position || 0);
+          });
+          
+          console.log(`Created ${state.project.groupIds.length} groups from folder structure`);
+        } catch (error) {
+          console.error('Error creating groups from folder structure:', error);
+        }
+      }
     }
     
     // Load individual files from chapter subfolders - this is the source of truth
