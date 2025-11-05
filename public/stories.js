@@ -340,10 +340,21 @@ async function checkDriveAuth() {
 }
 
 // Get or create Yarny Stories folder
-async function getOrCreateYarnyStoriesFolder() {
+async function getOrCreateYarnyStoriesFolder(forceRefresh = false) {
+  // Clear cache if force refresh is requested
+  if (forceRefresh) {
+    try {
+      localStorage.removeItem(CACHE_KEY_YARNY_FOLDER);
+      console.log('Cleared cached folder ID for refresh');
+    } catch (e) {
+      console.warn('Error clearing cache:', e);
+    }
+  }
+  
   // Always check with backend to allow migration to run
   // The backend will handle migration from "Yarny" to "Yarny Stories"
   try {
+    console.log('Calling backend to get or create Yarny Stories folder...');
     const response = await axios.get(`${API_BASE}/drive-get-or-create-yarny-stories`, {
       withCredentials: true
     });
@@ -351,14 +362,20 @@ async function getOrCreateYarnyStoriesFolder() {
     yarnyStoriesFolderId = response.data.id;
     cacheYarnyFolderId(response.data.id);
     
-    // If migration occurred, log it
+    // If migration occurred, log it and show a message
     if (response.data.migrated) {
-      console.log('Folder migrated from "Yarny" to "Yarny Stories"');
+      console.log('✅ Folder migrated from "Yarny" to "Yarny Stories"');
+      // Optionally show a user-visible notification
     }
     
     return response.data.id;
   } catch (error) {
     console.error('Error getting Yarny Stories folder:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     // If backend call fails, fall back to cache if available
     const cached = getCachedYarnyFolderId();
     if (cached) {
