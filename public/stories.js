@@ -392,6 +392,27 @@ async function fetchStoryProgress(storyFolderId) {
         const dataContent = await window.driveAPI.read(fileMap['data.json']);
         if (dataContent.content) {
           data = JSON.parse(dataContent.content);
+          
+          // Debug: Log what we found in data.json
+          const allSnippets = data.snippets ? Object.keys(data.snippets).length : 0;
+          const allGroups = data.groups ? Object.keys(data.groups).length : 0;
+          console.log(`Reading data.json for ${storyFolderId}: ${allSnippets} total snippets, ${allGroups} groups`);
+          
+          // Debug: Log all chapter snippets
+          if (data.snippets) {
+            const chapterSnippets = Object.values(data.snippets).filter(snippet => {
+              const group = snippet.groupId ? data.groups?.[snippet.groupId] : null;
+              return !!group;
+            });
+            console.log(`Chapter snippets found:`, chapterSnippets.map(s => ({
+              id: s.id,
+              title: s.title,
+              words: s.words,
+              groupId: s.groupId,
+              hasGroup: !!data.groups?.[s.groupId]
+            })));
+          }
+          
           // Use shared calculation function - same logic as editor progress meter
           if (data.snippets && data.groups) {
             totalWords = window.calculateStoryWordCount(data.snippets, data.groups);
