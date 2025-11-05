@@ -1458,15 +1458,23 @@ async function saveStoryDataToDrive() {
     console.log(`Saving data.json: ${chapterSnippets.length} chapter snippets, ${totalWords} total words, ${snippetsWithDriveId}/${Object.keys(state.snippets).length} snippets have driveFileId`);
     
     // Ensure all snippets have their driveFileId saved (create a deep copy to avoid modifying state during save)
+    // CRITICAL: Save ALL snippets from state.snippets - this should match mergedSnippets exactly
     const snippetsToSave = {};
-    Object.keys(state.snippets).forEach(snippetId => {
+    const snippetIds = Object.keys(state.snippets);
+    console.log(`saveStoryDataToDrive: state.snippets has ${snippetIds.length} snippets:`, snippetIds);
+    snippetIds.forEach(snippetId => {
       const snippet = state.snippets[snippetId];
+      if (!snippet) {
+        console.warn(`Snippet ${snippetId} is null/undefined in state.snippets!`);
+        return;
+      }
       snippetsToSave[snippetId] = {
         ...snippet,
         // Ensure driveFileId is included
         driveFileId: snippet.driveFileId || null
       };
     });
+    console.log(`saveStoryDataToDrive: snippetsToSave has ${Object.keys(snippetsToSave).length} snippets`);
     
     // Debug: Log what we're about to save
     const chapterSnippetsToSave = Object.values(snippetsToSave).filter(s => {
@@ -1500,6 +1508,17 @@ async function saveStoryDataToDrive() {
     
     const dataFile = files.files.find(f => f.name === 'data.json');
     const jsonString = JSON.stringify(storyData, null, 2);
+    
+    // CRITICAL: Verify what's actually in the JSON we're about to save
+    const parsedForVerification = JSON.parse(jsonString);
+    const chapterSnippetsInJson = Object.values(parsedForVerification.snippets || {}).filter(s => {
+      const group = s.groupId ? parsedForVerification.groups?.[s.groupId] : null;
+      return !!group;
+    });
+    console.log(`About to write data.json with ${Object.keys(parsedForVerification.snippets || {}).length} total snippets, ${chapterSnippetsInJson.length} chapter snippets:`, 
+      chapterSnippetsInJson.map(s => ({ id: s.id, title: s.title, words: s.words }))
+    );
+    
     console.log(`Saving data.json (${jsonString.length} bytes) with ${Object.keys(snippetsToSave).length} snippets, fileId: ${dataFile?.id || 'NEW'}`);
     
     const writeResult = await window.driveAPI.write(
@@ -3129,13 +3148,31 @@ async function loadStoryFromDrive(storyFolderId) {
       return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
     });
     
+    // CRITICAL VERIFICATION: mergedSnippets should have all snippets
+    const chapterSnippetsInMerged = Object.values(mergedSnippets).filter(s => {
+      const group = s.groupId ? loadedGroups[s.groupId] : null;
+      return !!group;
+    });
     console.log('Final state after loading:', {
       snippets: Object.keys(state.snippets),
+      mergedSnippets: Object.keys(mergedSnippets),
+      chapterSnippetsInState: chapterSnippetsInMerged.length,
+      chapterSnippetDetails: chapterSnippetsInMerged.map(s => ({
+        id: s.id,
+        title: s.title,
+        words: s.words,
+        driveFileId: s.driveFileId
+      })),
       groups: Object.keys(state.groups),
       groupIds: state.project.groupIds,
       loadedGroups: Object.keys(loadedGroups),
       mergedSnippetsCount: Object.keys(mergedSnippets).length
     });
+    
+    // Verify state.snippets === mergedSnippets (should be same object reference now)
+    if (state.snippets !== mergedSnippets) {
+      console.error('ERROR: state.snippets is not the same as mergedSnippets!');
+    }
     
     // CRITICAL: Save data.json with updated word counts after loading from Google Docs
     // This ensures word counts in data.json match the actual content in Google Docs
@@ -3144,6 +3181,7 @@ async function loadStoryFromDrive(storyFolderId) {
       console.log('Saving data.json with updated word counts after loading...');
       const totalWordsBeforeSave = window.calculateStoryWordCount(state.snippets, state.groups);
       console.log(`Word count before save: ${totalWordsBeforeSave}`);
+      console.log(`state.snippets has ${Object.keys(state.snippets).length} snippets before save`);
       
       await saveStoryDataToDrive();
       
