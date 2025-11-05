@@ -64,10 +64,11 @@ body {
 /* Drive Auth Prompt */
 .drive-auth-prompt {
   text-align: center;
-  background: var(--color-white);
-  border-radius: var(--radius-2xl);
+  background: rgba(31, 41, 55, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
   padding: var(--space-6xl) var(--space-4xl);
-  box-shadow: var(--shadow-base);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .drive-auth-prompt.hidden {
@@ -77,11 +78,11 @@ body {
 .drive-auth-prompt h2 {
   font-size: var(--font-size-2xl);
   margin-bottom: var(--space-md);
-  color: var(--color-text-primary);
+  color: var(--color-white);
 }
 
 .drive-auth-prompt p {
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: var(--space-3xl);
   font-size: var(--font-size-md);
 }
@@ -96,24 +97,28 @@ body {
   background: var(--color-primary);
   color: var(--color-white);
   border: none;
-  padding: var(--space-md) var(--space-2xl);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
+  padding: var(--space-lg) var(--space-2xl);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
 .connect-drive-btn:hover {
   background: var(--color-primary-dark);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 /* Stories Content */
 .stories-content {
-  background: var(--color-white);
-  border-radius: var(--radius-2xl);
+  background: rgba(31, 41, 55, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
   padding: var(--space-4xl);
-  box-shadow: var(--shadow-base);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .stories-content.hidden {
@@ -130,7 +135,7 @@ body {
 .stories-header-bar h2 {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--color-white);
 }
 
 .header-actions {
@@ -140,9 +145,9 @@ body {
 }
 
 .refresh-btn {
-  background: var(--color-gray-100);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-gray-300);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-base);
@@ -152,11 +157,12 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  backdrop-filter: blur(10px);
 }
 
 .refresh-btn:hover {
-  background: var(--color-gray-200);
-  border-color: var(--color-gray-400);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .refresh-btn:active {
@@ -173,18 +179,21 @@ body {
   color: var(--color-white);
   border: none;
   padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-full);
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: all var(--transition-base);
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
 .new-story-btn:hover {
   background: var(--color-primary-dark);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 /* Stories List */
@@ -196,7 +205,8 @@ body {
 }
 
 .story-card {
-  background: var(--color-gray-100);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   border: 2px solid transparent;
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
@@ -210,7 +220,7 @@ body {
 
 .story-card:hover {
   border-color: var(--color-primary);
-  background: var(--color-gray-50);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .story-card-content {
@@ -220,13 +230,13 @@ body {
 .story-card h3 {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--color-white);
   margin-bottom: var(--space-sm);
 }
 
 .story-card p {
   font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .story-modified {
@@ -246,7 +256,7 @@ body {
 
 .story-progress-text {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: var(--font-weight-medium);
 }
 
@@ -267,7 +277,7 @@ body {
 .story-delete-btn {
   background: none;
   border: none;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-size: var(--font-size-2xl);
   line-height: 1;
   padding: var(--space-xs) var(--space-sm);
@@ -361,13 +371,15 @@ body {
 
 .modal-content {
   position: relative;
-  background: var(--color-white);
-  border-radius: var(--radius-2xl);
+  background: rgba(31, 41, 55, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  color: var(--color-white);
 }
 
 .modal-header {
@@ -375,20 +387,20 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-2xl);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal-header h2 {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--color-white);
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: var(--font-size-3xl);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -401,7 +413,8 @@ body {
 }
 
 .modal-close:hover {
-  background: var(--color-gray-100);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
 }
 
 .modal-body {
@@ -409,12 +422,13 @@ body {
 }
 
 .error-message {
-  background: #FEE;
-  color: #C33;
+  background: rgba(239, 68, 68, 0.2);
+  color: rgba(255, 255, 255, 0.9);
   padding: var(--space-md);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-lg);
   font-size: var(--font-size-base);
+  border-left: 4px solid var(--color-error);
 }
 
 .error-message.hidden {
@@ -436,23 +450,31 @@ body {
   display: block;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
+  color: var(--color-white);
   margin-bottom: var(--space-sm);
 }
 
 .form-group input {
   width: 100%;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-base);
   transition: border-color var(--transition-fast);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+  backdrop-filter: blur(10px);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .form-group input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .form-actions {
