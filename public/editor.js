@@ -281,6 +281,9 @@ function renderStoryList() {
         const previousSnippetId = state.project.activeSnippetId;
         const targetSnippetId = snippet.id;
         
+        // OPTIMIZATION: Ensure content is loaded for target snippet before switching
+        await ensureSnippetContentLoaded(targetSnippetId);
+        
         // Check for conflicts in the target snippet BEFORE switching
         const conflict = await checkSnippetConflict(targetSnippetId);
         if (conflict) {
@@ -473,7 +476,7 @@ function renderSnippetsList() {
       snippetEl.dataset.snippetId = snippet.id;
       snippetEl.innerHTML = `
         <div class="note-title">${escapeHtml(snippet.title)}</div>
-        <div class="note-excerpt">${escapeHtml(snippet.body.substring(0, 60))}${snippet.body.length > 60 ? '...' : ''}</div>
+        <div class="note-excerpt">${escapeHtml(snippet.body ? (snippet.body.substring(0, 60) + (snippet.body.length > 60 ? '...' : '')) : 'Loading...')}</div>
       `;
 
       snippetEl.addEventListener('click', async () => {
@@ -487,6 +490,9 @@ function renderSnippetsList() {
         // Capture ID of previous snippet before switching
         const previousSnippetId = state.project.activeSnippetId;
         const targetSnippetId = snippet.id;
+        
+        // OPTIMIZATION: Ensure content is loaded for target snippet before switching
+        await ensureSnippetContentLoaded(targetSnippetId);
         
         // Check for conflicts in the target snippet BEFORE switching
         const conflict = await checkSnippetConflict(targetSnippetId);
@@ -535,7 +541,7 @@ function renderSnippetsList() {
         renderSnippetsList();
         renderEditor();
         updateFooter();
-              });
+      });
       
       // Right-click context menu
       snippetEl.addEventListener('contextmenu', (e) => {
@@ -2623,14 +2629,104 @@ async function saveSnippetToDriveByKind(snippet) {
   }
 }
 
+// Find the most recently edited snippet across all types (chapters and People/Places/Things)
+function findMostRecentlyEditedSnippet() {
+  const allSnippets = Object.values(state.snippets);
+  
+  if (allSnippets.length === 0) {
+    return null;
+  }
+  
+  // Filter out snippets without updatedAt timestamp
+  const snippetsWithTimestamp = allSnippets.filter(snippet => snippet.updatedAt);
+  
+  if (snippetsWithTimestamp.length === 0) {
+    // If no snippets have updatedAt, fall back to first snippet
+    return allSnippets[0] || null;
+  }
+  
+  // Find snippet with most recent updatedAt
+  const mostRecent = snippetsWithTimestamp.reduce((latest, current) => {
+    const latestTime = new Date(latest.updatedAt || 0).getTime();
+    const currentTime = new Date(current.updatedAt || 0).getTime();
+    return currentTime > latestTime ? current : latest;
+  });
+  
+  return mostRecent;
+}
+
+// Lazy load snippet content from Drive if not already loaded
+async function ensureSnippetContentLoaded(snippetId) {
+  const snippet = state.snippets[snippetId];
+  if (!snippet) {
+    console.warn(`Snippet ${snippetId} not found in state`);
+    return;
+  }
+  
+  // If content is already loaded, return immediately
+  if (snippet._contentLoaded && snippet.body) {
+    return;
+  }
+  
+  // If no driveFileId, can't load from Drive
+  if (!snippet.driveFileId) {
+    console.warn(`Snippet ${snippetId} has no driveFileId, cannot load content`);
+    return;
+  }
+  
+  try {
+    // Show loading indicator in editor
+    const editorContent = document.getElementById('editorContent');
+    if (editorContent) {
+      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading content...</div>';
+    }
+    
+    // Determine mimeType based on snippet type
+    const mimeType = snippet.kind ? 'text/plain' : 'application/vnd.google-apps.document';
+    const docContent = await window.driveAPI.read(snippet.driveFileId);
+    const snippetBody = (docContent.content || '').trim();
+    
+    snippet.body = snippetBody;
+    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+    snippet.chars = snippetBody.length;
+    snippet._contentLoaded = true;
+    snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || snippet.lastKnownDriveModifiedTime || new Date().toISOString();
+    
+    console.log(`Lazy loaded content for snippet: ${snippet.title}`);
+    
+    // Update UI
+    renderEditor();
+    updateWordCount();
+    updateGoalMeter();
+  } catch (error) {
+    console.error(`Error lazy loading content for snippet ${snippetId}:`, error);
+    // Show error in editor
+    const editorContent = document.getElementById('editorContent');
+    if (editorContent) {
+      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-danger);">Error loading content. Please try again.</div>';
+    }
+  }
+}
+
 // Load story data from Drive
 async function loadStoryFromDrive(storyFolderId) {
   try {
-    // Load project.json first to get saved folder IDs
+    // Show loading indicator
+    const editorContent = document.getElementById('editorContent');
+    if (editorContent) {
+      editorContent.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--color-text-secondary);">Loading story...</div>';
+    }
+    
+    // Load project.json and list story folder in parallel
     let savedFolderIds = null;
+    const projectFilesResult = await window.driveAPI.list(storyFolderId).catch(err => {
+      console.warn('Could not list story folder:', err);
+      return { files: [] };
+    });
+    
+    // Load project.json from the files we already listed
     try {
-      const projectFiles = await window.driveAPI.list(storyFolderId);
-      const projectFile = projectFiles.files.find(f => f.name === 'project.json');
+      const projectFile = projectFilesResult.files.find(f => f.name === 'project.json');
       
       if (projectFile) {
         const projectData = await window.driveAPI.read(projectFile.id);
@@ -2669,16 +2765,15 @@ async function loadStoryFromDrive(storyFolderId) {
     // Also handle duplicate data.json files by keeping only the most recent one
     let dataJsonFileId = null;
     try {
-      const dataFiles = await window.driveAPI.list(storyFolderId);
-      const allDataJsonFiles = (dataFiles.files || []).filter(f => f.name === 'data.json' && !f.trashed);
+      const dataFiles = projectFilesResult.files || [];
+      const allDataJsonFiles = (dataFiles || []).filter(f => f.name === 'data.json' && !f.trashed);
       
       if (allDataJsonFiles.length > 1) {
-        // Multiple data.json files found - read them all and keep the one with actual content
+        // Multiple data.json files found - read them all in PARALLEL and keep the one with actual content
         console.warn(`WARNING: Found ${allDataJsonFiles.length} data.json files in story folder. Analyzing content to determine which to keep.`);
         
-        // Read all files and check their content
-        const fileContents = [];
-        for (const file of allDataJsonFiles) {
+        // Read all files in parallel
+        const fileReadPromises = allDataJsonFiles.map(async (file) => {
           try {
             const content = await window.driveAPI.read(file.id);
             if (content.content) {
@@ -2689,20 +2784,27 @@ async function loadStoryFromDrive(storyFolderId) {
                 ? window.calculateStoryWordCount(parsed.snippets, parsed.groups) 
                 : 0;
               
-              fileContents.push({
+              return {
                 file: file,
                 parsed: parsed,
                 snippetCount: snippetCount,
                 totalWords: totalWords,
                 hasContent: snippetCount > 0 || totalWords > 0 || (parsed.groups && Object.keys(parsed.groups).length > 0)
-              });
-              
-              console.log(`data.json file ${file.id}: ${snippetCount} snippets, ${totalWords} words, modified: ${file.modifiedTime}`);
+              };
             }
+            return null;
           } catch (error) {
             console.error(`Failed to read data.json file ${file.id}:`, error);
+            return null;
           }
-        }
+        });
+        
+        const fileContents = (await Promise.all(fileReadPromises)).filter(f => f !== null);
+        
+        // Log results
+        fileContents.forEach(fc => {
+          console.log(`data.json file ${fc.file.id}: ${fc.snippetCount} snippets, ${fc.totalWords} words, modified: ${fc.file.modifiedTime}`);
+        });
         
         // Determine which file to keep:
         // 1. Prefer file with actual content (snippets/words)
@@ -2838,7 +2940,7 @@ async function loadStoryFromDrive(storyFolderId) {
       }
     }
     
-    // Load individual files from chapter subfolders - this is the source of truth
+    // Load individual files from chapter subfolders - OPTIMIZED: parallel loading
     // Google Docs content overrides data.json content
     const loadedSnippets = {};
     // Collect all file IDs from chapter folders in the current story to validate snippets
@@ -2852,91 +2954,52 @@ async function loadStoryFromDrive(storyFolderId) {
           .filter(group => group && group.driveFolderId);
         
         if (groupsWithFolders.length > 0) {
-          // First pass: collect all file IDs from chapter folders
-          for (const group of groupsWithFolders) {
-            try {
-              const chapterFiles = await window.driveAPI.list(group.driveFolderId);
-              if (chapterFiles.files) {
-                chapterFiles.files.forEach(file => {
-                  if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
-                    chapterFileIdsInCurrentStory.add(file.id);
-                  }
-                });
-              }
-            } catch (error) {
-              console.warn(`Error collecting file IDs from chapter folder ${group.title}:`, error);
-            }
-          }
+          // OPTIMIZATION: List all chapter folders in parallel
+          const chapterListPromises = groupsWithFolders.map(group => 
+            window.driveAPI.list(group.driveFolderId).catch(err => {
+              console.warn(`Error listing chapter folder ${group.title}:`, err);
+              return { files: [] };
+            })
+          );
+          const chapterListResults = await Promise.all(chapterListPromises);
           
-          // Second pass: load from chapter subfolders
-          for (const group of groupsWithFolders) {
-            console.log(`Loading files from chapter folder: ${group.title} (${group.driveFolderId})`);
-            const chapterFiles = await window.driveAPI.list(group.driveFolderId);
-            console.log('Chapter files found:', chapterFiles.files?.length || 0);
-            if (chapterFiles.files && chapterFiles.files.length > 0) {
-              console.log('Chapter files:', chapterFiles.files.map(f => ({ name: f.name, id: f.id, mimeType: f.mimeType })));
-            } else {
-              console.warn(`No chapter files found in ${group.title}!`);
+          // First pass: collect all file IDs from chapter folders (metadata only)
+          chapterListResults.forEach((chapterFiles, index) => {
+            if (chapterFiles.files) {
+              chapterFiles.files.forEach(file => {
+                if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+                  chapterFileIdsInCurrentStory.add(file.id);
+                }
+              });
             }
+          });
+          
+          // Second pass: process files and create snippet metadata (without loading content yet)
+          const allFilesToProcess = [];
+          chapterListResults.forEach((chapterFiles, index) => {
+            const group = groupsWithFolders[index];
+            console.log(`Processing files from chapter folder: ${group.title} (${group.driveFolderId})`);
+            console.log('Chapter files found:', chapterFiles.files?.length || 0);
             
-            // Build structure from Google Docs - this is the source of truth
-            // Only show snippets that exist as Google Docs in the chapter folder
-            for (const file of chapterFiles.files || []) {
-              if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
-                // Remove .doc or .docx extension from filename
-                const fileName = file.name.replace(/\.docx?$/i, '').trim();
-                
-                // Try to find matching snippet in existing state
-                // Priority: match by driveFileId first (most reliable), then by title
-                // Only match snippets from data.json if their driveFileId matches this file OR they don't have a driveFileId yet
-                let snippet = Object.values(state.snippets).find(s => {
-                  if (s.groupId !== group.id) return false;
-                  // If snippet has a driveFileId, it must match the current file
-                  if (s.driveFileId) {
-                    return s.driveFileId === file.id;
-                  }
-                  // If no driveFileId, match by title (for backward compatibility)
-                  const snippetTitle = (s.title || '').trim();
-                  return snippetTitle.toLowerCase() === fileName.toLowerCase();
-                });
-                
-                console.log(`Processing file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
-                
-                // Load content from Google Doc
-                try {
-                  const docContent = await window.driveAPI.read(file.id);
-                  const snippetBody = (docContent.content || '').trim();
-                  console.log(`Loaded content from ${file.name}, length: ${snippetBody.length}, first 50: ${snippetBody.substring(0, 50)}`);
+            if (chapterFiles.files && chapterFiles.files.length > 0) {
+              for (const file of chapterFiles.files) {
+                if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+                  const fileName = file.name.replace(/\.docx?$/i, '').trim();
                   
-                  if (snippet) {
-                    // Update existing snippet with Google Doc content
-                    snippet.driveFileId = file.id;
-                    snippet.body = snippetBody;
-                    snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-                    snippet.chars = snippetBody.length;
-                    // Store last known Drive modifiedTime for conflict detection
-                    snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
-                    loadedSnippets[snippet.id] = snippet;
-                    
-                    // CRITICAL: Ensure snippet is in group's snippetIds array
-                    if (!group.snippetIds) {
-                      group.snippetIds = [];
+                  // Try to find matching snippet in existing state
+                  let snippet = Object.values(state.snippets).find(s => {
+                    if (s.groupId !== group.id) return false;
+                    if (s.driveFileId) {
+                      return s.driveFileId === file.id;
                     }
-                    if (!group.snippetIds.includes(snippet.id)) {
-                      group.snippetIds.push(snippet.id);
-                      console.log(`Added existing snippet ${snippet.id} to group ${group.id} snippetIds`);
-                    }
-                    console.log(`Updated snippet ${snippet.id} with content`);
-                  } else {
-                    // Create new snippet from Google Doc
-                    // Use the snippet ID from data.json ONLY if it doesn't have a driveFileId
-                    // (if it has a driveFileId, it must have matched above, so we shouldn't reuse it)
-                    // Otherwise generate a new ID
+                    const snippetTitle = (s.title || '').trim();
+                    return snippetTitle.toLowerCase() === fileName.toLowerCase();
+                  });
+                  
+                  // If no snippet found, create one
+                  if (!snippet) {
                     let snippetId = null;
-                    // Try to find snippet ID from data.json that might not have been matched
-                    // Only reuse if it has NO driveFileId (backward compatibility)
                     if (group.snippetIds) {
-                      // Check if any snippet in this group matches by title AND has no driveFileId
                       for (const sid of group.snippetIds) {
                         const existingSnippet = state.snippets[sid];
                         if (existingSnippet && existingSnippet.title === fileName && !existingSnippet.driveFileId) {
@@ -2955,52 +3018,89 @@ async function loadStoryFromDrive(storyFolderId) {
                       projectId: 'default',
                       groupId: group.id,
                       title: fileName,
-                      body: snippetBody,
-                      words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
-                      chars: snippetBody.length,
+                      body: '', // Will be loaded lazily
+                      words: 0, // Will be updated when content loads
+                      chars: 0,
                       updatedAt: file.modifiedTime || new Date().toISOString(),
                       version: 1,
                       driveFileId: file.id,
-                      lastKnownDriveModifiedTime: docContent.modifiedTime || file.modifiedTime || new Date().toISOString()
+                      lastKnownDriveModifiedTime: file.modifiedTime || new Date().toISOString(),
+                      _contentLoaded: false // Flag to track if content is loaded
                     };
-                    loadedSnippets[snippetId] = snippet;
-                    
-                    // CRITICAL: Add snippet to group's snippetIds array
-                    // This ensures the snippet is associated with the group for display
-                    if (!group.snippetIds) {
-                      group.snippetIds = [];
-                    }
-                    if (!group.snippetIds.includes(snippetId)) {
-                      group.snippetIds.push(snippetId);
-                      console.log(`Added snippet ${snippetId} to group ${group.id} snippetIds`);
-                    }
+                  } else {
+                    // Update existing snippet with file metadata
+                    snippet.driveFileId = file.id;
+                    snippet.lastKnownDriveModifiedTime = file.modifiedTime || new Date().toISOString();
+                    snippet._contentLoaded = false; // Mark as needing content load
+                  }
+                  
+                  // Ensure snippet is in group's snippetIds array
+                  if (!group.snippetIds) {
+                    group.snippetIds = [];
+                  }
+                  if (!group.snippetIds.includes(snippet.id)) {
+                    group.snippetIds.push(snippet.id);
+                  }
+                  
+                  allFilesToProcess.push({ file, snippet, group });
+                  loadedSnippets[snippet.id] = snippet;
+                }
+              }
+            }
+          });
+          
+          // OPTIMIZATION: Determine which snippet to load immediately (active or first)
+          const activeSnippetId = state.project.activeSnippetId;
+          const activeSnippetInfo = allFilesToProcess.find(f => f.snippet.id === activeSnippetId);
+          const firstSnippetInfo = allFilesToProcess[0];
+          const snippetToLoadNow = activeSnippetInfo || firstSnippetInfo;
+          
+          // Load content for the active/first snippet immediately
+          if (snippetToLoadNow) {
+            try {
+              const docContent = await window.driveAPI.read(snippetToLoadNow.file.id);
+              const snippetBody = (docContent.content || '').trim();
+              snippetToLoadNow.snippet.body = snippetBody;
+              snippetToLoadNow.snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+              snippetToLoadNow.snippet.chars = snippetBody.length;
+              snippetToLoadNow.snippet._contentLoaded = true;
+              snippetToLoadNow.snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || snippetToLoadNow.file.modifiedTime || new Date().toISOString();
+              console.log(`Loaded content for active snippet: ${snippetToLoadNow.snippet.title}`);
+            } catch (error) {
+              console.warn('Could not load content for active snippet:', error);
+            }
+          }
+          
+          // Load content for remaining snippets in parallel (but don't block UI)
+          // This happens in the background after the UI is ready
+          if (allFilesToProcess.length > 1) {
+            const remainingSnippets = allFilesToProcess.filter(f => f !== snippetToLoadNow);
+            // Load in batches of 5 to avoid overwhelming the API
+            const batchSize = 5;
+            for (let i = 0; i < remainingSnippets.length; i += batchSize) {
+              const batch = remainingSnippets.slice(i, i + batchSize);
+              Promise.all(batch.map(async ({ file, snippet }) => {
+                try {
+                  const docContent = await window.driveAPI.read(file.id);
+                  const snippetBody = (docContent.content || '').trim();
+                  snippet.body = snippetBody;
+                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                  snippet.chars = snippetBody.length;
+                  snippet._contentLoaded = true;
+                  snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
+                  // Update word count in UI when each batch completes
+                  if (i + batchSize >= remainingSnippets.length) {
+                    updateWordCount();
+                    updateGoalMeter();
                   }
                 } catch (error) {
-                  console.warn('Could not load content from Google Doc:', file.name, error);
-                  // Still create snippet entry even if content load fails
-                  // Only reuse snippets from data.json if they have no driveFileId OR their driveFileId matches
-                  if (!snippet) {
-                    const snippetId = Object.keys(state.snippets).find(sid => {
-                      const s = state.snippets[sid];
-                      if (!s || s.groupId !== group.id) return false;
-                      // If snippet has a driveFileId, it MUST match the current file
-                      if (s.driveFileId) {
-                        return s.driveFileId === file.id;
-                      }
-                      // If no driveFileId, match by title (backward compatibility)
-                      return s.title === fileName;
-                    });
-                    if (snippetId) {
-                      snippet = state.snippets[snippetId];
-                      snippet.driveFileId = file.id;
-                      // Try to get modifiedTime if available
-                      if (file.modifiedTime) {
-                        snippet.lastKnownDriveModifiedTime = file.modifiedTime;
-                      }
-                      loadedSnippets[snippetId] = snippet;
-                    }
-                  }
+                  console.warn(`Could not load content from Google Doc: ${file.name}`, error);
                 }
+              })).catch(err => console.warn('Batch load error:', err));
+              
+              // Small delay between batches to avoid rate limiting
+              if (i + batchSize < remainingSnippets.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
               }
             }
           }
@@ -3014,21 +3114,15 @@ async function loadStoryFromDrive(storyFolderId) {
           for (const file of chapterFiles.files || []) {
             if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
               const fileName = file.name.replace(/\.docx?$/i, '').trim();
-              // Match snippets from data.json - prioritize driveFileId match, then title match
-              // Only match by title if snippet has no driveFileId (to prevent cross-story contamination)
               let snippet = Object.values(state.snippets).find(s => {
-                // If snippet has a driveFileId, it MUST match the current file
                 if (s.driveFileId) {
                   return s.driveFileId === file.id;
                 }
-                // If no driveFileId, match by title (backward compatibility)
                 const snippetTitle = (s.title || '').trim();
                 return snippetTitle.toLowerCase() === fileName.toLowerCase();
               });
               
               if (!snippet) {
-                // Try to find by matching to first group
-                // Only reuse snippets that have NO driveFileId (backward compatibility)
                 if (state.project.groupIds.length > 0) {
                   const firstGroup = state.groups[state.project.groupIds[0]];
                   if (firstGroup && firstGroup.snippetIds) {
@@ -3052,6 +3146,7 @@ async function loadStoryFromDrive(storyFolderId) {
                   snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
                   snippet.chars = snippetBody.length;
                   snippet.lastKnownDriveModifiedTime = docContent.modifiedTime || file.modifiedTime || new Date().toISOString();
+                  snippet._contentLoaded = true;
                   loadedSnippets[snippet.id] = snippet;
                 } catch (error) {
                   console.warn('Could not load content from Google Doc:', file.name, error);
@@ -3065,7 +3160,7 @@ async function loadStoryFromDrive(storyFolderId) {
       }
     }
     
-    // Load People/Places/Things snippets from their respective Drive folders
+    // Load People/Places/Things snippets from their respective Drive folders - OPTIMIZED: parallel loading
     // This ensures we only load files from the current story's folders
     const peoplePlacesThingsSnippets = {};
     const folderKinds = [
@@ -3074,96 +3169,94 @@ async function loadStoryFromDrive(storyFolderId) {
       { folderId: state.drive.folderIds.things, kind: 'thing' }
     ];
     
-    for (const { folderId, kind } of folderKinds) {
-      if (!folderId) continue;
+    // OPTIMIZATION: List all People/Places/Things folders in parallel
+    const folderListPromises = folderKinds
+      .filter(fk => fk.folderId)
+      .map(({ folderId, kind }) => 
+        window.driveAPI.list(folderId).catch(err => {
+          console.warn(`Error listing ${kind} folder:`, err);
+          return { files: [], kind, folderId };
+        }).then(result => ({ ...result, kind, folderId }))
+      );
+    
+    const folderListResults = await Promise.all(folderListPromises);
+    
+    // Process all folders in parallel
+    const allPeoplePlacesThingsFiles = [];
+    folderListResults.forEach(({ files, kind, folderId }) => {
+      if (!files || !files.files) return;
+      console.log(`Processing ${kind} snippets from folder: ${folderId}`);
+      console.log(`${kind} files found:`, files.files?.length || 0);
       
-      try {
-        console.log(`Loading ${kind} snippets from folder: ${folderId}`);
-        const folderFiles = await window.driveAPI.list(folderId);
-        console.log(`${kind} files found:`, folderFiles.files?.length || 0);
-        
-        if (folderFiles.files && folderFiles.files.length > 0) {
-          for (const file of folderFiles.files) {
-            // Only process text files (People/Places/Things are saved as .txt)
-            if (file.mimeType === 'text/plain' && !file.trashed) {
-              // Remove .txt extension from filename
-              const fileName = file.name.replace(/\.txt$/i, '').trim();
-              
-              // Try to find matching snippet in existing state by title or driveFileId
-              let snippet = Object.values(state.snippets).find(s => {
-                const snippetTitle = (s.title || '').trim();
-                return s.kind === kind && 
-                       (snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id);
-              });
-              
-              console.log(`Processing ${kind} file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
-              
-              // Load content from file
-              try {
-                const fileContent = await window.driveAPI.read(file.id);
-                const snippetBody = (fileContent.content || '').trim();
-                console.log(`Loaded ${kind} content from ${file.name}, length: ${snippetBody.length}`);
-                
-                if (snippet) {
-                  // Update existing snippet with file content
-                  snippet.driveFileId = file.id;
-                  snippet.body = snippetBody;
-                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
-                  snippet.chars = snippetBody.length;
-                  snippet.lastKnownDriveModifiedTime = fileContent.modifiedTime || file.modifiedTime || new Date().toISOString();
-                  peoplePlacesThingsSnippets[snippet.id] = snippet;
-                  console.log(`Updated ${kind} snippet ${snippet.id} with content`);
-                } else {
-                  // Create new snippet from file
-                  // Try to find snippet ID from data.json that might not have been matched
-                  let snippetId = Object.keys(state.snippets).find(sid => {
-                    const s = state.snippets[sid];
-                    return s && s.kind === kind && s.title === fileName;
-                  });
-                  
-                  if (!snippetId) {
-                    snippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                  }
-                  
-                  snippet = {
-                    id: snippetId,
-                    projectId: 'default',
-                    kind: kind,
-                    title: fileName,
-                    body: snippetBody,
-                    words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
-                    chars: snippetBody.length,
-                    updatedAt: file.modifiedTime || new Date().toISOString(),
-                    version: 1,
-                    driveFileId: file.id,
-                    lastKnownDriveModifiedTime: fileContent.modifiedTime || file.modifiedTime || new Date().toISOString()
-                  };
-                  peoplePlacesThingsSnippets[snippetId] = snippet;
-                  console.log(`Created new ${kind} snippet ${snippetId} from file`);
-                }
-              } catch (error) {
-                console.warn(`Could not load content from ${kind} file:`, file.name, error);
-                // Still create snippet entry even if content load fails
-                if (!snippet) {
-                  const snippetId = Object.keys(state.snippets).find(sid => {
-                    const s = state.snippets[sid];
-                    return s && s.kind === kind && (s.title === fileName || s.driveFileId === file.id);
-                  });
-                  if (snippetId) {
-                    snippet = state.snippets[snippetId];
-                    snippet.driveFileId = file.id;
-                    if (file.modifiedTime) {
-                      snippet.lastKnownDriveModifiedTime = file.modifiedTime;
-                    }
-                    peoplePlacesThingsSnippets[snippetId] = snippet;
-                  }
-                }
-              }
+      files.files.forEach(file => {
+        if (file.mimeType === 'text/plain' && !file.trashed) {
+          const fileName = file.name.replace(/\.txt$/i, '').trim();
+          
+          let snippet = Object.values(state.snippets).find(s => {
+            const snippetTitle = (s.title || '').trim();
+            return s.kind === kind && 
+                   (snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id);
+          });
+          
+          if (!snippet) {
+            let snippetId = Object.keys(state.snippets).find(sid => {
+              const s = state.snippets[sid];
+              return s && s.kind === kind && s.title === fileName;
+            });
+            
+            if (!snippetId) {
+              snippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             }
+            
+            snippet = {
+              id: snippetId,
+              projectId: 'default',
+              kind: kind,
+              title: fileName,
+              body: '', // Will be loaded lazily
+              words: 0,
+              chars: 0,
+              updatedAt: file.modifiedTime || new Date().toISOString(),
+              version: 1,
+              driveFileId: file.id,
+              lastKnownDriveModifiedTime: file.modifiedTime || new Date().toISOString(),
+              _contentLoaded: false
+            };
+          } else {
+            snippet.driveFileId = file.id;
+            snippet.lastKnownDriveModifiedTime = file.modifiedTime || new Date().toISOString();
+            snippet._contentLoaded = false;
           }
+          
+          allPeoplePlacesThingsFiles.push({ file, snippet, kind });
+          peoplePlacesThingsSnippets[snippet.id] = snippet;
         }
-      } catch (error) {
-        console.warn(`Could not load ${kind} files:`, error);
+      });
+    });
+    
+    // Load content for People/Places/Things snippets in parallel batches (background)
+    if (allPeoplePlacesThingsFiles.length > 0) {
+      const batchSize = 5;
+      for (let i = 0; i < allPeoplePlacesThingsFiles.length; i += batchSize) {
+        const batch = allPeoplePlacesThingsFiles.slice(i, i + batchSize);
+        Promise.all(batch.map(async ({ file, snippet }) => {
+          try {
+            const fileContent = await window.driveAPI.read(file.id);
+            const snippetBody = (fileContent.content || '').trim();
+            snippet.body = snippetBody;
+            snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+            snippet.chars = snippetBody.length;
+            snippet._contentLoaded = true;
+            snippet.lastKnownDriveModifiedTime = fileContent.modifiedTime || file.modifiedTime || new Date().toISOString();
+          } catch (error) {
+            console.warn(`Could not load content from ${snippet.kind} file: ${file.name}`, error);
+          }
+        })).catch(err => console.warn('Batch load error for People/Places/Things:', err));
+        
+        // Small delay between batches
+        if (i + batchSize < allPeoplePlacesThingsFiles.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
     }
     
