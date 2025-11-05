@@ -99,7 +99,7 @@ body {
 }
 
 .story-info-btn:hover {
-  background-color: var(--color-gray-100);
+  background-color: var(--color-gray-200);
   color: var(--color-text-primary);
 }
 
