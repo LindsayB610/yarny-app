@@ -21,6 +21,7 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Token Refresh**: OAuth tokens automatically refresh when expired
 - **Privacy-Focused**: Uses `drive.file` scope - only accesses files created by the app
 - **Refresh from Drive**: Manual sync button to remove deleted stories from the list
+- **Comments/Tracked Changes Protection**: Warns users before overwriting Google Docs that contain comments or tracked changes, allowing them to cancel the save operation
 
 ### Story Management
 - **Create Stories**: Start new writing projects with organized folder structure
@@ -191,6 +192,7 @@ yarny-app/
 │   │   ├── drive-list.js                  # List files/folders
 │   │   ├── drive-read.js                  # Read file content (supports Google Docs)
 │   │   ├── drive-write.js                 # Write/update files (supports Google Docs)
+│   │   ├── drive-check-comments.js        # Check for comments/tracked changes in Google Docs
 │   │   ├── drive-create-folder.js         # Create folders
 │   │   ├── drive-delete-story.js          # Delete story folders
 │   │   ├── drive-delete-file.js           # Delete individual files (moves to trash)
@@ -260,6 +262,7 @@ yarny-app/
 9. **Background Autosave**: Changes automatically save when switching between snippets
 10. **Auto-Save**: Changes are automatically saved to Drive
 11. **Word Count**: Real-time tracking with goal progress indicator
+12. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
 
 ## Development
 
@@ -357,6 +360,7 @@ Each error entry includes:
 - `GET /.netlify/functions/drive-list?folderId=<id>` - List files/folders in a folder
 - `POST /.netlify/functions/drive-read` - Read file content (supports Google Docs)
 - `POST /.netlify/functions/drive-write` - Write/update file (creates Google Docs)
+- `POST /.netlify/functions/drive-check-comments` - Check for comments and tracked changes in a Google Doc
 - `POST /.netlify/functions/drive-create-folder` - Create a new folder
 - `POST /.netlify/functions/drive-delete-story` - Delete a story folder (optional Drive deletion)
 - `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get or create the main Yarny stories folder
@@ -422,6 +426,7 @@ The status updates automatically every 5 minutes. You can also specify a specifi
 
 ## Recent Improvements
 
+- **Comments/Tracked Changes Protection**: Warns users before overwriting Google Docs that contain comments or tracked changes, allowing them to cancel the save to preserve collaborative feedback
 - **Performance Optimizations**: Significantly faster editor loading with parallel file operations, lazy loading of snippet content, and optimized batch processing - UI becomes interactive almost immediately while content loads in the background
 - **Chapter Color Coding**: Interactive color picker with 12 accent colors for visual chapter organization
 - **Improved Snippet Creation UX**: Snippets appear instantly when created - no waiting for Drive file creation

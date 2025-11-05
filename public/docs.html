@@ -233,6 +233,25 @@
 
           <h3>Refreshing from Drive</h3>
           <p>Click the "↻ Refresh" button on the Stories page to sync any changes made outside of Yarny.</p>
+
+          <h3>Comments and Tracked Changes Protection</h3>
+          <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 16px 0; border-radius: var(--radius-sm);">
+            <p style="margin: 0; font-size: 14px; color: #92400E;">
+              <strong>⚠️ Important:</strong> Yarny preserves only the plain text content of your snippets. Comments and tracked changes (suggestions) in Google Docs are not preserved when saving from Yarny.
+            </p>
+          </div>
+          <p>If you've added comments or tracked changes to a snippet in Google Docs, Yarny will warn you before saving:</p>
+          <ol>
+            <li>When you try to save a snippet that has comments or tracked changes, a warning dialog will appear</li>
+            <li>The warning shows how many comments and whether tracked changes are present</li>
+            <li>You can choose to:
+              <ul>
+                <li><strong>Cancel</strong>: Stops the save operation so you can open the document in Google Docs to resolve comments/tracked changes first</li>
+                <li><strong>Save Anyway</strong>: Proceeds with the save, but comments and tracked changes will be permanently lost</li>
+              </ul>
+            </li>
+          </ol>
+          <p><strong>Best Practice:</strong> If you've received collaborative feedback (comments or suggestions) on a snippet in Google Docs, resolve them in Google Docs before saving from Yarny to preserve the feedback.</p>
         </section>
 
         <section class="docs-section" id="troubleshooting">
@@ -262,6 +281,7 @@
             <li>Look for the "Saving..." or "Saved" indicator in the editor</li>
             <li>Try refreshing the page</li>
             <li>Check your browser's console for error messages</li>
+            <li>If you see a warning about comments/tracked changes, you may need to resolve them in Google Docs first before saving from Yarny</li>
           </ul>
         </section>
 

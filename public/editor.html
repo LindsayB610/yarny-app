@@ -273,6 +273,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Comments/Tracked Changes Warning Modal -->
+    <div id="commentsWarningModal" class="modal hidden">
+      <div class="modal-overlay" onclick="cancelCommentsWarning()"></div>
+      <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="color: #F59E0B;">warning</i>
+            Warning: Comments or Tracked Changes Detected
+          </h2>
+          <button class="modal-close" onclick="cancelCommentsWarning()">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 16px; color: var(--color-text-primary);">
+            This Google Doc contains <strong id="commentsWarningCount">comments or tracked changes</strong> that will be lost if you save from Yarny.
+          </p>
+          <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin-bottom: 20px; border-radius: var(--radius-sm);">
+            <p style="margin: 0; font-size: 13px; color: #92400E;">
+              <strong>What will happen:</strong><br>
+              • All comments will be removed<br>
+              • All tracked changes (suggestions) will be lost<br>
+              • Only the plain text content will be preserved
+            </p>
+          </div>
+          <p style="margin-bottom: 20px; font-size: 13px; color: var(--color-text-secondary);">
+            If you want to preserve the comments or tracked changes, open the document in Google Docs first and resolve them before saving from Yarny.
+          </p>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="cancelCommentsWarning()">Cancel</button>
+            <button type="button" class="btn-danger" id="commentsWarningConfirmBtn" onclick="confirmCommentsWarning()">Save Anyway (Will Lose Comments/Changes)</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>

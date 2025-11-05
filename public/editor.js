@@ -1155,6 +1155,61 @@ window.resolveConflictWithLocal = resolveConflictWithLocal;
 window.resolveConflictWithDrive = resolveConflictWithDrive;
 window.cancelConflictResolution = cancelConflictResolution;
 
+// ============================================
+// Comments/Tracked Changes Warning
+// ============================================
+
+let commentsWarningPromise = null;
+
+function showCommentsWarningModal(commentInfo, snippetTitle) {
+  return new Promise((resolve) => {
+    commentsWarningPromise = resolve;
+    
+    const modal = document.getElementById('commentsWarningModal');
+    const countEl = document.getElementById('commentsWarningCount');
+    
+    // Build warning message
+    const parts = [];
+    if (commentInfo.hasComments && commentInfo.commentCount > 0) {
+      parts.push(`${commentInfo.commentCount} ${commentInfo.commentCount === 1 ? 'comment' : 'comments'}`);
+    }
+    if (commentInfo.hasTrackedChanges) {
+      parts.push('tracked changes');
+    }
+    
+    const warningText = parts.length > 0 ? parts.join(' and ') : 'comments or tracked changes';
+    countEl.textContent = warningText;
+    
+    modal.classList.remove('hidden');
+  });
+}
+
+function confirmCommentsWarning() {
+  const modal = document.getElementById('commentsWarningModal');
+  modal.classList.add('hidden');
+  
+  if (commentsWarningPromise) {
+    commentsWarningPromise({ action: 'confirm' });
+  }
+  
+  commentsWarningPromise = null;
+}
+
+function cancelCommentsWarning() {
+  const modal = document.getElementById('commentsWarningModal');
+  modal.classList.add('hidden');
+  
+  if (commentsWarningPromise) {
+    commentsWarningPromise({ action: 'cancel' });
+  }
+  
+  commentsWarningPromise = null;
+}
+
+// Expose comments warning functions globally
+window.confirmCommentsWarning = confirmCommentsWarning;
+window.cancelCommentsWarning = cancelCommentsWarning;
+
 // Save current editor content to Drive (async, non-blocking)
 // Returns a promise that resolves when save completes
 async function saveCurrentEditorToDrive() {
@@ -2941,6 +2996,31 @@ async function saveSnippetToDrive(snippet) {
     return;
   }
   
+  // Check for comments/tracked changes before saving (only for existing files)
+  if (snippet.driveFileId) {
+    try {
+      const commentInfo = await window.driveAPI.checkComments(snippet.driveFileId);
+      
+      if (commentInfo.hasComments || commentInfo.hasTrackedChanges) {
+        // Show warning and wait for user confirmation
+        const userResponse = await showCommentsWarningModal(commentInfo, snippet.title);
+        
+        if (userResponse.action === 'cancel') {
+          // User cancelled, don't save
+          throw new Error('Save cancelled by user due to comments/tracked changes');
+        }
+        // If user confirmed, continue with save below
+      }
+    } catch (error) {
+      // If check fails or user cancels, re-throw to stop the save
+      if (error.message.includes('cancelled')) {
+        throw error;
+      }
+      // For other errors in checking, log but continue (don't block saves)
+      console.warn('Could not check for comments/tracked changes:', error.message);
+    }
+  }
+  
   try {
     const fileName = `${snippet.title}.doc`;
     // If driveFileId exists, update the existing file; otherwise create a new one
@@ -4159,5 +4239,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Close delete modal on overlay click
   document.querySelector('#deleteModal .modal-overlay').addEventListener('click', closeDeleteModal);
+  
+  // Close comments warning modal on overlay click
+  document.querySelector('#commentsWarningModal .modal-overlay').addEventListener('click', cancelCommentsWarning);
 });
 

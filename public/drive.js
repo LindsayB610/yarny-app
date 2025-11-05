@@ -164,6 +164,26 @@ async function renameDriveFile(fileId, newName) {
   }
 }
 
+// Check for comments and tracked changes in a Google Doc
+async function checkCommentsAndChanges(fileId) {
+  try {
+    const response = await axios.post(`${API_BASE}/drive-check-comments`,
+      { fileId },
+      { withCredentials: true }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Drive check comments error:', error);
+    // If check fails, assume no comments/changes to avoid blocking saves
+    return {
+      hasComments: false,
+      hasTrackedChanges: false,
+      commentCount: 0
+    };
+  }
+}
+
 // ============================================
 // Shared Progress Meter Functions
 // Used by both editor and stories page to ensure consistency
@@ -221,5 +241,6 @@ window.driveAPI = {
   write: writeDriveFile,
   delete: deleteDriveFile,
   rename: renameDriveFile,
-  checkAuth: checkDriveAuth
+  checkAuth: checkDriveAuth,
+  checkComments: checkCommentsAndChanges
 };
