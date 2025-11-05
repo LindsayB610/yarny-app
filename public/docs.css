@@ -50,7 +50,7 @@ html {
 .docs-header-content {
   max-width: none;
   margin: 0;
-  padding: 0 var(--space-lg) 0 300px; /* Account for sidebar */
+  padding: 0 var(--space-lg) 0 calc(280px + var(--space-lg)); /* Account for sidebar width */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -114,8 +114,8 @@ html {
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   position: fixed;
   left: 0;
-  top: 0;
-  height: 100vh;
+  top: 80px; /* Start below header */
+  height: calc(100vh - 80px); /* Full height minus header */
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 50;
@@ -389,6 +389,7 @@ html {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: var(--space-3xl) 0;
   margin-top: var(--space-6xl);
+  padding-left: 280px; /* Account for sidebar width */
 }
 
 .docs-footer p {
@@ -441,6 +442,8 @@ html {
     transform: translateX(-100%);
     transition: transform var(--transition-base);
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    top: 0; /* Full height on mobile when open */
+    height: 100vh;
   }
 
   .docs-sidebar.open {
@@ -455,6 +458,10 @@ html {
 
   .docs-header-content {
     padding: 0 var(--space-lg) 0 calc(var(--space-lg) + 40px);
+  }
+
+  .docs-footer {
+    padding-left: 0; /* Remove sidebar padding on mobile */
   }
 
   .mobile-menu-toggle {
