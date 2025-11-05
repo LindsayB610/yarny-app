@@ -249,15 +249,16 @@ yarny-app/
 
 ### Stories Management
 
-1. All stories are stored as folders in a `Yarny` folder in Google Drive
-2. The `Yarny` folder is automatically created on first story creation
-3. Each story contains organized subfolders:
+1. All stories are stored as folders in a `Yarny Stories` folder in Google Drive
+2. The `Yarny Stories` folder is automatically created on first story creation
+3. **Migration**: Existing users with the old `Yarny` folder will have it automatically renamed to `Yarny Stories` on their next access
+4. Each story contains organized subfolders:
    - `Chapters`: Contains chapter-specific subfolders (e.g., "Chapter 1", "Chapter 2") with snippets stored as Google Docs
    - `People`, `Places`, `Things`: Snippets stored as text files
-4. Story data is stored as JSON files within each story folder
-5. Chapter snippets are stored as Google Docs for rich text support, organized in chapter subfolders
-6. People/Places/Things snippets are stored as text files
-7. Stories can be deleted from the UI (with optional Drive deletion)
+5. Story data is stored as JSON files within each story folder
+6. Chapter snippets are stored as Google Docs for rich text support, organized in chapter subfolders
+7. People/Places/Things snippets are stored as text files
+8. Stories can be deleted from the UI (with optional Drive deletion)
 
 ### Editor Features
 

@@ -339,7 +339,7 @@ async function checkDriveAuth() {
   }
 }
 
-// Get or create Yarny folder
+// Get or create Yarny Stories folder
 async function getOrCreateYarnyStoriesFolder() {
   // Check cache first
   const cached = getCachedYarnyFolderId();
@@ -357,8 +357,8 @@ async function getOrCreateYarnyStoriesFolder() {
     cacheYarnyFolderId(response.data.id);
     return response.data.id;
   } catch (error) {
-    console.error('Error getting Yarny folder:', error);
-    const errorMessage = error.response?.data?.error || error.message || 'Failed to get Yarny folder';
+    console.error('Error getting Yarny Stories folder:', error);
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to get Yarny Stories folder';
     throw new Error(errorMessage);
   }
 }
@@ -381,7 +381,7 @@ async function createDriveFolder(folderName, parentFolderId) {
   }
 }
 
-// List folders (stories) in Yarny directory
+// List folders (stories) in Yarny Stories directory
 async function listStories() {
   try {
     if (!yarnyStoriesFolderId) {
@@ -1195,12 +1195,12 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
 // Create new story
 async function createStory(storyName, metadata = {}) {
   try {
-    // Ensure Yarny folder exists
+    // Ensure Yarny Stories folder exists
     if (!yarnyStoriesFolderId) {
       await getOrCreateYarnyStoriesFolder();
     }
     
-    // Create story folder in Yarny
+    // Create story folder in Yarny Stories
     const storyFolder = await createDriveFolder(storyName, yarnyStoriesFolderId);
     
     // Initialize story structure with folders and files
