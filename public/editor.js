@@ -327,6 +327,12 @@ function renderStoryList() {
           })();
         }
         
+        // Clear editor content immediately to prevent showing old content
+        const editorEl = document.getElementById('editorContent');
+        if (editorEl) {
+          setEditorTextContent(editorEl, '');
+        }
+        
         // Switch immediately (responsive UI)
         state.project.activeSnippetId = targetSnippetId;
         renderStoryList();
@@ -596,6 +602,12 @@ function renderSnippetsList() {
               console.error('Failed to save local version after conflict resolution:', error);
             }
           })();
+        }
+        
+        // Clear editor content immediately to prevent showing old content
+        const editorEl = document.getElementById('editorContent');
+        if (editorEl) {
+          setEditorTextContent(editorEl, '');
         }
         
         // Switch immediately (responsive UI)
