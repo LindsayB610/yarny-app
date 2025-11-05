@@ -341,13 +341,8 @@ async function checkDriveAuth() {
 
 // Get or create Yarny Stories folder
 async function getOrCreateYarnyStoriesFolder() {
-  // Check cache first
-  const cached = getCachedYarnyFolderId();
-  if (cached) {
-    yarnyStoriesFolderId = cached;
-    return cached;
-  }
-  
+  // Always check with backend to allow migration to run
+  // The backend will handle migration from "Yarny" to "Yarny Stories"
   try {
     const response = await axios.get(`${API_BASE}/drive-get-or-create-yarny-stories`, {
       withCredentials: true
@@ -355,9 +350,22 @@ async function getOrCreateYarnyStoriesFolder() {
     
     yarnyStoriesFolderId = response.data.id;
     cacheYarnyFolderId(response.data.id);
+    
+    // If migration occurred, log it
+    if (response.data.migrated) {
+      console.log('Folder migrated from "Yarny" to "Yarny Stories"');
+    }
+    
     return response.data.id;
   } catch (error) {
     console.error('Error getting Yarny Stories folder:', error);
+    // If backend call fails, fall back to cache if available
+    const cached = getCachedYarnyFolderId();
+    if (cached) {
+      console.warn('Using cached folder ID due to backend error');
+      yarnyStoriesFolderId = cached;
+      return cached;
+    }
     const errorMessage = error.response?.data?.error || error.message || 'Failed to get Yarny Stories folder';
     throw new Error(errorMessage);
   }
