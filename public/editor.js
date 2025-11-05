@@ -653,6 +653,8 @@ function renderSnippetsList() {
       const snippetEl = document.createElement('div');
       snippetEl.className = `note-item ${snippet.id === state.project.activeSnippetId ? 'active' : ''}`; // Keep CSS class for now
       snippetEl.dataset.snippetId = snippet.id;
+      snippetEl.draggable = true;
+      snippetEl.title = 'Drag to reorder snippets';
       snippetEl.innerHTML = `
         <div class="note-title">${escapeHtml(snippet.title)}</div>
         <div class="note-excerpt">${escapeHtml(snippet.body ? (snippet.body.substring(0, 60) + (snippet.body.length > 60 ? '...' : '')) : 'Loading...')}</div>
@@ -732,6 +734,16 @@ function renderSnippetsList() {
           updateFooter();
         });
       });
+      
+      // Drag & drop handlers for People/Places/Things snippets
+      snippetEl.addEventListener('dragstart', (e) => handleNoteDragStart(e, snippet.id, snippet.kind));
+      snippetEl.addEventListener('dragover', handleDragOver);
+      snippetEl.addEventListener('dragleave', handleDragLeave);
+      snippetEl.addEventListener('drop', (e) => {
+        handleNoteDrop(e, snippet.id, snippet.kind);
+        snippetEl.classList.remove('drag-over');
+      });
+      snippetEl.addEventListener('dragend', handleDragEnd);
       
       // Right-click context menu
       snippetEl.addEventListener('contextmenu', (e) => {
@@ -1357,7 +1369,7 @@ function highlightSearchMatches() {
 // ============================================
 
 let draggedElement = null;
-let draggedType = null; // 'group' or 'snippet'
+let draggedType = null; // 'group', 'snippet', or 'note'
 let draggedId = null;
 let draggedGroupId = null;
 
@@ -1378,12 +1390,21 @@ function handleSnippetDragStart(e, snippetId, groupId) {
   e.dataTransfer.effectAllowed = 'move';
 }
 
+function handleNoteDragStart(e, snippetId, kind) {
+  draggedElement = e.target.closest('.note-item');
+  draggedType = 'note';
+  draggedId = snippetId;
+  draggedGroupId = kind; // Store kind in draggedGroupId for notes
+  draggedElement.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   
   // Add visual feedback for valid drop targets
-  const targetEl = e.target.closest('.group-header, .snippet-item');
+  const targetEl = e.target.closest('.group-header, .snippet-item, .note-item');
   if (targetEl && !targetEl.classList.contains('dragging')) {
     targetEl.classList.add('drag-over');
   }
@@ -1391,7 +1412,7 @@ function handleDragOver(e) {
 
 function handleDragLeave(e) {
   // Remove visual feedback when leaving drop target
-  const targetEl = e.target.closest('.group-header, .snippet-item');
+  const targetEl = e.target.closest('.group-header, .snippet-item, .note-item');
   if (targetEl) {
     targetEl.classList.remove('drag-over');
   }
@@ -1472,6 +1493,48 @@ function handleSnippetDrop(e, targetSnippetId, targetGroupId) {
         // Save the new order to Drive
         saveStoryDataToDrive().catch(error => {
           console.error('Failed to save snippet order:', error);
+        });
+      }
+    }
+  }
+}
+
+function handleNoteDrop(e, targetSnippetId, targetKind) {
+  e.preventDefault();
+  
+  if (draggedType === 'note' && draggedId !== targetSnippetId && draggedGroupId === targetKind) {
+    // Only allow reordering within the same kind (People/Places/Things)
+    const draggedSnippet = state.snippets[draggedId];
+    const targetSnippet = state.snippets[targetSnippetId];
+    
+    if (draggedSnippet && targetSnippet && draggedSnippet.kind === targetKind) {
+      // Get all snippets of the same kind, sorted by position
+      const sameKindSnippets = state.project.snippetIds
+        .map(id => state.snippets[id])
+        .filter(s => s && s.kind === targetKind)
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+      
+      // Find indices
+      const draggedIndex = sameKindSnippets.findIndex(s => s.id === draggedId);
+      const targetIndex = sameKindSnippets.findIndex(s => s.id === targetSnippetId);
+      
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        // Remove from current position
+        sameKindSnippets.splice(draggedIndex, 1);
+        
+        // Insert at target position
+        sameKindSnippets.splice(targetIndex, 0, draggedSnippet);
+        
+        // Update positions
+        sameKindSnippets.forEach((snippet, index) => {
+          snippet.position = index;
+        });
+        
+        renderSnippetsList();
+        
+        // Save the new order to Drive
+        saveStoryDataToDrive().catch(error => {
+          console.error('Failed to save note order:', error);
         });
       }
     }
