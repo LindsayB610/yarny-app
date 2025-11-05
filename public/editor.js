@@ -391,16 +391,22 @@ function renderStoryList() {
         }
         
         // Clear editor content immediately to prevent showing old content
+        // First, set activeSnippetId to null and render empty editor
         const editorEl = document.getElementById('editorContent');
         if (editorEl) {
           setEditorTextContent(editorEl, '');
         }
         
-        // Switch immediately (responsive UI)
+        // Set the new active snippet ID and update sidebar immediately
         state.project.activeSnippetId = targetSnippetId;
         renderStoryList();
-        renderEditor();
-        updateFooter();
+        
+        // Use requestAnimationFrame to ensure the empty state is painted before showing new content
+        requestAnimationFrame(() => {
+          // Now render the editor with the new snippet's content
+          renderEditor();
+          updateFooter();
+        });
       });
 
       // Drag & drop handlers
@@ -677,11 +683,16 @@ function renderSnippetsList() {
           setEditorTextContent(editorEl, '');
         }
         
-        // Switch immediately (responsive UI)
+        // Set the new active snippet ID and update sidebar immediately
         state.project.activeSnippetId = targetSnippetId;
         renderSnippetsList();
-        renderEditor();
-        updateFooter();
+        
+        // Use requestAnimationFrame to ensure the empty state is painted before showing new content
+        requestAnimationFrame(() => {
+          // Now render the editor with the new snippet's content
+          renderEditor();
+          updateFooter();
+        });
       });
       
       // Right-click context menu
