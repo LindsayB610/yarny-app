@@ -794,7 +794,9 @@ async function renderStories(stories, skipLoadingState = false) {
         const todayWords = cachedProgress.dailyInfo.todayWords || 0;
         const todayTarget = cachedProgress.dailyInfo.target || 0;
         const daysLeft = cachedProgress.dailyInfo.remaining || 0;
+        const todayExceedsGoal = todayTarget > 0 && todayWords > todayTarget;
         const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
+        const exceedsClass = todayExceedsGoal ? ' exceeds-goal' : '';
         todayBadgeHtml = `
           <div class="story-today-badge">
             <span class="story-today-label">Today</span>
@@ -803,12 +805,14 @@ async function renderStories(stories, skipLoadingState = false) {
           </div>
           ${todayTarget > 0 ? `
             <div class="story-today-progress-bar-container">
-              <div class="story-today-progress-bar" style="width: ${todayPercentage}%"></div>
+              <div class="story-today-progress-bar${exceedsClass}" style="width: ${todayPercentage}%"></div>
             </div>
           ` : ''}
         `;
       }
       
+      const exceedsGoal = cachedProgress.wordGoal > 0 && cachedProgress.totalWords > cachedProgress.wordGoal;
+      const exceedsClass = exceedsGoal ? ' exceeds-goal' : '';
       progressHtml = `
         <div class="story-progress-container">
           <div class="story-progress-info">
@@ -816,7 +820,7 @@ async function renderStories(stories, skipLoadingState = false) {
             ${todayBadgeHtml}
           </div>
           <div class="story-progress-bar-container">
-            <div class="story-progress-bar" style="width: ${percentage}%"></div>
+            <div class="story-progress-bar${exceedsClass}" style="width: ${percentage}%"></div>
           </div>
         </div>
       `;
@@ -877,11 +881,19 @@ async function renderStories(stories, skipLoadingState = false) {
         const progressBar = card.querySelector('.story-progress-bar');
         const progressInfo = card.querySelector('.story-progress-info');
         
-        // Use shared update function to ensure consistency with editor progress meter
+        // Update overall progress bar
         if (progressText && progressBar) {
           window.updateProgressMeter(progressText, progressBar, progress.totalWords, progress.wordGoal);
           // Add "words" suffix for story cards (editor shows just numbers)
           progressText.textContent += ' words';
+          
+          // Handle overflow - add exceeds-goal class if progress exceeds goal
+          const exceedsGoal = progress.wordGoal > 0 && progress.totalWords > progress.wordGoal;
+          if (exceedsGoal) {
+            progressBar.classList.add('exceeds-goal');
+          } else {
+            progressBar.classList.remove('exceeds-goal');
+          }
         } else {
           console.warn(`Could not find progress elements for story ${story.name}`);
         }
@@ -897,6 +909,7 @@ async function renderStories(stories, skipLoadingState = false) {
             const todayWords = progress.dailyInfo.todayWords || 0;
             const todayTarget = progress.dailyInfo.target || 0;
             const daysLeft = progress.dailyInfo.remaining || 0;
+            const todayExceedsGoal = todayTarget > 0 && todayWords > todayTarget;
             const todayPercentage = todayTarget > 0 ? Math.min(100, Math.round((todayWords / todayTarget) * 100)) : 0;
             
             // Create or update today badge
@@ -929,6 +942,13 @@ async function renderStories(stories, skipLoadingState = false) {
                 todayProgressBar.appendChild(bar);
               }
               bar.style.width = `${todayPercentage}%`;
+              
+              // Handle overflow - add exceeds-goal class if progress exceeds goal
+              if (todayExceedsGoal) {
+                bar.classList.add('exceeds-goal');
+              } else {
+                bar.classList.remove('exceeds-goal');
+              }
             } else if (todayProgressBar) {
               todayProgressBar.remove();
             }

@@ -269,6 +269,7 @@ body {
   gap: var(--space-xs);
 }
 
+
 .story-progress-text {
   font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
@@ -300,32 +301,46 @@ body {
 }
 
 .story-progress-bar-container {
-  height: 6px;
-  background-color: rgba(0, 0, 0, 0.08);
-  border-radius: 3px;
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
   overflow: hidden;
+  margin-top: var(--space-xs);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .story-progress-bar {
   height: 100%;
-  background-color: var(--color-primary);
+  background: linear-gradient(90deg, var(--color-primary) 0%, #059669 100%);
   transition: width var(--transition-base);
-  border-radius: 3px;
+  border-radius: 4px;
+}
+
+/* Progress exceeding goal - show in gold/yellow gradient */
+.story-progress-bar.exceeds-goal {
+  background: linear-gradient(90deg, #F59E0B 0%, #FBBF24 100%);
 }
 
 .story-today-progress-bar-container {
-  height: 4px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
   overflow: hidden;
   margin-top: var(--space-xs);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .story-today-progress-bar {
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.9);
   transition: width var(--transition-base);
-  border-radius: 2px;
+  border-radius: 3px;
+}
+
+/* Today progress exceeding goal - show in gold/yellow */
+.story-today-progress-bar.exceeds-goal {
+  background: linear-gradient(90deg, #FBBF24 0%, #FCD34D 100%);
 }
 
 .story-delete-btn {
