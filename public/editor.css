@@ -567,6 +567,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-shrink: 0;
 }
 
 #versionLabel {
@@ -584,6 +585,11 @@ body {
 .last-modified {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+  min-width: 180px;
+  line-height: 1.4;
+  display: inline-block;
+  white-space: normal;
+  flex-shrink: 0;
 }
 
 .logout-button {
