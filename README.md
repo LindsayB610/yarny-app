@@ -33,7 +33,8 @@ A simple, secure writing tool with Google Sign-In authentication and Google Driv
 - **Chapter Color Coding**: Color-code chapters with 12 accent colors using an interactive color picker
 - **Snippets**: Individual writing snippets within chapters
 - **Instant Snippet Creation**: New snippets appear immediately - start typing while Drive file creation happens in the background
-- **Drag & Drop**: Reorder chapters and snippets by dragging
+- **Drag & Drop**: Reorder chapters and snippets by dragging - changes are automatically saved to Google Drive
+- **Chapter Collapse/Expand**: Minimize chapters you're not working on to focus on specific sections
 - **Search**: Full-text search across all snippets and chapters
 - **Tags**: Create and apply tags to snippets for better organization
 - **Tag Filtering**: Filter snippets by selected tags
@@ -248,14 +249,15 @@ yarny-app/
 2. **Chapter Color Coding**: Click the color chip next to a chapter title to open a color picker with 12 accent colors (red, orange, amber, yellow, lime, emerald, teal, cyan, blue, indigo, violet, fuchsia)
 3. **Snippets**: Individual pieces of writing within chapters
 4. **Instant Snippet Creation**: Click the "+" button to add a snippet - it appears immediately so you can start typing right away, while Drive file creation happens in the background
-5. **Drag & Drop**: Reorder chapters and snippets by dragging
-6. **Search**: Searches across snippet titles and content
-7. **Tags**: Create tags and apply to snippets for organization
-8. **Tag Filtering**: Show only snippets matching selected tags
-9. **Snippets**: Unified snippet system - all content (chapters, people, places, things) uses snippets
-10. **Background Autosave**: Changes automatically save when switching between snippets
-11. **Auto-Save**: Changes are automatically saved to Drive
-12. **Word Count**: Real-time tracking with goal progress indicator
+5. **Drag & Drop**: Reorder chapters and snippets by dragging - order is automatically saved to Google Drive
+6. **Chapter Collapse/Expand**: Click the collapse button on any chapter header to minimize it and focus on the chapters you're working on
+7. **Search**: Searches across snippet titles and content
+8. **Tags**: Create tags and apply to snippets for organization
+9. **Tag Filtering**: Show only snippets matching selected tags
+10. **Snippets**: Unified snippet system - all content (chapters, people, places, things) uses snippets
+11. **Background Autosave**: Changes automatically save when switching between snippets
+12. **Auto-Save**: Changes are automatically saved to Drive
+13. **Word Count**: Real-time tracking with goal progress indicator
 
 ## Development
 
