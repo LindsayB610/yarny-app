@@ -184,6 +184,42 @@ body {
   opacity: 0.5;
 }
 
+.group-header.drag-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+  border-radius: 6px;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 120ms ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.collapse-btn .material-icons {
+  font-size: 18px;
+  transition: transform 200ms ease;
+}
+
+.collapse-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #333;
+  opacity: 1;
+}
+
 .group-color-chip {
   width: 12px;
   height: 12px;
@@ -265,6 +301,16 @@ body {
 .group-snippets {
   margin-left: 20px;
   margin-top: 4px;
+  overflow: hidden;
+  transition: max-height 300ms ease, opacity 200ms ease;
+  max-height: 5000px;
+  opacity: 1;
+}
+
+.group-snippets.collapsed {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
 }
 
 .snippet-item {
@@ -290,6 +336,11 @@ body {
 .snippet-item.dragging {
   opacity: 0.5;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.snippet-item.drag-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px dashed rgba(59, 130, 246, 0.5);
 }
 
 .snippet-title {

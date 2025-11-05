@@ -120,6 +120,7 @@ const state = {
   },
   groups: {},
   snippets: {}, // Unified: all snippets (chapters have groupId, People/Places/Things have kind)
+  collapsedGroups: new Set(), // Track which groups are collapsed
   // Drive integration
   drive: {
     storyFolderId: null,
@@ -142,6 +143,7 @@ function initializeState() {
   state.project.groupIds = [];
   state.project.snippetIds = [];
   state.project.activeSnippetId = null;
+  state.collapsedGroups = new Set();
 
   // Render empty UI
   renderStoryList();
@@ -152,6 +154,46 @@ function initializeState() {
   updateFooter();
   updateGoalMeter();
   updateSaveStatus(); // Initialize save status and logout button warning
+}
+
+// Load collapsed groups from localStorage
+function loadCollapsedGroups() {
+  if (!state.drive.storyFolderId) return;
+  
+  try {
+    const key = `yarny_collapsed_${state.drive.storyFolderId}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const collapsed = JSON.parse(saved);
+      state.collapsedGroups = new Set(collapsed);
+    }
+  } catch (error) {
+    console.error('Failed to load collapsed groups:', error);
+  }
+}
+
+// Save collapsed groups to localStorage
+function saveCollapsedGroups() {
+  if (!state.drive.storyFolderId) return;
+  
+  try {
+    const key = `yarny_collapsed_${state.drive.storyFolderId}`;
+    const collapsed = Array.from(state.collapsedGroups);
+    localStorage.setItem(key, JSON.stringify(collapsed));
+  } catch (error) {
+    console.error('Failed to save collapsed groups:', error);
+  }
+}
+
+// Toggle group collapse state
+function toggleGroupCollapse(groupId) {
+  if (state.collapsedGroups.has(groupId)) {
+    state.collapsedGroups.delete(groupId);
+  } else {
+    state.collapsedGroups.add(groupId);
+  }
+  saveCollapsedGroups();
+  renderStoryList();
 }
 
 // ============================================
@@ -191,6 +233,19 @@ function renderStoryList() {
     headerEl.className = 'group-header';
     headerEl.draggable = true;
     
+    // Collapse/expand button
+    const collapseBtn = document.createElement('button');
+    collapseBtn.className = 'collapse-btn';
+    collapseBtn.title = state.collapsedGroups.has(group.id) ? 'Expand chapter' : 'Collapse chapter';
+    const collapseIcon = document.createElement('i');
+    collapseIcon.className = 'material-icons';
+    collapseIcon.textContent = state.collapsedGroups.has(group.id) ? 'expand_more' : 'expand_less';
+    collapseBtn.appendChild(collapseIcon);
+    collapseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleGroupCollapse(group.id);
+    });
+    
     const colorChip = document.createElement('div');
     colorChip.className = 'group-color-chip';
     colorChip.style.backgroundColor = group.color || '#3B82F6';
@@ -220,6 +275,7 @@ function renderStoryList() {
       addSnippetToGroup(group.id);
     });
     
+    headerEl.appendChild(collapseBtn);
     headerEl.appendChild(colorChip);
     headerEl.appendChild(titleSpan);
     headerEl.appendChild(countSpan);
@@ -228,7 +284,11 @@ function renderStoryList() {
     // Drag & drop handlers
     headerEl.addEventListener('dragstart', (e) => handleGroupDragStart(e, group.id));
     headerEl.addEventListener('dragover', handleDragOver);
-    headerEl.addEventListener('drop', (e) => handleGroupDrop(e, group.id));
+    headerEl.addEventListener('dragleave', handleDragLeave);
+    headerEl.addEventListener('drop', (e) => {
+      handleGroupDrop(e, group.id);
+      headerEl.classList.remove('drag-over');
+    });
     headerEl.addEventListener('dragend', handleDragEnd);
     
     // Right-click context menu
@@ -239,6 +299,9 @@ function renderStoryList() {
 
     const snippetsEl = document.createElement('div');
     snippetsEl.className = 'group-snippets';
+    if (state.collapsedGroups.has(group.id)) {
+      snippetsEl.classList.add('collapsed');
+    }
 
     const snippets = group.snippetIds
       .map(id => state.snippets[id])
@@ -343,7 +406,11 @@ function renderStoryList() {
       // Drag & drop handlers
       snippetEl.addEventListener('dragstart', (e) => handleSnippetDragStart(e, snippet.id, group.id));
       snippetEl.addEventListener('dragover', handleDragOver);
-      snippetEl.addEventListener('drop', (e) => handleSnippetDrop(e, snippet.id, group.id));
+      snippetEl.addEventListener('dragleave', handleDragLeave);
+      snippetEl.addEventListener('drop', (e) => {
+        handleSnippetDrop(e, snippet.id, group.id);
+        snippetEl.classList.remove('drag-over');
+      });
       snippetEl.addEventListener('dragend', handleDragEnd);
       
       // Right-click context menu
@@ -1265,6 +1332,20 @@ function handleSnippetDragStart(e, snippetId, groupId) {
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
+  
+  // Add visual feedback for valid drop targets
+  const targetEl = e.target.closest('.group-header, .snippet-item');
+  if (targetEl && !targetEl.classList.contains('dragging')) {
+    targetEl.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  // Remove visual feedback when leaving drop target
+  const targetEl = e.target.closest('.group-header, .snippet-item');
+  if (targetEl) {
+    targetEl.classList.remove('drag-over');
+  }
 }
 
 function handleGroupDrop(e, targetGroupId) {
@@ -1290,6 +1371,11 @@ function handleGroupDrop(e, targetGroupId) {
       });
       
       renderStoryList();
+      
+      // Save the new order to Drive
+      saveStoryDataToDrive().catch(error => {
+        console.error('Failed to save group order:', error);
+      });
     }
   }
 }
@@ -1306,27 +1392,54 @@ function handleSnippetDrop(e, targetSnippetId, targetGroupId) {
       const targetGroup = state.groups[targetGroupId];
       
       if (sourceGroup && targetGroup) {
-        // Remove from source
-        const sourceIndex = sourceGroup.snippetIds.indexOf(draggedId);
-        sourceGroup.snippetIds.splice(sourceIndex, 1);
-        
-        // Add to target
-        const targetIndex = targetGroup.snippetIds.indexOf(targetSnippetId);
-        targetGroup.snippetIds.splice(targetIndex, 0, draggedId);
-        
-        // Update snippet's group
-        draggedSnippet.groupId = targetGroupId;
+        // Check if we're moving within the same group or between groups
+        if (draggedGroupId === targetGroupId) {
+          // Reordering within the same group
+          const snippetIds = sourceGroup.snippetIds;
+          const draggedIndex = snippetIds.indexOf(draggedId);
+          const targetIndex = snippetIds.indexOf(targetSnippetId);
+          
+          // Remove from current position
+          snippetIds.splice(draggedIndex, 1);
+          
+          // Insert at target position
+          snippetIds.splice(targetIndex, 0, draggedId);
+        } else {
+          // Moving between groups
+          // Remove from source
+          const sourceIndex = sourceGroup.snippetIds.indexOf(draggedId);
+          sourceGroup.snippetIds.splice(sourceIndex, 1);
+          
+          // Add to target
+          const targetIndex = targetGroup.snippetIds.indexOf(targetSnippetId);
+          targetGroup.snippetIds.splice(targetIndex, 0, draggedId);
+          
+          // Update snippet's group
+          draggedSnippet.groupId = targetGroupId;
+        }
         
         renderStoryList();
+        
+        // Save the new order to Drive
+        saveStoryDataToDrive().catch(error => {
+          console.error('Failed to save snippet order:', error);
+        });
       }
     }
   }
 }
 
 function handleDragEnd() {
+  // Remove dragging class from dragged element
   if (draggedElement) {
     draggedElement.classList.remove('dragging');
   }
+  
+  // Remove drag-over classes from all elements
+  document.querySelectorAll('.drag-over').forEach(el => {
+    el.classList.remove('drag-over');
+  });
+  
   draggedElement = null;
   draggedType = null;
   draggedId = null;
@@ -2922,6 +3035,10 @@ async function loadStoryFromDrive(storyFolderId) {
     // Clear existing state first
     state.snippets = {};
     state.groups = {};
+    state.collapsedGroups = new Set(); // Reset collapsed groups
+    
+    // Load collapsed groups state for this story
+    loadCollapsedGroups();
     
     // Load data.json for metadata (but we'll prioritize Google Docs for content)
     // CRITICAL: Store the data.json file ID so we save to the same file
