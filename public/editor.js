@@ -2651,6 +2651,9 @@ async function loadStoryFromDrive(storyFolderId) {
     // Load individual files from chapter subfolders - this is the source of truth
     // Google Docs content overrides data.json content
     const loadedSnippets = {};
+    // Collect all file IDs from chapter folders in the current story to validate snippets
+    const chapterFileIdsInCurrentStory = new Set();
+    
     if (state.drive.folderIds.chapters) {
       try {
         // Load files from each chapter's subfolder
@@ -2659,7 +2662,23 @@ async function loadStoryFromDrive(storyFolderId) {
           .filter(group => group && group.driveFolderId);
         
         if (groupsWithFolders.length > 0) {
-          // Load from chapter subfolders
+          // First pass: collect all file IDs from chapter folders
+          for (const group of groupsWithFolders) {
+            try {
+              const chapterFiles = await window.driveAPI.list(group.driveFolderId);
+              if (chapterFiles.files) {
+                chapterFiles.files.forEach(file => {
+                  if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
+                    chapterFileIdsInCurrentStory.add(file.id);
+                  }
+                });
+              }
+            } catch (error) {
+              console.warn(`Error collecting file IDs from chapter folder ${group.title}:`, error);
+            }
+          }
+          
+          // Second pass: load from chapter subfolders
           for (const group of groupsWithFolders) {
             console.log(`Loading files from chapter folder: ${group.title} (${group.driveFolderId})`);
             const chapterFiles = await window.driveAPI.list(group.driveFolderId);
@@ -2678,11 +2697,17 @@ async function loadStoryFromDrive(storyFolderId) {
                 const fileName = file.name.replace(/\.docx?$/i, '').trim();
                 
                 // Try to find matching snippet in existing state
-                // Match by title (case-insensitive) or driveFileId, and ensure it belongs to this group
+                // Priority: match by driveFileId first (most reliable), then by title
+                // Only match snippets from data.json if their driveFileId matches this file OR they don't have a driveFileId yet
                 let snippet = Object.values(state.snippets).find(s => {
+                  if (s.groupId !== group.id) return false;
+                  // If snippet has a driveFileId, it must match the current file
+                  if (s.driveFileId) {
+                    return s.driveFileId === file.id;
+                  }
+                  // If no driveFileId, match by title (for backward compatibility)
                   const snippetTitle = (s.title || '').trim();
-                  return (s.groupId === group.id) && 
-                         (snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id);
+                  return snippetTitle.toLowerCase() === fileName.toLowerCase();
                 });
                 
                 console.log(`Processing file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
@@ -2705,15 +2730,17 @@ async function loadStoryFromDrive(storyFolderId) {
                     console.log(`Updated snippet ${snippet.id} with content`);
                   } else {
                     // Create new snippet from Google Doc
-                    // Use the snippet ID from data.json if we can find it by group membership
+                    // Use the snippet ID from data.json ONLY if it doesn't have a driveFileId
+                    // (if it has a driveFileId, it must have matched above, so we shouldn't reuse it)
                     // Otherwise generate a new ID
                     let snippetId = null;
                     // Try to find snippet ID from data.json that might not have been matched
+                    // Only reuse if it has NO driveFileId (backward compatibility)
                     if (group.snippetIds) {
-                      // Check if any snippet in this group matches
+                      // Check if any snippet in this group matches by title AND has no driveFileId
                       for (const sid of group.snippetIds) {
                         const existingSnippet = state.snippets[sid];
-                        if (existingSnippet && existingSnippet.title === fileName) {
+                        if (existingSnippet && existingSnippet.title === fileName && !existingSnippet.driveFileId) {
                           snippetId = sid;
                           break;
                         }
@@ -2742,10 +2769,17 @@ async function loadStoryFromDrive(storyFolderId) {
                 } catch (error) {
                   console.warn('Could not load content from Google Doc:', file.name, error);
                   // Still create snippet entry even if content load fails
+                  // Only reuse snippets from data.json if they have no driveFileId OR their driveFileId matches
                   if (!snippet) {
                     const snippetId = Object.keys(state.snippets).find(sid => {
                       const s = state.snippets[sid];
-                      return s && s.groupId === group.id && (s.title === fileName || s.driveFileId === file.id);
+                      if (!s || s.groupId !== group.id) return false;
+                      // If snippet has a driveFileId, it MUST match the current file
+                      if (s.driveFileId) {
+                        return s.driveFileId === file.id;
+                      }
+                      // If no driveFileId, match by title (backward compatibility)
+                      return s.title === fileName;
                     });
                     if (snippetId) {
                       snippet = state.snippets[snippetId];
@@ -2771,19 +2805,27 @@ async function loadStoryFromDrive(storyFolderId) {
           for (const file of chapterFiles.files || []) {
             if (file.mimeType === 'application/vnd.google-apps.document' && !file.trashed) {
               const fileName = file.name.replace(/\.docx?$/i, '').trim();
+              // Match snippets from data.json - prioritize driveFileId match, then title match
+              // Only match by title if snippet has no driveFileId (to prevent cross-story contamination)
               let snippet = Object.values(state.snippets).find(s => {
+                // If snippet has a driveFileId, it MUST match the current file
+                if (s.driveFileId) {
+                  return s.driveFileId === file.id;
+                }
+                // If no driveFileId, match by title (backward compatibility)
                 const snippetTitle = (s.title || '').trim();
-                return snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id;
+                return snippetTitle.toLowerCase() === fileName.toLowerCase();
               });
               
               if (!snippet) {
                 // Try to find by matching to first group
+                // Only reuse snippets that have NO driveFileId (backward compatibility)
                 if (state.project.groupIds.length > 0) {
                   const firstGroup = state.groups[state.project.groupIds[0]];
                   if (firstGroup && firstGroup.snippetIds) {
                     for (const sid of firstGroup.snippetIds) {
                       const existingSnippet = state.snippets[sid];
-                      if (existingSnippet && existingSnippet.title === fileName) {
+                      if (existingSnippet && existingSnippet.title === fileName && !existingSnippet.driveFileId) {
                         snippet = existingSnippet;
                         break;
                       }
@@ -2814,21 +2856,194 @@ async function loadStoryFromDrive(storyFolderId) {
       }
     }
     
-    // Merge loaded snippets from Google Docs with snippets from data.json
-    // This ensures snippets show up even if Google Doc creation failed
+    // Load People/Places/Things snippets from their respective Drive folders
+    // This ensures we only load files from the current story's folders
+    const peoplePlacesThingsSnippets = {};
+    const folderKinds = [
+      { folderId: state.drive.folderIds.people, kind: 'person' },
+      { folderId: state.drive.folderIds.places, kind: 'place' },
+      { folderId: state.drive.folderIds.things, kind: 'thing' }
+    ];
+    
+    for (const { folderId, kind } of folderKinds) {
+      if (!folderId) continue;
+      
+      try {
+        console.log(`Loading ${kind} snippets from folder: ${folderId}`);
+        const folderFiles = await window.driveAPI.list(folderId);
+        console.log(`${kind} files found:`, folderFiles.files?.length || 0);
+        
+        if (folderFiles.files && folderFiles.files.length > 0) {
+          for (const file of folderFiles.files) {
+            // Only process text files (People/Places/Things are saved as .txt)
+            if (file.mimeType === 'text/plain' && !file.trashed) {
+              // Remove .txt extension from filename
+              const fileName = file.name.replace(/\.txt$/i, '').trim();
+              
+              // Try to find matching snippet in existing state by title or driveFileId
+              let snippet = Object.values(state.snippets).find(s => {
+                const snippetTitle = (s.title || '').trim();
+                return s.kind === kind && 
+                       (snippetTitle.toLowerCase() === fileName.toLowerCase() || s.driveFileId === file.id);
+              });
+              
+              console.log(`Processing ${kind} file: ${file.name}, fileName: ${fileName}, found snippet:`, snippet ? snippet.id : 'none');
+              
+              // Load content from file
+              try {
+                const fileContent = await window.driveAPI.read(file.id);
+                const snippetBody = (fileContent.content || '').trim();
+                console.log(`Loaded ${kind} content from ${file.name}, length: ${snippetBody.length}`);
+                
+                if (snippet) {
+                  // Update existing snippet with file content
+                  snippet.driveFileId = file.id;
+                  snippet.body = snippetBody;
+                  snippet.words = snippetBody.split(/\s+/).filter(w => w.length > 0).length;
+                  snippet.chars = snippetBody.length;
+                  snippet.lastKnownDriveModifiedTime = fileContent.modifiedTime || file.modifiedTime || new Date().toISOString();
+                  peoplePlacesThingsSnippets[snippet.id] = snippet;
+                  console.log(`Updated ${kind} snippet ${snippet.id} with content`);
+                } else {
+                  // Create new snippet from file
+                  // Try to find snippet ID from data.json that might not have been matched
+                  let snippetId = Object.keys(state.snippets).find(sid => {
+                    const s = state.snippets[sid];
+                    return s && s.kind === kind && s.title === fileName;
+                  });
+                  
+                  if (!snippetId) {
+                    snippetId = 'snippet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                  }
+                  
+                  snippet = {
+                    id: snippetId,
+                    projectId: 'default',
+                    kind: kind,
+                    title: fileName,
+                    body: snippetBody,
+                    words: snippetBody.split(/\s+/).filter(w => w.length > 0).length,
+                    chars: snippetBody.length,
+                    updatedAt: file.modifiedTime || new Date().toISOString(),
+                    version: 1,
+                    driveFileId: file.id,
+                    lastKnownDriveModifiedTime: fileContent.modifiedTime || file.modifiedTime || new Date().toISOString()
+                  };
+                  peoplePlacesThingsSnippets[snippetId] = snippet;
+                  console.log(`Created new ${kind} snippet ${snippetId} from file`);
+                }
+              } catch (error) {
+                console.warn(`Could not load content from ${kind} file:`, file.name, error);
+                // Still create snippet entry even if content load fails
+                if (!snippet) {
+                  const snippetId = Object.keys(state.snippets).find(sid => {
+                    const s = state.snippets[sid];
+                    return s && s.kind === kind && (s.title === fileName || s.driveFileId === file.id);
+                  });
+                  if (snippetId) {
+                    snippet = state.snippets[snippetId];
+                    snippet.driveFileId = file.id;
+                    if (file.modifiedTime) {
+                      snippet.lastKnownDriveModifiedTime = file.modifiedTime;
+                    }
+                    peoplePlacesThingsSnippets[snippetId] = snippet;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Could not load ${kind} files:`, error);
+      }
+    }
+    
+    // Merge loaded snippets from Google Docs and People/Places/Things files with snippets from data.json
+    // This ensures snippets show up even if file creation failed
     // Save original snippets from data.json before merging
     const originalSnippets = { ...state.snippets };
-    const mergedSnippets = { ...state.snippets };
+    const mergedSnippets = {};
     
-    // Add or update snippets from Google Docs
+    // First, add all snippets loaded from Drive folders (chapters and People/Places/Things)
+    // These are the source of truth - only files that exist in the current story's folders
     Object.keys(loadedSnippets).forEach(snippetId => {
       mergedSnippets[snippetId] = loadedSnippets[snippetId];
     });
+    Object.keys(peoplePlacesThingsSnippets).forEach(snippetId => {
+      mergedSnippets[snippetId] = peoplePlacesThingsSnippets[snippetId];
+    });
     
-    // If no Google Docs were loaded but we have snippets in data.json, keep them
-    if (Object.keys(loadedSnippets).length === 0 && Object.keys(state.snippets).length > 0) {
-      console.log('No Google Docs found, but data.json has snippets - keeping snippets from data.json');
-      // Keep all snippets from data.json (they're already in mergedSnippets from line above)
+    // Then, add snippets from data.json that don't have a matching Drive file in the current story
+    // This ensures we only include snippets that belong to the current story
+    // Build a set of all driveFileIds from files loaded from Drive folders
+    const driveFileIdsFromCurrentStory = new Set();
+    Object.values(loadedSnippets).forEach(s => {
+      if (s.driveFileId) driveFileIdsFromCurrentStory.add(s.driveFileId);
+    });
+    Object.values(peoplePlacesThingsSnippets).forEach(s => {
+      if (s.driveFileId) driveFileIdsFromCurrentStory.add(s.driveFileId);
+    });
+    // Also add chapter file IDs from the collection pass
+    chapterFileIdsInCurrentStory.forEach(fileId => {
+      driveFileIdsFromCurrentStory.add(fileId);
+    });
+    
+    Object.keys(originalSnippets).forEach(snippetId => {
+      const snippet = originalSnippets[snippetId];
+      // Only include if it's not already in mergedSnippets (i.e., wasn't loaded from Drive)
+      if (!mergedSnippets[snippetId]) {
+        // CRITICAL: If snippet has a driveFileId, ONLY include it if that file is in the current story's Drive folders
+        // If driveFileId doesn't match any file in current story, it belongs to another story - REJECT IT
+        if (snippet.driveFileId) {
+          if (driveFileIdsFromCurrentStory.has(snippet.driveFileId)) {
+            // This snippet's file is in the current story, include it
+            mergedSnippets[snippetId] = snippet;
+          } else {
+            // This snippet's driveFileId points to a file NOT in the current story - REJECT IT
+            console.log(`REJECTING snippet ${snippetId} "${snippet.title}" - driveFileId ${snippet.driveFileId} not found in current story's folders`);
+          }
+          // Don't process further for snippets with driveFileId
+          return;
+        }
+        
+        // Snippets without driveFileId (for backward compatibility)
+        if (!snippet.driveFileId) {
+          // Snippet doesn't have a driveFileId yet, include it for backward compatibility
+          // Only do this if we're not loading from Drive (backward compatibility mode)
+          if (snippet.groupId) {
+            // Chapter snippet - only include if no chapters were loaded from Drive
+            if (Object.keys(loadedSnippets).length === 0) {
+              mergedSnippets[snippetId] = snippet;
+            }
+          } else if (snippet.kind) {
+            // People/Places/Things snippet - check if folder exists and if files were loaded
+            const folderKinds = [
+              { folderId: state.drive.folderIds.people, kind: 'person' },
+              { folderId: state.drive.folderIds.places, kind: 'place' },
+              { folderId: state.drive.folderIds.things, kind: 'thing' }
+            ];
+            const matchingFolder = folderKinds.find(fk => fk.kind === snippet.kind);
+            if (matchingFolder && !matchingFolder.folderId) {
+              // Folder doesn't exist, include from data.json
+              mergedSnippets[snippetId] = snippet;
+            } else if (matchingFolder && matchingFolder.folderId) {
+              // Folder exists - only include if no files were loaded from that folder (backward compatibility)
+              const wasLoaded = Object.values(peoplePlacesThingsSnippets).some(s => 
+                s.kind === snippet.kind && s.title === snippet.title
+              );
+              if (!wasLoaded) {
+                mergedSnippets[snippetId] = snippet;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // If no files were loaded from Drive but we have snippets in data.json, keep them
+    if (Object.keys(loadedSnippets).length === 0 && Object.keys(peoplePlacesThingsSnippets).length === 0 && Object.keys(originalSnippets).length > 0) {
+      console.log('No Drive files found, but data.json has snippets - keeping snippets from data.json');
+      // Already handled above in the merge logic
     }
     
     // Ensure groups are created for all snippets
@@ -2853,14 +3068,22 @@ async function loadStoryFromDrive(storyFolderId) {
         console.log(`Group ${groupId} validSnippetIds after filtering:`, validSnippetIds);
         
         // If this is the first group and validSnippetIds is empty, ensure snippets from data.json are included
+        // BUT ONLY if they don't have a driveFileId OR their driveFileId matches a file in current story
         // This ensures the initial chapter/snippet from data.json is preserved even if Google Doc wasn't created
         if (validSnippetIds.length === 0 && groupId === state.project.groupIds[0] && group.snippetIds.length > 0) {
-          console.log('First group has no valid snippets, ensuring snippets from data.json are included');
+          console.log('First group has no valid snippets, checking data.json snippets');
           // Add any missing snippets from data.json to mergedSnippets
+          // BUT filter out any that have driveFileIds pointing to other stories
           group.snippetIds.forEach(sid => {
-            if (originalSnippets[sid] && !mergedSnippets[sid]) {
-              mergedSnippets[sid] = originalSnippets[sid];
-              console.log(`Added missing snippet ${sid} from data.json to mergedSnippets`);
+            const originalSnippet = originalSnippets[sid];
+            if (originalSnippet && !mergedSnippets[sid]) {
+              // Only add if it has no driveFileId OR if driveFileId matches current story
+              if (!originalSnippet.driveFileId || driveFileIdsFromCurrentStory.has(originalSnippet.driveFileId)) {
+                mergedSnippets[sid] = originalSnippet;
+                console.log(`Added missing snippet ${sid} from data.json to mergedSnippets`);
+              } else {
+                console.log(`REJECTING snippet ${sid} "${originalSnippet.title}" - driveFileId points to another story`);
+              }
             }
           });
           // Recalculate validSnippetIds after adding missing snippets
