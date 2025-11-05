@@ -1572,6 +1572,10 @@ function closeColorPicker() {
 
 let currentContextType = null; // 'group', 'snippet', or 'note'
 let currentContextId = null;
+let renameContextType = null; // Persist context for rename modal
+let renameContextId = null;
+let deleteContextType = null; // Persist context for delete modal
+let deleteContextId = null;
 
 function showContextMenu(event, type, id) {
   const menu = document.getElementById('contextMenu');
@@ -1613,6 +1617,10 @@ function hideContextMenu() {
 // ============================================
 
 function openRenameModal() {
+  // Save context before hiding menu (which clears them)
+  renameContextType = currentContextType;
+  renameContextId = currentContextId;
+  
   hideContextMenu();
   
   const modal = document.getElementById('renameModal');
@@ -1622,13 +1630,13 @@ function openRenameModal() {
   let currentTitle = '';
   let itemType = '';
   
-  if (currentContextType === 'group') {
-    const group = state.groups[currentContextId];
+  if (renameContextType === 'group') {
+    const group = state.groups[renameContextId];
     if (!group) return;
     currentTitle = group.title;
     itemType = 'Chapter';
-  } else if (currentContextType === 'snippet') {
-    const snippet = state.snippets[currentContextId];
+  } else if (renameContextType === 'snippet') {
+    const snippet = state.snippets[renameContextId];
     if (!snippet) return;
     currentTitle = snippet.title;
     itemType = 'Snippet';
@@ -1650,8 +1658,8 @@ function openRenameModal() {
 function closeRenameModal() {
   const modal = document.getElementById('renameModal');
   modal.classList.add('hidden');
-  currentContextType = null;
-  currentContextId = null;
+  renameContextType = null;
+  renameContextId = null;
 }
 
 async function saveRename() {
@@ -1664,7 +1672,7 @@ async function saveRename() {
     return;
   }
   
-  if (!currentContextType || !currentContextId) {
+  if (!renameContextType || !renameContextId) {
     closeRenameModal();
     return;
   }
@@ -1673,8 +1681,8 @@ async function saveRename() {
   saveBtn.textContent = 'Saving...';
   
   try {
-    if (currentContextType === 'group') {
-      const group = state.groups[currentContextId];
+    if (renameContextType === 'group') {
+      const group = state.groups[renameContextId];
       if (!group) return;
       
       group.title = newName;
@@ -1684,9 +1692,9 @@ async function saveRename() {
       
       // Re-render
       renderStoryList();
-    } else if (currentContextType === 'snippet') {
+    } else if (renameContextType === 'snippet') {
       // Handle both chapter snippets and People/Places/Things snippets
-      const snippet = state.snippets[currentContextId];
+      const snippet = state.snippets[renameContextId];
       if (!snippet) return;
       
       snippet.title = newName;
@@ -1745,6 +1753,10 @@ window.saveRename = saveRename;
 // ============================================
 
 function openDeleteModal() {
+  // Save context before hiding menu (which clears them)
+  deleteContextType = currentContextType;
+  deleteContextId = currentContextId;
+  
   hideContextMenu();
   
   const modal = document.getElementById('deleteModal');
@@ -1753,13 +1765,13 @@ function openDeleteModal() {
   let itemName = '';
   let itemType = '';
   
-  if (currentContextType === 'group') {
-    const group = state.groups[currentContextId];
+  if (deleteContextType === 'group') {
+    const group = state.groups[deleteContextId];
     if (!group) return;
     itemName = group.title;
     itemType = 'chapter';
-  } else if (currentContextType === 'snippet') {
-    const snippet = state.snippets[currentContextId];
+  } else if (deleteContextType === 'snippet') {
+    const snippet = state.snippets[deleteContextId];
     if (!snippet) return;
     itemName = snippet.title;
     itemType = 'snippet';
@@ -1774,14 +1786,14 @@ function openDeleteModal() {
 function closeDeleteModal() {
   const modal = document.getElementById('deleteModal');
   modal.classList.add('hidden');
-  currentContextType = null;
-  currentContextId = null;
+  deleteContextType = null;
+  deleteContextId = null;
 }
 
 async function confirmDelete() {
   const confirmBtn = document.getElementById('deleteConfirmBtn');
   
-  if (!currentContextType || !currentContextId) {
+  if (!deleteContextType || !deleteContextId) {
     closeDeleteModal();
     return;
   }
@@ -1790,8 +1802,8 @@ async function confirmDelete() {
   confirmBtn.textContent = 'Deleting...';
   
   try {
-    if (currentContextType === 'group') {
-      const group = state.groups[currentContextId];
+    if (deleteContextType === 'group') {
+      const group = state.groups[deleteContextId];
       if (!group) return;
       
       // Delete all snippets in this group first
@@ -1801,8 +1813,8 @@ async function confirmDelete() {
       }
       
       // Remove group from state
-      delete state.groups[currentContextId];
-      const groupIndex = state.project.groupIds.indexOf(currentContextId);
+      delete state.groups[deleteContextId];
+      const groupIndex = state.project.groupIds.indexOf(deleteContextId);
       if (groupIndex > -1) {
         state.project.groupIds.splice(groupIndex, 1);
       }
@@ -1816,14 +1828,14 @@ async function confirmDelete() {
       // Clear editor if this group's snippet was active
       if (state.project.activeSnippetId) {
         const activeSnippet = state.snippets[state.project.activeSnippetId];
-        if (!activeSnippet || activeSnippet.groupId === currentContextId) {
+        if (!activeSnippet || activeSnippet.groupId === deleteContextId) {
           state.project.activeSnippetId = null;
           renderEditor();
           updateFooter();
         }
       }
-    } else if (currentContextType === 'snippet') {
-      await deleteSnippet(currentContextId);
+    } else if (deleteContextType === 'snippet') {
+      await deleteSnippet(deleteContextId);
       // Note: 'note' type removed - all are snippets now
     }
     
