@@ -687,56 +687,96 @@ async function checkSnippetConflict(snippetId) {
       return null; // Can't check without parent folder
     }
     
-    const files = await window.driveAPI.list(parentFolderId);
-    const driveFile = files.files?.find(f => f.id === snippet.driveFileId);
-    
-    if (!driveFile || !driveFile.modifiedTime) {
-      // File not found or no modifiedTime, no conflict to check
-      return null;
-    }
-    
-    const driveModifiedTime = driveFile.modifiedTime;
-    const lastKnownTime = snippet.lastKnownDriveModifiedTime;
-    
-    // If we don't have a last known time, load it now (first time checking this snippet)
-    if (!lastKnownTime) {
-      // Load the file to get its current modifiedTime
-      const fileData = await window.driveAPI.read(snippet.driveFileId);
-      if (fileData.modifiedTime) {
-        snippet.lastKnownDriveModifiedTime = fileData.modifiedTime;
-      }
-      return null; // First check, no conflict yet
-    }
-    
-    // Compare timestamps
-    if (driveModifiedTime && lastKnownTime) {
-      const driveTime = new Date(driveModifiedTime).getTime();
-      const lastKnownTimeMs = new Date(lastKnownTime).getTime();
+    try {
+      const files = await window.driveAPI.list(parentFolderId);
+      const driveFile = files.files?.find(f => f.id === snippet.driveFileId);
       
-      // If Drive version is newer, check if content actually differs
-      if (driveTime > lastKnownTimeMs) {
-        // Get the Drive content to compare
-        const driveData = await window.driveAPI.read(snippet.driveFileId);
-        const driveContent = (driveData.content || '').trim();
-        const localContent = (snippet.body || '').trim();
+      if (!driveFile || !driveFile.modifiedTime) {
+        // File not found or no modifiedTime, no conflict to check
+        // This could happen if the folder was deleted/renamed, but we'll handle gracefully
+        return null;
+      }
+      
+      const driveModifiedTime = driveFile.modifiedTime;
+      const lastKnownTime = snippet.lastKnownDriveModifiedTime;
+      
+      // If we don't have a last known time, load it now (first time checking this snippet)
+      if (!lastKnownTime) {
+        // Load the file to get its current modifiedTime
+        const fileData = await window.driveAPI.read(snippet.driveFileId);
+        if (fileData.modifiedTime) {
+          snippet.lastKnownDriveModifiedTime = fileData.modifiedTime;
+        }
+        return null; // First check, no conflict yet
+      }
+      
+      // Compare timestamps
+      if (driveModifiedTime && lastKnownTime) {
+        const driveTime = new Date(driveModifiedTime).getTime();
+        const lastKnownTimeMs = new Date(lastKnownTime).getTime();
         
-        // Only report conflict if content actually differs
-        if (driveContent !== localContent) {
-          return {
-            snippet: snippet,
-            driveContent: driveContent,
-            driveModifiedTime: driveModifiedTime,
-            localContent: localContent,
-            localModifiedTime: snippet.updatedAt || lastKnownTime
-          };
-        } else {
-          // Content is the same, just update the timestamp
-          snippet.lastKnownDriveModifiedTime = driveModifiedTime;
+        // If Drive version is newer, check if content actually differs
+        if (driveTime > lastKnownTimeMs) {
+          // Get the Drive content to compare
+          const driveData = await window.driveAPI.read(snippet.driveFileId);
+          const driveContent = (driveData.content || '').trim();
+          const localContent = (snippet.body || '').trim();
+          
+          // Only report conflict if content actually differs
+          if (driveContent !== localContent) {
+            return {
+              snippet: snippet,
+              driveContent: driveContent,
+              driveModifiedTime: driveModifiedTime,
+              localContent: localContent,
+              localModifiedTime: snippet.updatedAt || lastKnownTime
+            };
+          } else {
+            // Content is the same, just update the timestamp
+            snippet.lastKnownDriveModifiedTime = driveModifiedTime;
+          }
         }
       }
+      
+      return null; // No conflict
+    } catch (error) {
+      // If listing the parent folder fails (e.g., folder was deleted/renamed),
+      // try to find the file directly by ID as a fallback
+      console.warn('Could not list parent folder, trying direct file lookup:', error);
+      try {
+        const fileData = await window.driveAPI.read(snippet.driveFileId);
+        if (fileData.modifiedTime) {
+          const lastKnownTime = snippet.lastKnownDriveModifiedTime;
+          if (lastKnownTime) {
+            const driveTime = new Date(fileData.modifiedTime).getTime();
+            const lastKnownTimeMs = new Date(lastKnownTime).getTime();
+            
+            if (driveTime > lastKnownTimeMs) {
+              const driveContent = (fileData.content || '').trim();
+              const localContent = (snippet.body || '').trim();
+              
+              if (driveContent !== localContent) {
+                return {
+                  snippet: snippet,
+                  driveContent: driveContent,
+                  driveModifiedTime: fileData.modifiedTime,
+                  localContent: localContent,
+                  localModifiedTime: snippet.updatedAt || lastKnownTime
+                };
+              } else {
+                snippet.lastKnownDriveModifiedTime = fileData.modifiedTime;
+              }
+            }
+          } else {
+            snippet.lastKnownDriveModifiedTime = fileData.modifiedTime;
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Error in fallback conflict check:', fallbackError);
+        // File might have been deleted, no conflict to check
+      }
+      return null;
     }
-    
-    return null; // No conflict
   } catch (error) {
     console.error('Error checking snippet conflict:', error);
     // Don't block user if conflict check fails
@@ -1333,7 +1373,9 @@ async function saveStoryDataToDrive() {
       snippetIds: Object.keys(state.snippets),
       groupIds: state.project.groupIds,
       wordGoal: state.project.wordGoal || 3000,
-      genre: state.project.genre || ''
+      genre: state.project.genre || '',
+      // Store folder IDs so they persist even if folders are renamed
+      driveFolderIds: state.drive.folderIds || {}
     };
     
     const projectFile = files.files.find(f => f.name === 'project.json');
@@ -2184,7 +2226,7 @@ function getCurrentStory() {
 // ============================================
 
 // Load story folder structure from Drive
-async function loadStoryFolders(storyFolderId) {
+async function loadStoryFolders(storyFolderId, savedFolderIds = null) {
   try {
     state.drive.storyFolderId = storyFolderId;
     
@@ -2192,16 +2234,36 @@ async function loadStoryFolders(storyFolderId) {
     const files = await window.driveAPI.list(storyFolderId);
     const folders = {};
     
+    // First, try to find folders by saved IDs (if available)
+    if (savedFolderIds) {
+      files.files.forEach(file => {
+        if (file.mimeType === 'application/vnd.google-apps.folder' && !file.trashed) {
+          // Check if this folder matches any saved ID
+          if (savedFolderIds.chapters === file.id) {
+            folders.chapters = file.id;
+          } else if (savedFolderIds.people === file.id) {
+            folders.people = file.id;
+          } else if (savedFolderIds.places === file.id) {
+            folders.places = file.id;
+          } else if (savedFolderIds.things === file.id) {
+            folders.things = file.id;
+          }
+        }
+      });
+    }
+    
+    // Fallback to name-based matching for any folders not found by ID
     files.files.forEach(file => {
-      if (file.mimeType === 'application/vnd.google-apps.folder') {
+      if (file.mimeType === 'application/vnd.google-apps.folder' && !file.trashed) {
         const name = file.name.toLowerCase();
-        if (name === 'chapters') {
+        // Only use name matching if we didn't already find this folder by ID
+        if (name === 'chapters' && !folders.chapters) {
           folders.chapters = file.id;
-        } else if (name === 'people') {
+        } else if (name === 'people' && !folders.people) {
           folders.people = file.id;
-        } else if (name === 'places') {
+        } else if (name === 'places' && !folders.places) {
           folders.places = file.id;
-        } else if (name === 'things') {
+        } else if (name === 'things' && !folders.things) {
           folders.things = file.id;
         }
       }
@@ -2215,7 +2277,7 @@ async function loadStoryFolders(storyFolderId) {
   }
 }
 
-// Map chapter subfolders to groups by matching folder names to group titles
+// Map chapter subfolders to groups by matching folder IDs first, then by name
 async function mapChapterFoldersToGroups(chaptersFolderId) {
   try {
     const chapterFolders = await window.driveAPI.list(chaptersFolderId);
@@ -2225,18 +2287,31 @@ async function mapChapterFoldersToGroups(chaptersFolderId) {
       file => file.mimeType === 'application/vnd.google-apps.folder' && !file.trashed
     );
     
-    // Match subfolders to groups by name
+    // First pass: Match by ID (if groups already have driveFolderId from data.json)
+    subfolders.forEach(folder => {
+      const matchingGroup = Object.values(state.groups).find(
+        group => group.driveFolderId === folder.id
+      );
+      
+      if (matchingGroup) {
+        // Verify the folder still exists and update if needed
+        console.log(`Matched chapter folder by ID: "${folder.name}" (${folder.id}) to group ${matchingGroup.id}`);
+        // driveFolderId already set, no need to update
+      }
+    });
+    
+    // Second pass: Match by name for any groups that don't have a folder ID yet
     subfolders.forEach(folder => {
       const folderName = folder.name.trim();
-      // Find a group with a matching title
+      // Find a group with a matching title that doesn't already have a driveFolderId
       const matchingGroup = Object.values(state.groups).find(
-        group => group.title && group.title.trim() === folderName
+        group => !group.driveFolderId && group.title && group.title.trim() === folderName
       );
       
       if (matchingGroup) {
         // Store the folder ID in the group
         matchingGroup.driveFolderId = folder.id;
-        console.log(`Mapped chapter folder "${folderName}" (${folder.id}) to group ${matchingGroup.id}`);
+        console.log(`Mapped chapter folder by name: "${folderName}" (${folder.id}) to group ${matchingGroup.id}`);
       }
     });
   } catch (error) {
@@ -2341,10 +2416,8 @@ async function saveSnippetToDriveByKind(snippet) {
 // Load story data from Drive
 async function loadStoryFromDrive(storyFolderId) {
   try {
-    // Load folder structure
-    await loadStoryFolders(storyFolderId);
-    
-    // Load project.json
+    // Load project.json first to get saved folder IDs
+    let savedFolderIds = null;
     try {
       const projectFiles = await window.driveAPI.list(storyFolderId);
       const projectFile = projectFiles.files.find(f => f.name === 'project.json');
@@ -2362,11 +2435,20 @@ async function loadStoryFromDrive(storyFolderId) {
             ...parsed,
             title: parsed.name || parsed.title || 'Untitled Project'
           });
+          
+          // Extract saved folder IDs if available
+          if (parsed.driveFolderIds) {
+            savedFolderIds = parsed.driveFolderIds;
+            console.log('Loaded saved folder IDs from project.json:', savedFolderIds);
+          }
         }
       }
     } catch (error) {
       console.warn('Could not load project.json:', error);
     }
+    
+    // Load folder structure using saved IDs if available
+    await loadStoryFolders(storyFolderId, savedFolderIds);
     
     // Clear existing state first
     state.snippets = {};
@@ -2423,6 +2505,7 @@ async function loadStoryFromDrive(storyFolderId) {
     }
     
     // Map chapter subfolders to groups (after groups are loaded)
+    // Use ID-based matching first, then fallback to name matching
     if (state.drive.folderIds.chapters && Object.keys(state.groups).length > 0) {
       await mapChapterFoldersToGroups(state.drive.folderIds.chapters);
     }
