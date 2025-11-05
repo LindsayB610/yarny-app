@@ -302,6 +302,13 @@ html {
   margin-top: var(--space-lg);
 }
 
+.docs-section h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
+  margin-top: var(--space-2xl);
+  margin-bottom: var(--space-md);
+}
 
 .docs-section p {
   color: rgba(255, 255, 255, 0.9);
@@ -527,6 +534,10 @@ html {
 
   .docs-section h3 {
     font-size: var(--font-size-lg);
+  }
+
+  .docs-section h4 {
+    font-size: var(--font-size-base);
   }
 }
 
