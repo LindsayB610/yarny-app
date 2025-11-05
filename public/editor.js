@@ -373,8 +373,22 @@ function renderStoryList() {
   newChapterText.textContent = 'New Chapter';
   newChapterBtn.appendChild(newChapterIcon);
   newChapterBtn.appendChild(newChapterText);
+  
   newChapterBtn.addEventListener('click', async () => {
-    await createNewGroup();
+    // Disable button and show feedback
+    newChapterBtn.disabled = true;
+    const originalText = newChapterText.textContent;
+    newChapterText.textContent = 'Creating...';
+    
+    try {
+      await createNewGroup();
+    } finally {
+      // Re-enable button after a short delay to prevent rapid clicking
+      setTimeout(() => {
+        newChapterBtn.disabled = false;
+        newChapterText.textContent = originalText;
+      }, 500);
+    }
   });
   listEl.appendChild(newChapterBtn);
 }
@@ -1388,49 +1402,78 @@ async function createDriveFolder(folderName, parentFolderId) {
   }
 }
 
+// Global flag to prevent concurrent chapter creation
+let isCreatingChapter = false;
+
 async function createNewGroup() {
-  const groupId = 'group_' + Date.now();
-  // Use the 12 accent colors, cycling through them
-  const defaultColor = ACCENT_COLORS[state.project.groupIds.length % ACCENT_COLORS.length].value;
-  
-  // Generate chapter number based on existing chapters
-  const chapterNumber = state.project.groupIds.length + 1;
-  const title = `Chapter ${chapterNumber}`;
-  
-  // Create a folder for this chapter inside the Chapters folder
-  let chapterFolderId = null;
-  if (state.drive.folderIds.chapters) {
-    try {
-      const folderResult = await createDriveFolder(title, state.drive.folderIds.chapters);
-      chapterFolderId = folderResult.id;
-    } catch (error) {
-      console.error('Error creating chapter folder:', error);
-      // Continue without folder - snippets will still work, just won't be organized
-    }
+  // Prevent concurrent chapter creation (from button or keyboard shortcut)
+  if (isCreatingChapter) {
+    console.log('Chapter creation already in progress, ignoring duplicate request');
+    return null;
   }
   
-  const newGroup = {
-    id: groupId,
-    projectId: 'default',
-    title: title,
-    color: defaultColor,
-    position: state.project.groupIds.length,
-    snippetIds: [],
-    driveFolderId: chapterFolderId // Store the chapter's folder ID
-  };
-
-  state.groups[groupId] = newGroup;
-  state.project.groupIds.push(groupId);
-
-  // Save to Drive
+  isCreatingChapter = true;
+  
   try {
-    await saveStoryDataToDrive();
-  } catch (error) {
-    console.error('Error saving new chapter to Drive:', error);
-  }
+    const groupId = 'group_' + Date.now();
+    // Use the 12 accent colors, cycling through them
+    const defaultColor = ACCENT_COLORS[state.project.groupIds.length % ACCENT_COLORS.length].value;
+    
+    // Generate chapter number based on existing chapters
+    const chapterNumber = state.project.groupIds.length + 1;
+    const title = `Chapter ${chapterNumber}`;
+    
+    // Create the group object immediately (without Drive folder ID)
+    const newGroup = {
+      id: groupId,
+      projectId: 'default',
+      title: title,
+      color: defaultColor,
+      position: state.project.groupIds.length,
+      snippetIds: [],
+      driveFolderId: null, // Will be set in background
+      _creatingDriveFolder: false // Flag to track background Drive folder creation
+    };
 
-  renderStoryList();
-  return groupId;
+    state.groups[groupId] = newGroup;
+    state.project.groupIds.push(groupId);
+
+    // Render UI immediately so user can see and start working with the new chapter
+    renderStoryList();
+
+    // Create Drive folder in the background (don't block UI)
+    // If user starts adding snippets before this completes, autosave will handle it
+    (async () => {
+      try {
+        if (state.drive.folderIds.chapters) {
+          newGroup._creatingDriveFolder = true;
+          const folderResult = await createDriveFolder(title, state.drive.folderIds.chapters);
+          newGroup.driveFolderId = folderResult.id;
+          newGroup._creatingDriveFolder = false;
+          
+          // Save story data to update driveFolderId in Drive
+          await saveStoryDataToDrive();
+        }
+      } catch (error) {
+        console.error('Error creating chapter folder:', error);
+        newGroup._creatingDriveFolder = false;
+        // Continue without folder - snippets will still work, just won't be organized
+        // Save story data anyway (without folder ID)
+        try {
+          await saveStoryDataToDrive();
+        } catch (saveError) {
+          console.error('Error saving new chapter to Drive:', saveError);
+        }
+      }
+    })();
+
+    return groupId;
+  } finally {
+    // Reset flag after a short delay to allow UI to update
+    setTimeout(() => {
+      isCreatingChapter = false;
+    }, 500);
+  }
 }
 
 // Add snippet to a specific group/chapter
@@ -2585,6 +2628,16 @@ async function saveSnippetToDrive(snippet) {
   
   if (snippet.groupId && state.groups[snippet.groupId]) {
     const group = state.groups[snippet.groupId];
+    
+    // If folder is being created, wait for it (with timeout)
+    if (group._creatingDriveFolder && !group.driveFolderId) {
+      let waited = 0;
+      while (group._creatingDriveFolder && !group.driveFolderId && waited < 3000) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waited += 100;
+      }
+    }
+    
     // Use the chapter's specific folder if it exists, otherwise fall back to chapters folder
     targetFolderId = group.driveFolderId || state.drive.folderIds.chapters;
   } else {

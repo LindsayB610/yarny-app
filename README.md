@@ -289,15 +289,56 @@ GDRIVE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
 
 ### Error Logging
 
-The application includes error logging that persists to localStorage. To view errors in the browser console:
+The application includes error logging that persists to localStorage. Errors are automatically captured and stored (up to 50 most recent errors).
+
+#### Accessing Error Logs
+
+To view errors in the browser console:
 
 ```javascript
-// View error log
+// View error log (shows table with timestamps, types, and messages)
 viewYarnyErrors()
 
 // Clear error log
 clearYarnyErrors()
 ```
+
+#### Error Types
+
+The application logs the following error types:
+
+- **`console.error`**: Errors logged via `console.error()` - typically application errors
+- **`unhandledrejection`**: Unhandled promise rejections - async operation failures
+- **`error`**: Global JavaScript errors - runtime exceptions
+
+#### Common Error Scenarios
+
+- **Drive API errors**: Usually indicate authentication or permission issues with Google Drive
+  - Check that OAuth tokens are valid and not expired
+  - Verify Google Cloud Console credentials are correct
+  - Ensure Drive and Docs APIs are enabled
+  
+- **Network errors**: Connection issues preventing saves to Drive
+  - Check internet connectivity
+  - Verify Netlify function endpoints are accessible
+  
+- **File not found errors**: May occur if files were moved or deleted outside of Yarny
+  - Use the "Refresh" button on stories page to sync
+  - Check Drive folder structure matches expected format
+  
+- **Conflict detection errors**: Occurs when files are modified in Drive while being edited in Yarny
+  - Usually handled automatically, but may require manual resolution
+
+#### Error Log Structure
+
+Each error entry includes:
+- `timestamp`: ISO timestamp of when error occurred
+- `type`: Error type (see above)
+- `message`: Error message
+- `error`: Error object with:
+  - `message`: Detailed error message
+  - `stack`: Stack trace (if available)
+  - `response`: HTTP response details (if applicable)
 
 ## API Endpoints
 

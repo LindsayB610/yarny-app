@@ -226,6 +226,75 @@
         </section>
 
         <section class="docs-section">
+          <h2>Keyboard Shortcuts</h2>
+          
+          <p>Yarny supports the following keyboard shortcuts to help you work more efficiently:</p>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Shortcut</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Cmd/Ctrl + N</code></td>
+                <td>Create a new snippet in the current context</td>
+              </tr>
+              <tr>
+                <td><code>Cmd/Ctrl + Shift + N</code></td>
+                <td>Create a new chapter/group</td>
+              </tr>
+              <tr>
+                <td><code>Cmd/Ctrl + F</code></td>
+                <td>Focus the search box</td>
+              </tr>
+              <tr>
+                <td><code>Esc</code></td>
+                <td>Toggle focus mode (fade/show sidebars)</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p><strong>Note:</strong> On Mac, use <code>Cmd</code> instead of <code>Ctrl</code>. On Windows and Linux, use <code>Ctrl</code>.</p>
+        </section>
+
+        <section class="docs-section">
+          <h2>Error Codes and Debugging</h2>
+          
+          <p>Yarny includes built-in error logging to help diagnose issues. If you encounter problems, you can access error logs through your browser's developer console.</p>
+          
+          <h3>Accessing Error Logs</h3>
+          <ol>
+            <li>Open your browser's developer console (usually <code>F12</code> or <code>Cmd/Ctrl + Shift + I</code>)</li>
+            <li>Type <code>viewYarnyErrors()</code> and press Enter</li>
+            <li>A table of recent errors will be displayed, including timestamps, error types, and messages</li>
+          </ol>
+          
+          <h3>Error Types</h3>
+          <p>Yarny logs the following types of errors:</p>
+          <ul>
+            <li><strong>console.error</strong>: Errors logged via console.error() - typically application errors</li>
+            <li><strong>unhandledrejection</strong>: Unhandled promise rejections - async operation failures</li>
+            <li><strong>error</strong>: Global JavaScript errors - runtime exceptions</li>
+          </ul>
+          
+          <h3>Clearing Error Logs</h3>
+          <p>To clear the error log, type <code>clearYarnyErrors()</code> in the browser console.</p>
+          
+          <h3>Common Error Scenarios</h3>
+          <ul>
+            <li><strong>Drive API errors</strong>: Usually indicate authentication or permission issues with Google Drive</li>
+            <li><strong>Network errors</strong>: Connection issues preventing saves to Drive</li>
+            <li><strong>File not found errors</strong>: May occur if files were moved or deleted outside of Yarny</li>
+            <li><strong>Conflict detection errors</strong>: Occurs when files are modified in Drive while being edited in Yarny</li>
+          </ul>
+          
+          <p><strong>Tip:</strong> If you're reporting a bug, include the error log output from <code>viewYarnyErrors()</code> to help developers diagnose the issue.</p>
+        </section>
+
+        <section class="docs-section">
           <h2>Tips and Best Practices</h2>
           
           <ul>
@@ -237,6 +306,7 @@
             <li><strong>Switch between snippets freely</strong>: Your changes are automatically saved when switching, so you can move at your own pace</li>
             <li><strong>All snippets work the same</strong>: Whether they're in chapters or People/Places/Things, all snippets open in the main editor</li>
             <li><strong>Set writing goals</strong>: Use the goal meter to track your progress and stay motivated</li>
+            <li><strong>Use keyboard shortcuts</strong>: Learn the keyboard shortcuts to speed up your workflow</li>
           </ul>
         </section>
 
