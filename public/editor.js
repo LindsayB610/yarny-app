@@ -3031,11 +3031,19 @@ async function saveStoryInfo() {
     state.project.genre = genre;
     state.project.wordGoal = wordGoal;
     
+    // Sync goal target with project word goal (they should always be the same)
+    if (state.goal.target !== null) {
+      state.goal.target = wordGoal;
+      // Save goal data if goal is already set
+      await saveGoalToDrive();
+    }
+    
     // Save to Drive
     await saveStoryDataToDrive();
     
     // Update UI
     updateGoalMeter();
+    updateTodayChip(); // Also update today chip if goal is set
     
     // Update document title if needed
     if (document.title) {
@@ -3083,8 +3091,9 @@ function openGoalPanel() {
       }
     }
   } else {
-    // Reset form
-    document.getElementById('goalTarget').value = '';
+    // If no goal target set, use project word goal as default
+    const defaultTarget = state.project.wordGoal || '';
+    document.getElementById('goalTarget').value = defaultTarget;
     document.getElementById('goalDeadline').value = '';
     document.getElementById('goalMode').value = 'elastic';
     document.getElementById('daysOffInput').value = '';
@@ -3192,6 +3201,9 @@ async function saveGoal() {
     state.goal.daysOff = daysOff;
     state.goal.mode = mode;
     
+    // Sync word goal with project word goal (they should always be the same)
+    state.project.wordGoal = target;
+    
     // Initialize startDate and lastCalculatedDate if not set (first time setting goal)
     const today = getPacificDate();
     if (!state.goal.startDate) {
@@ -3203,8 +3215,10 @@ async function saveGoal() {
     
     // Save to Drive
     await saveGoalToDrive();
+    await saveStoryDataToDrive(); // Also save story data since wordGoal changed
     
     // Update UI
+    updateGoalMeter(); // Update the main progress bar
     updateTodayChip();
     closeGoalPanel();
   } catch (error) {
