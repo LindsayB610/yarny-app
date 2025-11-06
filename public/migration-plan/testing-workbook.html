@@ -230,11 +230,14 @@
         <nav class="sidebar-nav">
           <ul class="sidebar-nav-list">
             <li><a href="#intro" class="nav-link">Introduction</a></li>
-            <li><a href="#section-3" class="nav-link">Section 3: Editor - Visual & IME</a></li>
-            <li><a href="#section-4" class="nav-link">Section 4: Drag & Drop Visual</a></li>
-            <li><a href="#section-7" class="nav-link">Section 7: Classic UX Anchors</a></li>
-            <li><a href="#section-8" class="nav-link">Section 8: Notes Drag & Drop</a></li>
-            <li><a href="#section-11" class="nav-link">Section 11: UI/UX Visual & Accessibility</a></li>
+            <li><a href="#section-1" class="nav-link">Section 1: Editor - Visual & IME</a></li>
+            <li><a href="#section-2" class="nav-link">Section 2: Drag & Drop Visual</a></li>
+            <li><a href="#section-3" class="nav-link">Section 3: Classic UX Anchors</a></li>
+            <li><a href="#section-4" class="nav-link">Section 4: Notes Drag & Drop</a></li>
+            <li><a href="#section-5" class="nav-link">Section 5: Export Functionality</a></li>
+            <li><a href="#section-6" class="nav-link">Section 6: Google Drive Integration & Sync</a></li>
+            <li><a href="#section-7" class="nav-link">Section 7: UI/UX Elements</a></li>
+            <li><a href="#section-8" class="nav-link">Section 8: Performance & Edge Cases</a></li>
             <li><a href="#summary" class="nav-link">Testing Summary</a></li>
           </ul>
         </nav>
@@ -255,13 +258,13 @@
 
         <!-- Note: Sections 1 and 2 (Authentication, Story Management) are fully automated -->
 
-        <!-- Section 3: Editor - Visual & IME Testing -->
-        <div class="test-section" id="section-3">
-          <h2><i class="material-icons">edit</i> Section 3: Editor - Visual & IME Testing</h2>
+        <!-- Section 1: Editor - Visual & IME Testing -->
+        <div class="test-section" id="section-1">
+          <h2><i class="material-icons">edit</i> Section 1: Editor - Visual & IME Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification or human judgment. Functional editor tests (open snippet, edit content, auto-save, word count) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 3.5: Plain Text Only (No Rich Formatting) - Visual Verification</h4>
+          <h4>Test 1.1: Plain Text Only (No Rich Formatting) - Visual Verification</h4>
           <p>Verify that the editor only supports plain text (no bold, italic, colors, etc.) and preserves paragraph/line breaks correctly.</p>
           <div class="test-steps">
             <ol>
@@ -279,13 +282,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-3-5" name="test-3-5">
-            <label for="test-3-5">Editor only supports plain text and preserves paragraph/line breaks correctly</label>
+            <input type="checkbox" id="test-1-1" name="test-1-1">
+            <label for="test-1-1">Editor only supports plain text and preserves paragraph/line breaks correctly</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 3.7: IME Composition Handling (Japanese/Chinese/Korean Input)</h4>
+          <h4>Test 1.2: IME Composition Handling (Japanese/Chinese/Korean Input)</h4>
           <p>Verify that the editor handles IME (Input Method Editor) composition correctly for Japanese, Chinese, and Korean text input.</p>
           <div class="test-steps">
             <ol>
@@ -303,20 +306,20 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-3-7" name="test-3-7">
-            <label for="test-3-7">IME composition handling works correctly for Japanese/Chinese/Korean input</label>
+            <input type="checkbox" id="test-1-2" name="test-1-2">
+            <label for="test-1-2">IME composition handling works correctly for Japanese/Chinese/Korean input</label>
           </div>
         </div>
 
       </div>
 
-        <!-- Section 4: Drag & Drop Visual Testing -->
-        <div class="test-section" id="section-4">
-          <h2><i class="material-icons">folder</i> Section 4: Drag & Drop Visual Testing</h2>
+        <!-- Section 2: Drag & Drop Visual Testing -->
+        <div class="test-section" id="section-2">
+          <h2><i class="material-icons">folder</i> Section 2: Drag & Drop Visual Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification of drag & drop feedback. Functional drag & drop operations (create, rename, delete chapters/snippets) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 4.9: Drag & Drop Reorder Chapters - Visual Feedback</h4>
+          <h4>Test 2.1: Drag & Drop Reorder Chapters - Visual Feedback</h4>
           <p>Verify that you can reorder chapters by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -330,13 +333,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-4-9" name="test-4-9">
-            <label for="test-4-9">I can reorder chapters by dragging and dropping</label>
+            <input type="checkbox" id="test-2-1" name="test-2-1">
+            <label for="test-2-1">I can reorder chapters by dragging and dropping</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 4.10: Drag & Drop Reorder Snippets - Visual Feedback</h4>
+          <h4>Test 2.2: Drag & Drop Reorder Snippets - Visual Feedback</h4>
           <p>Verify that you can reorder snippets within a chapter by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -350,13 +353,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-4-10" name="test-4-10">
-            <label for="test-4-10">I can reorder snippets by dragging and dropping</label>
+            <input type="checkbox" id="test-2-2" name="test-2-2">
+            <label for="test-2-2">I can reorder snippets by dragging and dropping</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 4.11: Drag & Drop Move Snippet Between Chapters - Visual Feedback</h4>
+          <h4>Test 2.3: Drag & Drop Move Snippet Between Chapters - Visual Feedback</h4>
           <p>Verify that you can move a snippet from one chapter to another by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -371,8 +374,8 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-4-11" name="test-4-11">
-            <label for="test-4-11">I can move snippets between chapters by dragging and dropping</label>
+            <input type="checkbox" id="test-2-3" name="test-2-3">
+            <label for="test-2-3">I can move snippets between chapters by dragging and dropping</label>
           </div>
         </div>
 
@@ -380,13 +383,13 @@
 
         <!-- Note: Sections 5 and 6 (Color Coding, Search) are fully automated -->
 
-        <!-- Section 7: Classic UX Anchors - Visual Parity -->
-        <div class="test-section" id="section-7">
-          <h2><i class="material-icons">track_changes</i> Section 7: Classic UX Anchors - Visual Parity</h2>
+        <!-- Section 3: Classic UX Anchors - Visual Parity -->
+        <div class="test-section" id="section-3">
+          <h2><i class="material-icons">track_changes</i> Section 3: Classic UX Anchors - Visual Parity</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual comparison with the original app to verify design parity. Functional goal tests (set goal, calculations, updates) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 7.1: Goal Meter - Visual Parity Check</h4>
+          <h4>Test 3.1: Goal Meter - Visual Parity Check</h4>
           <p>Verify that the goal meter in the left sidebar displays correctly.</p>
           <div class="test-steps">
             <ol>
@@ -399,13 +402,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-7-1" name="test-7-1">
-            <label for="test-7-1">Goal meter displays correctly and is clickable</label>
+            <input type="checkbox" id="test-3-1" name="test-3-1">
+            <label for="test-3-1">Goal meter displays correctly and is clickable</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 7.2: "Today • N" Chip - Visual Parity Check</h4>
+          <h4>Test 3.2: "Today • N" Chip - Visual Parity Check</h4>
           <p>Verify that the "Today • N" chip displays daily word count correctly.</p>
           <div class="test-steps">
             <ol>
@@ -420,20 +423,20 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-7-2" name="test-7-2">
-            <label for="test-7-2">"Today • N" chip displays and updates correctly</label>
+            <input type="checkbox" id="test-3-2" name="test-3-2">
+            <label for="test-3-2">"Today • N" chip displays and updates correctly</label>
           </div>
         </div>
 
       </div>
 
-        <!-- Section 8: Notes Drag & Drop Visual Testing -->
-        <div class="test-section" id="section-8">
-          <h2><i class="material-icons">note</i> Section 8: Notes Drag & Drop Visual Testing</h2>
+        <!-- Section 4: Notes Drag & Drop Visual Testing -->
+        <div class="test-section" id="section-4">
+          <h2><i class="material-icons">note</i> Section 4: Notes Drag & Drop Visual Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This test requires visual verification of drag & drop feedback. Functional notes tests (create, edit, rename, delete) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 8.8: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
+          <h4>Test 4.1: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
           <p>Verify that you can reorder notes by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -446,18 +449,18 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-8-8" name="test-8-8">
-            <label for="test-8-8">I can reorder notes by dragging and dropping</label>
+            <input type="checkbox" id="test-4-1" name="test-4-1">
+            <label for="test-4-1">I can reorder notes by dragging and dropping</label>
           </div>
         </div>
       </div>
 
-        <!-- Section 9: Export Functionality -->
-        <div class="test-section" id="section-9">
-          <h2><i class="material-icons">file_download</i> Section 9: Export Functionality</h2>
+        <!-- Section 5: Export Functionality -->
+        <div class="test-section" id="section-5">
+          <h2><i class="material-icons">file_download</i> Section 5: Export Functionality</h2>
         
         <div class="test-item">
-          <h4>Test 9.1: Export All Chapters</h4>
+          <h4>Test 5.1: Export All Chapters</h4>
           <p>Verify that you can export all chapters as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -472,13 +475,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-1" name="test-9-1">
-            <label for="test-9-1">I can export all chapters as a Google Doc</label>
+            <input type="checkbox" id="test-5-1" name="test-5-1">
+            <label for="test-5-1">I can export all chapters as a Google Doc</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 9.2: Export Outline</h4>
+          <h4>Test 5.2: Export Outline</h4>
           <p>Verify that you can export an outline (chapter and snippet titles with descriptions).</p>
           <div class="test-steps">
             <ol>
@@ -492,13 +495,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-2" name="test-9-2">
-            <label for="test-9-2">I can export an outline with titles and descriptions</label>
+            <input type="checkbox" id="test-5-2" name="test-5-2">
+            <label for="test-5-2">I can export an outline with titles and descriptions</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 9.3: Export All People</h4>
+          <h4>Test 5.3: Export All People</h4>
           <p>Verify that you can export all People notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -511,13 +514,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-3" name="test-9-3">
-            <label for="test-9-3">I can export all People notes</label>
+            <input type="checkbox" id="test-5-3" name="test-5-3">
+            <label for="test-5-3">I can export all People notes</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 9.4: Export All Places</h4>
+          <h4>Test 5.4: Export All Places</h4>
           <p>Verify that you can export all Places notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -530,13 +533,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-4" name="test-9-4">
-            <label for="test-9-4">I can export all Places notes</label>
+            <input type="checkbox" id="test-5-4" name="test-5-4">
+            <label for="test-5-4">I can export all Places notes</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 9.5: Export All Things</h4>
+          <h4>Test 5.5: Export All Things</h4>
           <p>Verify that you can export all Things notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -549,13 +552,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-5" name="test-9-5">
-            <label for="test-9-5">I can export all Things notes</label>
+            <input type="checkbox" id="test-5-5" name="test-5-5">
+            <label for="test-5-5">I can export all Things notes</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 9.6: Export Large Chapter (Chunked Writes)</h4>
+          <h4>Test 5.6: Export Large Chapter (Chunked Writes)</h4>
           <p>Verify that exporting a very large chapter (50+ snippets) uses chunked writes to handle Google Docs API body size limits.</p>
           <div class="test-steps">
             <ol>
@@ -573,18 +576,18 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-9-6" name="test-9-6">
-            <label for="test-9-6">Large chapter export uses chunked writes correctly</label>
+            <input type="checkbox" id="test-5-6" name="test-5-6">
+            <label for="test-5-6">Large chapter export uses chunked writes correctly</label>
           </div>
         </div>
       </div>
 
-        <!-- Section 10: Google Drive Integration & Sync -->
-        <div class="test-section" id="section-10">
-          <h2><i class="material-icons">cloud</i> Section 10: Google Drive Integration & Sync</h2>
+        <!-- Section 6: Google Drive Integration & Sync -->
+        <div class="test-section" id="section-6">
+          <h2><i class="material-icons">cloud</i> Section 6: Google Drive Integration & Sync</h2>
         
         <div class="test-item">
-          <h4>Test 10.1: Files Created in Google Drive</h4>
+          <h4>Test 6.1: Files Created in Google Drive</h4>
           <p>Verify that all created items (stories, chapters, snippets, notes) appear in Google Drive.</p>
           <div class="test-steps">
             <ol>
@@ -598,13 +601,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-1" name="test-10-1">
-            <label for="test-10-1">All created items appear in Google Drive</label>
+            <input type="checkbox" id="test-6-1" name="test-6-1">
+            <label for="test-6-1">All created items appear in Google Drive</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.2: Changes Saved to Google Drive</h4>
+          <h4>Test 6.2: Changes Saved to Google Drive</h4>
           <p>Verify that edits made in Yarny are saved to Google Drive files.</p>
           <div class="test-steps">
             <ol>
@@ -618,13 +621,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-2" name="test-10-2">
-            <label for="test-10-2">Changes are saved to Google Drive files</label>
+            <input type="checkbox" id="test-6-2" name="test-6-2">
+            <label for="test-6-2">Changes are saved to Google Drive files</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
+          <h4>Test 6.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
           <p>Verify that you can edit in Google Docs and see changes in Yarny with no format loss (plain text only).</p>
           <div class="test-steps">
             <ol>
@@ -643,13 +646,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-3" name="test-10-3">
-            <label for="test-10-3">I can edit in Google Docs and see changes in Yarny with no format loss</label>
+            <input type="checkbox" id="test-6-3" name="test-6-3">
+            <label for="test-6-3">I can edit in Google Docs and see changes in Yarny with no format loss</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.3a: Cross-Edit Testing (Yarny Idle → Google Docs Edit → Yarny)</h4>
+          <h4>Test 6.3a: Cross-Edit Testing (Yarny Idle → Google Docs Edit → Yarny)</h4>
           <p>Verify that Yarny detects changes made in Google Docs while Yarny is idle (not actively editing the snippet).</p>
           <div class="test-steps">
             <ol>
@@ -666,13 +669,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-3a" name="test-10-3a">
-            <label for="test-10-3a">Yarny detects changes made in Google Docs while snippet is idle</label>
+            <input type="checkbox" id="test-6-3a" name="test-6-3a">
+            <label for="test-6-3a">Yarny detects changes made in Google Docs while snippet is idle</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.4: Conflict Detection</h4>
+          <h4>Test 6.4: Conflict Detection</h4>
           <p>Verify that Yarny detects conflicts when both Yarny and Google Docs are edited (but NOT while actively editing in Yarny).</p>
           <div class="test-steps">
             <ol>
@@ -689,17 +692,17 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-4" name="test-10-4">
-            <label for="test-10-4">Conflict detection works when both are edited (detected on snippet switch)</label>
+            <input type="checkbox" id="test-6-4" name="test-6-4">
+            <label for="test-6-4">Conflict detection works when both are edited (detected on snippet switch)</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.5: Conflict Resolution - Keep Yarny Version</h4>
+          <h4>Test 6.5: Conflict Resolution - Keep Yarny Version</h4>
           <p>Verify that you can resolve conflicts by keeping the Yarny version.</p>
           <div class="test-steps">
             <ol>
-              <li>Trigger a conflict (see Test 10.4)</li>
+              <li>Trigger a conflict (see Test 6.4)</li>
               <li>In the conflict resolution modal, choose "Keep Yarny Version"</li>
               <li>Verify the Yarny version is kept</li>
               <li>Verify the Google Doc is updated with the Yarny version</li>
@@ -708,30 +711,30 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-5" name="test-10-5">
-            <label for="test-10-5">I can resolve conflicts by keeping Yarny version</label>
+            <input type="checkbox" id="test-6-5" name="test-6-5">
+            <label for="test-6-5">I can resolve conflicts by keeping Yarny version</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.6: Conflict Resolution - Use Google Docs Version</h4>
+          <h4>Test 6.6: Conflict Resolution - Use Google Docs Version</h4>
           <p>Verify that you can resolve conflicts by using the Google Docs version.</p>
           <div class="test-steps">
             <ol>
-              <li>Trigger a conflict (see Test 10.4)</li>
+              <li>Trigger a conflict (see Test 6.4)</li>
               <li>In the conflict resolution modal, choose "Use Google Docs Version"</li>
               <li>Verify the Google Docs version replaces the Yarny content</li>
               <li>Verify the editor shows the Google Docs content</li>
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-6" name="test-10-6">
-            <label for="test-10-6">I can resolve conflicts by using Google Docs version</label>
+            <input type="checkbox" id="test-6-6" name="test-6-6">
+            <label for="test-6-6">I can resolve conflicts by using Google Docs version</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.7: Reconciliation on Window Focus</h4>
+          <h4>Test 6.7: Reconciliation on Window Focus</h4>
           <p>Verify that Yarny checks for external changes when the window regains focus.</p>
           <div class="test-steps">
             <ol>
@@ -745,13 +748,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-7" name="test-10-7">
-            <label for="test-10-7">Yarny checks for external changes on window focus</label>
+            <input type="checkbox" id="test-6-7" name="test-6-7">
+            <label for="test-6-7">Yarny checks for external changes on window focus</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.8: Comments/Tracked Changes Warning</h4>
+          <h4>Test 6.8: Comments/Tracked Changes Warning</h4>
           <p>Verify that Yarny warns about comments or tracked changes in Google Docs.</p>
           <div class="test-steps">
             <ol>
@@ -764,13 +767,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-8" name="test-10-8">
-            <label for="test-10-8">Yarny warns about comments/tracked changes in Google Docs</label>
+            <input type="checkbox" id="test-6-8" name="test-6-8">
+            <label for="test-6-8">Yarny warns about comments/tracked changes in Google Docs</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.9: Cross-Tab Yarny Conflicts</h4>
+          <h4>Test 6.9: Cross-Tab Yarny Conflicts</h4>
           <p>Verify that Yarny detects and prevents conflicts when the same snippet is edited in multiple Yarny tabs.</p>
           <div class="test-steps">
             <ol>
@@ -787,13 +790,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-9" name="test-10-9">
-            <label for="test-10-9">Cross-tab conflict detection prevents simultaneous editing</label>
+            <input type="checkbox" id="test-6-9" name="test-6-9">
+            <label for="test-6-9">Cross-tab conflict detection prevents simultaneous editing</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.10: Format Normalization (Line Endings, NBSPs, Trailing Spaces)</h4>
+          <h4>Test 6.10: Format Normalization (Line Endings, NBSPs, Trailing Spaces)</h4>
           <p>Verify that Yarny normalizes text format to match Google Docs behavior (mixed line endings, non-breaking spaces, trailing spaces).</p>
           <div class="test-steps">
             <ol>
@@ -811,13 +814,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-10" name="test-10-10">
-            <label for="test-10-10">Format normalization works correctly (line endings, NBSPs, trailing spaces)</label>
+            <input type="checkbox" id="test-6-10" name="test-6-10">
+            <label for="test-6-10">Format normalization works correctly (line endings, NBSPs, trailing spaces)</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.11: Visibility-Based Request Gating</h4>
+          <h4>Test 6.11: Visibility-Based Request Gating</h4>
           <p>Verify that Yarny only makes background requests when the browser tab is visible (prevents Drive quota exhaustion).</p>
           <div class="test-steps">
             <ol>
@@ -834,13 +837,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-11" name="test-10-11">
-            <label for="test-10-11">Visibility-based request gating prevents quota exhaustion</label>
+            <input type="checkbox" id="test-6-11" name="test-6-11">
+            <label for="test-6-11">Visibility-based request gating prevents quota exhaustion</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 10.12: Drive API Rate Limiting (429 Errors)</h4>
+          <h4>Test 6.12: Drive API Rate Limiting (429 Errors)</h4>
           <p>Verify that Yarny handles Drive API rate limit errors (429) gracefully with exponential backoff.</p>
           <div class="test-steps">
             <ol>
@@ -855,18 +858,18 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-10-12" name="test-10-12">
-            <label for="test-10-12">Drive API rate limiting is handled gracefully with exponential backoff</label>
+            <input type="checkbox" id="test-6-12" name="test-6-12">
+            <label for="test-6-12">Drive API rate limiting is handled gracefully with exponential backoff</label>
           </div>
         </div>
       </div>
 
-        <!-- Section 11: UI/UX Elements -->
-        <div class="test-section" id="section-11">
-          <h2><i class="material-icons">design_services</i> Section 11: UI/UX Elements</h2>
+        <!-- Section 7: UI/UX Elements -->
+        <div class="test-section" id="section-7">
+          <h2><i class="material-icons">design_services</i> Section 7: UI/UX Elements</h2>
         
         <div class="test-item">
-          <h4>Test 11.1: Classic UX Anchors - Goal Meter</h4>
+          <h4>Test 7.1: Classic UX Anchors - Goal Meter</h4>
           <p>Verify that the goal meter looks and behaves identically to the original app.</p>
           <div class="test-steps">
             <ol>
@@ -878,13 +881,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-1" name="test-11-1">
-            <label for="test-11-1">Goal meter looks and behaves identically to original</label>
+            <input type="checkbox" id="test-7-1" name="test-7-1">
+            <label for="test-7-1">Goal meter looks and behaves identically to original</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.2: Classic UX Anchors - "Today • N" Chip</h4>
+          <h4>Test 7.2: Classic UX Anchors - "Today • N" Chip</h4>
           <p>Verify that the "Today • N" chip looks and behaves identically to the original app.</p>
           <div class="test-steps">
             <ol>
@@ -897,13 +900,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-2" name="test-11-2">
-            <label for="test-11-2">"Today • N" chip looks and behaves identically to original</label>
+            <input type="checkbox" id="test-7-2" name="test-7-2">
+            <label for="test-7-2">"Today • N" chip looks and behaves identically to original</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.3: Classic UX Anchors - Footer Word/Character Counts</h4>
+          <h4>Test 7.3: Classic UX Anchors - Footer Word/Character Counts</h4>
           <p>Verify that the footer word/character counts look and behave identically to the original app.</p>
           <div class="test-steps">
             <ol>
@@ -915,13 +918,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-3" name="test-11-3">
-            <label for="test-11-3">Footer word/character counts look and behave identically to original</label>
+            <input type="checkbox" id="test-7-3" name="test-7-3">
+            <label for="test-7-3">Footer word/character counts look and behave identically to original</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.4: Modals - Open and Close</h4>
+          <h4>Test 7.4: Modals - Open and Close</h4>
           <p>Verify that all modals open and close correctly.</p>
           <div class="test-steps">
             <ol>
@@ -932,13 +935,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-4" name="test-11-4">
-            <label for="test-11-4">All modals open and close correctly</label>
+            <input type="checkbox" id="test-7-4" name="test-7-4">
+            <label for="test-7-4">All modals open and close correctly</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.5: Context Menus</h4>
+          <h4>Test 7.5: Context Menus</h4>
           <p>Verify that right-click context menus work correctly.</p>
           <div class="test-steps">
             <ol>
@@ -953,13 +956,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-5" name="test-11-5">
-            <label for="test-11-5">Context menus work correctly</label>
+            <input type="checkbox" id="test-7-5" name="test-7-5">
+            <label for="test-7-5">Context menus work correctly</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.6: Mobile Device Warning</h4>
+          <h4>Test 7.6: Mobile Device Warning</h4>
           <p>Verify that mobile devices show a warning message.</p>
           <div class="test-steps">
             <ol>
@@ -970,13 +973,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-6" name="test-11-6">
-            <label for="test-11-6">Mobile devices show warning message</label>
+            <input type="checkbox" id="test-7-6" name="test-7-6">
+            <label for="test-7-6">Mobile devices show warning message</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.7: Loading States</h4>
+          <h4>Test 7.7: Loading States</h4>
           <p>Verify that loading indicators appear during data fetching.</p>
           <div class="test-steps">
             <ol>
@@ -988,13 +991,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-7" name="test-11-7">
-            <label for="test-11-7">Loading indicators appear during data fetching</label>
+            <input type="checkbox" id="test-7-7" name="test-7-7">
+            <label for="test-7-7">Loading indicators appear during data fetching</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.8: Error Messages</h4>
+          <h4>Test 7.8: Error Messages</h4>
           <p>Verify that error messages are clear and helpful.</p>
           <div class="test-steps">
             <ol>
@@ -1005,13 +1008,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-8" name="test-11-8">
-            <label for="test-11-8">Error messages are clear and helpful</label>
+            <input type="checkbox" id="test-7-8" name="test-7-8">
+            <label for="test-7-8">Error messages are clear and helpful</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 11.9: Accessible Focus Rings</h4>
+          <h4>Test 7.9: Accessible Focus Rings</h4>
           <p>Verify that focus rings are visible and accessible when navigating with keyboard (especially on dark cards and pale chips).</p>
           <div class="test-steps">
             <ol>
@@ -1028,18 +1031,18 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-11-9" name="test-11-9">
-            <label for="test-11-9">Focus rings are visible and accessible on all backgrounds</label>
+            <input type="checkbox" id="test-7-9" name="test-7-9">
+            <label for="test-7-9">Focus rings are visible and accessible on all backgrounds</label>
           </div>
         </div>
       </div>
 
-        <!-- Section 12: Performance & Edge Cases -->
-        <div class="test-section" id="section-12">
-          <h2><i class="material-icons">speed</i> Section 12: Performance & Edge Cases</h2>
+        <!-- Section 8: Performance & Edge Cases -->
+        <div class="test-section" id="section-8">
+          <h2><i class="material-icons">speed</i> Section 8: Performance & Edge Cases</h2>
         
         <div class="test-item">
-          <h4>Test 12.1: Large Story Performance</h4>
+          <h4>Test 8.1: Large Story Performance</h4>
           <p>Verify that the app performs well with large stories (many chapters and snippets).</p>
           <div class="test-steps">
             <ol>
@@ -1053,13 +1056,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-1" name="test-12-1">
-            <label for="test-12-1">App performs well with large stories</label>
+            <input type="checkbox" id="test-8-1" name="test-8-1">
+            <label for="test-8-1">App performs well with large stories</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.2: Lazy Loading</h4>
+          <h4>Test 8.2: Lazy Loading</h4>
           <p>Verify that snippet content loads on demand (lazy loading).</p>
           <div class="test-steps">
             <ol>
@@ -1072,13 +1075,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2" name="test-12-2">
-            <label for="test-12-2">Snippet content loads on demand (lazy loading)</label>
+            <input type="checkbox" id="test-8-2" name="test-8-2">
+            <label for="test-8-2">Snippet content loads on demand (lazy loading)</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.2a: Performance Budget - Time to First Edit (Hot Path)</h4>
+          <h4>Test 8.3: Performance Budget - Time to First Edit (Hot Path)</h4>
           <p>Verify that opening a snippet already in cache and starting to type is fast (≤300 ms from click to first character appearing).</p>
           <div class="test-steps">
             <ol>
@@ -1093,13 +1096,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2a" name="test-12-2a">
-            <label for="test-12-2a">Time to first edit (hot path) is ≤300 ms</label>
+            <input type="checkbox" id="test-8-3" name="test-8-3">
+            <label for="test-8-3">Time to first edit (hot path) is ≤300 ms</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.2b: Performance Budget - Time to First Edit (Cold Path)</h4>
+          <h4>Test 8.4: Performance Budget - Time to First Edit (Cold Path)</h4>
           <p>Verify that opening a snippet not yet loaded and starting to type is acceptable (≤1.5 s from click to first character appearing, includes Drive fetch).</p>
           <div class="test-steps">
             <ol>
@@ -1114,13 +1117,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2b" name="test-12-2b">
-            <label for="test-12-2b">Time to first edit (cold path) is ≤1.5 s</label>
+            <input type="checkbox" id="test-8-4" name="test-8-4">
+            <label for="test-8-4">Time to first edit (cold path) is ≤1.5 s</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.2c: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
+          <h4>Test 8.5: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
           <p>Verify that switching to a snippet already in cache is fast (≤300 ms from click to editor ready).</p>
           <div class="test-steps">
             <ol>
@@ -1133,13 +1136,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2c" name="test-12-2c">
-            <label for="test-12-2c">Time to switch snippet (hot path) is ≤300 ms</label>
+            <input type="checkbox" id="test-8-5" name="test-8-5">
+            <label for="test-8-5">Time to switch snippet (hot path) is ≤300 ms</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.2d: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
+          <h4>Test 8.6: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
           <p>Verify that switching to a snippet not yet loaded is acceptable (≤1.5 s from click to editor ready, includes Drive fetch).</p>
           <div class="test-steps">
             <ol>
@@ -1153,13 +1156,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2d" name="test-12-2d">
-            <label for="test-12-2d">Time to switch snippet (cold path) is ≤1.5 s</label>
+            <input type="checkbox" id="test-8-6" name="test-8-6">
+            <label for="test-8-6">Time to switch snippet (cold path) is ≤1.5 s</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.3: Special Characters & Round-Trip Preservation</h4>
+          <h4>Test 8.7: Special Characters & Round-Trip Preservation</h4>
           <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly in round-trips between Yarny and Google Docs.</p>
           <div class="test-steps">
             <ol>
@@ -1177,13 +1180,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-3" name="test-12-3">
-            <label for="test-12-3">Special characters are preserved correctly in round-trips</label>
+            <input type="checkbox" id="test-8-7" name="test-8-7">
+            <label for="test-8-7">Special characters are preserved correctly in round-trips</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.4: Long Text</h4>
+          <h4>Test 8.8: Long Text</h4>
           <p>Verify that the editor handles long text (10,000+ words) without issues.</p>
           <div class="test-steps">
             <ol>
@@ -1198,13 +1201,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-4" name="test-12-4">
-            <label for="test-12-4">Editor handles long text without issues</label>
+            <input type="checkbox" id="test-8-8" name="test-8-8">
+            <label for="test-8-8">Editor handles long text without issues</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.5: Empty States</h4>
+          <h4>Test 8.9: Empty States</h4>
           <p>Verify that empty states (no stories, no chapters, no snippets) display correctly.</p>
           <div class="test-steps">
             <ol>
@@ -1216,13 +1219,13 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-5" name="test-12-5">
-            <label for="test-12-5">Empty states display correctly</label>
+            <input type="checkbox" id="test-8-9" name="test-8-9">
+            <label for="test-8-9">Empty states display correctly</label>
           </div>
         </div>
 
         <div class="test-item">
-          <h4>Test 12.6: Offline/Spotty-Network Semantics</h4>
+          <h4>Test 8.10: Offline/Spotty-Network Semantics</h4>
           <p>Verify that the app handles offline and spotty network conditions gracefully with clear user feedback.</p>
           <div class="test-steps">
             <ol>
@@ -1245,8 +1248,8 @@
             </ol>
           </div>
           <div class="checkbox-container">
-            <input type="checkbox" id="test-12-6" name="test-12-6">
-            <label for="test-12-6">App handles offline/spotty-network conditions gracefully with clear feedback</label>
+            <input type="checkbox" id="test-8-10" name="test-8-10">
+            <label for="test-8-10">App handles offline/spotty-network conditions gracefully with clear feedback</label>
           </div>
         </div>
       </div>
