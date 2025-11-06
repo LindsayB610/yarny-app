@@ -41,36 +41,95 @@
         </div>
         <nav class="sidebar-nav">
           <ul class="sidebar-nav-list">
-            <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
-            <li><a href="#typescript-react" class="nav-link">Understanding TypeScript + React</a></li>
-            <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
-            <li><a href="#preserve-ux-anchors" class="nav-link">Preserve Classic UX Anchors (P1/P2)</a></li>
-            <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
-            <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
-            <li><a href="#mui-theming-strategy" class="nav-link">MUI Theming Strategy (P2)</a></li>
-            <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
-            <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
-            <li><a href="#state-normalization" class="nav-link">State Normalization (P1)</a></li>
-            <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
-            <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
-            <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
-            <li><a href="#offline-semantics" class="nav-link">Offline/Spotty-Network Semantics (P2)</a></li>
-            <li><a href="#editor-truth" class="nav-link">Editor Truth & Round-Tripping</a></li>
-            <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
-            <li><a href="#phase-8" class="nav-link">Phase 8: Test Automation</a></li>
-            <li><a href="#risk-factors" class="nav-link">Risk Factors</a></li>
-            <li><a href="#benefits" class="nav-link">Benefits of Migration</a></li>
-            <li><a href="#netlify-config" class="nav-link">Netlify Configuration</a></li>
-            <li><a href="#file-structure" class="nav-link">File Structure</a></li>
-            <li><a href="#decision-points" class="nav-link">Decision Points</a></li>
-            <li><a href="#success-criteria" class="nav-link">Success Criteria</a></li>
-            <li><a href="#notes-considerations" class="nav-link">Notes & Considerations</a></li>
-            <li><a href="#test-strategy-drive-docs" class="nav-link">Test Strategy: Drive/Docs (P2)</a></li>
-            <li><a href="#questions" class="nav-link">Questions to Resolve</a></li>
-            <li><a href="#resources" class="nav-link">Resources</a></li>
-            <li><a href="#technical-details" class="nav-link">Technical Details</a></li>
-            <li><a href="#changelog" class="nav-link">Changelog</a></li>
-            <li><a href="#next-steps" class="nav-link">Next Steps</a></li>
+            <!-- Overview Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="overview">
+                <span>Overview</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="overview">
+                <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
+                <li><a href="#typescript-react" class="nav-link">Understanding TypeScript + React</a></li>
+                <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
+              </ul>
+            </li>
+
+            <!-- Strategy & Planning Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="strategy">
+                <span>Strategy & Planning</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="strategy">
+                <li><a href="#preserve-ux-anchors" class="nav-link">Preserve Classic UX Anchors (P1/P2)</a></li>
+                <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
+                <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
+                <li><a href="#mui-theming-strategy" class="nav-link">MUI Theming Strategy (P2)</a></li>
+                <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
+              </ul>
+            </li>
+
+            <!-- Implementation Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="implementation">
+                <span>Implementation</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="implementation">
+                <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
+                <li><a href="#state-normalization" class="nav-link">State Normalization (P1)</a></li>
+                <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
+                <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
+                <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
+                <li><a href="#offline-semantics" class="nav-link">Offline/Spotty-Network Semantics (P2)</a></li>
+                <li><a href="#editor-truth" class="nav-link">Editor Truth & Round-Tripping</a></li>
+              </ul>
+            </li>
+
+            <!-- Migration Phases Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="phases">
+                <span>Migration Phases</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="phases">
+                <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
+                <li><a href="#phase-8" class="nav-link">Phase 8: Test Automation</a></li>
+              </ul>
+            </li>
+
+            <!-- Project Management Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="project">
+                <span>Project Management</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="project">
+                <li><a href="#risk-factors" class="nav-link">Risk Factors</a></li>
+                <li><a href="#benefits" class="nav-link">Benefits of Migration</a></li>
+                <li><a href="#netlify-config" class="nav-link">Netlify Configuration</a></li>
+                <li><a href="#file-structure" class="nav-link">File Structure</a></li>
+                <li><a href="#decision-points" class="nav-link">Decision Points</a></li>
+                <li><a href="#success-criteria" class="nav-link">Success Criteria</a></li>
+                <li><a href="#notes-considerations" class="nav-link">Notes & Considerations</a></li>
+                <li><a href="#test-strategy-drive-docs" class="nav-link">Test Strategy: Drive/Docs (P2)</a></li>
+                <li><a href="#questions" class="nav-link">Questions to Resolve</a></li>
+              </ul>
+            </li>
+
+            <!-- Reference Section -->
+            <li class="nav-group">
+              <button class="nav-group-header" aria-expanded="true" data-group="reference">
+                <span>Reference</span>
+                <i class="material-icons nav-group-icon">expand_more</i>
+              </button>
+              <ul class="nav-group-items" data-group="reference">
+                <li><a href="#resources" class="nav-link">Resources</a></li>
+                <li><a href="#technical-details" class="nav-link">Technical Details</a></li>
+                <li><a href="#changelog" class="nav-link">Changelog</a></li>
+                <li><a href="#next-steps" class="nav-link">Next Steps</a></li>
+              </ul>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -4586,6 +4645,35 @@ export function useGroupsList() {
       });
 
       updateActiveNav(); // Initial call
+
+      // Collapsible navigation groups
+      const navGroupHeaders = document.querySelectorAll('.nav-group-header');
+      
+      navGroupHeaders.forEach(header => {
+        // Load saved state from localStorage
+        const groupId = header.getAttribute('data-group');
+        const savedState = localStorage.getItem(`nav-group-${groupId}`);
+        if (savedState === 'collapsed') {
+          header.setAttribute('aria-expanded', 'false');
+        }
+
+        header.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const isExpanded = header.getAttribute('aria-expanded') === 'true';
+          const newState = isExpanded ? 'false' : 'true';
+          
+          header.setAttribute('aria-expanded', newState);
+          
+          // Save state to localStorage
+          if (newState === 'false') {
+            localStorage.setItem(`nav-group-${groupId}`, 'collapsed');
+          } else {
+            localStorage.removeItem(`nav-group-${groupId}`);
+          }
+        });
+      });
     });
   </script>
 </body>

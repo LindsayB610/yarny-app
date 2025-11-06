@@ -259,6 +259,84 @@ html {
   font-weight: var(--font-weight-medium);
 }
 
+/* ============================================
+   Collapsible Navigation Groups
+   ============================================ */
+
+.nav-group {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-group:last-child {
+  border-bottom: none;
+}
+
+.nav-group-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+  border-left: 3px solid transparent;
+  margin: 0;
+}
+
+.nav-group-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+}
+
+.nav-group-header:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.nav-group-icon {
+  font-size: 18px;
+  transition: transform var(--transition-base);
+  flex-shrink: 0;
+  margin-left: var(--space-sm);
+}
+
+.nav-group-header[aria-expanded="false"] .nav-group-icon {
+  transform: rotate(-90deg);
+}
+
+.nav-group-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height var(--transition-base), opacity var(--transition-base);
+  opacity: 1;
+}
+
+.nav-group-header[aria-expanded="false"] + .nav-group-items {
+  max-height: 0;
+  opacity: 0.5;
+}
+
+.nav-group-items li {
+  margin: 0;
+  padding: 0;
+}
+
+.nav-group-items .nav-link {
+  padding-left: calc(var(--space-lg) + var(--space-md));
+  font-size: var(--font-size-sm);
+}
+
 .docs-content {
   flex: 1;
   margin-left: 280px;
