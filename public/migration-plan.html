@@ -49,6 +49,7 @@
             <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
             <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
             <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
+            <li><a href="#state-normalization" class="nav-link">State Normalization (P1)</a></li>
             <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
             <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
             <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
@@ -1074,17 +1075,177 @@ export function useDrive(folderId: string): UseDriveResult {
           </ul>
         </section>
 
+        <section class="docs-section" id="state-normalization" style="background: #ECFDF5; border-left: 4px solid #10B981; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
+          <h2 id="state-normalization-heading" style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="font-size: 24px;">storage</i>
+            State Normalization (P1 Priority)
+          </h2>
+
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Moving to React is the perfect moment to stop passing giant nested objects around. Normalized state keeps renders cheap, enables virtualized lists later, and makes the codebase more maintainable.</p>
+          <p><strong>What</strong>: Model all entities (stories, groups, snippets, notes, tags, goals) keyed by id in the Zustand store. Use selectors to derive views (e.g., left-rail lists). This keeps renders cheap and enables virtualized lists later.</p>
+
+          <h3>Implementation Strategy</h3>
+
+          <h4>1. Normalized Store Structure</h4>
+          <p>All entities will be stored in normalized form (keyed by id) in the Zustand store:</p>
+          <pre><code>// src/store/types.ts
+export interface AppState {
+  // Normalized entities - keyed by id
+  stories: Record&lt;string, Story&gt;;
+  groups: Record&lt;string, Group&gt;;
+  snippets: Record&lt;string, Snippet&gt;;
+  notes: Record&lt;string, Note&gt;; // People, Places, Things
+  tags: Record&lt;string, Tag&gt;;
+  goals: Record&lt;string, Goal&gt;;
+  
+  // Denormalized views - derived via selectors
+  project: {
+    storyId: string | null;
+    groupIds: string[]; // Ordered list of group ids
+    snippetIds: string[]; // Ordered list of snippet ids
+    activeSnippetId: string | null;
+    activeRightTab: 'people' | 'places' | 'things';
+    filters: {
+      search: string;
+    };
+  };
+  
+  // UI state
+  collapsedGroups: Set&lt;string&gt;;
+  editing: {
+    savingState: 'idle' | 'saving' | 'saved';
+    lastSavedAt: string | null;
+  };
+}</code></pre>
+
+          <h4>2. Selectors for Derived Views</h4>
+          <p>Create selectors to derive views from normalized state:</p>
+          <pre><code>// src/store/selectors.ts
+import { useStore } from './store';
+
+// Get groups as array (for left-rail list)
+export function useGroupsList() {
+  return useStore((state) => {
+    const { project, groups } = state;
+    return project.groupIds
+      .map((id) => groups[id])
+      .filter(Boolean); // Filter out any missing groups
+  });
+}
+
+// Get snippets for a specific group
+export function useGroupSnippets(groupId: string) {
+  return useStore((state) => {
+    const group = state.groups[groupId];
+    if (!group) return [];
+    return group.snippetIds
+      .map((id) => state.snippets[id])
+      .filter(Boolean);
+  });
+}
+
+// Get filtered groups (for search)
+export function useFilteredGroups() {
+  return useStore((state) => {
+    const { project, groups } = state;
+    const search = project.filters.search.toLowerCase();
+    if (!search) {
+      return project.groupIds.map((id) => groups[id]).filter(Boolean);
+    }
+    return project.groupIds
+      .map((id) => groups[id])
+      .filter((group) => {
+        if (!group) return false;
+        // Search in group title
+        if (group.title.toLowerCase().includes(search)) return true;
+        // Search in group snippets
+        return group.snippetIds.some((snippetId) => {
+          const snippet = state.snippets[snippetId];
+          if (!snippet) return false;
+          return (
+            snippet.title.toLowerCase().includes(search) ||
+            snippet.body.toLowerCase().includes(search)
+          );
+        });
+      });
+  });
+}
+
+// Get notes by type (People, Places, Things)
+export function useNotesByType(type: 'person' | 'place' | 'thing') {
+  return useStore((state) => {
+    return Object.values(state.notes).filter((note) => note.kind === type);
+  });
+}</code></pre>
+
+          <h4>3. Benefits of Normalization</h4>
+          <ol>
+            <li><strong>Cheap Renders</strong>: Components only re-render when their specific entities change, not when unrelated entities update</li>
+            <li><strong>Virtualized Lists</strong>: Normalized structure makes it easy to implement virtual scrolling for long lists later</li>
+            <li><strong>Single Source of Truth</strong>: Each entity exists once in the store, eliminating duplication</li>
+            <li><strong>Efficient Updates</strong>: Updating a single entity doesn't require re-rendering entire lists</li>
+            <li><strong>Type Safety</strong>: TypeScript ensures we access entities correctly via selectors</li>
+          </ol>
+
+          <h4>4. Migration from Current Structure</h4>
+          <p><strong>Before (nested objects)</strong>:</p>
+          <pre><code>// ❌ DON'T DO THIS
+const state = {
+  groups: [
+    {
+      id: '1',
+      title: 'Chapter 1',
+      snippets: [
+        { id: '1-1', title: 'Snippet 1', body: '...' },
+        { id: '1-2', title: 'Snippet 2', body: '...' },
+      ],
+    },
+  ],
+};</code></pre>
+
+          <p><strong>After (normalized)</strong>:</p>
+          <pre><code>// ✅ DO THIS
+const state = {
+  groups: {
+    '1': { id: '1', title: 'Chapter 1', snippetIds: ['1-1', '1-2'] },
+  },
+  snippets: {
+    '1-1': { id: '1-1', title: 'Snippet 1', body: '...', groupId: '1' },
+    '1-2': { id: '1-2', title: 'Snippet 2', body: '...', groupId: '1' },
+  },
+  project: {
+    groupIds: ['1'],
+  },
+};
+
+// Use selector to get groups as array
+const groupsList = useGroupsList(); // Returns array of groups</code></pre>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 1</strong> (Setup & Infrastructure) as it's foundational:</p>
+          <ul>
+            <li>Define normalized state structure in <code>src/store/types.ts</code></li>
+            <li>Create Zustand store with normalized entities</li>
+            <li>Create selectors in <code>src/store/selectors.ts</code></li>
+            <li>Update all components to use selectors instead of direct state access</li>
+          </ul>
+          <p><strong>LOE</strong>: 4-6 hours (adds time but saves significant debugging and enables future optimizations)</p>
+        </section>
+
         <section class="docs-section" id="custom-implementation">
           <h2 id="what-needs-custom-implementation">What Needs Custom Implementation</h2>
           <p>These areas cannot be replaced with libraries and require custom React code:</p>
 
           <h3>1. State Management Architecture</h3>
           <ul>
-            <li><strong>Current</strong>: Global <code>state</code> object with direct mutations</li>
-            <li><strong>React + TypeScript</strong>: Zustand with TypeScript interfaces</li>
+            <li><strong>Current</strong>: Global <code>state</code> object with direct mutations and nested structures</li>
+            <li><strong>React + TypeScript</strong>: Zustand with TypeScript interfaces and <strong>normalized state structure</strong></li>
             <li><strong>Complexity</strong>: High</li>
-            <li><strong>Lines</strong>: ~500-800 lines of state logic + type definitions</li>
+            <li><strong>Lines</strong>: ~500-800 lines of state logic + type definitions + selectors</li>
             <li><strong>TypeScript</strong>: Will create interfaces for all state structures (Group, Snippet, Project, Goal, etc.)</li>
+            <li><strong>Normalization</strong>: All entities (stories, groups, snippets, notes, tags, goals) keyed by id in the store; selectors derive views (e.g., left-rail lists)</li>
+            <li><strong>Benefits</strong>: Keeps renders cheap, enables virtualized lists later, single source of truth</li>
           </ul>
 
           <h3>2. Google Drive Integration</h3>
@@ -1661,11 +1822,13 @@ export async function writeDriveFile(
             <li><strong>Create conflict detection hooks (<code>src/hooks/useConflictDetection.ts</code>)</strong></li>
             <li><strong>Create text extraction utilities matching Google Docs format</strong></li>
             <li>Create base component structure with TypeScript</li>
-            <li>Set up state management (Zustand) with TypeScript types</li>
-            <li>Create TypeScript interfaces/types for state structure</li>
+            <li><strong>Set up normalized state management (Zustand) with TypeScript types</strong></li>
+            <li><strong>Create normalized state structure in <code>src/store/types.ts</code> (all entities keyed by id)</strong></li>
+            <li><strong>Create selectors in <code>src/store/selectors.ts</code> to derive views (e.g., left-rail lists)</strong></li>
+            <li><strong>Update all components to use selectors instead of direct state access</strong></li>
             <li><strong>Replace all ad-hoc Drive API calls with React Query hooks</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 26-36 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, and early conflict detection)</p>
+          <p><strong>LOE:</strong> 30-42 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, and state normalization)</p>
 
           <h3>Phase 2: Authentication (Week 1-2)</h3>
           <ul>
@@ -2010,7 +2173,8 @@ export function App(): JSX.Element {
 │   │   └── ...
 │   ├── store/
 │   │   ├── store.ts (Zustand)
-│   │   └── types.ts
+│   │   ├── types.ts (Normalized state types)
+│   │   └── selectors.ts (Selectors for derived views)
 │   ├── api/
 │   │   ├── contract.ts      # API contract definitions (types + Zod schemas)
 │   │   ├── client.ts        # Typed API client functions
@@ -2190,14 +2354,14 @@ export function App(): JSX.Element {
           <h2 id="additional-technical-details">Additional Technical Details</h2>
           
           <h3>State Structure</h3>
-          <p>The current global <code>state</code> object will be converted to TypeScript interfaces:</p>
-          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// types/state.ts
+          <p>The current global <code>state</code> object will be converted to <strong>normalized</strong> TypeScript interfaces. All entities are keyed by id, and selectors derive views:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/types.ts
 export interface Group {
   id: string;
   title: string;
   description?: string;
   color: string;
-  snippetIds: string[];
+  snippetIds: string[]; // References to snippet ids
   position?: number;
 }
 
@@ -2206,7 +2370,7 @@ export interface Snippet {
   title: string;
   body: string;
   description?: string;
-  groupId?: string;
+  groupId?: string; // Reference to group id
   kind?: 'person' | 'place' | 'thing';
   color?: string;
   words: number;
@@ -2217,17 +2381,32 @@ export interface Snippet {
   _contentLoaded?: boolean;
 }
 
-export interface Project {
-  groupIds: string[];
-  snippetIds: string[];
-  activeSnippetId: string | null;
-  activeRightTab: 'people' | 'places' | 'things';
-  filters: {
-    search: string;
-  };
+export interface Note {
+  id: string;
+  title: string;
+  body: string;
+  description?: string;
+  kind: 'person' | 'place' | 'thing';
+  color?: string;
+  words: number;
+  chars: number;
+  driveFileId?: string;
+  updatedAt?: string;
+}
+
+export interface Story {
+  id: string;
+  title: string;
+  description?: string;
+  genre?: string;
+  driveFolderId: string;
+  goalId?: string; // Reference to goal id
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Goal {
+  id: string;
   target: number | null;
   deadline: string | null;
   mode: 'elastic' | 'strict';
@@ -2235,20 +2414,42 @@ export interface Goal {
   daysOff: string[];
 }
 
+export interface Project {
+  storyId: string | null;
+  groupIds: string[]; // Ordered list of group ids
+  snippetIds: string[]; // Ordered list of snippet ids
+  activeSnippetId: string | null;
+  activeRightTab: 'people' | 'places' | 'things';
+  filters: {
+    search: string;
+  };
+}
+
+// Normalized state structure - all entities keyed by id
 export interface AppState {
+  // Normalized entities - keyed by id
+  stories: Record&lt;string, Story&gt;;
   groups: Record&lt;string, Group&gt;;
   snippets: Record&lt;string, Snippet&gt;;
+  notes: Record&lt;string, Note&gt;; // People, Places, Things
+  goals: Record&lt;string, Goal&gt;;
+  
+  // Denormalized views - derived via selectors (see src/store/selectors.ts)
   project: Project;
+  
+  // Drive state
   drive: {
     storyFolderId: string | null;
   };
-  goal: Goal;
+  
+  // UI state
   collapsedGroups: Set&lt;string&gt;;
   editing: {
     savingState: 'idle' | 'saving' | 'saved';
     lastSavedAt: string | null;
   };
 }</code></pre>
+          <p><strong>Note</strong>: Views (e.g., left-rail lists) are derived using selectors in <code>src/store/selectors.ts</code>, not stored directly in state. This keeps renders cheap and enables virtualized lists later.</p>
 
           <h3>Key Algorithms</h3>
           <ol>
@@ -2339,6 +2540,18 @@ export interface AppState {
                     <li>Updated Phase 4 to integrate TipTap with conflict detection and test round-tripping</li>
                     <li>Added TipTap extension dependencies (individual extensions, not full starter-kit)</li>
                     <li>Added editor truth and round-tripping to success criteria</li>
+                  </ul>
+                </li>
+                <li><strong>Added State Normalization section (P1 Priority)</strong>:
+                  <ul>
+                    <li>Normalize all entities (stories, groups, snippets, notes, tags, goals) keyed by id in Zustand store</li>
+                    <li>Use selectors to derive views (e.g., left-rail lists) instead of storing nested objects</li>
+                    <li>Keeps renders cheap and enables virtualized lists later</li>
+                    <li>Updated state structure to show normalized form with entity references</li>
+                    <li>Created selectors examples for derived views</li>
+                    <li>Updated Phase 1 to include state normalization setup</li>
+                    <li>Updated file structure to include <code>selectors.ts</code></li>
+                    <li>Updated State Management Architecture section to explicitly call out normalization</li>
                   </ul>
                 </li>
               </ul>
