@@ -444,12 +444,14 @@ export function useDrive(folderId: string): UseDriveResult {
 
           <h4>Phase 7: Visual Parity Testing</h4>
           <ol>
-            <li><strong>Side-by-Side Comparison</strong>:
+            <li><strong>Side-by-Side Comparison</strong> (Required before closing editor phase):
               <ul>
                 <li>Deploy React app to <code>/react</code> path</li>
                 <li>Compare each element side-by-side with current app</li>
+                <li><strong>Perform pixel-diff or side-by-side visual comparison</strong> for goal meter, "Today" chip, and footer counts</li>
                 <li>Verify pixel-perfect visual match</li>
                 <li>Verify identical behavior</li>
+                <li>Document any visual discrepancies and resolve before proceeding</li>
               </ul>
             </li>
             <li><strong>User Testing</strong>:
@@ -475,7 +477,7 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Today chip looks and behaves identically to current app</li>
             <li>✅ Footer word/character counts look and behave identically to current app</li>
             <li>✅ Version slider (if present) looks and behaves identically to historical/current app, or is documented for future restoration</li>
-            <li>✅ Side-by-side visual comparison shows pixel-perfect match</li>
+            <li>✅ <strong>Pixel-diff or side-by-side visual comparison confirms pixel-perfect match</strong> (required before closing editor phase)</li>
             <li>✅ User testing confirms no "uncanny valley" effect</li>
           </ul>
 
@@ -2279,6 +2281,7 @@ export async function writeDriveFile(
             <li><strong>Document smoke test checklist</strong></li>
           </ul>
           <p><strong>LOE:</strong> 30-42 hours (includes TypeScript setup, type definitions, React Query setup, TipTap plain text configuration, state normalization, MUI theming, and test corpus setup)</p>
+          <p><strong>Phase 1 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify React Query and Zod are fully implemented per definition of done.</p>
 
           <h3>Phase 2: Authentication, Router & API Contract (Week 1-2)</h3>
           <ul>
@@ -2295,6 +2298,7 @@ export async function writeDriveFile(
             <li>Test authentication flow</li>
           </ul>
           <p><strong>LOE:</strong> 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)</p>
+          <p><strong>Phase 2 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify API contract formalization is complete.</p>
 
           <h3>Phase 3: Stories Page with Virtualization Stub (Week 2)</h3>
           <ul>
@@ -2306,6 +2310,7 @@ export async function writeDriveFile(
             <li>Test story management</li>
           </ul>
           <p><strong>LOE:</strong> 10-14 hours (includes virtualization infrastructure setup)</p>
+          <p><strong>Phase 3 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale.</p>
 
           <h3>Phase 4: Editor - Tri-Pane Shell & Plain Text Round-Trip (Week 2-3)</h3>
           <ul>
@@ -2322,8 +2327,10 @@ export async function writeDriveFile(
             <li><strong>Run smoke tests on small project (test-small) after TipTap integration</strong></li>
             <li><strong>Validate round-tripping with small project</strong></li>
             <li><strong>Populate medium project (test-medium)</strong></li>
+            <li><strong>Classic UX anchors visual parity check</strong>: Perform pixel-diff or side-by-side visual comparison for goal meter, "Today" chip, and footer counts before closing phase</li>
           </ul>
           <p><strong>LOE:</strong> 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and footer/save status implementation)</p>
+          <p><strong>Phase 4 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify classic UX anchors pass visual parity check (pixel-diff or side-by-side comparison).</p>
 
           <h3>Phase 5: Library Features & Goals UI (Week 3-4)</h3>
           <ul>
@@ -2341,6 +2348,7 @@ export async function writeDriveFile(
             <li><strong>Test cross-tab conflicts (two Yarny tabs editing same snippet)</strong></li>
           </ul>
           <p><strong>LOE:</strong> 25-35 hours (includes Goals UI implementation with chip and panel, plus conflict resolution modal)</p>
+          <p><strong>Phase 5 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify conflict resolution modal is functional and cross-edit testing passes.</p>
 
           <h3>Phase 6: Lazy Loading & Exports (Week 4)</h3>
           <ul>
@@ -2352,6 +2360,7 @@ export async function writeDriveFile(
             <li><strong>Populate large project (test-large)</strong></li>
           </ul>
           <p><strong>LOE:</strong> 12-17 hours (Note: Conflict resolution moved to Phase 5; lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)</p>
+          <p><strong>Phase 6 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify export chunking works correctly for large chapters.</p>
 
           <h3>Phase 7: Accessibility, Performance & Polish (Week 4-5)</h3>
           <ul>
@@ -2366,10 +2375,40 @@ export async function writeDriveFile(
             <li>Documentation updates</li>
           </ul>
           <p><strong>LOE:</strong> 19-31 hours (includes smoke test execution on all test corpus projects, accessibility pass, and performance touches)</p>
+          <p><strong>Phase 7 Risk Checkpoint</strong>: Final risk assessment before production deployment. Re-rate all risks and verify mitigation strategies are effective.</p>
         </section>
 
         <section class="docs-section" id="risk-factors">
           <h2 id="risk-factors-heading">Risk Factors</h2>
+          
+          <h3>Risk Register Cadence</h3>
+          <p><strong>Process</strong>: At the end of each migration phase, conduct a risk checkpoint to re-rate the following critical risks:</p>
+          <ol>
+            <li><strong>Editor/Docs Mismatch & Round-Tripping</strong> - Verify round-trip testing passes, conflict detection works, format normalization is correct</li>
+            <li><strong>Drive Quotas</strong> - Verify visibility-based gating prevents request storms, rate limit handling works correctly</li>
+            <li><strong>Performance at Large Scale</strong> - Verify performance with large projects (test-large), virtualization thresholds are appropriate, memoization is effective</li>
+          </ol>
+          <p><strong>Checkpoint Activities</strong>:</p>
+          <ul>
+            <li>Review risk mitigation strategies implemented in the phase</li>
+            <li>Test critical paths with test corpus (small, medium, large projects)</li>
+            <li>Re-rate risk level (High/Medium/Low) based on current status</li>
+            <li>Update mitigation strategies if needed</li>
+            <li>Document any new risks discovered</li>
+            <li>Verify definition of done criteria are met</li>
+          </ul>
+          <p><strong>Checkpoint Schedule</strong>:</p>
+          <ul>
+            <li><strong>Phase 1</strong>: Verify React Query and Zod are fully implemented (definition of done)</li>
+            <li><strong>Phase 2</strong>: Verify API contract formalization is complete</li>
+            <li><strong>Phase 3</strong>: Baseline risk assessment before editor work begins</li>
+            <li><strong>Phase 4</strong>: Critical checkpoint - verify classic UX anchors pass visual parity check (pixel-diff or side-by-side comparison)</li>
+            <li><strong>Phase 5</strong>: Verify conflict resolution modal is functional and cross-edit testing passes</li>
+            <li><strong>Phase 6</strong>: Verify export chunking works correctly for large chapters</li>
+            <li><strong>Phase 7</strong>: Final risk assessment before production deployment</li>
+          </ul>
+          
+          <hr style="margin: var(--space-xl) 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.1);">
           
           <h3>High Risk</h3>
           <ul>
@@ -2791,6 +2830,9 @@ export function App(): JSX.Element {
             <li>Editor saves correctly</li>
             <li>Export functionality works</li>
             <li><strong>Classic UX anchors preserved</strong>: Goal meter, Today chip, footer word/character counts look and behave identically</li>
+            <li><strong>Phase 1 Definition of Done</strong>: TanStack Query (React Query) fully configured and used for ALL Drive I/O operations</li>
+            <li><strong>Phase 1 Definition of Done</strong>: API contract formalization with Zod schemas and runtime validation implemented</li>
+            <li><strong>Classic UX anchors visual parity</strong>: Pixel-diff or side-by-side visual comparison confirms pixel-perfect match for goal meter, "Today" chip, and footer counts before closing editor phase</li>
           </ul>
 
           <h3>Should Have</h3>
@@ -2801,8 +2843,6 @@ export function App(): JSX.Element {
             <li>Better loading states</li>
             <li>Complete TypeScript type coverage (all components, hooks, utilities)</li>
             <li>Type-safe API calls and state management</li>
-            <li><strong>API contract formalization with runtime validation (Zod schemas)</strong></li>
-            <li><strong>TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, stale-while-revalidate, visibility-based gating, and rate limit handling</strong></li>
             <li><strong>Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus</strong></li>
             <li><strong>Configurable virtualization thresholds</strong>: Virtualization thresholds (50+ chapters, 200+ snippets) exposed as settings for tuning without redeployment</li>
             <li><strong>Chunked export writes</strong>: Large chapter exports handle batchUpdate body limits with chunked writes</li>

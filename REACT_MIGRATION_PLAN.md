@@ -336,11 +336,13 @@ export function useDrive(folderId: string): UseDriveResult {
 
 #### Phase 7: Visual Parity Testing
 
-1. **Side-by-Side Comparison**:
+1. **Side-by-Side Comparison** (Required before closing editor phase):
    - Deploy React app to `/react` path
    - Compare each element side-by-side with current app
+   - **Perform pixel-diff or side-by-side visual comparison** for goal meter, "Today" chip, and footer counts
    - Verify pixel-perfect visual match
    - Verify identical behavior
+   - Document any visual discrepancies and resolve before proceeding
 
 2. **User Testing**:
    - Test with users familiar with current app
@@ -360,7 +362,7 @@ export function useDrive(folderId: string): UseDriveResult {
 - [ ] Today chip looks and behaves identically to current app
 - [ ] Footer word/character counts look and behave identically to current app
 - [ ] Version slider (if present) looks and behaves identically to historical/current app, or is documented for future restoration
-- [ ] Side-by-side visual comparison shows pixel-perfect match
+- [ ] **Pixel-diff or side-by-side visual comparison confirms pixel-perfect match** (required before closing editor phase)
 - [ ] User testing confirms no "uncanny valley" effect
 
 ### LOE
@@ -2717,6 +2719,8 @@ Already included in recommended stack:
 
 **LOE**: 30-42 hours (includes TypeScript setup, type definitions, React Query setup, TipTap plain text configuration, state normalization, MUI theming, and test corpus setup)
 
+**Phase 1 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify React Query and Zod are fully implemented per definition of done.
+
 ### Phase 2: Authentication, Router & API Contract (Week 1-2)
 - [ ] Configure React Router with TypeScript
 - [ ] Set up routing structure
@@ -2731,6 +2735,8 @@ Already included in recommended stack:
 
 **LOE**: 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)
 
+**Phase 2 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify API contract formalization is complete.
+
 ### Phase 3: Stories Page with Virtualization Stub (Week 2)
 - [ ] Convert stories list to React components
 - [ ] Implement search/filtering
@@ -2740,6 +2746,8 @@ Already included in recommended stack:
 - [ ] Test story management
 
 **LOE**: 10-14 hours (includes virtualization infrastructure setup)
+
+**Phase 3 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale.
 
 ### Phase 4: Editor - Tri-Pane Shell & Plain Text Round-Trip (Week 2-3)
 - [ ] Set up three-column layout (Story/Editor/Notes)
@@ -2755,8 +2763,11 @@ Already included in recommended stack:
 - [ ] **Run smoke tests on small project (test-small) after TipTap integration**
 - [ ] **Validate round-tripping with small project**
 - [ ] **Populate medium project (test-medium)**
+- [ ] **Classic UX anchors visual parity check**: Perform pixel-diff or side-by-side visual comparison for goal meter, "Today" chip, and footer counts before closing phase
 
 **LOE**: 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and footer/save status implementation)
+
+**Phase 4 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify classic UX anchors pass visual parity check (pixel-diff or side-by-side comparison).
 
 ### Phase 5: Library Features & Goals UI (Week 3-4)
 - [ ] Implement drag & drop with @dnd-kit
@@ -2773,6 +2784,8 @@ Already included in recommended stack:
 
 **LOE**: 25-35 hours (includes Goals UI implementation with chip and panel, plus conflict resolution modal)
 
+**Phase 5 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify conflict resolution modal is functional and cross-edit testing passes.
+
 ### Phase 6: Lazy Loading & Exports (Week 4)
 - [ ] Lazy loading logic using React Query prefetching and `useQueries` (visibility-gated)
 - [ ] Auto-save functionality using React Query mutations (visibility-gated)
@@ -2785,6 +2798,8 @@ Already included in recommended stack:
 - [ ] **Test export of very large chapter to validate chunking**
 
 **LOE**: 12-17 hours (Note: Conflict resolution moved to Phase 5; lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
+
+**Phase 6 Risk Checkpoint**: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify export chunking works correctly for large chapters.
 
 ### Phase 7: Accessibility, Performance & Polish (Week 4-5)
 - [ ] Accessibility audit and fixes
@@ -2799,9 +2814,38 @@ Already included in recommended stack:
 
 **LOE**: 19-31 hours (includes smoke test execution on all test corpus projects, accessibility pass, and performance touches)
 
+**Phase 7 Risk Checkpoint**: Final risk assessment before production deployment. Re-rate all risks and verify mitigation strategies are effective.
+
 ---
 
 ## Risk Factors
+
+### Risk Register Cadence
+
+**Process**: At the end of each migration phase, conduct a risk checkpoint to re-rate the following critical risks:
+
+1. **Editor/Docs Mismatch & Round-Tripping** - Verify round-trip testing passes, conflict detection works, format normalization is correct
+2. **Drive Quotas** - Verify visibility-based gating prevents request storms, rate limit handling works correctly
+3. **Performance at Large Scale** - Verify performance with large projects (test-large), virtualization thresholds are appropriate, memoization is effective
+
+**Checkpoint Activities**:
+- Review risk mitigation strategies implemented in the phase
+- Test critical paths with test corpus (small, medium, large projects)
+- Re-rate risk level (High/Medium/Low) based on current status
+- Update mitigation strategies if needed
+- Document any new risks discovered
+- Verify definition of done criteria are met
+
+**Checkpoint Schedule**:
+- **Phase 1**: Verify React Query and Zod are fully implemented (definition of done)
+- **Phase 2**: Verify API contract formalization is complete
+- **Phase 3**: Baseline risk assessment before editor work begins
+- **Phase 4**: Critical checkpoint - verify classic UX anchors pass visual parity check (pixel-diff or side-by-side comparison)
+- **Phase 5**: Verify conflict resolution modal is functional and cross-edit testing passes
+- **Phase 6**: Verify export chunking works correctly for large chapters
+- **Phase 7**: Final risk assessment before production deployment
+
+---
 
 ### High Risk
 1. **Editor/Docs Mismatch & Round-Tripping**
@@ -3219,6 +3263,9 @@ yarny-app/
 - [ ] Editor saves correctly
 - [ ] Export functionality works
 - [ ] **Classic UX anchors preserved**: Goal meter, Today chip, footer word/character counts look and behave identically
+- [ ] **Phase 1 Definition of Done**: TanStack Query (React Query) fully configured and used for ALL Drive I/O operations
+- [ ] **Phase 1 Definition of Done**: API contract formalization with Zod schemas and runtime validation implemented
+- [ ] **Classic UX anchors visual parity**: Pixel-diff or side-by-side visual comparison confirms pixel-perfect match for goal meter, "Today" chip, and footer counts before closing editor phase
 
 ### Should Have
 - [ ] Better accessibility (ARIA attributes)
@@ -3227,8 +3274,6 @@ yarny-app/
 - [ ] Better loading states
 - [ ] Complete TypeScript type coverage (all components, hooks, utilities)
 - [ ] Type-safe API calls and state management
-- [ ] **API contract formalization with runtime validation (Zod schemas)**
-- [ ] **TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, stale-while-revalidate, visibility-based gating, and rate limit handling**
 - [ ] **Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus**
 - [ ] **Configurable virtualization thresholds**: Virtualization thresholds (50+ chapters, 200+ snippets) exposed as settings for tuning without redeployment
 - [ ] **Chunked export writes**: Large chapter exports handle batchUpdate body limits with chunked writes
