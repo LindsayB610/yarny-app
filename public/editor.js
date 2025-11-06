@@ -5426,6 +5426,36 @@ function exportChapters() {
 }
 
 /**
+ * Open filename modal for outline export
+ */
+function exportOutline() {
+  if (!state.drive.storyFolderId) {
+    alert('Story folder not found. Please reload the page.');
+    return;
+  }
+  
+  // Check if there are chapters to export
+  const groups = state.project.groupIds
+    .map(id => state.groups[id])
+    .filter(group => group)
+    .sort((a, b) => a.position - b.position);
+  
+  if (groups.length === 0) {
+    alert('No chapters to export.');
+    return;
+  }
+  
+  // Store export info
+  pendingExport = {
+    type: 'outline',
+    suggestedName: `${state.project.title || 'Untitled Story'} - Outline`
+  };
+  
+  // Open modal with suggested name
+  openExportFilenameModal();
+}
+
+/**
  * Open filename modal for People export
  */
 function exportPeople() {
@@ -5484,11 +5514,25 @@ function openExportFilenameModalForKind(kind, kindDisplayName) {
 function openExportFilenameModal() {
   const modal = document.getElementById('exportFilenameModal');
   const input = document.getElementById('exportFilenameInput');
+  const snippetNamesGroup = document.getElementById('exportSnippetNamesGroup');
+  const snippetNamesCheckbox = document.getElementById('exportSnippetNamesCheckbox');
   
   if (!modal || !input) return;
   
   // Pre-populate with suggested name
   input.value = pendingExport?.suggestedName || '';
+  
+  // Show/hide snippet names checkbox based on export type
+  // Only show for chapters export, not for outline or kind exports
+  if (snippetNamesGroup && snippetNamesCheckbox) {
+    if (pendingExport?.type === 'chapters') {
+      snippetNamesGroup.style.display = 'block';
+      snippetNamesCheckbox.checked = false; // Default: unchecked (don't include snippet names)
+    } else {
+      snippetNamesGroup.style.display = 'none';
+      snippetNamesCheckbox.checked = false;
+    }
+  }
   
   // Show modal
   modal.classList.remove('hidden');
@@ -5536,6 +5580,11 @@ async function confirmExportFilename() {
   const exportInfo = { ...pendingExport };
   const finalFilename = filename;
   
+  // Get checkbox state for chapters export (before closing modal)
+  const includeSnippetNames = exportInfo.type === 'chapters' 
+    ? document.getElementById('exportSnippetNamesCheckbox')?.checked || false
+    : false;
+  
   // Close modal (this clears pendingExport)
   closeExportFilenameModal();
   
@@ -5566,14 +5615,43 @@ async function confirmExportFilename() {
           .sort((a, b) => (a.position || 0) - (b.position || 0));
         
         snippets.forEach((snippet) => {
-          // Add snippet title
-          if (snippet.title) {
+          // Add snippet title only if checkbox is checked
+          if (includeSnippetNames && snippet.title) {
             combinedContent += `## ${snippet.title}\n\n`;
           }
           
           // Add snippet body
           if (snippet.body) {
             combinedContent += snippet.body.trim() + '\n\n';
+          }
+        });
+        
+        // Add separator between chapters (except after last one)
+        if (groupIndex < groups.length - 1) {
+          combinedContent += '---\n\n';
+        }
+      });
+    } else if (exportInfo.type === 'outline') {
+      // Export outline (just chapter and snippet titles)
+      const groups = state.project.groupIds
+        .map(id => state.groups[id])
+        .filter(group => group)
+        .sort((a, b) => a.position - b.position);
+      
+      groups.forEach((group, groupIndex) => {
+        // Add chapter title
+        combinedContent += `# ${group.title}\n\n`;
+        
+        // Get snippets in this group, sorted by position
+        const snippets = group.snippetIds
+          .map(id => state.snippets[id])
+          .filter(snippet => snippet)
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+        
+        snippets.forEach((snippet) => {
+          // Add snippet title (only titles, no body)
+          if (snippet.title) {
+            combinedContent += `## ${snippet.title}\n\n`;
           }
         });
         
@@ -5625,7 +5703,14 @@ async function confirmExportFilename() {
     
   } catch (error) {
     console.error('Export error:', error);
-    const exportType = exportInfo?.type === 'chapters' ? 'chapters' : exportInfo?.kindDisplayName?.toLowerCase() || 'content';
+    let exportType = 'content';
+    if (exportInfo?.type === 'chapters') {
+      exportType = 'chapters';
+    } else if (exportInfo?.type === 'outline') {
+      exportType = 'outline';
+    } else if (exportInfo?.kindDisplayName) {
+      exportType = exportInfo.kindDisplayName.toLowerCase();
+    }
     alert(`Failed to export ${exportType}: ` + (error.message || 'Unknown error'));
     exportBtn.innerHTML = originalContent;
     exportBtn.disabled = false;
@@ -5634,6 +5719,7 @@ async function confirmExportFilename() {
 
 // Export functions for global access
 window.exportChapters = exportChapters;
+window.exportOutline = exportOutline;
 window.exportPeople = exportPeople;
 window.exportPlaces = exportPlaces;
 window.exportThings = exportThings;

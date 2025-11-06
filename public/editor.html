@@ -163,6 +163,10 @@
               <i class="material-icons">auto_stories</i>
               Export All Chapters
             </button>
+            <button class="export-option" onclick="exportOutline()">
+              <i class="material-icons">list</i>
+              Export Outline
+            </button>
             <button class="export-option" onclick="exportPeople()">
               <i class="material-icons">people</i>
               Export All People
@@ -213,6 +217,16 @@
               placeholder="Enter file name"
               autocomplete="off"
             >
+          </div>
+          <div class="form-group" id="exportSnippetNamesGroup" style="display: none;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input 
+                type="checkbox" 
+                id="exportSnippetNamesCheckbox"
+                name="exportSnippetNames"
+              >
+              <span>Include snippet names</span>
+            </label>
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="closeExportFilenameModal()">Cancel</button>
