@@ -4302,9 +4302,27 @@ async function loadStoryFromDrive(storyFolderId) {
           // Load groups and structure from data.json
           if (parsed.groups) {
             state.groups = parsed.groups;
-            state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
-              return (state.groups[a].position || 0) - (state.groups[b].position || 0);
-            });
+            
+            // Always preserve the saved order from project.json - never reorder automatically
+            const savedGroupIds = state.project.groupIds || [];
+            
+            if (savedGroupIds.length > 0 && savedGroupIds.every(id => state.groups[id])) {
+              // Saved order exists and all groups are still present - preserve exact order
+              // Add any new groups that weren't in the saved order (at the end)
+              const newGroups = Object.keys(state.groups).filter(id => !savedGroupIds.includes(id));
+              state.project.groupIds = [...savedGroupIds, ...newGroups];
+              console.log('Preserved exact groupIds order from project.json:', state.project.groupIds);
+            } else if (savedGroupIds.length > 0) {
+              // Saved order exists but some groups are missing - filter to only existing groups, preserve order
+              const filteredSavedOrder = savedGroupIds.filter(id => state.groups[id]);
+              const newGroups = Object.keys(state.groups).filter(id => !savedGroupIds.includes(id));
+              state.project.groupIds = [...filteredSavedOrder, ...newGroups];
+              console.log('Preserved groupIds order from project.json (filtered missing groups):', state.project.groupIds);
+            } else {
+              // No saved order - use whatever order the groups are in (no sorting)
+              state.project.groupIds = Object.keys(state.groups);
+              console.log('No saved order found, using groups as-is:', state.project.groupIds);
+            }
             console.log('Loaded groups from data.json:', Object.keys(state.groups), 'groupIds:', state.project.groupIds);
           } else {
             console.warn('No groups found in data.json');
@@ -4370,9 +4388,19 @@ async function loadStoryFromDrive(storyFolderId) {
           });
           
           // Update groupIds in state
-          state.project.groupIds = Object.keys(state.groups).sort((a, b) => {
-            return (state.groups[a].position || 0) - (state.groups[b].position || 0);
-          });
+          // Preserve saved order if it exists, otherwise use groups as-is (no sorting)
+          const savedGroupIds = state.project.groupIds || [];
+          
+          if (savedGroupIds.length > 0 && savedGroupIds.every(id => state.groups[id])) {
+            // Saved order exists and all groups are present - preserve it
+            const newGroups = Object.keys(state.groups).filter(id => !savedGroupIds.includes(id));
+            state.project.groupIds = [...savedGroupIds, ...newGroups];
+            console.log('Preserved groupIds order when creating from folder structure:', state.project.groupIds);
+          } else {
+            // No saved order or some groups missing - use groups as-is (no sorting)
+            state.project.groupIds = Object.keys(state.groups);
+            console.log('Using groups as-is when creating from folder structure (no saved order):', state.project.groupIds);
+          }
           
           console.log(`Created ${state.project.groupIds.length} groups from folder structure`);
         } catch (error) {
@@ -4850,9 +4878,27 @@ async function loadStoryFromDrive(storyFolderId) {
     state.snippets = mergedSnippets;
     
     state.groups = loadedGroups;
-    state.project.groupIds = Object.keys(loadedGroups).sort((a, b) => {
-      return (loadedGroups[a].position || 0) - (loadedGroups[b].position || 0);
-    });
+    
+    // Always preserve the saved order from project.json - never reorder automatically
+    const savedGroupIds = state.project.groupIds || [];
+    
+    if (savedGroupIds.length > 0 && savedGroupIds.every(id => loadedGroups[id])) {
+      // Saved order exists and all groups are still present - preserve exact order
+      // Add any new groups that weren't in the saved order (at the end)
+      const newGroups = Object.keys(loadedGroups).filter(id => !savedGroupIds.includes(id));
+      state.project.groupIds = [...savedGroupIds, ...newGroups];
+      console.log('Preserved exact groupIds order after merging snippets:', state.project.groupIds);
+    } else if (savedGroupIds.length > 0) {
+      // Saved order exists but some groups are missing - filter to only existing groups, preserve order
+      const filteredSavedOrder = savedGroupIds.filter(id => loadedGroups[id]);
+      const newGroups = Object.keys(loadedGroups).filter(id => !savedGroupIds.includes(id));
+      state.project.groupIds = [...filteredSavedOrder, ...newGroups];
+      console.log('Preserved groupIds order after merging snippets (filtered missing groups):', state.project.groupIds);
+    } else {
+      // No saved order - use whatever order the groups are in (no sorting)
+      state.project.groupIds = Object.keys(loadedGroups);
+      console.log('No saved order found after merging, using groups as-is:', state.project.groupIds);
+    }
     
     // Load collapsed groups state now that groups are loaded
     // This must happen after groups are in state so the IDs match
