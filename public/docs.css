@@ -438,12 +438,17 @@ html {
 }
 
 .docs-section code {
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.9em;
   color: var(--color-primary);
+}
+
+.docs-section pre code {
+  background: transparent;
+  padding: 0;
 }
 
 .docs-section table {
