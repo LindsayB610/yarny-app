@@ -255,6 +255,84 @@ async function initializeGoogleSignIn() {
       use_fedcm_for_prompt: true, // Enable FedCM
     });
 
+    // Render a Google Sign-In button that overlays our custom button
+    // This ensures users can always log in, even if not already signed in to Google
+    // The Google-rendered button will always show the account selector/login screen
+    const setupGoogleButtonOverlay = () => {
+      const customButton = document.getElementById('googleSignInBtn');
+      if (!customButton) {
+        // Retry after a short delay if button not found yet
+        setTimeout(setupGoogleButtonOverlay, 100);
+        return;
+      }
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.id = 'googleSignInButtonContainer';
+      
+      // Position the Google button to overlay our custom button
+      const updatePosition = () => {
+        const rect = customButton.getBoundingClientRect();
+        buttonContainer.style.position = 'fixed';
+        buttonContainer.style.top = rect.top + 'px';
+        buttonContainer.style.left = rect.left + 'px';
+        buttonContainer.style.width = rect.width + 'px';
+        buttonContainer.style.height = rect.height + 'px';
+      };
+      
+      updatePosition();
+      buttonContainer.style.opacity = '0'; // Make it invisible but still clickable
+      buttonContainer.style.pointerEvents = 'auto'; // Make sure it's clickable
+      buttonContainer.style.zIndex = '1000'; // Above our custom button
+      buttonContainer.style.overflow = 'hidden'; // Ensure iframe doesn't overflow
+      buttonContainer.style.cursor = 'pointer'; // Show pointer cursor
+      
+      document.body.appendChild(buttonContainer);
+
+      // Render the Google button - this will always show account selector when clicked
+      // We'll style it to match our custom button size
+      const rect = customButton.getBoundingClientRect();
+      google.accounts.id.renderButton(
+        buttonContainer,
+        {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          logo_alignment: 'left',
+          width: rect.width, // Match custom button width
+        }
+      );
+
+      // Wait for the button to render (it's async), then update position
+      const checkButtonRendered = setInterval(() => {
+        if (buttonContainer.querySelector('iframe') || buttonContainer.querySelector('div[role="button"]')) {
+          clearInterval(checkButtonRendered);
+          updatePosition(); // Update position once button is rendered
+        }
+      }, 100);
+
+      // Clear interval after 5 seconds if button still not rendered
+      setTimeout(() => clearInterval(checkButtonRendered), 5000);
+
+      // Store reference to button container for later use
+      window.googleSignInButtonContainer = buttonContainer;
+      
+      // Update position if window is resized or scrolled
+      const updatePositionHandler = () => updatePosition();
+      window.addEventListener('resize', updatePositionHandler);
+      window.addEventListener('scroll', updatePositionHandler, true);
+      
+      // Store cleanup function
+      buttonContainer._cleanup = () => {
+        window.removeEventListener('resize', updatePositionHandler);
+        window.removeEventListener('scroll', updatePositionHandler, true);
+      };
+    };
+
+    // Start setting up the overlay
+    setupGoogleButtonOverlay();
+
     console.log('Google Sign-In initialized with FedCM support');
   } catch (error) {
     console.error('Error initializing Google Sign-In:', error);
@@ -314,7 +392,7 @@ async function handleGoogleSignIn(response) {
 }
 
 // Sign in with Google button click
-window.signInWithGoogle = function() {
+window.signInWithGoogle = function(event) {
   if (!googleClientId) {
     // On localhost, suggest using dev mode
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -326,7 +404,62 @@ window.signInWithGoogle = function() {
     return;
   }
 
-  google.accounts.id.prompt();
+  // The Google button overlay should be positioned over our custom button
+  // If the overlay is set up correctly, clicks should naturally go to it
+  // However, since our custom button has an onclick handler, we need to prevent
+  // default behavior and manually trigger the overlay
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const buttonContainer = document.getElementById('googleSignInButtonContainer') || window.googleSignInButtonContainer;
+  
+  if (buttonContainer) {
+    // Try to simulate a click at the center of the overlay
+    // This will trigger the Google button's click handler
+    const rect = buttonContainer.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // Create a synthetic click event at the center of the overlay
+    const syntheticClick = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX: centerX,
+      clientY: centerY,
+      button: 0
+    });
+    
+    // Dispatch the event on the container
+    buttonContainer.dispatchEvent(syntheticClick);
+    
+    // Also try dispatching on the iframe if it exists
+    const iframe = buttonContainer.querySelector('iframe');
+    if (iframe) {
+      try {
+        iframe.dispatchEvent(syntheticClick);
+        // Also try the native click method
+        iframe.click();
+      } catch (e) {
+        // Cross-origin restrictions may prevent this, which is fine
+        // The container click should work
+      }
+    }
+    
+    // If the button hasn't been rendered yet, fall back to prompt()
+    setTimeout(() => {
+      if (!buttonContainer.querySelector('iframe') && !buttonContainer.querySelector('div[role="button"]')) {
+        console.warn('Google button not rendered yet, falling back to prompt()');
+        google.accounts.id.prompt();
+      }
+    }, 200);
+  } else {
+    // Fallback: try prompt() if container not found
+    console.warn('Google button container not found, falling back to prompt()');
+    google.accounts.id.prompt();
+  }
 };
 
 // Logout function
