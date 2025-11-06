@@ -45,6 +45,7 @@
             <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
             <li><a href="#typescript-react" class="nav-link">Understanding TypeScript + React</a></li>
             <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
+            <li><a href="#preserve-ux-anchors" class="nav-link">Preserve Classic UX Anchors (P1/P2)</a></li>
             <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
             <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
             <li><a href="#mui-theming-strategy" class="nav-link">MUI Theming Strategy (P2)</a></li>
@@ -235,6 +236,131 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Conflict resolution (Yarny vs Google Docs)</li>
             <li>✅ Comments/tracked changes detection</li>
           </ul>
+        </section>
+
+        <section class="docs-section" id="preserve-ux-anchors" style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
+          <h2 id="preserve-ux-anchors-heading" style="margin-top: 0; color: #92400E; display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="font-size: 24px;">palette</i>
+            Preserve Classic UX Anchors (P1/P2 Priority)
+          </h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: These UI elements are recognizable bits from the 2011–2015 screenshots that define Yarny's identity. Preserving them intact avoids the "new app uncanny valley" and maintains user familiarity during migration.</p>
+          <p><strong>What</strong>: These specific UI elements must be preserved exactly as they appear in the current app, with identical visual design, behavior, and placement.</p>
+
+          <h3>Elements to Preserve</h3>
+
+          <h4>1. Left-Rail Goal Meter</h4>
+          <ul>
+            <li><strong>Location</strong>: Left sidebar, below story title and settings button</li>
+            <li><strong>Features</strong>:
+              <ul>
+                <li>Displays total word count vs. goal (e.g., "0 / 3,000")</li>
+                <li>Progress bar showing completion percentage</li>
+                <li>Clickable to open goal panel</li>
+                <li>Updates in real-time as user writes</li>
+              </ul>
+            </li>
+            <li><strong>Preservation Requirements</strong>:
+              <ul>
+                <li>✅ Exact same visual design (font size, colors, spacing, border radius)</li>
+                <li>✅ Same placement in left rail header</li>
+                <li>✅ Same click behavior (opens goal panel)</li>
+                <li>✅ Same real-time update behavior</li>
+                <li>✅ Same progress bar styling and animation</li>
+              </ul>
+            </li>
+            <li><strong>React Implementation</strong>: Create <code>GoalMeter.tsx</code> component in <code>src/components/editor/</code></li>
+          </ul>
+
+          <h4>2. "Today • N" Chip</h4>
+          <ul>
+            <li><strong>Location</strong>: Left sidebar, below goal meter</li>
+            <li><strong>Features</strong>:
+              <ul>
+                <li>Displays "Today" label with daily word count (e.g., "Today • 250")</li>
+                <li>Progress bar showing daily progress toward daily target</li>
+                <li>Color-coded progress bar (green when ahead, red when behind in strict mode)</li>
+                <li>Clickable to open goal panel</li>
+                <li>Shows "—" when no goal is set</li>
+              </ul>
+            </li>
+            <li><strong>Preservation Requirements</strong>:
+              <ul>
+                <li>✅ Exact same visual design (chip style, padding, border, colors)</li>
+                <li>✅ Same placement below goal meter</li>
+                <li>✅ Same "Today • N" format with number formatting (e.g., "1,234" with commas)</li>
+                <li>✅ Same progress bar styling (2px height, subtle background)</li>
+                <li>✅ Same color logic (green/red in strict mode, primary color otherwise)</li>
+                <li>✅ Same click behavior (opens goal panel)</li>
+                <li>✅ Always visible (even when no goal set, shows "—")</li>
+              </ul>
+            </li>
+            <li><strong>React Implementation</strong>: Create <code>TodayChip.tsx</code> component in <code>src/components/editor/</code></li>
+          </ul>
+
+          <h4>3. Footer Word/Character Counts</h4>
+          <ul>
+            <li><strong>Location</strong>: Footer bar, center section</li>
+            <li><strong>Features</strong>:
+              <ul>
+                <li>Displays "Words: N" and "Characters: N" with separator ("—")</li>
+                <li>Updates in real-time as user types</li>
+                <li>Shows counts for active snippet only</li>
+                <li>Centered in footer bar</li>
+                <li>Small font size, secondary text color</li>
+              </ul>
+            </li>
+            <li><strong>Preservation Requirements</strong>:
+              <ul>
+                <li>✅ Exact same visual design (font size, color, spacing, separator)</li>
+                <li>✅ Same placement in footer center</li>
+                <li>✅ Same format ("Words: N — Characters: N")</li>
+                <li>✅ Same real-time update behavior</li>
+                <li>✅ Same calculation logic (active snippet only)</li>
+              </ul>
+            </li>
+            <li><strong>React Implementation</strong>: Create <code>Footer.tsx</code> component in <code>src/components/shared/</code></li>
+          </ul>
+
+          <h4>4. Version Slider Affordance</h4>
+          <ul>
+            <li><strong>Location</strong>: Footer bar (or editor area, depending on implementation)</li>
+            <li><strong>Note</strong>: This may refer to a feature from the original 2011-2015 Yarny app that isn't in the current codebase</li>
+            <li><strong>Investigation Needed</strong>:
+              <ul>
+                <li>Check reference documentation for original version slider implementation</li>
+                <li>Verify if this feature exists in current codebase under different name</li>
+                <li>Document findings and implementation plan</li>
+              </ul>
+            </li>
+            <li><strong>Preservation Requirements</strong>:
+              <ul>
+                <li>✅ If present in current app: Preserve exact design and behavior</li>
+                <li>✅ If not present but referenced in original app: Document for future implementation</li>
+                <li>✅ Maintain same visual affordance and interaction pattern</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>Implementation Strategy</h3>
+          <ul>
+            <li><strong>Phase 1</strong>: Document and audit current implementation</li>
+            <li><strong>Phase 4</strong>: Implement components (Goal Meter, Today Chip, Footer) with exact styling</li>
+            <li><strong>Phase 7</strong>: Visual parity testing - side-by-side comparison with current app</li>
+          </ul>
+
+          <h3>Success Criteria</h3>
+          <ul>
+            <li>✅ Goal meter looks and behaves identically to current app</li>
+            <li>✅ Today chip looks and behaves identically to current app</li>
+            <li>✅ Footer word/character counts look and behave identically to current app</li>
+            <li>✅ Version slider (if applicable) looks and behaves identically to current app</li>
+            <li>✅ Side-by-side visual comparison shows pixel-perfect match</li>
+            <li>✅ User testing confirms no "uncanny valley" effect</li>
+          </ul>
+
+          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #92400E;"><strong style="color: #92400E !important;">LOE</strong>: 9-14 hours (documentation, implementation, and visual parity testing)</p>
         </section>
 
         <section class="docs-section" id="migration-strategy">
@@ -1993,8 +2119,10 @@ export async function writeDriveFile(
             <li><strong>Implement editor as truth (authoritative while open)</strong></li>
             <li>Basic editor functionality</li>
             <li><strong>Test round-tripping with Google Docs</strong></li>
+            <li><strong>Implement classic UX anchors: Goal Meter, Today Chip, Footer word/character counts</strong></li>
+            <li><strong>Verify visual parity with current app for all preserved elements</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 18-25 hours (includes TipTap integration, conflict detection integration, and round-trip testing)</p>
+          <p><strong>LOE:</strong> 22-31 hours (includes TipTap integration, conflict detection integration, round-trip testing, and classic UX anchor preservation)</p>
 
           <h3>Phase 5: Editor - Advanced Features (Week 3-4)</h3>
           <ul>
@@ -2386,6 +2514,7 @@ export function App(): JSX.Element {
             <li>Google Drive sync works</li>
             <li>Editor saves correctly</li>
             <li>Export functionality works</li>
+            <li><strong>Classic UX anchors preserved</strong>: Goal meter, Today chip, footer word/character counts look and behave identically</li>
           </ul>
 
           <h3>Should Have</h3>

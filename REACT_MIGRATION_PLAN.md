@@ -163,6 +163,208 @@ export function useDrive(folderId: string): UseDriveResult {
 
 ---
 
+## Preserve Classic UX Anchors (P1/P2 Priority)
+
+### Overview
+
+**Why**: These UI elements are recognizable bits from the 2011–2015 screenshots that define Yarny's identity. Preserving them intact avoids the "new app uncanny valley" and maintains user familiarity during migration.
+
+**What**: These specific UI elements must be preserved exactly as they appear in the current app, with identical visual design, behavior, and placement.
+
+### Elements to Preserve
+
+#### 1. Left-Rail Goal Meter
+
+**Location**: Left sidebar, below story title and settings button
+
+**Current Implementation**:
+- Displays total word count vs. goal (e.g., "0 / 3,000")
+- Progress bar showing completion percentage
+- Clickable to open goal panel
+- Updates in real-time as user writes
+
+**Preservation Requirements**:
+- ✅ Exact same visual design (font size, colors, spacing, border radius)
+- ✅ Same placement in left rail header
+- ✅ Same click behavior (opens goal panel)
+- ✅ Same real-time update behavior
+- ✅ Same progress bar styling and animation
+
+**Code Locations**:
+- `editor.html` lines 71-76 (HTML structure)
+- `editor.css` lines 106-135 (styling)
+- `editor.js` lines 974-986 (`updateGoalMeter` function)
+
+**React Implementation**:
+- Create `GoalMeter.tsx` component in `src/components/editor/`
+- Preserve exact CSS classes and styling
+- Use same calculation logic (`calculateStoryWordCount`)
+- Maintain click handler to open goal panel
+
+#### 2. "Today • N" Chip
+
+**Location**: Left sidebar, below goal meter
+
+**Current Implementation**:
+- Displays "Today" label with daily word count (e.g., "Today • 250")
+- Progress bar showing daily progress toward daily target
+- Color-coded progress bar (green when ahead, red when behind in strict mode)
+- Clickable to open goal panel
+- Shows "—" when no goal is set
+
+**Preservation Requirements**:
+- ✅ Exact same visual design (chip style, padding, border, colors)
+- ✅ Same placement below goal meter
+- ✅ Same "Today • N" format with number formatting (e.g., "1,234" with commas)
+- ✅ Same progress bar styling (2px height, subtle background)
+- ✅ Same color logic (green/red in strict mode, primary color otherwise)
+- ✅ Same click behavior (opens goal panel)
+- ✅ Always visible (even when no goal set, shows "—")
+
+**Code Locations**:
+- `editor.html` lines 77-83 (HTML structure)
+- `editor.css` lines 137-187 (styling)
+- `editor.js` lines 988-1055 (`updateTodayChip` function)
+
+**React Implementation**:
+- Create `TodayChip.tsx` component in `src/components/editor/`
+- Preserve exact CSS classes and styling
+- Use same calculation logic (`calculateDailyTarget`)
+- Maintain color logic for strict mode (ahead/behind indicators)
+- Format numbers with `toLocaleString()` for comma separators
+
+#### 3. Footer Word/Character Counts
+
+**Location**: Footer bar, center section
+
+**Current Implementation**:
+- Displays "Words: N" and "Characters: N" with separator ("—")
+- Updates in real-time as user types
+- Shows counts for active snippet only
+- Centered in footer bar
+- Small font size, secondary text color
+
+**Preservation Requirements**:
+- ✅ Exact same visual design (font size, color, spacing, separator)
+- ✅ Same placement in footer center
+- ✅ Same format ("Words: N — Characters: N")
+- ✅ Same real-time update behavior
+- ✅ Same calculation logic (active snippet only)
+
+**Code Locations**:
+- `editor.html` lines 185-189 (HTML structure)
+- `editor.css` lines 889-898 (styling)
+- `editor.js` lines 949-972 (`updateFooter` function)
+
+**React Implementation**:
+- Create `Footer.tsx` component in `src/components/shared/`
+- Preserve exact CSS classes and styling
+- Use same calculation logic (active snippet word/char count)
+- Update on active snippet change and content changes
+
+#### 4. Version Slider Affordance
+
+**Location**: Footer bar (or editor area, depending on implementation)
+
+**Current Implementation**:
+- **Note**: This may refer to a feature from the original 2011-2015 Yarny app that isn't in the current codebase
+- If present, it would allow users to view/edit different versions of a snippet
+- May be a timeline/history slider or version selector
+
+**Preservation Requirements**:
+- ✅ If present in current app: Preserve exact design and behavior
+- ✅ If not present but referenced in original app: Document for future implementation
+- ✅ Maintain same visual affordance and interaction pattern
+
+**Investigation Needed**:
+- Check reference documentation for original version slider implementation
+- Verify if this feature exists in current codebase under different name
+- Document findings and implementation plan
+
+**React Implementation**:
+- If feature exists: Create `VersionSlider.tsx` component
+- Preserve exact design and interaction patterns
+- If not present: Document in migration plan for future consideration
+
+### Implementation Strategy
+
+#### Phase 1: Document and Audit
+
+1. **Audit Current Implementation**:
+   - Document exact HTML structure for each element
+   - Document exact CSS styling (colors, spacing, fonts, animations)
+   - Document exact JavaScript behavior (click handlers, update logic)
+   - Take screenshots for visual reference
+
+2. **Create Component Specifications**:
+   - Create detailed specs for each component
+   - Include pixel-perfect measurements
+   - Document all state dependencies
+   - Document all event handlers
+
+#### Phase 4: Implement Components
+
+1. **Goal Meter Component**:
+   - Create `GoalMeter.tsx` with exact styling
+   - Implement `updateGoalMeter` logic as hook
+   - Test visual parity with current app
+
+2. **Today Chip Component**:
+   - Create `TodayChip.tsx` with exact styling
+   - Implement `updateTodayChip` logic as hook
+   - Preserve color logic for strict mode
+   - Test visual parity with current app
+
+3. **Footer Component**:
+   - Create `Footer.tsx` with exact styling
+   - Implement `updateFooter` logic as hook
+   - Preserve word/character count display
+   - Test visual parity with current app
+
+4. **Version Slider** (if applicable):
+   - Investigate and document current implementation
+   - Create component if feature exists
+   - Preserve exact design and behavior
+
+#### Phase 7: Visual Parity Testing
+
+1. **Side-by-Side Comparison**:
+   - Deploy React app to `/react` path
+   - Compare each element side-by-side with current app
+   - Verify pixel-perfect visual match
+   - Verify identical behavior
+
+2. **User Testing**:
+   - Test with users familiar with current app
+   - Verify no "uncanny valley" effect
+   - Confirm elements feel identical
+
+### Benefits
+
+1. **User Familiarity**: Users won't experience jarring visual changes
+2. **Brand Consistency**: Maintains Yarny's recognizable identity
+3. **Reduced Learning Curve**: No need to relearn UI elements
+4. **Trust**: Preserves elements users rely on daily
+
+### Success Criteria
+
+- [ ] Goal meter looks and behaves identically to current app
+- [ ] Today chip looks and behaves identically to current app
+- [ ] Footer word/character counts look and behave identically to current app
+- [ ] Version slider (if applicable) looks and behaves identically to current app
+- [ ] Side-by-side visual comparison shows pixel-perfect match
+- [ ] User testing confirms no "uncanny valley" effect
+
+### LOE
+
+- **Documentation & Audit**: 2-3 hours
+- **Component Implementation**: 4-6 hours (Goal Meter, Today Chip, Footer)
+- **Version Slider Investigation**: 1-2 hours (if needed)
+- **Visual Parity Testing**: 2-3 hours
+- **Total**: 9-14 hours
+
+---
+
 ## Migration Strategy
 
 ### Approach: Incremental Migration
@@ -2133,8 +2335,10 @@ Already included in recommended stack:
 - [ ] **Implement editor as truth (authoritative while open)**
 - [ ] Basic editor functionality
 - [ ] **Test round-tripping with Google Docs**
+- [ ] **Implement classic UX anchors: Goal Meter, Today Chip, Footer word/character counts**
+- [ ] **Verify visual parity with current app for all preserved elements**
 
-**LOE**: 18-25 hours (includes TipTap integration, conflict detection integration, and round-trip testing)
+**LOE**: 22-31 hours (includes TipTap integration, conflict detection integration, round-trip testing, and classic UX anchor preservation)
 
 ### Phase 5: Editor - Advanced Features (Week 3-4)
 - [ ] Implement drag & drop with @dnd-kit
@@ -2433,6 +2637,8 @@ yarny-app/
 │   │   │   ├── StorySidebar.tsx
 │   │   │   ├── NotesSidebar.tsx
 │   │   │   ├── TipTapEditor.tsx        # Plain text only configuration
+│   │   │   ├── GoalMeter.tsx           # Left-rail goal meter (preserved UX anchor)
+│   │   │   ├── TodayChip.tsx           # "Today • N" chip (preserved UX anchor)
 │   │   │   └── ...
 │   │   ├── stories/
 │   │   │   ├── StoriesList.tsx
@@ -2445,7 +2651,7 @@ yarny-app/
 │   │   │   └── ...
 │   │   └── shared/
 │   │       ├── Header.tsx
-│   │       └── Footer.tsx
+│   │       └── Footer.tsx               # Footer with word/character counts (preserved UX anchor)
 │   ├── hooks/
 │   │   ├── useDriveQueries.ts              # React Query hooks for ALL Drive I/O
 │   │   ├── useConflictDetection.ts         # Conflict detection between Yarny and Drive
@@ -2541,6 +2747,7 @@ yarny-app/
 - [ ] Google Drive sync works
 - [ ] Editor saves correctly
 - [ ] Export functionality works
+- [ ] **Classic UX anchors preserved**: Goal meter, Today chip, footer word/character counts look and behave identically
 
 ### Should Have
 - [ ] Better accessibility (ARIA attributes)
@@ -3071,6 +3278,17 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Added "Preserve Classic UX Anchors" section (P1/P2 Priority)
+  - Documented preservation requirements for left-rail goal meter and "Today • N" chip
+  - Documented preservation requirements for footer word/character counts
+  - Documented version slider affordance (investigation needed)
+  - Added implementation strategy for preserving these elements
+  - Updated Phase 4 to include classic UX anchor implementation
+  - Updated Success Criteria to include preservation requirements
+  - Updated file structure to show preserved component locations
+  - Added visual parity testing requirements
+  - **Total LOE**: 9-14 hours for preservation work
 
 - **2025-01-XX**: Initial plan created
   - Added implementation details section
