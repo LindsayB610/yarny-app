@@ -302,7 +302,15 @@ export function useDrive(folderId: string): UseDriveResult {
    - Document all state dependencies
    - Document all event handlers
 
-#### Phase 4: Implement Components
+#### Phase 4: Implement Footer Components
+
+1. **Footer Component**:
+   - Create `Footer.tsx` with exact styling
+   - Implement `updateFooter` logic as hook
+   - Preserve word/character count display
+   - Test visual parity with current app
+
+#### Phase 5: Implement Goals UI Components
 
 1. **Goal Meter Component**:
    - Create `GoalMeter.tsx` with exact styling
@@ -315,13 +323,7 @@ export function useDrive(folderId: string): UseDriveResult {
    - Preserve color logic for strict mode
    - Test visual parity with current app
 
-3. **Footer Component**:
-   - Create `Footer.tsx` with exact styling
-   - Implement `updateFooter` logic as hook
-   - Preserve word/character count display
-   - Test visual parity with current app
-
-4. **Version Slider** (if applicable):
+3. **Version Slider** (if applicable):
    - Investigate and document current implementation
    - Create component if feature exists
    - Preserve exact design and behavior
@@ -1987,17 +1989,19 @@ Add to `package.json`:
     - Use Drive version (replace local)
     - View diff and decide later
 
-#### 4. Early Conflict Detection
+#### 4. Conflict Detection
 
-**Decision**: Bring conflict detection forward to **Phase 1/2** (early in migration), not wait until Phase 6.
+**Decision**: Set up conflict detection infrastructure early (Phase 1), implement hooks and UI in Phase 6.
 
 **Why**:
-- Conflict detection is foundational - affects how editor works
-- Need to test round-tripping early
-- Better to catch issues during migration than after
+- Conflict detection infrastructure (text extraction utilities) is foundational
+- Need to test round-tripping early (Phase 4)
+- Conflict resolution UI can be implemented after core editor is working (Phase 6)
 
 **Implementation**:
-- Implement conflict detection hooks in Phase 1/2
+- Phase 1: Create text extraction utilities matching Google Docs format
+- Phase 4: Test round-tripping with TipTap editor
+- Phase 6: Implement conflict detection hooks and conflict resolution UI
 - Use React Query to check file metadata
 - Compare timestamps and content
 - Show conflict resolution modal (reuse existing UI patterns)
@@ -2260,12 +2264,11 @@ export function comparePlainText(text1: string, text2: string): boolean {
 
 ### Implementation Timeline
 
-This should be implemented in **Phase 1/2** (early in migration):
-- **Phase 1**: Set up TipTap with plain text configuration
-- **Phase 2**: Implement conflict detection hooks
+This spans multiple phases:
+- **Phase 1**: Set up TipTap with plain text configuration, create text extraction utilities
 - **Phase 2**: Implement reconciliation on window focus
-- **Phase 4**: Integrate TipTap editor with conflict detection
-- **Phase 6**: Test and refine round-tripping
+- **Phase 4**: Integrate TipTap editor with round-trip testing
+- **Phase 6**: Create conflict detection hooks, conflict resolution UI and logic
 
 **LOE**: 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)
 
@@ -2285,22 +2288,16 @@ Already included in recommended stack:
 - [ ] Set up React + TypeScript + Vite build system
 - [ ] Configure TypeScript (tsconfig.json)
 - [ ] Set up type definitions for all libraries
-- [ ] Configure React Router with TypeScript
 - [ ] Set up Netlify build configuration
 - [ ] Install and configure all libraries
-- [ ] **Create API contract module (`src/api/contract.ts`) with Zod schemas**
-- [ ] **Create typed API client (`src/api/client.ts`)**
 - [ ] **Set up TanStack Query (React Query) with QueryClient and QueryClientProvider**
 - [ ] **Create React Query hooks for ALL Drive I/O operations (`src/hooks/useDriveQueries.ts`)**
 - [ ] **Configure TipTap for plain text only (no rich formatting)**
-- [ ] **Create conflict detection hooks (`src/hooks/useConflictDetection.ts`)**
 - [ ] **Create text extraction utilities matching Google Docs format**
 - [ ] Create base component structure with TypeScript
 - [ ] **Set up normalized state management (Zustand) with TypeScript types**
 - [ ] **Create normalized state structure in `src/store/types.ts` (all entities keyed by id)**
 - [ ] **Create selectors in `src/store/selectors.ts` to derive views (e.g., left-rail lists)**
-- [ ] **Update all components to use selectors instead of direct state access**
-- [ ] **Replace all ad-hoc Drive API calls with React Query hooks**
 - [ ] **Set up MUI theme customization (`src/theme/theme.ts`) with brand color mappings**
 - [ ] **Customize MUI component defaults to match existing design**
 - [ ] **Set up ThemeProvider in app root**
@@ -2308,9 +2305,13 @@ Already included in recommended stack:
 - [ ] **Populate small project with sample data**
 - [ ] **Document smoke test checklist**
 
-**LOE**: 38-54 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, state normalization, MUI theming, and test corpus setup)
+**LOE**: 30-42 hours (includes TypeScript setup, type definitions, React Query setup, TipTap plain text configuration, state normalization, MUI theming, and test corpus setup)
 
-### Phase 2: Authentication (Week 1-2)
+### Phase 2: Authentication, Router & API Contract (Week 1-2)
+- [ ] Configure React Router with TypeScript
+- [ ] Set up routing structure
+- [ ] **Create API contract module (`src/api/contract.ts`) with Zod schemas**
+- [ ] **Create typed API client (`src/api/client.ts`)**
 - [ ] Convert login page to React
 - [ ] Integrate Google Sign-In SDK
 - [ ] Create Auth context/provider
@@ -2318,21 +2319,24 @@ Already included in recommended stack:
 - [ ] **Implement reconciliation on window focus (`src/hooks/useWindowFocusReconciliation.ts`)**
 - [ ] Test authentication flow
 
-**LOE**: 8-12 hours (includes reconciliation hook implementation)
+**LOE**: 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)
 
-### Phase 3: Stories Page (Week 2)
+### Phase 3: Stories Page with Virtualization Stub (Week 2)
 - [ ] Convert stories list to React components
 - [ ] Implement search/filtering
 - [ ] Add modals (new story, delete confirmation)
 - [ ] Integrate with Drive API hooks
+- [ ] **Stub virtualized list capability (set up `@tanstack/react-virtual` infrastructure, even if not used yet)**
 - [ ] Test story management
 
-**LOE**: 8-12 hours
+**LOE**: 10-14 hours (includes virtualization infrastructure setup)
 
-### Phase 4: Editor - Core Structure (Week 2-3)
+### Phase 4: Editor - Tri-Pane Shell & Plain Text Round-Trip (Week 2-3)
 - [ ] Set up three-column layout (Story/Editor/Notes)
 - [ ] Convert story list sidebar
 - [ ] Convert notes sidebar with tabs
+- [ ] **Implement footer word/character counts first**
+- [ ] **Implement save status display**
 - [ ] **Set up TipTap editor with plain text configuration**
 - [ ] **Integrate TipTap with conflict detection**
 - [ ] **Implement editor as truth (authoritative while open)**
@@ -2341,26 +2345,26 @@ Already included in recommended stack:
 - [ ] **Run smoke tests on small project (test-small) after TipTap integration**
 - [ ] **Validate round-tripping with small project**
 - [ ] **Populate medium project (test-medium)**
-- [ ] **Implement classic UX anchors: Goal Meter, Today Chip, Footer word/character counts**
-- [ ] **Verify visual parity with current app for all preserved elements**
 
-**LOE**: 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and classic UX anchor preservation)
+**LOE**: 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and footer/save status implementation)
 
-### Phase 5: Editor - Advanced Features (Week 3-4)
+### Phase 5: Library Features & Goals UI (Week 3-4)
 - [ ] Implement drag & drop with @dnd-kit
 - [ ] Color picker integration
 - [ ] Context menus
-- [ ] All modals (story info, rename, delete, etc.)
-- [ ] Goal tracking UI
+- [ ] All modals (story info, rename, delete, etc.) using Material UI Dialog
+- [ ] Tabs implementation using Material UI Tabs
+- [ ] **Implement Goals UI: Goal Meter (left-rail) and Goal Panel modal at parity with alpha plan**
+- [ ] **Implement "Today • N" chip with progress bar**
 - [ ] Word count updates
 
-**LOE**: 20-30 hours
+**LOE**: 20-30 hours (includes Goals UI implementation with chip and panel)
 
-### Phase 6: Editor - State & Sync (Week 4)
-- [ ] Implement state management for groups/snippets
+### Phase 6: Lazy Loading, Conflict Resolution & Exports (Week 4)
 - [ ] Lazy loading logic using React Query prefetching and `useQueries`
 - [ ] Auto-save functionality using React Query mutations
-- [ ] Conflict resolution
+- [ ] **Create conflict detection hooks (`src/hooks/useConflictDetection.ts`)**
+- [ ] Conflict resolution UI and logic
 - [ ] Export functionality
 - [ ] **Run full smoke test suite on small and medium projects**
 - [ ] **Validate all operations work correctly**
@@ -2368,18 +2372,18 @@ Already included in recommended stack:
 
 **LOE**: 17-22 hours (Note: Lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
 
-### Phase 7: Testing & Polish (Week 4-5)
+### Phase 7: Accessibility, Performance & Polish (Week 4-5)
+- [ ] Accessibility audit and fixes
 - [ ] Cross-browser testing
 - [ ] **Run full smoke test suite on all three project sizes (test-small, test-medium, test-large)**
 - [ ] **Performance testing with large project (test-large)**
+- [ ] Performance optimization (virtualization activation if needed, memoization review)
 - [ ] **Regression testing before production deployment**
-- [ ] Performance optimization
 - [ ] Bug fixes
-- [ ] Accessibility audit
 - [ ] Mobile responsiveness check
 - [ ] Documentation updates
 
-**LOE**: 19-31 hours (includes smoke test execution on all test corpus projects)
+**LOE**: 19-31 hours (includes smoke test execution on all test corpus projects, accessibility pass, and performance touches)
 
 ---
 
@@ -2956,22 +2960,22 @@ Map smoke tests to success criteria to ensure regressions are obvious:
 
 #### 4. Test Execution Plan
 
-**Phase 1-2 (Setup & Infrastructure)**:
+**Phase 1 (Setup & Infrastructure)**:
 - Create test corpus folder structure
 - Populate small project with sample data
 - Document smoke test checklist
 
-**Phase 4 (Editor - Core Structure)**:
+**Phase 4 (Editor - Tri-Pane Shell & Plain Text Round-Trip)**:
 - Run smoke tests on small project after TipTap integration
 - Validate round-tripping with small project
 - Populate medium project
 
-**Phase 5-6 (Editor - Advanced Features & State & Sync)**:
+**Phase 6 (Lazy Loading, Conflict Resolution & Exports)**:
 - Run full smoke test suite on small and medium projects
 - Validate all operations work correctly
 - Populate large project
 
-**Phase 7 (Testing & Polish)**:
+**Phase 7 (Accessibility, Performance & Polish)**:
 - Run full smoke test suite on all three project sizes
 - Performance testing with large project
 - Regression testing before production deployment
@@ -2993,11 +2997,11 @@ Map smoke tests to success criteria to ensure regressions are obvious:
 
 #### Implementation Timeline
 
-This should be implemented in **Phase 1-2** (Setup & Infrastructure):
+This should be implemented in **Phase 1** (Setup & Infrastructure):
 - Create test corpus folder structure
 - Populate small project
 - Document smoke test checklist
-- Integrate smoke tests into Phase 4-7 testing workflow
+- Integrate smoke tests into Phase 4, 6, and 7 testing workflow
 
 **LOE**: 4-6 hours (includes creating test corpus structure, populating small/medium projects, documenting smoke tests, and setting up test execution workflow)
 
@@ -3074,7 +3078,7 @@ export function StorySidebar() {
 ```
 
 **When to Implement**: 
-- Phase 4 (Editor - Core Structure) or Phase 5 (Editor - Advanced Features)
+- Phase 4 (Editor - Tri-Pane Shell) or Phase 5 (Library Features & Goals UI)
 - Add when testing with large stories (50+ chapters, 200+ snippets)
 - Can be deferred if initial performance is acceptable, but should be in place before production
 
@@ -3199,8 +3203,8 @@ const handleGroupClick = useCallback((groupId: string) => {
 ```
 
 **When to Implement**: 
-- Phase 4 (Editor - Core Structure) - implement memoization from the start
-- Review and optimize during Phase 7 (Testing & Polish)
+- Phase 4 (Editor - Tri-Pane Shell) - implement memoization from the start
+- Review and optimize during Phase 7 (Accessibility, Performance & Polish)
 
 **LOE**: 3-4 hours (includes memoizing list rows, editor shell, and reviewing callback patterns)
 
@@ -3289,7 +3293,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
 
 **When to Implement**: 
 - Phase 1 (Setup & Infrastructure) - React Query setup already includes this
-- Phase 6 (Editor - State & Sync) - integrate with editor component
+- Phase 6 (Lazy Loading, Conflict Resolution & Exports) - integrate with editor component
 
 **LOE**: Already included in React Query setup (Phase 1) and lazy loading (Phase 6)
 
@@ -3297,9 +3301,9 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
 
 | Optimization | Priority | Phase | LOE | Status |
 |-------------|----------|-------|-----|--------|
-| Virtualize long lists | P2 | Phase 4/5 | 4-6 hrs | Deferred until needed |
+| Virtualize long lists | P2 | Phase 4 or 5 | 4-6 hrs | Deferred until needed |
 | Memoize list rows & editor | P2 | Phase 4 | 3-4 hrs | Implement from start |
-| Defer non-active loads | P2 | Phase 1/6 | Included | Already planned |
+| Defer non-active loads | P2 | Phase 1 & 6 | Included | Already planned |
 
 **Total Additional LOE**: 7-10 hours (virtualization + memoization)
 
@@ -3474,6 +3478,17 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Reorganized migration phases based on priority feedback
+  - **Phase 1** (unchanged): Setup + typed store skeleton + data-fetch layer baseline
+  - **Phase 2**: Moved API contract formalization here; added router setup; auth + router + typed API contract
+  - **Phase 3**: Added virtualization stub capability (set up infrastructure even if not used yet)
+  - **Phase 4**: Reordered priorities - footer counts and save status first; tri-pane editor shell; TipTap constrained to plain text round-trip
+  - **Phase 5**: Library features (drag/drop, dialogs, tabs) and Goals UI (chip + panel) at parity with alpha plan
+  - **Phase 6**: Lazy loading, conflict resolution, exports (moved conflict detection hooks here from Phase 1/2)
+  - **Phase 7**: Accessibility pass, performance touches, and polish
+  - Updated all phase references throughout document (test strategy, performance guardrails, conflict detection timeline)
+  - Updated LOE estimates to reflect phase reorganization
 
 - **2025-01-XX**: Added "Test Strategy Specific to Drive/Docs" section (P2 Priority)
   - Created test corpus structure with three project sizes (small, medium, large) in separate Drive folder

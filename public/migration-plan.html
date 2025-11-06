@@ -347,7 +347,8 @@ export function useDrive(folderId: string): UseDriveResult {
           <h3>Implementation Strategy</h3>
           <ul>
             <li><strong>Phase 1</strong>: Document and audit current implementation</li>
-            <li><strong>Phase 4</strong>: Implement components (Goal Meter, Today Chip, Footer) with exact styling</li>
+            <li><strong>Phase 4</strong>: Implement Footer component (word/character counts) with exact styling</li>
+            <li><strong>Phase 5</strong>: Implement Goals UI components (Goal Meter, Today Chip) with exact styling</li>
             <li><strong>Phase 7</strong>: Visual parity testing - side-by-side comparison with current app</li>
           </ul>
 
@@ -522,7 +523,7 @@ export function useDrive(folderId: string): UseDriveResult {
             <li><strong>Format Constraint</strong>: Plain paragraphs and soft line breaks only (matches current model)</li>
             <li><strong>Editor as Truth</strong>: Editor is authoritative while Yarny is open</li>
             <li><strong>Reconciliation</strong>: Check for external changes on window focus, reconcile if needed</li>
-            <li><strong>Early Conflict Detection</strong>: Bring conflict detection forward to Phase 1/2</li>
+            <li><strong>Conflict Detection</strong>: Infrastructure in Phase 1, hooks and UI in Phase 6</li>
             <li>Type-safe editor API</li>
             <li>Handles cursor management and content synchronization</li>
           </ul>
@@ -2022,13 +2023,13 @@ export async function writeDriveFile(
             <li>Better than only checking on snippet switch (catches changes sooner)</li>
           </ul>
 
-          <h4>4. Early Conflict Detection</h4>
-          <p><strong>Decision</strong>: Bring conflict detection forward to <strong>Phase 1/2</strong> (early in migration), not wait until Phase 6.</p>
+          <h4>4. Conflict Detection</h4>
+          <p><strong>Decision</strong>: Set up conflict detection infrastructure early (Phase 1), implement hooks and UI in Phase 6.</p>
           <p><strong>Why</strong>:</p>
           <ul>
-            <li>Conflict detection is foundational - affects how editor works</li>
-            <li>Need to test round-tripping early</li>
-            <li>Better to catch issues during migration than after</li>
+            <li>Conflict detection infrastructure (text extraction utilities) is foundational</li>
+            <li>Need to test round-tripping early (Phase 4)</li>
+            <li>Conflict resolution UI can be implemented after core editor is working (Phase 6)</li>
           </ul>
 
           <h3>Round-Tripping Flow</h3>
@@ -2040,13 +2041,12 @@ export async function writeDriveFile(
           </ol>
 
           <h3>Implementation Timeline</h3>
-          <p>This should be implemented in <strong>Phase 1/2</strong> (early in migration):</p>
+          <p>This spans multiple phases:</p>
           <ul>
-            <li><strong>Phase 1</strong>: Set up TipTap with plain text configuration</li>
-            <li><strong>Phase 2</strong>: Implement conflict detection hooks</li>
+            <li><strong>Phase 1</strong>: Set up TipTap with plain text configuration, create text extraction utilities</li>
             <li><strong>Phase 2</strong>: Implement reconciliation on window focus</li>
-            <li><strong>Phase 4</strong>: Integrate TipTap editor with conflict detection</li>
-            <li><strong>Phase 6</strong>: Test and refine round-tripping</li>
+            <li><strong>Phase 4</strong>: Integrate TipTap editor with round-trip testing</li>
+            <li><strong>Phase 6</strong>: Create conflict detection hooks, conflict resolution UI and logic</li>
           </ul>
           <p><strong>LOE:</strong> 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)</p>
 
@@ -2067,30 +2067,31 @@ export async function writeDriveFile(
             <li>Set up React + TypeScript + Vite build system</li>
             <li>Configure TypeScript (tsconfig.json)</li>
             <li>Set up type definitions for all libraries</li>
-            <li>Configure React Router with TypeScript</li>
             <li>Set up Netlify build configuration</li>
             <li>Install and configure all libraries</li>
-            <li><strong>Create API contract module (<code>src/api/contract.ts</code>) with Zod schemas</strong></li>
-            <li><strong>Create typed API client (<code>src/api/client.ts</code>)</strong></li>
             <li><strong>Set up TanStack Query (React Query) with QueryClient and QueryClientProvider</strong></li>
             <li><strong>Create React Query hooks for ALL Drive I/O operations (<code>src/hooks/useDriveQueries.ts</code>)</strong></li>
             <li><strong>Configure TipTap for plain text only (no rich formatting)</strong></li>
-            <li><strong>Create conflict detection hooks (<code>src/hooks/useConflictDetection.ts</code>)</strong></li>
             <li><strong>Create text extraction utilities matching Google Docs format</strong></li>
             <li>Create base component structure with TypeScript</li>
             <li><strong>Set up normalized state management (Zustand) with TypeScript types</strong></li>
             <li><strong>Create normalized state structure in <code>src/store/types.ts</code> (all entities keyed by id)</strong></li>
             <li><strong>Create selectors in <code>src/store/selectors.ts</code> to derive views (e.g., left-rail lists)</strong></li>
-            <li><strong>Update all components to use selectors instead of direct state access</strong></li>
-            <li><strong>Replace all ad-hoc Drive API calls with React Query hooks</strong></li>
             <li><strong>Set up MUI theme customization (<code>src/theme/theme.ts</code>) with brand color mappings</strong></li>
             <li><strong>Customize MUI component defaults to match existing design</strong></li>
             <li><strong>Set up ThemeProvider in app root</strong></li>
+            <li><strong>Create test corpus folder structure (<code>Yarny Test Corpus</code> in Drive)</strong></li>
+            <li><strong>Populate small project with sample data</strong></li>
+            <li><strong>Document smoke test checklist</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 34-48 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, state normalization, and MUI theming)</p>
+          <p><strong>LOE:</strong> 30-42 hours (includes TypeScript setup, type definitions, React Query setup, TipTap plain text configuration, state normalization, MUI theming, and test corpus setup)</p>
 
-          <h3>Phase 2: Authentication (Week 1-2)</h3>
+          <h3>Phase 2: Authentication, Router & API Contract (Week 1-2)</h3>
           <ul>
+            <li>Configure React Router with TypeScript</li>
+            <li>Set up routing structure</li>
+            <li><strong>Create API contract module (<code>src/api/contract.ts</code>) with Zod schemas</strong></li>
+            <li><strong>Create typed API client (<code>src/api/client.ts</code>)</strong></li>
             <li>Convert login page to React</li>
             <li>Integrate Google Sign-In SDK</li>
             <li>Create Auth context/provider</li>
@@ -2098,64 +2099,76 @@ export async function writeDriveFile(
             <li><strong>Implement reconciliation on window focus (<code>src/hooks/useWindowFocusReconciliation.ts</code>)</strong></li>
             <li>Test authentication flow</li>
           </ul>
-          <p><strong>LOE:</strong> 8-12 hours (includes reconciliation hook implementation)</p>
+          <p><strong>LOE:</strong> 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)</p>
 
-          <h3>Phase 3: Stories Page (Week 2)</h3>
+          <h3>Phase 3: Stories Page with Virtualization Stub (Week 2)</h3>
           <ul>
             <li>Convert stories list to React components</li>
             <li>Implement search/filtering</li>
             <li>Add modals (new story, delete confirmation)</li>
             <li>Integrate with Drive API hooks</li>
+            <li><strong>Stub virtualized list capability (set up <code>@tanstack/react-virtual</code> infrastructure, even if not used yet)</strong></li>
             <li>Test story management</li>
           </ul>
-          <p><strong>LOE:</strong> 8-12 hours</p>
+          <p><strong>LOE:</strong> 10-14 hours (includes virtualization infrastructure setup)</p>
 
-          <h3>Phase 4: Editor - Core Structure (Week 2-3)</h3>
+          <h3>Phase 4: Editor - Tri-Pane Shell & Plain Text Round-Trip (Week 2-3)</h3>
           <ul>
             <li>Set up three-column layout (Story/Editor/Notes)</li>
             <li>Convert story list sidebar</li>
             <li>Convert notes sidebar with tabs</li>
+            <li><strong>Implement footer word/character counts first</strong></li>
+            <li><strong>Implement save status display</strong></li>
             <li><strong>Set up TipTap editor with plain text configuration</strong></li>
             <li><strong>Integrate TipTap with conflict detection</strong></li>
             <li><strong>Implement editor as truth (authoritative while open)</strong></li>
             <li>Basic editor functionality</li>
             <li><strong>Test round-tripping with Google Docs</strong></li>
-            <li><strong>Implement classic UX anchors: Goal Meter, Today Chip, Footer word/character counts</strong></li>
-            <li><strong>Verify visual parity with current app for all preserved elements</strong></li>
+            <li><strong>Run smoke tests on small project (test-small) after TipTap integration</strong></li>
+            <li><strong>Validate round-tripping with small project</strong></li>
+            <li><strong>Populate medium project (test-medium)</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 22-31 hours (includes TipTap integration, conflict detection integration, round-trip testing, and classic UX anchor preservation)</p>
+          <p><strong>LOE:</strong> 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and footer/save status implementation)</p>
 
-          <h3>Phase 5: Editor - Advanced Features (Week 3-4)</h3>
+          <h3>Phase 5: Library Features & Goals UI (Week 3-4)</h3>
           <ul>
             <li>Implement drag & drop with @dnd-kit</li>
             <li>Color picker integration</li>
             <li>Context menus</li>
-            <li>All modals (story info, rename, delete, etc.)</li>
-            <li>Goal tracking UI</li>
+            <li>All modals (story info, rename, delete, etc.) using Material UI Dialog</li>
+            <li>Tabs implementation using Material UI Tabs</li>
+            <li><strong>Implement Goals UI: Goal Meter (left-rail) and Goal Panel modal at parity with alpha plan</strong></li>
+            <li><strong>Implement "Today • N" chip with progress bar</strong></li>
             <li>Word count updates</li>
           </ul>
-          <p><strong>LOE:</strong> 20-30 hours</p>
+          <p><strong>LOE:</strong> 20-30 hours (includes Goals UI implementation with chip and panel)</p>
 
-          <h3>Phase 6: Editor - State & Sync (Week 4)</h3>
+          <h3>Phase 6: Lazy Loading, Conflict Resolution & Exports (Week 4)</h3>
           <ul>
-            <li>Implement state management for groups/snippets</li>
             <li>Lazy loading logic using React Query prefetching and <code>useQueries</code></li>
             <li>Auto-save functionality using React Query mutations</li>
-            <li>Conflict resolution</li>
+            <li><strong>Create conflict detection hooks (<code>src/hooks/useConflictDetection.ts</code>)</strong></li>
+            <li>Conflict resolution UI and logic</li>
             <li>Export functionality</li>
+            <li><strong>Run full smoke test suite on small and medium projects</strong></li>
+            <li><strong>Validate all operations work correctly</strong></li>
+            <li><strong>Populate large project (test-large)</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 15-20 hours (Note: Lazy loading is simplified with React Query's built-in prefetching)</p>
+          <p><strong>LOE:</strong> 17-22 hours (Note: Lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)</p>
 
-          <h3>Phase 7: Testing & Polish (Week 4-5)</h3>
+          <h3>Phase 7: Accessibility, Performance & Polish (Week 4-5)</h3>
           <ul>
+            <li>Accessibility audit and fixes</li>
             <li>Cross-browser testing</li>
-            <li>Performance optimization</li>
+            <li><strong>Run full smoke test suite on all three project sizes (test-small, test-medium, test-large)</strong></li>
+            <li><strong>Performance testing with large project (test-large)</strong></li>
+            <li>Performance optimization (virtualization activation if needed, memoization review)</li>
+            <li><strong>Regression testing before production deployment</strong></li>
             <li>Bug fixes</li>
-            <li>Accessibility audit</li>
             <li>Mobile responsiveness check</li>
             <li>Documentation updates</li>
           </ul>
-          <p><strong>LOE:</strong> 15-25 hours</p>
+          <p><strong>LOE:</strong> 19-31 hours (includes smoke test execution on all test corpus projects, accessibility pass, and performance touches)</p>
         </section>
 
         <section class="docs-section" id="risk-factors">
@@ -2753,28 +2766,28 @@ export function App(): JSX.Element {
           </table>
 
           <h4>4. Test Execution Plan</h4>
-          <p><strong>Phase 1-2 (Setup &amp; Infrastructure)</strong>:</p>
+          <p><strong>Phase 1 (Setup &amp; Infrastructure)</strong>:</p>
           <ul>
             <li>Create test corpus folder structure</li>
             <li>Populate small project with sample data</li>
             <li>Document smoke test checklist</li>
           </ul>
 
-          <p><strong>Phase 4 (Editor - Core Structure)</strong>:</p>
+          <p><strong>Phase 4 (Editor - Tri-Pane Shell &amp; Plain Text Round-Trip)</strong>:</p>
           <ul>
             <li>Run smoke tests on small project after TipTap integration</li>
             <li>Validate round-tripping with small project</li>
             <li>Populate medium project</li>
           </ul>
 
-          <p><strong>Phase 5-6 (Editor - Advanced Features &amp; State &amp; Sync)</strong>:</p>
+          <p><strong>Phase 6 (Lazy Loading, Conflict Resolution &amp; Exports)</strong>:</p>
           <ul>
             <li>Run full smoke test suite on small and medium projects</li>
             <li>Validate all operations work correctly</li>
             <li>Populate large project</li>
           </ul>
 
-          <p><strong>Phase 7 (Testing &amp; Polish)</strong>:</p>
+          <p><strong>Phase 7 (Accessibility, Performance &amp; Polish)</strong>:</p>
           <ul>
             <li>Run full smoke test suite on all three project sizes</li>
             <li>Performance testing with large project</li>
@@ -2799,12 +2812,12 @@ export function App(): JSX.Element {
           </ol>
 
           <h4>Implementation Timeline</h4>
-          <p>This should be implemented in <strong>Phase 1-2</strong> (Setup &amp; Infrastructure):</p>
+          <p>This should be implemented in <strong>Phase 1</strong> (Setup &amp; Infrastructure):</p>
           <ul>
             <li>Create test corpus folder structure</li>
             <li>Populate small project</li>
             <li>Document smoke test checklist</li>
-            <li>Integrate smoke tests into Phase 4-7 testing workflow</li>
+            <li>Integrate smoke tests into Phase 4, 6, and 7 testing workflow</li>
           </ul>
 
           <p><strong>LOE</strong>: 4-6 hours (includes creating test corpus structure, populating small/medium projects, documenting smoke tests, and setting up test execution workflow)</p>
@@ -2880,7 +2893,7 @@ export function StorySidebar() {
 }</code></pre>
           <p><strong>When to Implement</strong>:</p>
           <ul>
-            <li>Phase 4 (Editor - Core Structure) or Phase 5 (Editor - Advanced Features)</li>
+            <li>Phase 4 (Editor - Tri-Pane Shell) or Phase 5 (Library Features &amp; Goals UI)</li>
             <li>Add when testing with large stories (50+ chapters, 200+ snippets)</li>
             <li>Can be deferred if initial performance is acceptable, but should be in place before production</li>
           </ul>
@@ -2995,8 +3008,8 @@ const handleGroupClick = useCallback((groupId: string) =&gt; {
 /&gt;</code></pre>
           <p><strong>When to Implement</strong>:</p>
           <ul>
-            <li>Phase 4 (Editor - Core Structure) - implement memoization from the start</li>
-            <li>Review and optimize during Phase 7 (Testing &amp; Polish)</li>
+            <li>Phase 4 (Editor - Tri-Pane Shell) - implement memoization from the start</li>
+            <li>Review and optimize during Phase 7 (Accessibility, Performance &amp; Polish)</li>
           </ul>
           <p><strong>LOE</strong>: 3-4 hours (includes memoizing list rows, editor shell, and reviewing callback patterns)</p>
 
@@ -3087,7 +3100,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
           <p><strong>When to Implement</strong>:</p>
           <ul>
             <li>Phase 1 (Setup &amp; Infrastructure) - React Query setup already includes this</li>
-            <li>Phase 6 (Editor - State &amp; Sync) - integrate with editor component</li>
+            <li>Phase 6 (Lazy Loading, Conflict Resolution &amp; Exports) - integrate with editor component</li>
           </ul>
           <p><strong>LOE</strong>: Already included in React Query setup (Phase 1) and lazy loading (Phase 6)</p>
 
@@ -3106,7 +3119,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
               <tr>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Virtualize long lists</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">P2</td>
-                <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Phase 4/5</td>
+                <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Phase 4 or 5</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">4-6 hrs</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Deferred until needed</td>
               </tr>
@@ -3120,7 +3133,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
               <tr>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Defer non-active loads</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">P2</td>
-                <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Phase 1/6</td>
+                <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Phase 1 &amp; 6</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Included</td>
                 <td style="padding: var(--space-md); border: 1px solid rgba(255, 255, 255, 0.1);">Already planned</td>
               </tr>
