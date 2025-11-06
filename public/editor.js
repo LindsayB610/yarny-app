@@ -5486,7 +5486,11 @@ async function confirmExportFilename() {
     return;
   }
   
-  // Close modal
+  // Save export info before closing modal (which clears pendingExport)
+  const exportInfo = { ...pendingExport };
+  const finalFilename = filename;
+  
+  // Close modal (this clears pendingExport)
   closeExportFilenameModal();
   
   // Show loading state
@@ -5498,7 +5502,7 @@ async function confirmExportFilename() {
   try {
     let combinedContent = '';
     
-    if (pendingExport.type === 'chapters') {
+    if (exportInfo.type === 'chapters') {
       // Export chapters
       const groups = state.project.groupIds
         .map(id => state.groups[id])
@@ -5532,11 +5536,11 @@ async function confirmExportFilename() {
           combinedContent += '---\n\n';
         }
       });
-    } else if (pendingExport.type === 'kind') {
+    } else if (exportInfo.type === 'kind') {
       // Export by kind (People/Places/Things)
       const snippets = state.project.snippetIds
         .map(id => state.snippets[id])
-        .filter(snippet => snippet && snippet.kind === pendingExport.kind)
+        .filter(snippet => snippet && snippet.kind === exportInfo.kind)
         .sort((a, b) => (a.position || 0) - (b.position || 0));
       
       snippets.forEach((snippet, index) => {
@@ -5559,7 +5563,7 @@ async function confirmExportFilename() {
     
     // Create Google Doc with user-provided filename
     await window.driveAPI.write(
-      filename,
+      finalFilename,
       combinedContent.trim(),
       null,
       state.drive.storyFolderId,
@@ -5575,12 +5579,10 @@ async function confirmExportFilename() {
     
   } catch (error) {
     console.error('Export error:', error);
-    const exportType = pendingExport?.type === 'chapters' ? 'chapters' : pendingExport?.kindDisplayName?.toLowerCase() || 'content';
+    const exportType = exportInfo?.type === 'chapters' ? 'chapters' : exportInfo?.kindDisplayName?.toLowerCase() || 'content';
     alert(`Failed to export ${exportType}: ` + (error.message || 'Unknown error'));
     exportBtn.innerHTML = originalContent;
     exportBtn.disabled = false;
-  } finally {
-    pendingExport = null;
   }
 }
 
