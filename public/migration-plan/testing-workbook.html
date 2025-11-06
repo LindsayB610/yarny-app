@@ -9,29 +9,28 @@
   <link rel="stylesheet" href="/docs.css">
   <link rel="stylesheet" href="/footer.css">
   <style>
-    .workbook-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-4xl) var(--space-xl);
+    /* Keep content styling unchanged */
+    .workbook-intro {
+      background: rgba(31, 41, 55, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4xl);
+      margin-bottom: var(--space-3xl);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
     }
     
-    .workbook-header {
-      text-align: center;
-      margin-bottom: var(--space-6xl);
-      padding-bottom: var(--space-4xl);
-      border-bottom: 2px solid rgba(16, 185, 129, 0.3);
-    }
-    
-    .workbook-header h1 {
-      color: var(--color-primary);
+    .workbook-intro h1 {
+      color: var(--color-white);
       font-size: 2.5rem;
       margin-bottom: var(--space-md);
+      font-weight: var(--font-weight-bold);
     }
     
-    .workbook-header p {
-      color: rgba(255, 255, 255, 0.8);
+    .workbook-intro p {
+      color: rgba(255, 255, 255, 0.9);
       font-size: 1.1rem;
       line-height: 1.6;
+      margin-bottom: var(--space-md);
     }
     
     .test-section {
@@ -205,16 +204,59 @@
 </head>
 <body>
   <div class="docs-container">
-    <div class="workbook-container">
-      <div class="workbook-header">
-        <h1>Yarny React Migration - Testing Workbook</h1>
-        <p>This workbook guides you through testing every feature and function after the React migration is complete. Check off each item as you test it, and note any issues you encounter.</p>
-        <p style="margin-top: var(--space-md);"><strong>Note:</strong> This workbook is designed for non-developers. Each test includes clear instructions and expected results.</p>
+    <header class="docs-header">
+      <div class="docs-header-content">
+        <div>
+          <h1>Yarny</h1>
+          <p class="docs-subtitle">React Migration - Testing Workbook</p>
+        </div>
+        <nav class="docs-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/docs.html" class="btn-secondary">Docs</a>
+          <a href="/migration-plan" class="btn-secondary">Migration Plan</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+        </nav>
       </div>
+    </header>
 
-      <!-- Section 1: Authentication & Access -->
-      <div class="test-section">
-        <h2><i class="material-icons">lock</i> Section 1: Authentication & Access</h2>
+    <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <a href="/migration-plan/testing-workbook" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
+            Testing Workbook
+          </a>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#intro" class="nav-link">Introduction</a></li>
+            <li><a href="#section-1" class="nav-link">Section 1: Authentication & Access</a></li>
+            <li><a href="#section-2" class="nav-link">Section 2: Story Management</a></li>
+            <li><a href="#section-3" class="nav-link">Section 3: Editor - Basic</a></li>
+            <li><a href="#section-4" class="nav-link">Section 4: Chapters & Snippets</a></li>
+            <li><a href="#section-5" class="nav-link">Section 5: Color Coding</a></li>
+            <li><a href="#section-6" class="nav-link">Section 6: Search</a></li>
+            <li><a href="#section-7" class="nav-link">Section 7: Goals & Word Count</a></li>
+            <li><a href="#section-8" class="nav-link">Section 8: People, Places, Things</a></li>
+            <li><a href="#section-9" class="nav-link">Section 9: Export</a></li>
+            <li><a href="#section-10" class="nav-link">Section 10: Google Drive & Sync</a></li>
+            <li><a href="#section-11" class="nav-link">Section 11: UI/UX Elements</a></li>
+            <li><a href="#section-12" class="nav-link">Section 12: Performance</a></li>
+            <li><a href="#summary" class="nav-link">Testing Summary</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <div class="workbook-intro" id="intro">
+          <h1>Yarny React Migration - Testing Workbook</h1>
+          <p>This workbook guides you through testing every feature and function after the React migration is complete. Check off each item as you test it, and note any issues you encounter.</p>
+          <p><strong>Note:</strong> This workbook is designed for non-developers. Each test includes clear instructions and expected results.</p>
+        </div>
+
+        <!-- Section 1: Authentication & Access -->
+        <div class="test-section" id="section-1">
+          <h2><i class="material-icons">lock</i> Section 1: Authentication & Access</h2>
         
         <div class="test-item">
           <h4>Test 1.1: Google Sign-In</h4>
@@ -286,9 +328,9 @@
         </div>
       </div>
 
-      <!-- Section 2: Story Management -->
-      <div class="test-section">
-        <h2><i class="material-icons">book</i> Section 2: Story Management</h2>
+        <!-- Section 2: Story Management -->
+        <div class="test-section" id="section-2">
+          <h2><i class="material-icons">book</i> Section 2: Story Management</h2>
         
         <div class="test-item">
           <h4>Test 2.1: View Stories List</h4>
@@ -405,9 +447,9 @@
         </div>
       </div>
 
-      <!-- Section 3: Editor - Basic Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">edit</i> Section 3: Editor - Basic Functionality</h2>
+        <!-- Section 3: Editor - Basic Functionality -->
+        <div class="test-section" id="section-3">
+          <h2><i class="material-icons">edit</i> Section 3: Editor - Basic Functionality</h2>
         
         <div class="test-item">
           <h4>Test 3.1: Open Snippet in Editor</h4>
@@ -507,9 +549,9 @@
         </div>
       </div>
 
-      <!-- Section 4: Chapters & Snippets Management -->
-      <div class="test-section">
-        <h2><i class="material-icons">folder</i> Section 4: Chapters & Snippets Management</h2>
+        <!-- Section 4: Chapters & Snippets Management -->
+        <div class="test-section" id="section-4">
+          <h2><i class="material-icons">folder</i> Section 4: Chapters & Snippets Management</h2>
         
         <div class="test-item">
           <h4>Test 4.1: Create New Chapter</h4>
@@ -751,9 +793,9 @@
         </div>
       </div>
 
-      <!-- Section 5: Color Coding -->
-      <div class="test-section">
-        <h2><i class="material-icons">palette</i> Section 5: Color Coding</h2>
+        <!-- Section 5: Color Coding -->
+        <div class="test-section" id="section-5">
+          <h2><i class="material-icons">palette</i> Section 5: Color Coding</h2>
         
         <div class="test-item">
           <h4>Test 5.1: Assign Color to Chapter</h4>
@@ -810,9 +852,9 @@
         </div>
       </div>
 
-      <!-- Section 6: Search Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">search</i> Section 6: Search Functionality</h2>
+        <!-- Section 6: Search Functionality -->
+        <div class="test-section" id="section-6">
+          <h2><i class="material-icons">search</i> Section 6: Search Functionality</h2>
         
         <div class="test-item">
           <h4>Test 6.1: Search Chapters and Snippets</h4>
@@ -850,9 +892,9 @@
         </div>
       </div>
 
-      <!-- Section 7: Goals & Word Count Tracking -->
-      <div class="test-section">
-        <h2><i class="material-icons">track_changes</i> Section 7: Goals & Word Count Tracking</h2>
+        <!-- Section 7: Goals & Word Count Tracking -->
+        <div class="test-section" id="section-7">
+          <h2><i class="material-icons">track_changes</i> Section 7: Goals & Word Count Tracking</h2>
         
         <div class="test-item">
           <h4>Test 7.1: Goal Meter Display</h4>
@@ -996,9 +1038,9 @@
         </div>
       </div>
 
-      <!-- Section 8: People, Places, Things (Notes) -->
-      <div class="test-section">
-        <h2><i class="material-icons">note</i> Section 8: People, Places, Things (Notes)</h2>
+        <!-- Section 8: People, Places, Things (Notes) -->
+        <div class="test-section" id="section-8">
+          <h2><i class="material-icons">note</i> Section 8: People, Places, Things (Notes)</h2>
         
         <div class="test-item">
           <h4>Test 8.1: View Notes Sidebar</h4>
@@ -1160,9 +1202,9 @@
         </div>
       </div>
 
-      <!-- Section 9: Export Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">file_download</i> Section 9: Export Functionality</h2>
+        <!-- Section 9: Export Functionality -->
+        <div class="test-section" id="section-9">
+          <h2><i class="material-icons">file_download</i> Section 9: Export Functionality</h2>
         
         <div class="test-item">
           <h4>Test 9.1: Export All Chapters</h4>
@@ -1263,9 +1305,9 @@
         </div>
       </div>
 
-      <!-- Section 10: Google Drive Integration & Sync -->
-      <div class="test-section">
-        <h2><i class="material-icons">cloud</i> Section 10: Google Drive Integration & Sync</h2>
+        <!-- Section 10: Google Drive Integration & Sync -->
+        <div class="test-section" id="section-10">
+          <h2><i class="material-icons">cloud</i> Section 10: Google Drive Integration & Sync</h2>
         
         <div class="test-item">
           <h4>Test 10.1: Files Created in Google Drive</h4>
@@ -1425,9 +1467,9 @@
         </div>
       </div>
 
-      <!-- Section 11: UI/UX Elements -->
-      <div class="test-section">
-        <h2><i class="material-icons">design_services</i> Section 11: UI/UX Elements</h2>
+        <!-- Section 11: UI/UX Elements -->
+        <div class="test-section" id="section-11">
+          <h2><i class="material-icons">design_services</i> Section 11: UI/UX Elements</h2>
         
         <div class="test-item">
           <h4>Test 11.1: Classic UX Anchors - Goal Meter</h4>
@@ -1575,9 +1617,9 @@
         </div>
       </div>
 
-      <!-- Section 12: Performance & Edge Cases -->
-      <div class="test-section">
-        <h2><i class="material-icons">speed</i> Section 12: Performance & Edge Cases</h2>
+        <!-- Section 12: Performance & Edge Cases -->
+        <div class="test-section" id="section-12">
+          <h2><i class="material-icons">speed</i> Section 12: Performance & Edge Cases</h2>
         
         <div class="test-item">
           <h4>Test 12.1: Large Story Performance</h4>
@@ -1697,9 +1739,9 @@
         </div>
       </div>
 
-      <!-- Summary Section -->
-      <div class="summary-section">
-        <h2>Testing Summary</h2>
+        <!-- Summary Section -->
+        <div class="summary-section" id="summary">
+          <h2>Testing Summary</h2>
         <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: var(--space-xl);">Use this section to track your overall testing progress.</p>
         
         <div class="summary-stats">
@@ -1722,10 +1764,11 @@
         </div>
       </div>
 
-      <div class="note-box" style="margin-top: var(--space-4xl);">
-        <p><strong>Note:</strong> This testing workbook is designed to be comprehensive. You don't need to complete all tests in one session. Work through them systematically, and note any issues or unexpected behavior you encounter. Report any bugs or problems to the development team.</p>
+        <div class="note-box" style="margin-top: var(--space-4xl);">
+          <p><strong>Note:</strong> This testing workbook is designed to be comprehensive. You don't need to complete all tests in one session. Work through them systematically, and note any issues or unexpected behavior you encounter. Report any bugs or problems to the development team.</p>
+        </div>
       </div>
-    </div>
+    </main>
 
     <footer class="shared-footer">
       <p>&copy; 2025 Yarny. Your personal writing tool.</p>
@@ -1738,6 +1781,47 @@
   </div>
 
   <script>
+    // Check if user is logged in
+    function isTokenExpired(token) {
+      if (!token) return true;
+      
+      try {
+        const decoded = atob(token);
+        const parts = decoded.split(':');
+        
+        if (parts.length !== 2) return true;
+        
+        const timestamp = parseInt(parts[1], 10);
+        if (isNaN(timestamp)) return true;
+        
+        // Check if token is within 48 hours
+        const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
+        const now = Date.now();
+        const age = now - timestamp;
+        
+        return age > SESSION_DURATION_MS;
+      } catch (error) {
+        console.error('Error checking token expiration:', error);
+        return true;
+      }
+    }
+
+    function checkAuthStatus() {
+      const authToken = localStorage.getItem('yarny_auth');
+      const isLoggedIn = authToken && !isTokenExpired(authToken);
+      
+      const storiesLink = document.getElementById('storiesNavLink');
+      const loginLink = document.getElementById('loginNavLink');
+      
+      if (isLoggedIn) {
+        if (storiesLink) storiesLink.style.display = 'inline-block';
+        if (loginLink) loginLink.style.display = 'none';
+      } else {
+        if (storiesLink) storiesLink.style.display = 'none';
+        if (loginLink) loginLink.style.display = 'inline-block';
+      }
+    }
+
     // Calculate and update test statistics
     function updateStats() {
       const checkboxes = document.querySelectorAll('input[type="checkbox"]');
@@ -1766,8 +1850,12 @@
       }
     });
 
-    // Load saved state from localStorage
-    window.addEventListener('load', function() {
+    // Highlight active navigation item based on scroll position
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check auth status on page load
+      checkAuthStatus();
+      
+      // Load saved checkbox state
       const saved = localStorage.getItem('testingWorkbookState');
       if (saved) {
         try {
@@ -1783,6 +1871,99 @@
         }
       }
       updateStats();
+
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+      const sections = document.querySelectorAll('.test-section[id], .workbook-intro[id], .summary-section[id]');
+      const sidebar = document.querySelector('.docs-sidebar');
+      const header = document.querySelector('.docs-header');
+
+      function updateActiveNav() {
+        let current = '';
+        const scrollPos = window.scrollY + 200; // Offset for header
+
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      // Mobile menu toggle
+      const menuButton = document.querySelector('.mobile-menu-toggle') || document.createElement('button');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      
+      if (!menuButton.parentNode) {
+        menuButton.className = 'mobile-menu-toggle';
+        menuButton.innerHTML = '☰';
+        menuButton.setAttribute('aria-label', 'Toggle menu');
+        header.appendChild(menuButton);
+      }
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        if (backdrop) {
+          backdrop.classList.toggle('active');
+        }
+      }
+
+      menuButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSidebar();
+      });
+
+      // Close sidebar when clicking backdrop
+      if (backdrop) {
+        backdrop.addEventListener('click', function() {
+          sidebar.classList.remove('open');
+          backdrop.classList.remove('active');
+        });
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+          if (!sidebar.contains(e.target) && !e.target.classList.contains('mobile-menu-toggle')) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        }
+      });
+
+      // Close sidebar when clicking a nav link on mobile
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          if (window.innerWidth <= 900) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        });
+      });
+
+      window.addEventListener('scroll', updateActiveNav);
+      window.addEventListener('resize', function() {
+        // Only auto-close sidebar if we're above mobile breakpoint
+        if (window.innerWidth > 900) {
+          sidebar.classList.remove('open');
+          if (backdrop) {
+            backdrop.classList.remove('active');
+          }
+        }
+      });
+
+      updateActiveNav(); // Initial call
     });
   </script>
 </body>
