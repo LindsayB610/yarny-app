@@ -2071,22 +2071,26 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { extractPlainText } from '../../utils/textExtraction';
 
 interface TipTapEditorProps {
   content: string;
   onChange: (content: string) => void;
+  onWordCountChange?: (words: number, chars: number) => void;
   placeholder?: string;
+  isReadOnly?: boolean;
 }
 
-export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorProps) {
-  // Extract plain text from TipTap editor state
-  const extractPlainText = useCallback((editor: any): string => {
-    // TipTap's getText() returns plain text with line breaks
-    // Paragraph breaks are represented as \n\n
-    // Soft line breaks (Shift+Enter) are represented as \n
-    return editor.getText({ blockSeparator: '\n\n' });
-  }, []);
+export function TipTapEditor({ 
+  content, 
+  onChange, 
+  onWordCountChange,
+  placeholder,
+  isReadOnly = false 
+}: TipTapEditorProps) {
+  const isComposingRef = useRef(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -2100,26 +2104,75 @@ export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorPro
       // - Lists, Blockquote, etc. (keep it minimal)
     ],
     content: content || '',
+    editable: !isReadOnly,
     onUpdate: ({ editor }) => {
+      // Don't update during IME composition
+      if (isComposingRef.current) return;
+      
       // Extract plain text and notify parent
       const plainText = extractPlainText(editor);
       onChange(plainText);
+      
+      // Update word count (debounced)
+      if (onWordCountChange) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+          const text = plainText;
+          const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+          const chars = text.length;
+          onWordCountChange(words, chars);
+        }, 100);
+      }
     },
     editorProps: {
       attributes: {
         class: 'tiptap-editor',
         'data-placeholder': placeholder || 'Start writing...',
       },
+      handleDOMEvents: {
+        // Handle IME composition events
+        compositionstart: () => {
+          isComposingRef.current = true;
+          return false;
+        },
+        compositionend: () => {
+          isComposingRef.current = false;
+          // Trigger update after composition ends
+          if (editor) {
+            const plainText = extractPlainText(editor);
+            onChange(plainText);
+            if (onWordCountChange) {
+              const text = plainText;
+              const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+              const chars = text.length;
+              onWordCountChange(words, chars);
+            }
+          }
+          return false;
+        },
+      },
     },
   });
 
   // Update editor content when prop changes (but not on every render)
-  React.useEffect(() => {
-    if (editor && content !== extractPlainText(editor)) {
+  useEffect(() => {
+    if (editor && content !== extractPlainText(editor) && !isComposingRef.current) {
       // Only update if content actually changed (prevents loops)
+      // Don't update during IME composition
       editor.commands.setContent(content || '');
     }
-  }, [content, editor, extractPlainText]);
+  }, [content, editor]);
+
+  // Cleanup debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return <EditorContent editor={editor} />;
 }
@@ -2202,7 +2255,133 @@ export function useWindowFocusReconciliation() {
 }
 ```
 
-#### 4. Conflict Detection Hook
+#### 4. Cross-Tab Coordination Hook
+
+Create `src/hooks/useCrossTabCoordination.ts`:
+
+```typescript
+import { useEffect, useRef } from 'react';
+import { useStore } from '../store/store';
+
+const CHANNEL_NAME = 'yarny-tab-coordination';
+const HEARTBEAT_INTERVAL = 1000; // 1 second
+const TAB_TIMEOUT = 3000; // 3 seconds - tab considered inactive if no heartbeat
+
+interface TabState {
+  tabId: string;
+  activeSnippetId: string | null;
+  timestamp: number;
+}
+
+export function useCrossTabCoordination() {
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const tabIdRef = useRef<string>(`tab-${Date.now()}-${Math.random()}`);
+  const otherTabsRef = useRef<Map<string, TabState>>(new Map());
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Try BroadcastChannel first, fall back to localStorage events
+    if (typeof BroadcastChannel !== 'undefined') {
+      channelRef.current = new BroadcastChannel(CHANNEL_NAME);
+      
+      channelRef.current.onmessage = (event) => {
+        const { type, tabId, activeSnippetId: snippetId, timestamp } = event.data;
+        
+        if (type === 'heartbeat' && tabId !== tabIdRef.current) {
+          // Update other tab's state
+          otherTabsRef.current.set(tabId, {
+            tabId,
+            activeSnippetId: snippetId,
+            timestamp,
+          });
+          
+          // Remove stale tabs (no heartbeat for 3 seconds)
+          const now = Date.now();
+          for (const [id, state] of otherTabsRef.current.entries()) {
+            if (now - state.timestamp > TAB_TIMEOUT) {
+              otherTabsRef.current.delete(id);
+            }
+          }
+        }
+      };
+    } else {
+      // Fallback to localStorage events
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === 'yarny-tab-heartbeat' && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            if (data.tabId !== tabIdRef.current) {
+              otherTabsRef.current.set(data.tabId, {
+                tabId: data.tabId,
+                activeSnippetId: data.activeSnippetId,
+                timestamp: data.timestamp,
+              });
+            }
+          } catch (err) {
+            console.error('Failed to parse tab heartbeat', err);
+          }
+        }
+      };
+      
+      window.addEventListener('storage', handleStorage);
+      return () => window.removeEventListener('storage', handleStorage);
+    }
+
+    // Send heartbeat periodically
+    const sendHeartbeat = () => {
+      const message = {
+        type: 'heartbeat',
+        tabId: tabIdRef.current,
+        activeSnippetId,
+        timestamp: Date.now(),
+      };
+      
+      if (channelRef.current) {
+        channelRef.current.postMessage(message);
+      } else {
+        // Fallback to localStorage
+        localStorage.setItem('yarny-tab-heartbeat', JSON.stringify(message));
+        localStorage.removeItem('yarny-tab-heartbeat'); // Trigger storage event
+      }
+    };
+
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+    sendHeartbeat(); // Send immediately
+
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      if (channelRef.current) {
+        channelRef.current.close();
+      }
+    };
+  }, [activeSnippetId]);
+
+  // Check if snippet is being edited in another tab
+  const isSnippetLockedInOtherTab = (snippetId: string | null): boolean => {
+    if (!snippetId) return false;
+    
+    const now = Date.now();
+    for (const state of otherTabsRef.current.values()) {
+      // Check if another tab is editing this snippet and is still active
+      if (state.activeSnippetId === snippetId && (now - state.timestamp) < TAB_TIMEOUT) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  return {
+    isSnippetLockedInOtherTab,
+    otherTabsCount: otherTabsRef.current.size,
+  };
+}
+```
+
+#### 5. Conflict Detection Hook
 
 Create `src/hooks/useConflictDetection.ts`:
 
@@ -2271,30 +2450,57 @@ Create `src/utils/textExtraction.ts`:
  * Google Docs API returns plain text with:
  * - Paragraph breaks as \n\n
  * - Soft line breaks as \n
- * - No other formatting
+ * - Normalized line endings (CRLF -> LF, CR -> LF)
+ * - Trailing spaces may be collapsed
+ * - Non-breaking spaces (NBSP) may be normalized to regular spaces
+ * 
+ * This function normalizes text to match Google Docs' normalization behavior.
  */
 export function extractPlainText(editor: any): string {
   // TipTap's getText() with blockSeparator handles this correctly
   let text = editor.getText({ blockSeparator: '\n\n' });
   
-  // Normalize line endings (CRLF -> LF, CR -> LF)
+  // Normalize line endings (CRLF -> LF, CR -> LF) - matches Google Docs behavior
   text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Normalize non-breaking spaces (NBSP) to regular spaces - Google Docs may normalize these
+  text = text.replace(/\u00A0/g, ' ');
   
   // Clean up excessive newlines (more than 2 consecutive)
   text = text.replace(/\n{3,}/g, '\n\n');
   
-  // Remove leading/trailing whitespace
+  // Normalize trailing spaces per line (Google Docs may collapse these)
+  // Keep paragraph structure but normalize trailing whitespace
+  text = text.split('\n').map(line => {
+    // Preserve intentional paragraph breaks (empty lines)
+    if (line.trim() === '') return '';
+    // Remove trailing spaces (Google Docs may collapse these)
+    return line.replace(/\s+$/, '');
+  }).join('\n');
+  
+  // Remove leading/trailing whitespace from entire text
   text = text.trim();
   
   return text;
 }
 
 /**
- * Compare two plain text strings, accounting for whitespace differences.
+ * Compare two plain text strings, accounting for whitespace differences and Google Docs normalization.
+ * 
+ * This function normalizes both texts using the same rules as extractPlainText() before comparison.
  */
 export function comparePlainText(text1: string, text2: string): boolean {
-  // Normalize both texts
-  const normalize = (t: string) => t.trim().replace(/\s+/g, ' ');
+  const normalize = (t: string): string => {
+    // Apply same normalization as extractPlainText
+    let normalized = t.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    normalized = normalized.replace(/\u00A0/g, ' '); // NBSP -> space
+    normalized = normalized.split('\n').map(line => {
+      if (line.trim() === '') return '';
+      return line.replace(/\s+$/, ''); // Remove trailing spaces
+    }).join('\n');
+    return normalized.trim();
+  };
+  
   return normalize(text1) === normalize(text2);
 }
 ```
@@ -2323,13 +2529,15 @@ export function comparePlainText(text1: string, text2: string): boolean {
 ### Implementation Timeline
 
 This spans multiple phases:
-- **Phase 1**: Set up TipTap with plain text configuration, create text extraction utilities
-- **Phase 2**: Implement reconciliation on window focus
-- **Phase 4**: Integrate TipTap editor with round-trip testing
+- **Phase 1**: Set up TipTap with plain text configuration, create text extraction utilities with newline normalization
+- **Phase 2**: Implement reconciliation on window focus, add cross-tab coordination hook
+- **Phase 4**: Integrate TipTap editor with IME composition handling, round-trip testing with format normalization tests
 - **Phase 5**: Create conflict detection hooks, conflict resolution UI and modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)
 - **Phase 5**: Test cross-edits (open Doc in Google Docs while Yarny is idle, make edits, return to Yarny)
+- **Phase 5**: Test cross-tab conflicts (two Yarny tabs editing same snippet)
+- **Phase 4/5**: Add CJK and emoji test snippets to test corpus
 
-**LOE**: 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)
+**LOE**: 12-18 hours (includes TipTap configuration with IME handling, conflict detection, reconciliation, cross-tab coordination, format normalization, and comprehensive testing)
 
 ### Dependencies
 
@@ -2457,6 +2665,8 @@ Already included in recommended stack:
      - **Test cross-edits early**: Test by opening a Doc in Google Docs while Yarny is idle, making edits, then returning to Yarny to verify conflict detection works correctly
      - **Conflict modal in Phase 5**: Ensure conflict resolution modal is implemented in Phase 5 (not later) to catch issues early
      - **Round-trip testing**: Test editing in Yarny → saving → editing in Google Docs → switching snippets in Yarny → verify no format loss
+     - **Google Docs newline semantics**: Google Docs API normalizes carriage returns (`\r\n` → `\n`) and may collapse trailing spaces. Test with mixed `\n`/`\r\n`, non-breaking spaces (NBSPs), and trailing spaces. Normalize text extraction to match Docs' behavior.
+     - **IME composition handling**: Japanese/Chinese/Korean IME composition fires change events differently. Respect `compositionstart`/`compositionend` events to prevent premature word count updates and save debouncing during composition.
    - Contingency: Allow extra 5-10 hours for editor edge cases, round-trip testing, and conflict resolution refinement
 
 2. **State Churn Causing Re-renders**
@@ -2479,17 +2689,28 @@ Already included in recommended stack:
    - Contingency: Profile and optimize as needed
 
 ### Medium Risk
-1. **Google Drive API Integration**
+1. **Cross-Tab Yarny Conflicts**
+   - Risk: Two Yarny tabs editing the same snippet simultaneously can cause data loss or conflicts
+   - **Mitigation Strategies**:
+     - **Cross-tab detection**: Use `BroadcastChannel` API or `localStorage` heartbeat to detect when multiple Yarny tabs are open
+     - **Read-only mode for inactive tabs**: When a snippet is being edited in one tab, mark it as read-only in other tabs with a visual indicator
+     - **Tab coordination**: Broadcast snippet edit state across tabs; inactive tabs show "Editing in another tab" message
+     - **Storage heartbeat**: Each tab broadcasts its active snippet ID and timestamp; tabs detect conflicts and coordinate access
+   - Implementation: Add `src/hooks/useCrossTabCoordination.ts` hook using BroadcastChannel API
+   - Contingency: Fall back to localStorage events if BroadcastChannel is unavailable
+   - Status: Medium risk - requires careful coordination but prevents data loss
+
+2. **Google Drive API Integration**
    - Risk: React hooks may need different error handling
    - Mitigation: Backend already works, just needs React wrapper
    - Status: Low risk, mostly wrapping existing code
 
-2. **Feature Parity**
+3. **Feature Parity**
    - Risk: Missing features during migration
    - Mitigation: Create feature checklist, test each feature
    - Contingency: Keep old code until new version is complete
 
-3. **Design Drift with MUI**
+4. **Design Drift with MUI**
    - Risk: MUI's default styling may cause visual drift from existing brand design
    - **Mitigation Strategies**:
      - **Start theme with palette tokens and gradient from Phase 1**: Create `src/theme/theme.ts` with all 12-color accent palette and gradient tokens mapped to MUI's theme system from the very start
@@ -2498,7 +2719,7 @@ Already included in recommended stack:
      - **Customize component defaults early**: Match MUI component defaults (Dialog, Button, Menu, Tabs, etc.) to existing design in Phase 1, before building components
    - Contingency: Can adjust theme customization incrementally, but starting early prevents drift
 
-4. **CSS/Styling Migration**
+5. **CSS/Styling Migration**
    - Risk: Styling may break during migration
    - Mitigation: Use CSS modules or styled-components for isolation, start with brand palette in MUI theme from Phase 1
    - Contingency: Can reuse existing CSS with minor updates
@@ -2919,7 +3140,12 @@ Create a dedicated Google Drive folder: **`Yarny Test Corpus`** (separate from p
 - 5 snippets per chapter (15 total snippets)
 - 2 People, 2 Places, 2 Things notes
 - ~5,000 words total
-- **Purpose**: Fast smoke tests, basic operations
+- **Special test snippets**:
+  - One snippet with mixed line endings (`\n`, `\r\n`, `\r`)
+  - One snippet with NBSPs and trailing spaces
+  - One snippet with CJK text (Japanese, Chinese, Korean)
+  - One snippet with emoji and Unicode characters
+- **Purpose**: Fast smoke tests, basic operations, format normalization, IME composition
 
 **Medium Project** (`test-medium`):
 - 1 story
@@ -3012,6 +3238,9 @@ Document and execute these smoke tests for each project size to validate critica
 - [ ] Test paragraph breaks (`\n\n`) → Verify preserved in round-trip
 - [ ] Test soft line breaks (`\n`) → Verify preserved in round-trip
 - [ ] Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip
+- [ ] **Format/Line Break Tests**: Paste content with mixed `\n`/`\r\n` line endings → Round-trip through Docs → Verify normalized correctly
+- [ ] **NBSP and Trailing Spaces**: Paste content with non-breaking spaces (NBSP) and trailing spaces → Round-trip through Docs → Verify normalized correctly (NBSP → space, trailing spaces may be collapsed)
+- [ ] **Mixed Line Endings**: Test content with `\n`, `\r\n`, and `\r` → Round-trip → Verify all normalized to `\n`
 
 **H. Performance & Loading**
 - [ ] Load large project (test-large) → Verify initial load time acceptable (< 5 seconds)
@@ -3019,6 +3248,21 @@ Document and execute these smoke tests for each project size to validate critica
 - [ ] Scroll through chapter list in large project → Verify smooth scrolling (virtualized)
 - [ ] Background loading → Verify non-active snippets load in background without blocking UI
 - [ ] Lazy loading → Verify snippet content only loads when needed
+
+**J. IME Composition & Internationalization**
+- [ ] Type in Japanese (IME composition) → Verify word count updates only after `compositionend` event
+- [ ] Type in Chinese (IME composition) → Verify save debouncing respects `compositionstart`/`compositionend`
+- [ ] Type in Korean (IME composition) → Verify no premature updates during composition
+- [ ] Type emoji (Unicode composition) → Verify word count and save behavior correct
+- [ ] Test CJK text in test corpus → Verify round-trip preserves content correctly
+- [ ] Test emoji in test corpus → Verify round-trip preserves content correctly
+
+**K. Cross-Tab Conflicts**
+- [ ] Open Yarny in two tabs → Edit same snippet in Tab 1 → Verify Tab 2 shows "Editing in another tab" message
+- [ ] Edit snippet in Tab 1 → Try to edit in Tab 2 → Verify Tab 2 is read-only with visual indicator
+- [ ] Save in Tab 1 → Switch to Tab 2 → Verify Tab 2 updates with latest content
+- [ ] Close Tab 1 → Verify Tab 2 regains edit capability
+- [ ] Test BroadcastChannel fallback → Verify localStorage heartbeat works if BroadcastChannel unavailable
 
 **I. Error Handling**
 - [ ] Network error during save → Verify error message displayed, retry works
@@ -3560,6 +3804,16 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Added new gotchas and edge cases
+  - **Google Docs Newline Semantics**: Added normalization for mixed `\n`/`\r\n` line endings, NBSPs, and trailing spaces in text extraction utilities
+  - **IME Composition Handling**: Added `compositionstart`/`compositionend` event handling in TipTap editor to prevent premature word count updates and save debouncing during CJK/emoji input
+  - **Cross-Tab Conflict Detection**: Added `useCrossTabCoordination` hook using BroadcastChannel API (with localStorage fallback) to detect and prevent simultaneous editing of same snippet in multiple Yarny tabs
+  - **Enhanced Test Corpus**: Added special test snippets for format normalization (mixed line endings, NBSPs, trailing spaces) and IME composition (CJK text, emoji)
+  - **Expanded Smoke Tests**: Added format/line break tests, IME composition tests, and cross-tab conflict tests to smoke test checklist
+  - Updated text extraction utilities to match Google Docs normalization behavior
+  - Updated TipTap editor to handle IME composition events
+  - Updated LOE estimates to include new edge case handling (12-18 hours for editor truth section)
 
 - **2025-01-XX**: Addressed risk mitigation feedback
   - **Risk Factors Section Enhanced**:

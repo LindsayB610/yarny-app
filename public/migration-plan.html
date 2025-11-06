@@ -2228,13 +2228,15 @@ export async function writeDriveFile(
           <h3>Implementation Timeline</h3>
           <p>This spans multiple phases:</p>
           <ul>
-            <li><strong>Phase 1</strong>: Set up TipTap with plain text configuration, create text extraction utilities</li>
-            <li><strong>Phase 2</strong>: Implement reconciliation on window focus</li>
-            <li><strong>Phase 4</strong>: Integrate TipTap editor with round-trip testing</li>
+            <li><strong>Phase 1</strong>: Set up TipTap with plain text configuration, create text extraction utilities with newline normalization</li>
+            <li><strong>Phase 2</strong>: Implement reconciliation on window focus, add cross-tab coordination hook</li>
+            <li><strong>Phase 4</strong>: Integrate TipTap editor with IME composition handling, round-trip testing with format normalization tests</li>
             <li><strong>Phase 5</strong>: Create conflict detection hooks, conflict resolution UI and modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)</li>
             <li><strong>Phase 5</strong>: Test cross-edits (open Doc in Google Docs while Yarny is idle, make edits, return to Yarny)</li>
+            <li><strong>Phase 5</strong>: Test cross-tab conflicts (two Yarny tabs editing same snippet)</li>
+            <li><strong>Phase 4/5</strong>: Add CJK and emoji test snippets to test corpus</li>
           </ul>
-          <p><strong>LOE:</strong> 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)</p>
+          <p><strong>LOE:</strong> 12-18 hours (includes TipTap configuration with IME handling, conflict detection, reconciliation, cross-tab coordination, format normalization, and comprehensive testing)</p>
 
           <h3>Dependencies</h3>
           <p>Already included in recommended stack:</p>
@@ -2283,6 +2285,7 @@ export async function writeDriveFile(
             <li>Create Auth context/provider</li>
             <li>Handle auth state and redirects</li>
             <li><strong>Implement reconciliation on window focus (<code>src/hooks/useWindowFocusReconciliation.ts</code>)</strong></li>
+            <li><strong>Add cross-tab coordination hook (<code>src/hooks/useCrossTabCoordination.ts</code>)</strong></li>
             <li>Test authentication flow</li>
           </ul>
           <p><strong>LOE:</strong> 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)</p>
@@ -2305,7 +2308,7 @@ export async function writeDriveFile(
             <li>Convert notes sidebar with tabs</li>
             <li><strong>Implement footer word/character counts first</strong></li>
             <li><strong>Implement save status display</strong></li>
-            <li><strong>Set up TipTap editor with plain text configuration</strong></li>
+            <li><strong>Set up TipTap editor with plain text configuration and IME composition handling</strong></li>
             <li><strong>Integrate TipTap with conflict detection</strong></li>
             <li><strong>Implement editor as truth (authoritative while open)</strong></li>
             <li>Basic editor functionality</li>
@@ -2329,6 +2332,7 @@ export async function writeDriveFile(
             <li><strong>Create conflict detection hooks (<code>src/hooks/useConflictDetection.ts</code>)</strong></li>
             <li><strong>Conflict resolution UI and modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)</strong></li>
             <li><strong>Test cross-edits: Open Doc in Google Docs while Yarny is idle, make edits, return to Yarny and verify conflict detection works</strong></li>
+            <li><strong>Test cross-tab conflicts (two Yarny tabs editing same snippet)</strong></li>
           </ul>
           <p><strong>LOE:</strong> 25-35 hours (includes Goals UI implementation with chip and panel, plus conflict resolution modal)</p>
 
@@ -2372,6 +2376,8 @@ export async function writeDriveFile(
                     <li><strong>Test cross-edits early</strong>: Test by opening a Doc in Google Docs while Yarny is idle, making edits, then returning to Yarny to verify conflict detection works correctly</li>
                     <li><strong>Conflict modal in Phase 5</strong>: Ensure conflict resolution modal is implemented in Phase 5 (not later) to catch issues early</li>
                     <li><strong>Round-trip testing</strong>: Test editing in Yarny → saving → editing in Google Docs → switching snippets in Yarny → verify no format loss</li>
+                    <li><strong>Google Docs newline semantics</strong>: Google Docs API normalizes carriage returns (<code>\r\n</code> → <code>\n</code>) and may collapse trailing spaces. Test with mixed <code>\n</code>/<code>\r\n</code>, non-breaking spaces (NBSPs), and trailing spaces. Normalize text extraction to match Docs' behavior.</li>
+                    <li><strong>IME composition handling</strong>: Japanese/Chinese/Korean IME composition fires change events differently. Respect <code>compositionstart</code>/<code>compositionend</code> events to prevent premature word count updates and save debouncing during composition.</li>
                   </ul>
                 </li>
                 <li><strong>Contingency</strong>: Allow extra 5-10 hours for editor edge cases, round-trip testing, and conflict resolution refinement</li>
@@ -2397,6 +2403,22 @@ export async function writeDriveFile(
 
           <h3>Medium Risk</h3>
           <ul>
+            <li><strong>Cross-Tab Yarny Conflicts</strong>
+              <ul>
+                <li><strong>Risk</strong>: Two Yarny tabs editing the same snippet simultaneously can cause data loss or conflicts</li>
+                <li><strong>Mitigation Strategies</strong>:
+                  <ul>
+                    <li><strong>Cross-tab detection</strong>: Use <code>BroadcastChannel</code> API or <code>localStorage</code> heartbeat to detect when multiple Yarny tabs are open</li>
+                    <li><strong>Read-only mode for inactive tabs</strong>: When a snippet is being edited in one tab, mark it as read-only in other tabs with a visual indicator</li>
+                    <li><strong>Tab coordination</strong>: Broadcast snippet edit state across tabs; inactive tabs show "Editing in another tab" message</li>
+                    <li><strong>Storage heartbeat</strong>: Each tab broadcasts its active snippet ID and timestamp; tabs detect conflicts and coordinate access</li>
+                  </ul>
+                </li>
+                <li><strong>Implementation</strong>: Add <code>src/hooks/useCrossTabCoordination.ts</code> hook using BroadcastChannel API</li>
+                <li><strong>Contingency</strong>: Fall back to localStorage events if BroadcastChannel is unavailable</li>
+                <li><strong>Status</strong>: Medium risk - requires careful coordination but prevents data loss</li>
+              </ul>
+            </li>
             <li><strong>Google Drive API Integration</strong> - React hooks may need different error handling. Status: Low risk, mostly wrapping existing code.</li>
             <li><strong>Feature Parity</strong> - Missing features during migration. Mitigation: Create feature checklist, test each feature.</li>
             <li><strong>Design Drift with MUI</strong>
@@ -2831,7 +2853,15 @@ export function App(): JSX.Element {
             <li>5 snippets per chapter (15 total snippets)</li>
             <li>2 People, 2 Places, 2 Things notes</li>
             <li>~5,000 words total</li>
-            <li><strong>Purpose</strong>: Fast smoke tests, basic operations</li>
+            <li><strong>Special test snippets</strong>:
+              <ul>
+                <li>One snippet with mixed line endings (<code>\n</code>, <code>\r\n</code>, <code>\r</code>)</li>
+                <li>One snippet with NBSPs and trailing spaces</li>
+                <li>One snippet with CJK text (Japanese, Chinese, Korean)</li>
+                <li>One snippet with emoji and Unicode characters</li>
+              </ul>
+            </li>
+            <li><strong>Purpose</strong>: Fast smoke tests, basic operations, format normalization, IME composition</li>
           </ul>
 
           <p><strong>Medium Project</strong> (<code>test-medium</code>):</p>
@@ -2939,6 +2969,9 @@ export function App(): JSX.Element {
             <li>[ ] Test paragraph breaks (<code>\n\n</code>) → Verify preserved in round-trip</li>
             <li>[ ] Test soft line breaks (<code>\n</code>) → Verify preserved in round-trip</li>
             <li>[ ] Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip</li>
+            <li>[ ] <strong>Format/Line Break Tests</strong>: Paste content with mixed <code>\n</code>/<code>\r\n</code> line endings → Round-trip through Docs → Verify normalized correctly</li>
+            <li>[ ] <strong>NBSP and Trailing Spaces</strong>: Paste content with non-breaking spaces (NBSP) and trailing spaces → Round-trip through Docs → Verify normalized correctly (NBSP → space, trailing spaces may be collapsed)</li>
+            <li>[ ] <strong>Mixed Line Endings</strong>: Test content with <code>\n</code>, <code>\r\n</code>, and <code>\r</code> → Round-trip → Verify all normalized to <code>\n</code></li>
           </ul>
 
           <p><strong>H. Performance &amp; Loading</strong></p>
@@ -2956,6 +2989,25 @@ export function App(): JSX.Element {
             <li>[ ] Invalid Drive permissions → Verify clear error message</li>
             <li>[ ] Drive API rate limit → Verify graceful handling, retry logic</li>
             <li>[ ] Corrupted metadata file → Verify error handling, recovery option</li>
+          </ul>
+
+          <p><strong>J. IME Composition &amp; Internationalization</strong></p>
+          <ul>
+            <li>[ ] Type in Japanese (IME composition) → Verify word count updates only after <code>compositionend</code> event</li>
+            <li>[ ] Type in Chinese (IME composition) → Verify save debouncing respects <code>compositionstart</code>/<code>compositionend</code></li>
+            <li>[ ] Type in Korean (IME composition) → Verify no premature updates during composition</li>
+            <li>[ ] Type emoji (Unicode composition) → Verify word count and save behavior correct</li>
+            <li>[ ] Test CJK text in test corpus → Verify round-trip preserves content correctly</li>
+            <li>[ ] Test emoji in test corpus → Verify round-trip preserves content correctly</li>
+          </ul>
+
+          <p><strong>K. Cross-Tab Conflicts</strong></p>
+          <ul>
+            <li>[ ] Open Yarny in two tabs → Edit same snippet in Tab 1 → Verify Tab 2 shows "Editing in another tab" message</li>
+            <li>[ ] Edit snippet in Tab 1 → Try to edit in Tab 2 → Verify Tab 2 is read-only with visual indicator</li>
+            <li>[ ] Save in Tab 1 → Switch to Tab 2 → Verify Tab 2 updates with latest content</li>
+            <li>[ ] Close Tab 1 → Verify Tab 2 regains edit capability</li>
+            <li>[ ] Test BroadcastChannel fallback → Verify localStorage heartbeat works if BroadcastChannel unavailable</li>
           </ul>
 
           <h4>3. Linking to Success Criteria</h4>
@@ -3564,6 +3616,18 @@ export interface AppState {
         <section class="docs-section" id="changelog">
           <h2 id="changelog-heading">Changelog</h2>
           <ul>
+            <li><strong>2025-01-XX</strong>: Added new gotchas and edge cases
+              <ul>
+                <li><strong>Google Docs Newline Semantics</strong>: Added normalization for mixed <code>\n</code>/<code>\r\n</code> line endings, NBSPs, and trailing spaces in text extraction utilities</li>
+                <li><strong>IME Composition Handling</strong>: Added <code>compositionstart</code>/<code>compositionend</code> event handling in TipTap editor to prevent premature word count updates and save debouncing during CJK/emoji input</li>
+                <li><strong>Cross-Tab Conflict Detection</strong>: Added <code>useCrossTabCoordination</code> hook using BroadcastChannel API (with localStorage fallback) to detect and prevent simultaneous editing of same snippet in multiple Yarny tabs</li>
+                <li><strong>Enhanced Test Corpus</strong>: Added special test snippets for format normalization (mixed line endings, NBSPs, trailing spaces) and IME composition (CJK text, emoji)</li>
+                <li><strong>Expanded Smoke Tests</strong>: Added format/line break tests, IME composition tests, and cross-tab conflict tests to smoke test checklist</li>
+                <li>Updated text extraction utilities to match Google Docs normalization behavior</li>
+                <li>Updated TipTap editor to handle IME composition events</li>
+                <li>Updated LOE estimates to include new edge case handling (12-18 hours for editor truth section)</li>
+              </ul>
+            </li>
             <li><strong>2025-01-XX</strong>: Initial plan created
               <ul>
                 <li>Added implementation details section</li>
