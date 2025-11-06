@@ -1147,12 +1147,21 @@ body {
   margin-bottom: var(--space-xl);
 }
 
+.form-group:has(.checkbox-label) {
+  margin-bottom: var(--space-md);
+}
+
 .form-group label {
   display: block;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   margin-bottom: var(--space-sm);
+}
+
+.form-group .checkbox-label {
+  margin-bottom: 0;
+  font-weight: var(--font-weight-normal);
 }
 
 .form-group input {

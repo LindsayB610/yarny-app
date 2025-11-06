@@ -5409,9 +5409,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 let pendingExport = null;
 
 /**
+ * Generate a unique filename by checking Drive for existing files
+ * @param {string} baseName - Base filename to check
+ * @param {string} folderId - Drive folder ID to check in
+ * @returns {Promise<string>} - Unique filename (with number suffix if needed)
+ */
+async function generateUniqueFilename(baseName, folderId) {
+  try {
+    // List files in the story folder
+    const files = await window.driveAPI.list(folderId);
+    const existingFiles = (files.files || []).filter(
+      file => file.mimeType === 'application/vnd.google-apps.document' && !file.trashed
+    );
+    
+    // Check if base name exists
+    const exactMatch = existingFiles.find(file => file.name === baseName);
+    if (!exactMatch) {
+      return baseName; // Name is available
+    }
+    
+    // Name exists, find next available number
+    const baseNameWithoutExt = baseName;
+    let number = 2;
+    let uniqueName = `${baseNameWithoutExt} (${number})`;
+    
+    // Keep incrementing until we find an available name
+    while (existingFiles.some(file => file.name === uniqueName)) {
+      number++;
+      uniqueName = `${baseNameWithoutExt} (${number})`;
+    }
+    
+    return uniqueName;
+  } catch (error) {
+    console.error('Error checking for existing files:', error);
+    // If check fails, return base name (user can rename if conflict)
+    return baseName;
+  }
+}
+
+/**
  * Open filename modal for chapters export
  */
-function exportChapters() {
+async function exportChapters() {
   if (!state.drive.storyFolderId) {
     alert('Story folder not found. Please reload the page.');
     return;
@@ -5428,20 +5467,47 @@ function exportChapters() {
     return;
   }
   
-  // Store export info
-  pendingExport = {
-    type: 'chapters',
-    suggestedName: `${state.project.title || 'Untitled Story'} - All Chapters`
-  };
+  // Show loading state on export button
+  const exportBtn = document.getElementById('exportBtn');
+  const originalContent = exportBtn?.innerHTML;
+  if (exportBtn) {
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="material-icons" style="animation: spin 1s linear infinite;">hourglass_empty</i><span>Checking...</span>';
+  }
+  document.getElementById('exportDropdown')?.classList.add('hidden');
   
-  // Open modal with suggested name
-  openExportFilenameModal();
+  try {
+    // Generate base name using story title
+    const storyTitle = state.project.title || 'Untitled Story';
+    const baseName = `${storyTitle} - All Chapters`;
+    
+    // Generate unique filename
+    const suggestedName = await generateUniqueFilename(baseName, state.drive.storyFolderId);
+    
+    // Store export info
+    pendingExport = {
+      type: 'chapters',
+      suggestedName: suggestedName
+    };
+    
+    // Open modal with suggested name
+    openExportFilenameModal();
+  } catch (error) {
+    console.error('Error preparing export:', error);
+    alert('Failed to prepare export: ' + (error.message || 'Unknown error'));
+  } finally {
+    // Restore button
+    if (exportBtn && originalContent) {
+      exportBtn.innerHTML = originalContent;
+      exportBtn.disabled = false;
+    }
+  }
 }
 
 /**
  * Open filename modal for outline export
  */
-function exportOutline() {
+async function exportOutline() {
   if (!state.drive.storyFolderId) {
     alert('Story folder not found. Please reload the page.');
     return;
@@ -5458,41 +5524,68 @@ function exportOutline() {
     return;
   }
   
-  // Store export info
-  pendingExport = {
-    type: 'outline',
-    suggestedName: `${state.project.title || 'Untitled Story'} - Outline`
-  };
+  // Show loading state on export button
+  const exportBtn = document.getElementById('exportBtn');
+  const originalContent = exportBtn?.innerHTML;
+  if (exportBtn) {
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="material-icons" style="animation: spin 1s linear infinite;">hourglass_empty</i><span>Checking...</span>';
+  }
+  document.getElementById('exportDropdown')?.classList.add('hidden');
   
-  // Open modal with suggested name
-  openExportFilenameModal();
+  try {
+    // Generate base name using story title
+    const storyTitle = state.project.title || 'Untitled Story';
+    const baseName = `${storyTitle} - Outline`;
+    
+    // Generate unique filename
+    const suggestedName = await generateUniqueFilename(baseName, state.drive.storyFolderId);
+    
+    // Store export info
+    pendingExport = {
+      type: 'outline',
+      suggestedName: suggestedName
+    };
+    
+    // Open modal with suggested name
+    openExportFilenameModal();
+  } catch (error) {
+    console.error('Error preparing export:', error);
+    alert('Failed to prepare export: ' + (error.message || 'Unknown error'));
+  } finally {
+    // Restore button
+    if (exportBtn && originalContent) {
+      exportBtn.innerHTML = originalContent;
+      exportBtn.disabled = false;
+    }
+  }
 }
 
 /**
  * Open filename modal for People export
  */
-function exportPeople() {
-  openExportFilenameModalForKind('person', 'People');
+async function exportPeople() {
+  await openExportFilenameModalForKind('person', 'People');
 }
 
 /**
  * Open filename modal for Places export
  */
-function exportPlaces() {
-  openExportFilenameModalForKind('place', 'Places');
+async function exportPlaces() {
+  await openExportFilenameModalForKind('place', 'Places');
 }
 
 /**
  * Open filename modal for Things export
  */
-function exportThings() {
-  openExportFilenameModalForKind('thing', 'Things');
+async function exportThings() {
+  await openExportFilenameModalForKind('thing', 'Things');
 }
 
 /**
  * Helper to open filename modal for kind-based exports
  */
-function openExportFilenameModalForKind(kind, kindDisplayName) {
+async function openExportFilenameModalForKind(kind, kindDisplayName) {
   if (!state.drive.storyFolderId) {
     alert('Story folder not found. Please reload the page.');
     return;
@@ -5509,16 +5602,43 @@ function openExportFilenameModalForKind(kind, kindDisplayName) {
     return;
   }
   
-  // Store export info
-  pendingExport = {
-    type: 'kind',
-    kind: kind,
-    kindDisplayName: kindDisplayName,
-    suggestedName: `${state.project.title || 'Untitled Story'} - All ${kindDisplayName}`
-  };
+  // Show loading state on export button
+  const exportBtn = document.getElementById('exportBtn');
+  const originalContent = exportBtn?.innerHTML;
+  if (exportBtn) {
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="material-icons" style="animation: spin 1s linear infinite;">hourglass_empty</i><span>Checking...</span>';
+  }
+  document.getElementById('exportDropdown')?.classList.add('hidden');
   
-  // Open modal with suggested name
-  openExportFilenameModal();
+  try {
+    // Generate base name using story title
+    const storyTitle = state.project.title || 'Untitled Story';
+    const baseName = `${storyTitle} - All ${kindDisplayName}`;
+    
+    // Generate unique filename
+    const suggestedName = await generateUniqueFilename(baseName, state.drive.storyFolderId);
+    
+    // Store export info
+    pendingExport = {
+      type: 'kind',
+      kind: kind,
+      kindDisplayName: kindDisplayName,
+      suggestedName: suggestedName
+    };
+    
+    // Open modal with suggested name
+    openExportFilenameModal();
+  } catch (error) {
+    console.error('Error preparing export:', error);
+    alert('Failed to prepare export: ' + (error.message || 'Unknown error'));
+  } finally {
+    // Restore button
+    if (exportBtn && originalContent) {
+      exportBtn.innerHTML = originalContent;
+      exportBtn.disabled = false;
+    }
+  }
 }
 
 /**
