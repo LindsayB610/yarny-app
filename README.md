@@ -92,6 +92,10 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 - **Deployment**: Netlify
 - **Analytics**: Plausible (privacy-friendly analytics)
 
+### Migration to React + TypeScript
+
+Yarny is planning a migration to React + TypeScript. A detailed migration plan is available at [yarny.lindsaybrunner.com/migration-plan](https://yarny.lindsaybrunner.com/migration-plan) or see [`REACT_MIGRATION_PLAN.md`](./REACT_MIGRATION_PLAN.md) in this repository.
+
 ## Setup Instructions
 
 ### 1. Install Dependencies
