@@ -204,7 +204,7 @@
           </ul>
 
           <h3>Example: React Component in TypeScript</h3>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/components/editor/Editor.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/components/editor/Editor.tsx
 // This is a React component written in TypeScript
 
 import React from 'react';
@@ -229,7 +229,7 @@ export function Editor({ storyId }: EditorProps): JSX.Element {
 }</code></pre>
 
           <h3>Example: React Hook in TypeScript</h3>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/hooks/useDrive.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/hooks/useDrive.ts
 // This is a React hook written in TypeScript
 
 import { useState, useEffect } from 'react';
@@ -936,7 +936,7 @@ export function useDrive(folderId: string): UseDriveResult {
 
           <h3>Recommended Library Stack</h3>
           <p><strong>Note:</strong> This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, and state management will be written in TypeScript.</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
   "dependencies": {
     "react": "^18.x",
     "react-dom": "^18.x",
@@ -1687,7 +1687,7 @@ export function useNotesByType(type: 'person' | 'place' | 'thing') {
             <li>Order changes trigger Drive write operations (not just in-memory updates)</li>
           </ul>
           <p><strong>Drive Metadata Structure</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// story.json in Drive
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// story.json in Drive
 {
   "id": "story-1",
   "title": "My Story",
@@ -2004,7 +2004,7 @@ const groupsList = useGroupsList(); // Returns array of groups</code></pre>
           </ul>
 
           <h4>3. File Structure</h4>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>src/api/
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>src/api/
 ├── contract.ts      # Type definitions + Zod schemas for all endpoints
 ├── client.ts       # Typed API client functions
 └── types.ts        # Shared TypeScript types (if needed)</code></pre>
@@ -2039,7 +2039,7 @@ const groupsList = useGroupsList(); // Returns array of groups</code></pre>
           </ul>
 
           <h3>Example Implementation</h3>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/api/contract.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/api/contract.ts
 import { z } from 'zod';
 
 // Request/Response schemas using Zod
@@ -2120,7 +2120,7 @@ export const ApiErrorResponseSchema = z.object({
 
 export type ApiErrorResponse = z.infer&lt;typeof ApiErrorResponseSchema&gt;;</code></pre>
 
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/api/client.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/api/client.ts
 import axios from 'axios';
 import { z } from 'zod';
 import {
@@ -2251,7 +2251,7 @@ export async function writeDriveFile(
 
           <h3>Dependencies</h3>
           <p>Add to <code>package.json</code>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
   "dependencies": {
     "zod": "^3.x"
   }
@@ -2267,7 +2267,7 @@ export async function writeDriveFile(
 
           <h3>Network State Detection</h3>
           <p>Use React Query's <code>useIsFetching</code>, <code>useIsMutating</code>, and browser <code>navigator.onLine</code> API to detect network state:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useNetworkStatus.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useNetworkStatus.ts
 import { useIsFetching, useIsMutating } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 
@@ -2327,7 +2327,7 @@ export function useNetworkStatus(): NetworkStatus {
             <li><strong>Visual indicator</strong>: Offline banner appears at top of editor (non-blocking, dismissible)</li>
           </ul>
           <p><strong>Implementation</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In Editor component
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In Editor component
 const { isOnline, saveState } = useNetworkStatus();
 const writeMutation = useWriteDriveFile();
 
@@ -2355,7 +2355,7 @@ const writeMutation = useWriteDriveFile();
             <li><strong>Auto-refresh on reconnect</strong>: When network returns, React Query automatically refetches stale data</li>
           </ul>
           <p><strong>Implementation</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// Check cache staleness
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// Check cache staleness
 const { data: file, dataUpdatedAt, isStale } = useDriveFile(fileId);
 
 // Show staleness warning
@@ -2376,7 +2376,7 @@ const { data: file, dataUpdatedAt, isStale } = useDriveFile(fileId);
             <li><strong>Visual style</strong>: Subtle background color (e.g., amber/yellow), not red/error</li>
           </ul>
           <p><strong>Implementation</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/shared/OfflineBanner.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/shared/OfflineBanner.tsx
 export function OfflineBanner() {
   const { isOnline } = useNetworkStatus();
   const [dismissed, setDismissed] = useState(false);
@@ -2402,7 +2402,7 @@ export function OfflineBanner() {
             <li><strong>Stale cache</strong>: Show "Last synced: X:XX" instead of "Saved at X:XX"</li>
           </ul>
           <p><strong>Implementation</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
 export function SaveStatus() {
   const { isOnline, saveState, lastSavedAt } = useNetworkStatus();
   const writeMutation = useWriteDriveFile();
@@ -2424,7 +2424,7 @@ export function SaveStatus() {
 
           <h4>5. React Query Integration</h4>
           <p><strong>Tie UX to React Query's retry/backoff and cache staleness</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -2503,7 +2503,7 @@ export const queryClient = new QueryClient({
           
           <h4>1. Timezone Detection</h4>
           <p>Use browser's IANA timezone identifier:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.ts
 export function getUserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
@@ -2512,7 +2512,7 @@ export function getUserTimezone(): string {
 
           <h4>2. Daily Rollover Calculation</h4>
           <p>Use timezone-aware date calculations for goal rollover:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useGoal.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useGoal.ts
 import { getUserTimezone } from '../utils/timezone';
 
 export function useDailyTarget() {
@@ -2549,7 +2549,7 @@ export function useDailyTarget() {
 
           <h4>3. DST Boundary Testing</h4>
           <p>Test DST transitions explicitly:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.test.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.test.ts
 describe('DST Boundary Handling', () => {
   it('handles spring forward (loses hour)', () => {
     // Test date: March 10, 2024 2:00 AM EST → 3:00 AM EDT (spring forward)
@@ -2607,7 +2607,7 @@ describe('DST Boundary Handling', () => {
             <li><strong>Purpose</strong>: Test caret movement, word counting, paste stripping</li>
           </ul>
           <p>Example content:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>This is English text. هذا نص عربي. This is more English. זה טקסט בעברית.</code></pre>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>This is English text. هذا نص عربي. This is more English. זה טקסט בעברית.</code></pre>
 
           <h4>2. Test Assertions</h4>
           <p><strong>Caret Movement</strong>:</p>
@@ -2668,7 +2668,7 @@ describe('DST Boundary Handling', () => {
           
           <h4>1. Memory Guard Configuration</h4>
           <p>Create memory budget configuration:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/memory.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/memory.ts
 const DEFAULT_MAX_CACHED_SNIPPETS = 50; // Keep 50 most-recent snippet bodies in memory
 
 interface MemoryConfig {
@@ -2697,7 +2697,7 @@ export function getMemoryConfig(): MemoryConfig {
 
           <h4>2. LRU Eviction for Snippet Bodies</h4>
           <p>Implement LRU (Least Recently Used) eviction in React Query cache:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
 import { QueryClient } from '@tanstack/react-query';
 import { getMemoryConfig } from '../config/memory';
 
@@ -2731,7 +2731,7 @@ export const queryClient = new QueryClient({
 
           <h4>3. Active Snippet Protection</h4>
           <p>Always keep active snippet in memory (never evict):</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In eviction logic, exclude active snippet
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In eviction logic, exclude active snippet
 const activeSnippetId = useStore.getState().project.activeSnippetId;
 const toEvict = sorted
   .filter((q) => {
@@ -2776,7 +2776,7 @@ const toEvict = sorted
           
           <h4>1. Unload Handler</h4>
           <p>Create unload safety handler:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useUnloadSafety.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useUnloadSafety.ts
 import { useEffect, useRef } from 'react';
 import { useIsMutating } from '@tanstack/react-query';
 import { useStore } from '../store/store';
@@ -2813,7 +2813,7 @@ export function useUnloadSafety() {
 
           <h4>2. Save Status Indicator Integration</h4>
           <p>Tie unload behavior to save status indicator:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
 export function SaveStatus() {
   const { saveState, lastSavedAt } = useNetworkStatus();
   useUnloadSafety(); // Integrate unload safety
@@ -2833,7 +2833,7 @@ export function SaveStatus() {
 
           <h4>3. React Query Mutation Queue Persistence</h4>
           <p>Ensure React Query's mutation queue persists to cache:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts
 export const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
@@ -2897,7 +2897,7 @@ export const queryClient = new QueryClient({
           
           <h4>1. Debug Flag Configuration</h4>
           <p>Create debug flag for observability:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/debug.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/debug.ts
 const DEBUG_FLAG = 'yarny-debug-observability';
 
 export function isObservabilityEnabled(): boolean {
@@ -2907,7 +2907,7 @@ export function isObservabilityEnabled(): boolean {
 
           <h4>2. Observability Metrics</h4>
           <p>Track only migration risks:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/observability.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/observability.ts
 interface ObservabilityMetrics {
   saveLatency: number[]; // Array of save latencies (ms)
   conflictHits: number; // Count of conflict detections
@@ -2993,7 +2993,7 @@ export function getMetricsSummary(): {
 
           <h4>3. Integration Points</h4>
           <p>Integrate observability into key operations:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In save hook
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In save hook
 const startTime = Date.now();
 await writeMutation.mutateAsync(data);
 const latency = Date.now() - startTime;
@@ -3009,7 +3009,7 @@ recordRetryCount(failureCount);</code></pre>
 
           <h4>4. Debug View</h4>
           <p>Add debug view (only when flag enabled):</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/debug/ObservabilityPanel.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/debug/ObservabilityPanel.tsx
 export function ObservabilityPanel() {
   if (!isObservabilityEnabled()) return null;
   
@@ -3675,14 +3675,14 @@ export function ObservabilityPanel() {
 
           <h3>Deployment Strategy: Parallel Paths</h3>
           <p>The React app will be deployed to <code>/react</code> path while keeping the existing app at root:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny.lindsaybrunner.com/          → Existing vanilla JS app (public/)
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny.lindsaybrunner.com/          → Existing vanilla JS app (public/)
 yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
 
           <h3>Required Changes</h3>
           
           <h4>Option 1: Separate Build Directory (Recommended)</h4>
           <p>Create a new <code>netlify-react.toml</code> for React app deployment:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code># netlify-react.toml (for React app at /react path)
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code># netlify-react.toml (for React app at /react path)
 
 [build]
   command = "npm run build"
@@ -3705,7 +3705,7 @@ yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
 
           <h4>Option 2: Combined Configuration</h4>
           <p>Update existing <code>netlify.toml</code> to handle both:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>[build]
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>[build]
   command = "npm run build"
   publish = "dist"  # React app builds to dist/
 
@@ -3741,7 +3741,7 @@ yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
 
           <h4>Vite Configuration for Base Path</h4>
           <p>Update <code>vite.config.ts</code> to set base path (TypeScript configuration):</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -3760,7 +3760,7 @@ export default defineConfig({
 
           <h4>TypeScript Configuration</h4>
           <p>Create <code>tsconfig.json</code>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -3788,7 +3788,7 @@ export default defineConfig({
 
           <h4>React Router Configuration</h4>
           <p>Update React Router to work with <code>/react</code> base path (TypeScript):</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In your router setup (App.tsx)
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In your router setup (App.tsx)
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LoginPage } from './components/auth/LoginPage';
 import { StoriesPage } from './components/stories/StoriesPage';
@@ -3807,7 +3807,7 @@ export function App(): JSX.Element {
 }</code></pre>
 
           <h3>Build Scripts</h3>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -3841,7 +3841,7 @@ export function App(): JSX.Element {
 
         <section class="docs-section" id="file-structure">
           <h2 id="file-structure-proposed">File Structure (Proposed)</h2>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny-app/
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny-app/
 ├── src/
 │   ├── components/
 │   │   ├── auth/
@@ -4101,7 +4101,7 @@ export function App(): JSX.Element {
           </ul>
 
           <p><strong>Test Corpus Structure</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>Yarny Test Corpus/
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>Yarny Test Corpus/
 ├── test-small/
 │   ├── Chapters/
 │   │   ├── Chapter 1/
@@ -4399,7 +4399,7 @@ export function App(): JSX.Element {
           <p><strong>Configuration</strong>:</p>
           <p>Create <code>src/config/virtualization.ts</code> with configurable thresholds that can be adjusted via localStorage (default: 50+ chapters, 200+ snippets). This allows tuning performance thresholds without code changes or redeployment.</p>
           <p><strong>Code Example</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/StorySidebar.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/StorySidebar.tsx
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useGroupsList } from '../../store/selectors';
 
@@ -4458,7 +4458,7 @@ export function StorySidebar() {
           <p><strong>Solution</strong>: Use <code>React.memo</code>, <code>useMemo</code>, and <code>useCallback</code> strategically to prevent unnecessary re-renders.</p>
           <p><strong>Implementation Strategy</strong>:</p>
           <p><strong>A. Memoize List Row Components</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/GroupRow.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/GroupRow.tsx
 import React, { memo } from 'react';
 import { Group } from '../../store/types';
 
@@ -4490,7 +4490,7 @@ export const GroupRow = memo(function GroupRow({
   );
 });</code></pre>
           <p><strong>B. Memoize Editor Shell</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/Editor.tsx
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/Editor.tsx
 import React, { memo, useCallback, useMemo } from 'react';
 import { useStore } from '../../store/store';
 
@@ -4521,7 +4521,7 @@ export const Editor = memo(function Editor({ storyId }: { storyId: string }) {
   );
 });</code></pre>
           <p><strong>C. Avoid Anonymous Callbacks in Deep Trees</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// ❌ DON'T DO THIS - creates new function on every render
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// ❌ DON'T DO THIS - creates new function on every render
 &lt;GroupRow 
   group={group}
   onSelect={(id) =&gt; handleSelect(id)}  // Anonymous callback
@@ -4589,7 +4589,7 @@ const handleGroupClick = useCallback((groupId: string) =&gt; {
             </li>
           </ul>
           <p><strong>Code Example</strong>:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useSnippetContent.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useSnippetContent.ts
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../store/store';
 import { useDriveFile } from './useDriveQueries';
@@ -4745,7 +4745,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
           
           <h3>State Structure</h3>
           <p>The current global <code>state</code> object will be converted to <strong>normalized</strong> TypeScript interfaces. All entities are keyed by id, and selectors derive views:</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/types.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/types.ts
 export interface Group {
   id: string;
   title: string;
@@ -4842,7 +4842,7 @@ export interface AppState {
           <p><strong>Note</strong>: Views (e.g., left-rail lists) are derived using selectors in <code>src/store/selectors.ts</code>, not stored directly in state. This keeps renders cheap and enables virtualized lists later.</p>
 
           <p><strong>Example Selector Pattern</strong> (from <code>src/store/selectors.ts</code>):</p>
-          <pre style="background: #2D2D2D; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/selectors.ts
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/selectors.ts
 // Convention: "derive, don't duplicate" - views computed via selectors, not stored in state
 
 import { useStore } from './store';
