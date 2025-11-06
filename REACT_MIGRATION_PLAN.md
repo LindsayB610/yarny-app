@@ -1234,29 +1234,63 @@ export function useNotesByType(type: 'person' | 'place' | 'thing') {
 - Reorders survive concurrent edits (order changes are persisted independently of content)
 - Order doesn't revert after background loads (order is stored in Drive, not just in-memory state)
 - Order is authoritative source of truth (Drive metadata determines display order)
+- Concurrent loads never revert list order (order is persisted atomically)
 
-**Implementation**:
-- Store order in Drive metadata files (e.g., `story.json` contains `groupIds` array, `chapter.json` contains `snippetIds` array)
-- When reordering chapters/snippets, update both in-memory state AND Drive metadata
-- On load, read order from Drive metadata first, then populate entities
-- Order changes trigger Drive write operations (not just in-memory updates)
+**Persistence Mechanism** (Explicit):
 
-**Drive Metadata Structure**:
+**Option 1: Drive File appProperties (Recommended)**
+- Store order arrays in Drive file `appProperties` (metadata that survives file updates)
+- Use `story.json` appProperties for `groupIds` array
+- Use `chapter.json` appProperties for `snippetIds` array
+- Benefits: Atomic updates, survives file content changes, doesn't require separate file
+
+**Option 2: Separate structure.json File**
+- Store order in a small `structure.json` file per story folder
+- Contains: `{ "groupIds": [...], "chapters": { "chapter-id": { "snippetIds": [...] } } }`
+- Benefits: Explicit separation of structure from content, easy to inspect/debug
+
+**Implementation** (Using appProperties):
+- When reordering chapters/snippets, update both in-memory state AND Drive file appProperties
+- On load, read order from Drive file appProperties first, then populate entities
+- Order changes trigger Drive write operations (update appProperties, not just in-memory updates)
+- Use Drive API `files.update` with `appProperties` field to persist order atomically
+
+**Drive Metadata Structure** (appProperties approach):
 ```typescript
-// story.json in Drive
+// story.json in Drive (with appProperties)
 {
   "id": "story-1",
   "title": "My Story",
-  "groupIds": ["group-1", "group-2", "group-3"], // ORDER IS PERSISTED HERE
+  "appProperties": {
+    "groupIds": "[\"group-1\",\"group-2\",\"group-3\"]" // ORDER IS PERSISTED HERE (JSON string in appProperties)
+  },
   // ... other story fields
 }
 
-// chapter.json in Drive
+// chapter.json in Drive (with appProperties)
 {
   "id": "group-1",
   "title": "Chapter 1",
-  "snippetIds": ["snippet-1", "snippet-2", "snippet-3"], // ORDER IS PERSISTED HERE
+  "appProperties": {
+    "snippetIds": "[\"snippet-1\",\"snippet-2\",\"snippet-3\"]" // ORDER IS PERSISTED HERE (JSON string in appProperties)
+  },
   // ... other chapter fields
+}
+```
+
+**Alternative: structure.json approach**:
+```typescript
+// structure.json in story folder
+{
+  "groupIds": ["group-1", "group-2", "group-3"],
+  "chapters": {
+    "group-1": {
+      "snippetIds": ["snippet-1", "snippet-2", "snippet-3"]
+    },
+    "group-2": {
+      "snippetIds": ["snippet-4", "snippet-5"]
+    }
+  }
 }
 ```
 
@@ -1969,6 +2003,7 @@ const writeMutation = useWriteDriveFile();
 - **Cache staleness indicator**: Show "Using cached data" or "Last synced: X:XX" in footer
 - **Read-only warning**: If cache is very stale (> 10 minutes), show warning: "You're viewing cached data. Some changes may not be saved."
 - **Auto-refresh on reconnect**: When network returns, React Query automatically refetches stale data
+- **Read-only toggle on reconciliation failure**: If reconciliation fails on reconnect (conflict detected and cannot be automatically resolved), toggle editor to read-only mode with clear message: "Reconciliation failed — editor is read-only. Please resolve conflicts manually."
 
 **Implementation**:
 ```typescript
@@ -1991,7 +2026,7 @@ const { data: file, dataUpdatedAt, isStale } = useDriveFile(fileId);
 - **Non-blocking**: Banner appears at top of editor, doesn't block editing
 - **Dismissible**: User can dismiss banner (but it reappears if still offline)
 - **Auto-dismiss**: Banner disappears when network returns
-- **Message**: "You're offline. Changes will be saved when connection is restored."
+- **Message**: "Working offline — changes queued" (matches React Query's mutation queue behavior)
 - **Visual style**: Subtle background color (e.g., amber/yellow), not red/error
 
 **Implementation**:
@@ -2005,7 +2040,7 @@ export function OfflineBanner() {
   
   return (
     <div className="offline-banner">
-      <span>You're offline. Changes will be saved when connection is restored.</span>
+      <span>Working offline — changes queued</span>
       <button onClick={() => setDismissed(true)}>Dismiss</button>
     </div>
   );
@@ -2019,6 +2054,7 @@ export function OfflineBanner() {
 **Behavior**:
 - **Online + successful save**: Show "Saved at X:XX" (current time)
 - **Offline + queued**: Show "Queued - will save when online" (no timestamp)
+- **Offline + queued with local timestamp**: Show "Saved locally at X:XX" when changes are queued to local cache (bounded retries/backoff)
 - **Network error + retrying**: Show "Saving... (retrying)" with retry count
 - **Network error + exhausted**: Show "Queued - will save when online" (no timestamp)
 - **Stale cache**: Show "Last synced: X:XX" instead of "Saved at X:XX"
@@ -2035,6 +2071,10 @@ export function SaveStatus() {
   }
   
   if (saveState === 'queued') {
+    // Show "Saved locally at X:XX" when changes are queued to local cache
+    if (lastSavedAt) {
+      return <div className="save-status queued">Saved locally at {new Date(lastSavedAt).toLocaleTimeString()}</div>;
+    }
     return <div className="save-status queued">Queued - will save when online</div>;
   }
   
@@ -2118,6 +2158,628 @@ This should be implemented in **Phase 6** (Lazy Loading & Exports) alongside aut
 - Add smoke tests for offline scenarios
 
 **LOE**: 4-6 hours (includes network status hook, offline banner, save status updates, and smoke tests)
+
+---
+
+## Timezone/DST for "Goals that Think" (P2 Priority)
+
+### Overview
+
+**Why**: Daily rollover and "Today" calculations must use the user's actual timezone to prevent confusion for travelers and night-owls. DST boundaries (spring forward/fall back) can cause "Today" to bounce around if not handled correctly.
+
+**What**: Specify that daily rollover uses the user's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and test DST boundaries explicitly.
+
+### Implementation Strategy
+
+#### 1. Timezone Detection
+
+Use browser's IANA timezone identifier:
+
+```typescript
+// src/utils/timezone.ts
+export function getUserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+// Example: "America/New_York", "Europe/London", "Asia/Tokyo"
+```
+
+#### 2. Daily Rollover Calculation
+
+Use timezone-aware date calculations for goal rollover:
+
+```typescript
+// src/hooks/useGoal.ts
+import { getUserTimezone } from '../utils/timezone';
+
+export function useDailyTarget() {
+  const timezone = getUserTimezone();
+  
+  // Get current date in user's timezone
+  const getTodayInTimezone = (): Date => {
+    const now = new Date();
+    // Use Intl.DateTimeFormat to get date string in user's timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(now);
+    const year = parseInt(parts.find(p => p.type === 'year')!.value);
+    const month = parseInt(parts.find(p => p.type === 'month')!.value) - 1;
+    const day = parseInt(parts.find(p => p.type === 'day')!.value);
+    
+    // Create date at midnight in user's timezone
+    return new Date(Date.UTC(year, month, day));
+  };
+  
+  // Calculate if we've crossed midnight in user's timezone
+  const hasCrossedMidnight = (lastDate: Date): boolean => {
+    const today = getTodayInTimezone();
+    const lastDay = new Date(lastDate);
+    lastDay.setHours(0, 0, 0, 0);
+    
+    return today.getTime() !== lastDay.getTime();
+  };
+}
+```
+
+#### 3. DST Boundary Testing
+
+Test DST transitions explicitly:
+
+```typescript
+// src/utils/timezone.test.ts
+describe('DST Boundary Handling', () => {
+  it('handles spring forward (loses hour)', () => {
+    // Test date: March 10, 2024 2:00 AM EST → 3:00 AM EDT (spring forward)
+    // Verify "Today" doesn't bounce around
+  });
+  
+  it('handles fall back (gains hour)', () => {
+    // Test date: November 3, 2024 2:00 AM EDT → 1:00 AM EST (fall back)
+    // Verify "Today" doesn't bounce around
+  });
+  
+  it('handles timezone changes for travelers', () => {
+    // Simulate user traveling from EST to PST
+    // Verify "Today" updates correctly based on new timezone
+  });
+});
+```
+
+### Smoke Tests
+
+Add to smoke test checklist:
+
+**M. Timezone/DST Handling**:
+- [ ] **Daily rollover**: Verify "Today" chip updates at midnight in user's timezone (not UTC)
+- [ ] **Spring forward**: Test DST spring forward boundary → Verify "Today" doesn't bounce around
+- [ ] **Fall back**: Test DST fall back boundary → Verify "Today" doesn't bounce around
+- [ ] **Timezone change**: Change system timezone → Verify "Today" updates correctly
+- [ ] **Traveler scenario**: Simulate timezone change (EST → PST) → Verify goal calculations update correctly
+
+### Implementation Timeline
+
+This should be implemented in **Phase 5** (Library Features & Goals UI) alongside goal calculation logic:
+- Add timezone detection utility
+- Update goal calculation hooks to use IANA timezone
+- Add DST boundary tests
+- Test with various timezones
+
+**LOE**: 2-3 hours (includes timezone detection, DST boundary testing, and smoke tests)
+
+---
+
+## Right-to-Left (RTL) & Mixed-Script Paste (P2 Priority)
+
+### Overview
+
+**Why**: Users may paste content with RTL scripts (Arabic, Hebrew) or mixed-script content. Caret movement, word counting, and paste stripping must behave correctly for RTL content.
+
+**What**: Add one RTL snippet (Arabic/Hebrew) to the test corpus and assert caret movement, word counting, and paste stripping behave correctly. No architecture change—just tests.
+
+### Implementation Strategy
+
+#### 1. Test Corpus Addition
+
+Add RTL test snippet to small project (`test-small`):
+
+**RTL Test Snippet**:
+- **Title**: "RTL Test Snippet"
+- **Content**: Mix of Arabic/Hebrew text with English
+- **Purpose**: Test caret movement, word counting, paste stripping
+
+Example content:
+```
+This is English text. هذا نص عربي. This is more English. זה טקסט בעברית.
+```
+
+#### 2. Test Assertions
+
+**Caret Movement**:
+- Verify caret moves correctly in RTL text (right-to-left direction)
+- Verify caret moves correctly when switching between LTR and RTL text
+- Verify selection works correctly in RTL text
+
+**Word Counting**:
+- Verify word count includes RTL words correctly
+- Verify word boundaries are detected correctly in RTL text
+- Verify mixed-script content (English + Arabic + Hebrew) counts words correctly
+
+**Paste Stripping**:
+- Verify rich text paste with RTL content is stripped to plain text
+- Verify RTL formatting (bold, italic) is removed but text content is preserved
+- Verify mixed-script paste (LTR + RTL) is handled correctly
+
+### Smoke Tests
+
+Add to smoke test checklist:
+
+**N. RTL & Mixed-Script Handling**:
+- [ ] **RTL caret movement**: Type in Arabic/Hebrew snippet → Verify caret moves right-to-left correctly
+- [ ] **Mixed-script caret**: Type in mixed English/Arabic/Hebrew snippet → Verify caret switches direction correctly
+- [ ] **RTL word counting**: Verify word count includes RTL words correctly in test snippet
+- [ ] **RTL paste stripping**: Paste rich text with RTL content → Verify formatting stripped, text preserved
+- [ ] **Mixed-script paste**: Paste mixed LTR/RTL content → Verify handled correctly
+
+### Implementation Timeline
+
+This should be implemented in **Phase 4** (Editor - Tri-Pane Shell & Plain Text Round-Trip) alongside round-trip testing:
+- Add RTL test snippet to test corpus
+- Add RTL assertions to smoke tests
+- Test caret movement, word counting, paste stripping
+
+**LOE**: 1-2 hours (includes adding RTL snippet to corpus and smoke test assertions)
+
+---
+
+## Memory Budget & Long Sessions (P2 Priority)
+
+### Overview
+
+**Why**: All-day sessions on large projects can cause memory to balloon if cached snippet bodies are never evicted. We need a simple memory guard to cap cached snippet bodies.
+
+**What**: Cap cached snippet bodies to N most-recent, evict the rest. This prevents memory bloat during long sessions.
+
+### Implementation Strategy
+
+#### 1. Memory Guard Configuration
+
+Create memory budget configuration:
+
+```typescript
+// src/config/memory.ts
+const DEFAULT_MAX_CACHED_SNIPPETS = 50; // Keep 50 most-recent snippet bodies in memory
+
+interface MemoryConfig {
+  maxCachedSnippets: number; // Maximum number of snippet bodies to keep in memory
+}
+
+const STORAGE_KEY = 'yarny-memory-config';
+
+export function getMemoryConfig(): MemoryConfig {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        maxCachedSnippets: parsed.maxCachedSnippets ?? DEFAULT_MAX_CACHED_SNIPPETS,
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to load memory config from localStorage', err);
+  }
+  
+  return {
+    maxCachedSnippets: DEFAULT_MAX_CACHED_SNIPPETS,
+  };
+}
+```
+
+#### 2. LRU Eviction for Snippet Bodies
+
+Implement LRU (Least Recently Used) eviction in React Query cache:
+
+```typescript
+// src/lib/react-query.ts (update existing config)
+import { QueryClient } from '@tanstack/react-query';
+import { getMemoryConfig } from '../config/memory';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      // Memory guard: Evict oldest snippet bodies when cache exceeds limit
+      gcTime: (query) => {
+        const config = getMemoryConfig();
+        // Count snippet body queries
+        const snippetQueries = queryClient.getQueryCache().getAll().filter(
+          (q) => q.queryKey[0] === 'drive' && q.queryKey[1] === 'file'
+        );
+        
+        if (snippetQueries.length > config.maxCachedSnippets) {
+          // Evict oldest (least recently used) queries
+          const sorted = snippetQueries.sort((a, b) => 
+            (a.state.dataUpdatedAt || 0) - (b.state.dataUpdatedAt || 0)
+          );
+          const toEvict = sorted.slice(0, snippetQueries.length - config.maxCachedSnippets);
+          toEvict.forEach((q) => queryClient.removeQueries({ queryKey: q.queryKey }));
+        }
+        
+        return 10 * 60 * 1000; // Default gcTime
+      },
+    },
+  },
+});
+```
+
+#### 3. Active Snippet Protection
+
+Always keep active snippet in memory (never evict):
+
+```typescript
+// In eviction logic, exclude active snippet
+const activeSnippetId = useStore.getState().project.activeSnippetId;
+const toEvict = sorted
+  .filter((q) => {
+    // Don't evict active snippet
+    const fileId = q.queryKey[2] as string;
+    const snippet = Object.values(useStore.getState().snippets).find(
+      (s) => s.driveFileId === fileId
+    );
+    return snippet?.id !== activeSnippetId;
+  })
+  .slice(0, snippetQueries.length - config.maxCachedSnippets);
+```
+
+### Smoke Tests
+
+Add to smoke test checklist:
+
+**O. Memory Budget & Long Sessions**:
+- [ ] **Memory guard**: Open large project (test-large) → Make 100+ snippet switches → Verify memory doesn't balloon
+- [ ] **LRU eviction**: Verify oldest snippet bodies are evicted when cache exceeds limit
+- [ ] **Active snippet protection**: Verify active snippet is never evicted, even if cache is full
+- [ ] **Long session**: Keep app open for 4+ hours, make many edits → Verify memory stays bounded
+
+### Implementation Timeline
+
+This should be implemented in **Phase 6** (Lazy Loading & Exports) alongside lazy loading:
+- Add memory budget configuration
+- Implement LRU eviction for snippet bodies
+- Protect active snippet from eviction
+- Add smoke tests
+
+**LOE**: 2-3 hours (includes memory guard implementation and smoke tests)
+
+---
+
+## Unload Safety (P2 Priority)
+
+### Overview
+
+**Why**: With optimistic saves/mutations, we need a clear rule for window/tab close while `isSaving`. Users need predictable behavior when closing the app during saves.
+
+**What**: Define the rule for window/tab close while `isSaving`: allow close after queueing to cache, or prompt. Tie to "Saved/Saving" indicator so it's predictable.
+
+### Implementation Strategy
+
+#### 1. Unload Handler
+
+Create unload safety handler:
+
+```typescript
+// src/hooks/useUnloadSafety.ts
+import { useEffect, useRef } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
+import { useStore } from '../store/store';
+
+export function useUnloadSafety() {
+  const isMutating = useIsMutating() > 0;
+  const savingState = useStore((state) => state.editing.savingState);
+  const hasPendingMutations = useRef(false);
+  
+  useEffect(() => {
+    hasPendingMutations.current = isMutating || savingState === 'saving';
+  }, [isMutating, savingState]);
+  
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // If mutations are queued to cache, allow close (React Query will retry on next open)
+      if (hasPendingMutations.current && savingState === 'queued') {
+        // Queued saves are safe to close - they're in React Query's mutation queue
+        return; // Allow close
+      }
+      
+      // If actively saving, prompt user
+      if (hasPendingMutations.current && savingState === 'saving') {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [savingState]);
+}
+```
+
+#### 2. Save Status Indicator Integration
+
+Tie unload behavior to save status indicator:
+
+```typescript
+// src/components/editor/SaveStatus.tsx
+export function SaveStatus() {
+  const { saveState, lastSavedAt } = useNetworkStatus();
+  useUnloadSafety(); // Integrate unload safety
+  
+  // Save status indicator shows current state
+  // Unload handler uses same state to determine behavior
+  if (saveState === 'saving') {
+    return <div className="save-status saving">Saving... (don't close yet)</div>;
+  }
+  
+  if (saveState === 'queued') {
+    return <div className="save-status queued">Saved locally at {new Date(lastSavedAt).toLocaleTimeString()} (safe to close)</div>;
+  }
+  
+  // ... rest of component
+}
+```
+
+#### 3. React Query Mutation Queue Persistence
+
+Ensure React Query's mutation queue persists to cache:
+
+```typescript
+// src/lib/react-query.ts
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      // Persist mutation queue to localStorage for unload safety
+      onMutate: async (variables) => {
+        // Queue mutation to localStorage cache
+        const queue = JSON.parse(localStorage.getItem('yarny-mutation-queue') || '[]');
+        queue.push({
+          type: 'write',
+          variables,
+          timestamp: Date.now(),
+        });
+        localStorage.setItem('yarny-mutation-queue', JSON.stringify(queue));
+      },
+      onSuccess: () => {
+        // Remove from queue on success
+        const queue = JSON.parse(localStorage.getItem('yarny-mutation-queue') || '[]');
+        // Remove completed mutation
+        // ...
+      },
+    },
+  },
+});
+```
+
+### Behavior Rules
+
+1. **Queued saves (offline/cached)**: Allow close without prompt - mutations are queued to cache and will retry on next open
+2. **Active saves (in-flight)**: Prompt user before close - "You have unsaved changes. Are you sure you want to leave?"
+3. **Saved state**: Allow close without prompt - all changes are saved
+
+### Smoke Tests
+
+Add to smoke test checklist:
+
+**P. Unload Safety**:
+- [ ] **Queued save close**: Go offline → Make edits → Close tab → Verify no prompt, changes queued
+- [ ] **Active save close**: Make edits → Close tab while saving → Verify prompt appears
+- [ ] **Saved state close**: Make edits → Wait for save → Close tab → Verify no prompt
+- [ ] **Mutation queue persistence**: Go offline → Make edits → Close tab → Reopen → Verify queued mutations retry
+
+### Implementation Timeline
+
+This should be implemented in **Phase 6** (Lazy Loading & Exports) alongside auto-save functionality:
+- Create `useUnloadSafety` hook
+- Integrate with save status indicator
+- Add mutation queue persistence
+- Add smoke tests
+
+**LOE**: 2-3 hours (includes unload handler, mutation queue persistence, and smoke tests)
+
+---
+
+## Observability Light (P2 Priority)
+
+### Overview
+
+**Why**: During migration, we need visibility into migration risks (save latency, conflict hits, retry counts) to validate the performance budgets we've written down. A tiny, privacy-respecting heartbeat helps catch issues early.
+
+**What**: Consider a tiny, privacy-respecting heartbeat for only migration risks (save latency, conflict hits, retry counts) behind a debug flag. It'll help validate the budgets you wrote down.
+
+### Implementation Strategy
+
+#### 1. Debug Flag Configuration
+
+Create debug flag for observability:
+
+```typescript
+// src/config/debug.ts
+const DEBUG_FLAG = 'yarny-debug-observability';
+
+export function isObservabilityEnabled(): boolean {
+  // Enable via localStorage: localStorage.setItem('yarny-debug-observability', 'true')
+  return localStorage.getItem(DEBUG_FLAG) === 'true';
+}
+```
+
+#### 2. Observability Metrics
+
+Track only migration risks:
+
+```typescript
+// src/utils/observability.ts
+interface ObservabilityMetrics {
+  saveLatency: number[]; // Array of save latencies (ms)
+  conflictHits: number; // Count of conflict detections
+  retryCounts: number[]; // Array of retry counts per request
+  timestamp: number; // Last update timestamp
+}
+
+const METRICS_KEY = 'yarny-observability-metrics';
+const MAX_METRICS = 100; // Keep last 100 data points
+
+export function recordSaveLatency(latency: number): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.saveLatency.push(latency);
+  if (metrics.saveLatency.length > MAX_METRICS) {
+    metrics.saveLatency.shift(); // Remove oldest
+  }
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+export function recordConflictHit(): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.conflictHits++;
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+export function recordRetryCount(retryCount: number): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.retryCounts.push(retryCount);
+  if (metrics.retryCounts.length > MAX_METRICS) {
+    metrics.retryCounts.shift(); // Remove oldest
+  }
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+function getMetrics(): ObservabilityMetrics {
+  try {
+    const stored = localStorage.getItem(METRICS_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (err) {
+    console.warn('Failed to load observability metrics', err);
+  }
+  
+  return {
+    saveLatency: [],
+    conflictHits: 0,
+    retryCounts: [],
+    timestamp: Date.now(),
+  };
+}
+
+export function getMetricsSummary(): {
+  avgSaveLatency: number;
+  maxSaveLatency: number;
+  conflictHits: number;
+  avgRetryCount: number;
+} {
+  const metrics = getMetrics();
+  
+  return {
+    avgSaveLatency: metrics.saveLatency.length > 0
+      ? metrics.saveLatency.reduce((a, b) => a + b, 0) / metrics.saveLatency.length
+      : 0,
+    maxSaveLatency: metrics.saveLatency.length > 0
+      ? Math.max(...metrics.saveLatency)
+      : 0,
+    conflictHits: metrics.conflictHits,
+    avgRetryCount: metrics.retryCounts.length > 0
+      ? metrics.retryCounts.reduce((a, b) => a + b, 0) / metrics.retryCounts.length
+      : 0,
+  };
+}
+```
+
+#### 3. Integration Points
+
+Integrate observability into key operations:
+
+```typescript
+// In save hook
+const startTime = Date.now();
+await writeMutation.mutateAsync(data);
+const latency = Date.now() - startTime;
+recordSaveLatency(latency);
+
+// In conflict detection
+if (conflict) {
+  recordConflictHit();
+}
+
+// In React Query retry handler
+recordRetryCount(failureCount);
+```
+
+#### 4. Debug View
+
+Add debug view (only when flag enabled):
+
+```typescript
+// src/components/debug/ObservabilityPanel.tsx
+export function ObservabilityPanel() {
+  if (!isObservabilityEnabled()) return null;
+  
+  const summary = getMetricsSummary();
+  
+  return (
+    <div className="observability-panel">
+      <h3>Migration Risk Metrics</h3>
+      <div>Avg Save Latency: {summary.avgSaveLatency.toFixed(0)}ms</div>
+      <div>Max Save Latency: {summary.maxSaveLatency}ms</div>
+      <div>Conflict Hits: {summary.conflictHits}</div>
+      <div>Avg Retry Count: {summary.avgRetryCount.toFixed(1)}</div>
+      <button onClick={() => {
+        localStorage.removeItem(METRICS_KEY);
+        window.location.reload();
+      }}>Clear Metrics</button>
+    </div>
+  );
+}
+```
+
+### Privacy Considerations
+
+- **Local-only**: All metrics stored in localStorage, never sent to server
+- **Opt-in**: Only enabled via debug flag (not enabled by default)
+- **No PII**: No user data, only performance metrics
+- **Clearable**: User can clear metrics at any time
+
+### Smoke Tests
+
+Add to smoke test checklist:
+
+**Q. Observability**:
+- [ ] **Debug flag**: Enable observability flag → Make edits → Verify metrics recorded
+- [ ] **Save latency**: Verify save latency metrics are recorded correctly
+- [ ] **Conflict hits**: Trigger conflict → Verify conflict hit recorded
+- [ ] **Retry counts**: Trigger retry → Verify retry count recorded
+- [ ] **Metrics summary**: Verify metrics summary displays correctly
+- [ ] **Privacy**: Verify metrics never sent to server, only stored locally
+
+### Implementation Timeline
+
+This should be implemented in **Phase 7** (Accessibility, Performance & Polish) alongside performance testing:
+- Create observability utilities
+- Integrate into save, conflict, retry operations
+- Add debug panel (optional)
+- Add smoke tests
+
+**LOE**: 2-3 hours (includes observability utilities, integration, and smoke tests)
 
 ---
 
@@ -3920,7 +4582,8 @@ Create a dedicated Google Drive folder: **`Yarny Test Corpus`** (separate from p
   - One snippet with CJK text (Japanese, Chinese, Korean)
   - One snippet with emoji and Unicode characters
   - One snippet with long-press accents (é, è, ê, ë, ñ, ü, etc.)
-- **Purpose**: Fast smoke tests, basic operations, format normalization, IME composition
+  - One snippet with RTL text (Arabic/Hebrew mixed with English) - tests caret movement, word counting, paste stripping
+- **Purpose**: Fast smoke tests, basic operations, format normalization, IME composition, RTL handling
 
 **Medium Project** (`test-medium`):
 - 1 story
@@ -4716,6 +5379,22 @@ This pattern ensures:
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Addressed feedback on offline semantics, timezone/DST, persisted ordering, RTL handling, memory budget, unload safety, and observability
+  - **Offline & Flaky-Network Semantics Enhanced**: Updated offline banner message to "Working offline — changes queued"; added "Saved locally at X:XX" variant for queued saves; added read-only toggle only if reconciliation fails on reconnect; tied all UX to React Query's retry/backoff and cache staleness
+  - **Timezone/DST for "Goals that Think"**: Added new section specifying daily rollover uses user's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`); added DST boundary testing (spring forward/fall back); added timezone-aware date calculations; added smoke tests for timezone handling
+  - **Persisted Ordering as First-Class Metadata**: Enhanced order persistence section to make mechanism explicit (Drive file appProperties or structure.json file); documented atomic updates and concurrent load safety; added implementation details for both approaches
+  - **Right-to-Left (RTL) & Mixed-Script Paste**: Added new section for RTL handling; added RTL test snippet (Arabic/Hebrew mixed with English) to test corpus; added smoke tests for RTL caret movement, word counting, and paste stripping
+  - **Memory Budget & Long Sessions**: Added new section for memory guard; implemented LRU eviction for cached snippet bodies (cap to N most-recent); added active snippet protection (never evict active snippet); added configurable memory budget via localStorage
+  - **Unload Safety**: Added new section defining rules for window/tab close during saves; queued saves allow close without prompt; active saves prompt user; tied to "Saved/Saving" indicator for predictability; added mutation queue persistence to localStorage
+  - **Observability Light**: Added new section for privacy-respecting metrics (save latency, conflict hits, retry counts); debug flag enabled (opt-in); local-only storage (never sent to server); added debug panel for metrics summary
+  - Updated test corpus to include RTL test snippet
+  - Updated smoke tests to include timezone/DST, RTL, memory budget, unload safety, and observability tests
+  - Updated Phase 4 to include RTL handling (1-2 hours)
+  - Updated Phase 5 to include timezone/DST handling (2-3 hours)
+  - Updated Phase 6 to include memory budget and unload safety (4-6 hours total)
+  - Updated Phase 7 to include observability (2-3 hours)
+  - **Total Additional LOE**: 9-14 hours for all new gotchas
 
 - **2025-01-XX**: Added explicit success criteria for visual parity, concurrency safety, round-trip integrity, performance, accessibility, and bundle discipline
   - **Visual parity**: Added side-by-side `/react` vs. root checks for goal meter, Today chip, footer counts, story cards, and modal spacing with "diff" screenshots as artifacts
