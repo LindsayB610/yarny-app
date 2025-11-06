@@ -4033,6 +4033,32 @@ export interface AppState {
 
 **Note**: Views (e.g., left-rail lists) are derived using selectors in `src/store/selectors.ts`, not stored directly in state. This keeps renders cheap and enables virtualized lists later.
 
+**Example Selector Pattern** (from `src/store/selectors.ts`):
+```typescript
+// src/store/selectors.ts
+// Convention: "derive, don't duplicate" - views computed via selectors, not stored in state
+
+import { useStore } from './store';
+import { useMemo } from 'react';
+
+// Get groups as array (for left-rail list) - MEMOIZED
+export function useGroupsList() {
+  const groupIds = useStore((state) => state.project.groupIds);
+  const groups = useStore((state) => state.groups);
+  
+  return useMemo(() => {
+    return groupIds
+      .map((id) => groups[id])
+      .filter(Boolean); // Filter out any missing groups
+  }, [groupIds, groups]);
+}
+```
+
+This pattern ensures:
+- **Single source of truth**: Groups exist once in `state.groups` Record
+- **Cheap renders**: Only re-renders when `groupIds` or `groups` change, not on unrelated updates
+- **Memoization**: Prevents unnecessary recalculations
+
 ### Key Algorithms
 1. **Word Counting**: Custom function handling various text formats
 2. **Goal Calculation**: Complex date/word math for daily targets
@@ -4055,6 +4081,11 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Addressed feedback on performance budgets, decision point triggers, and selector examples
+  - **Performance Budgets**: Added time-to-first-edit and time-to-switch-snippet budgets (≤300 ms hot path, ≤1.5 s cold path) to large project smoke tests to catch performance regressions early
+  - **Decision Point Triggers**: Added one-liners to each decision point stating what would trigger a change (e.g., if TipTap plain text extraction diverges from Docs, consider Slate)
+  - **Selector Examples**: Added concrete selector example near store definition in file structure and State Structure sections to model "derive, don't duplicate" convention for discoverability
 
 - **2025-01-XX**: Addressed feedback on Drive quota, virtualization, focus rings, and export chunking
   - **Drive Quota & Request Storms**: Added visibility-based gating to React Query (only refetch/prefetch when tab is visible), exponential backoff with jitter for rate limit (429) responses, explicit "Drive rate limit" test with behavior validation

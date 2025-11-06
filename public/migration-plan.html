@@ -2706,7 +2706,9 @@ export function App(): JSX.Element {
 │   ├── store/
 │   │   ├── store.ts (Zustand)
 │   │   ├── types.ts (Normalized state types)
-│   │   └── selectors.ts (Selectors for derived views)
+│   │   └── selectors.ts (Selectors for derived views - see example below)
+│   │       # Example: useGroupsList() derives array from normalized groups Record
+│   │       # Convention: "derive, don't duplicate" - views computed via selectors, not stored in state
 │   ├── api/
 │   │   ├── contract.ts      # API contract definitions (types + Zod schemas)
 │   │   ├── client.ts        # Typed API client functions
@@ -2735,6 +2737,7 @@ export function App(): JSX.Element {
             <li>✅ Good TypeScript support</li>
             <li>✅ Small bundle size</li>
             <li><strong>Alternative</strong>: Context API (if team prefers built-in solution)</li>
+            <li><strong>Trigger for change</strong>: If Zustand's API becomes too limiting for complex state updates or if React Context performance becomes acceptable for our use case</li>
           </ul>
 
           <h3>Text Editor: TipTap vs Slate vs Draft.js</h3>
@@ -2746,6 +2749,7 @@ export function App(): JSX.Element {
             <li>✅ Good performance</li>
             <li>✅ <strong>Configured for plain text only</strong> - matches Yarny's minimalist model and Google Docs round-tripping requirements</li>
             <li><strong>Alternative</strong>: Slate (if need more customization, but plain text constraint still applies)</li>
+            <li><strong>Trigger for change</strong>: If TipTap's plain text extraction diverges from Google Docs API format and cannot be normalized, or if TipTap introduces breaking changes that conflict with our plain text constraint</li>
           </ul>
 
           <h3>Build Tool: Vite vs Create React App vs Webpack</h3>
@@ -2756,6 +2760,7 @@ export function App(): JSX.Element {
             <li>✅ Great TypeScript support</li>
             <li>✅ Smaller bundle sizes</li>
             <li><strong>Alternative</strong>: CRA (if team prefers familiarity)</li>
+            <li><strong>Trigger for change</strong>: If Vite's build output has compatibility issues with Netlify deployment or if Vite's plugin ecosystem becomes insufficient for our needs</li>
           </ul>
 
           <h3>TypeScript: Required</h3>
@@ -2769,6 +2774,7 @@ export function App(): JSX.Element {
             <li>✅ Easier to maintain and refactor large codebases</li>
             <li>✅ All recommended libraries have excellent TypeScript support</li>
             <li>✅ TypeScript is now the industry standard for React projects</li>
+            <li><strong>Trigger for change</strong>: None - TypeScript is a hard requirement for this migration</li>
           </ul>
         </section>
 
@@ -2997,7 +3003,10 @@ export function App(): JSX.Element {
           <p><strong>H. Performance &amp; Loading</strong></p>
           <ul>
             <li>[ ] Load large project (test-large) → Verify initial load time acceptable (&lt; 5 seconds)</li>
-            <li>[ ] Switch between snippets in large project → Verify no lag</li>
+            <li>[ ] <strong>Time-to-first-edit (hot path)</strong>: Open snippet already in cache → Start typing → Verify latency ≤300 ms from click to first character appearing</li>
+            <li>[ ] <strong>Time-to-first-edit (cold path)</strong>: Open snippet not yet loaded → Start typing → Verify latency ≤1.5 s from click to first character appearing (includes Drive fetch)</li>
+            <li>[ ] <strong>Time-to-switch-snippet (hot path)</strong>: Switch to snippet already in cache → Verify latency ≤300 ms from click to editor ready</li>
+            <li>[ ] <strong>Time-to-switch-snippet (cold path)</strong>: Switch to snippet not yet loaded → Verify latency ≤1.5 s from click to editor ready (includes Drive fetch)</li>
             <li>[ ] Scroll through chapter list in large project → Verify smooth scrolling (virtualized)</li>
             <li>[ ] Background loading → Verify non-active snippets load in background without blocking UI</li>
             <li>[ ] Lazy loading → Verify snippet content only loads when needed</li>
@@ -3626,6 +3635,32 @@ export interface AppState {
 }</code></pre>
           <p><strong>Note</strong>: Views (e.g., left-rail lists) are derived using selectors in <code>src/store/selectors.ts</code>, not stored directly in state. This keeps renders cheap and enables virtualized lists later.</p>
 
+          <p><strong>Example Selector Pattern</strong> (from <code>src/store/selectors.ts</code>):</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/store/selectors.ts
+// Convention: "derive, don't duplicate" - views computed via selectors, not stored in state
+
+import { useStore } from './store';
+import { useMemo } from 'react';
+
+// Get groups as array (for left-rail list) - MEMOIZED
+export function useGroupsList() {
+  const groupIds = useStore((state) => state.project.groupIds);
+  const groups = useStore((state) => state.groups);
+  
+  return useMemo(() => {
+    return groupIds
+      .map((id) => groups[id])
+      .filter(Boolean); // Filter out any missing groups
+  }, [groupIds, groups]);
+}</code></pre>
+
+          <p>This pattern ensures:</p>
+          <ul>
+            <li><strong>Single source of truth</strong>: Groups exist once in <code>state.groups</code> Record</li>
+            <li><strong>Cheap renders</strong>: Only re-renders when <code>groupIds</code> or <code>groups</code> change, not on unrelated updates</li>
+            <li><strong>Memoization</strong>: Prevents unnecessary recalculations</li>
+          </ul>
+
           <h3>Key Algorithms</h3>
           <ol>
             <li><strong>Word Counting</strong>: Custom function handling various text formats</li>
@@ -3656,6 +3691,13 @@ export interface AppState {
           <h2 id="changelog-heading">Changelog</h2>
           
           <ul>
+            <li><strong>2025-01-XX</strong>: Addressed feedback on performance budgets, decision point triggers, and selector examples
+              <ul>
+                <li><strong>Performance Budgets</strong>: Added time-to-first-edit and time-to-switch-snippet budgets (≤300 ms hot path, ≤1.5 s cold path) to large project smoke tests to catch performance regressions early</li>
+                <li><strong>Decision Point Triggers</strong>: Added one-liners to each decision point stating what would trigger a change (e.g., if TipTap plain text extraction diverges from Docs, consider Slate)</li>
+                <li><strong>Selector Examples</strong>: Added concrete selector example near store definition in file structure and State Structure sections to model "derive, don't duplicate" convention for discoverability</li>
+              </ul>
+            </li>
             <li><strong>2025-01-XX</strong>: Addressed feedback on Drive quota, virtualization, focus rings, and export chunking
               <ul>
                 <li><strong>Drive Quota & Request Storms</strong>: Added visibility-based gating to React Query (only refetch/prefetch when tab is visible), exponential backoff with jitter for rate limit (429) responses, explicit "Drive rate limit" test with behavior validation</li>
