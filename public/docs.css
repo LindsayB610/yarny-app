@@ -76,22 +76,21 @@ html {
   display: flex;
   gap: var(--space-md);
   align-items: center;
-  position: fixed;
-  top: calc((var(--space-5xl) + 60px) / 2 - 20px); /* Center between top of page and first section */
-  right: var(--space-4xl); /* Align with content area right edge (matches content padding-right) */
-  z-index: 200;
-  transform: translateY(-50%); /* Center vertically on the calculated position */
+  position: absolute;
+  top: calc((var(--space-5xl) + 60px) / 2); /* Center vertically between top and first section */
+  right: var(--space-4xl); /* Align with content blocks right edge */
+  z-index: 10;
+  transform: translateY(-50%); /* Center the buttons on the calculated position */
 }
 
 .docs-nav .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(31, 41, 55, 0.95);
   color: var(--color-white);
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-fast);
-  backdrop-filter: blur(10px);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
 }
@@ -363,6 +362,7 @@ html {
   padding: var(--space-5xl) var(--space-4xl);
   max-width: calc(100vw - 280px);
   box-sizing: border-box;
+  position: relative; /* Allow absolute positioning of nav inside */
   padding-top: calc(var(--space-5xl) + 60px); /* Add top padding to account for nav buttons */
 }
 

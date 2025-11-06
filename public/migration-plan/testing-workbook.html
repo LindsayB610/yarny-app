@@ -204,12 +204,6 @@
 </head>
 <body>
   <div class="docs-container">
-    <nav class="docs-nav">
-      <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
-      <a href="/docs.html" class="btn-secondary">Docs</a>
-      <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
-    </nav>
-
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
@@ -239,6 +233,11 @@
       </aside>
 
       <div class="docs-content">
+        <nav class="docs-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/docs.html" class="btn-secondary">Docs</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+        </nav>
         <div class="workbook-intro" id="intro">
           <h1>Yarny React Migration - Manual Testing Workbook</h1>
           <p>This workbook guides you through the <strong>manual testing</strong> required after the React migration is complete. Most functional tests are now automated and run continuously in CI/CD.</p>
