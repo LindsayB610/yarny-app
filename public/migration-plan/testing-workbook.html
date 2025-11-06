@@ -252,6 +252,9 @@
           <h1>Yarny React Migration - Testing Workbook</h1>
           <p>This workbook guides you through testing every feature and function after the React migration is complete. Check off each item as you test it, and note any issues you encounter.</p>
           <p><strong>Note:</strong> This workbook is designed for non-developers. Each test includes clear instructions and expected results.</p>
+          <div class="note-box" style="margin-top: var(--space-lg);">
+            <p><strong>Test Corpus:</strong> For comprehensive testing, use the "Yarny Test Corpus" folder in Google Drive, which contains three project sizes (small, medium, large) with sample data. Start with the small project for basic tests, then use medium and large projects for performance and edge case testing.</p>
+          </div>
         </div>
 
         <!-- Section 1: Authentication & Access -->
@@ -530,7 +533,7 @@
 
         <div class="test-item">
           <h4>Test 3.5: Plain Text Only (No Rich Formatting)</h4>
-          <p>Verify that the editor only supports plain text (no bold, italic, colors, etc.).</p>
+          <p>Verify that the editor only supports plain text (no bold, italic, colors, etc.) and preserves paragraph/line breaks correctly.</p>
           <div class="test-steps">
             <ol>
               <li>Type some text in the editor</li>
@@ -538,13 +541,40 @@
               <li>Try to make text italic (Ctrl+I or Cmd+I) - it should NOT work</li>
               <li>Paste rich text from another document</li>
               <li>Verify the formatting is stripped and only plain text remains</li>
-              <li>Verify paragraph breaks (double Enter) work correctly</li>
-              <li>Verify single line breaks (Shift+Enter) work correctly</li>
+              <li>Test paragraph breaks: Press Enter twice to create a paragraph break</li>
+              <li>Verify paragraph breaks (double Enter) create proper spacing between paragraphs</li>
+              <li>Test soft line breaks: Press Shift+Enter to create a line break within a paragraph</li>
+              <li>Verify single line breaks (Shift+Enter) work correctly without creating new paragraphs</li>
+              <li>Save the snippet and open it in Google Docs</li>
+              <li>Verify paragraph breaks and line breaks are preserved correctly in Google Docs</li>
             </ol>
           </div>
           <div class="checkbox-container">
             <input type="checkbox" id="test-3-5" name="test-3-5">
-            <label for="test-3-5">Editor only supports plain text (no rich formatting)</label>
+            <label for="test-3-5">Editor only supports plain text and preserves paragraph/line breaks correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 3.6: Editor Authority (Editor is Truth While Open)</h4>
+          <p>Verify that while a snippet is open in the editor, the editor is authoritative and external changes in Google Docs are ignored until you switch snippets.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a snippet in the Yarny editor</li>
+              <li>Type some text in the editor</li>
+              <li>In another tab, open the same snippet's Google Doc in Google Docs</li>
+              <li>Make changes in Google Docs and save</li>
+              <li>Return to Yarny (don't switch snippets yet)</li>
+              <li>Verify your Yarny edits are still visible (editor is authoritative)</li>
+              <li>Continue editing in Yarny and save</li>
+              <li>Verify your Yarny changes overwrite the Google Docs changes</li>
+              <li>Open the Google Doc again</li>
+              <li>Verify it matches your Yarny version (not the Google Docs edits you made earlier)</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-3-6" name="test-3-6">
+            <label for="test-3-6">Editor is authoritative while snippet is open (external changes ignored)</label>
           </div>
         </div>
       </div>
@@ -1351,43 +1381,72 @@
 
         <div class="test-item">
           <h4>Test 10.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
-          <p>Verify that you can edit in Google Docs and see changes in Yarny (after reconciliation).</p>
+          <p>Verify that you can edit in Google Docs and see changes in Yarny with no format loss (plain text only).</p>
           <div class="test-steps">
             <ol>
-              <li>Edit a snippet in Yarny and save</li>
+              <li>Edit a snippet in Yarny with paragraph breaks (double Enter) and line breaks (Shift+Enter)</li>
+              <li>Save the snippet in Yarny</li>
               <li>Open the same snippet's Google Doc in Google Docs (another tab)</li>
-              <li>Make changes in Google Docs</li>
+              <li>Verify the content matches exactly (paragraph breaks and line breaks preserved)</li>
+              <li>Make changes in Google Docs (add text, modify existing text)</li>
               <li>Save in Google Docs</li>
-              <li>Switch to a different snippet in Yarny (or close and reopen Yarny)</li>
+              <li>In Yarny, switch to a different snippet (or close and reopen Yarny)</li>
               <li>Switch back to the original snippet</li>
               <li>Verify Yarny detects the external changes (may show conflict resolution or reconciliation)</li>
               <li>Verify you can see the changes from Google Docs</li>
+              <li>Verify paragraph breaks and line breaks are still preserved correctly</li>
+              <li>Verify no formatting (bold, italic, etc.) was introduced</li>
             </ol>
           </div>
           <div class="checkbox-container">
             <input type="checkbox" id="test-10-3" name="test-10-3">
-            <label for="test-10-3">I can edit in Google Docs and see changes in Yarny</label>
+            <label for="test-10-3">I can edit in Google Docs and see changes in Yarny with no format loss</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 10.3a: Cross-Edit Testing (Yarny Idle → Google Docs Edit → Yarny)</h4>
+          <p>Verify that Yarny detects changes made in Google Docs while Yarny is idle (not actively editing the snippet).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a snippet in Yarny (make it the active snippet)</li>
+              <li>Switch to a different snippet in Yarny (make the first snippet idle, not actively being edited)</li>
+              <li>In another tab, open the first snippet's Google Doc in Google Docs</li>
+              <li>Make edits in Google Docs</li>
+              <li>Save in Google Docs</li>
+              <li>Return to Yarny and switch back to the first snippet</li>
+              <li>Verify Yarny detects the external changes</li>
+              <li>Verify a conflict resolution modal or reconciliation notification appears</li>
+              <li>Verify you can see the changes from Google Docs</li>
+              <li>Verify you can choose to keep Yarny version or use Google Docs version</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-10-3a" name="test-10-3a">
+            <label for="test-10-3a">Yarny detects changes made in Google Docs while snippet is idle</label>
           </div>
         </div>
 
         <div class="test-item">
           <h4>Test 10.4: Conflict Detection</h4>
-          <p>Verify that Yarny detects conflicts when both Yarny and Google Docs are edited.</p>
+          <p>Verify that Yarny detects conflicts when both Yarny and Google Docs are edited (but NOT while actively editing in Yarny).</p>
           <div class="test-steps">
             <ol>
-              <li>Edit a snippet in Yarny (but don't switch snippets yet)</li>
-              <li>Open the same snippet's Google Doc in Google Docs (another tab)</li>
+              <li>Edit a snippet in Yarny and save</li>
+              <li>Switch to a different snippet in Yarny (make the first snippet idle)</li>
+              <li>Open the first snippet's Google Doc in Google Docs (another tab)</li>
               <li>Make different changes in Google Docs</li>
               <li>Save in Google Docs</li>
-              <li>In Yarny, switch to a different snippet (or wait for reconciliation check)</li>
-              <li>Switch back to the original snippet</li>
-              <li>Verify a conflict resolution modal appears</li>
+              <li>In Yarny, switch back to the original snippet</li>
+              <li>Verify a conflict resolution modal appears (conflicts are detected when switching snippets, not while actively editing)</li>
               <li>Verify you can see both versions (Yarny version vs Google Docs version)</li>
+              <li>Verify the modal shows timestamps for both versions</li>
+              <li>Verify you can compare the differences</li>
             </ol>
           </div>
           <div class="checkbox-container">
             <input type="checkbox" id="test-10-4" name="test-10-4">
-            <label for="test-10-4">Conflict detection works when both are edited</label>
+            <label for="test-10-4">Conflict detection works when both are edited (detected on snippet switch)</label>
           </div>
         </div>
 
@@ -1661,22 +1720,26 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 12.3: Special Characters</h4>
-          <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly.</p>
+          <h4>Test 12.3: Special Characters & Round-Trip Preservation</h4>
+          <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly in round-trips between Yarny and Google Docs.</p>
           <div class="test-steps">
             <ol>
-              <li>Type special characters in a snippet: "quotes", 'apostrophes', —em dashes, –en dashes, …ellipses</li>
-              <li>Save the snippet</li>
+              <li>Type special characters in a snippet: "quotes", 'apostrophes', —em dashes, –en dashes, …ellipses, ©copyright, ®registered, ™trademark</li>
+              <li>Save the snippet in Yarny</li>
               <li>Open the Google Doc in Google Drive</li>
-              <li>Verify special characters are preserved</li>
-              <li>Edit in Google Docs and add more special characters</li>
-              <li>Switch snippets in Yarny and switch back</li>
-              <li>Verify special characters are preserved in round-trip</li>
+              <li>Verify all special characters are preserved exactly</li>
+              <li>Edit in Google Docs and add more special characters: curly quotes "like this" and 'this'</li>
+              <li>Save in Google Docs</li>
+              <li>In Yarny, switch to a different snippet and switch back</li>
+              <li>Verify all special characters are preserved in the round-trip</li>
+              <li>Edit in Yarny again and add more special characters</li>
+              <li>Save and verify in Google Docs that all characters are preserved</li>
+              <li>Verify no characters are corrupted or changed during round-trips</li>
             </ol>
           </div>
           <div class="checkbox-container">
             <input type="checkbox" id="test-12-3" name="test-12-3">
-            <label for="test-12-3">Special characters are preserved correctly</label>
+            <label for="test-12-3">Special characters are preserved correctly in round-trips</label>
           </div>
         </div>
 
