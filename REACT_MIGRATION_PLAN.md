@@ -10,6 +10,124 @@ This document outlines the plan and effort estimation for converting the Yarny w
 
 ---
 
+## Understanding TypeScript + React
+
+### They Work Together, Not Separately
+
+**Important**: TypeScript and React are not alternatives—they work together. Everything in this migration will be built using **React components written in TypeScript**.
+
+- **TypeScript** = The programming language (typed JavaScript)
+- **React** = The UI framework/library for building components
+- **Result** = React components written in TypeScript (`.tsx` files)
+
+### What Gets Built as React Components (TypeScript)
+
+All UI components will be React components written in TypeScript:
+
+- **Pages**: `LoginPage.tsx`, `StoriesPage.tsx`, `EditorPage.tsx`
+- **Editor Components**: `Editor.tsx`, `StorySidebar.tsx`, `NotesSidebar.tsx`, `TipTapEditor.tsx`
+- **UI Components**: `Modal.tsx`, `ColorPicker.tsx`, `ContextMenu.tsx`, etc.
+- **Shared Components**: `Header.tsx`, `Footer.tsx`
+
+### What Gets Built as React Hooks (TypeScript)
+
+Business logic will be React hooks written in TypeScript:
+
+- **`useDrive.ts`** - Google Drive API wrapper with TypeScript types
+- **`useAuth.ts`** - Authentication logic with TypeScript types
+- **`useStory.ts`** - Story management with TypeScript types
+- **`useGoal.ts`** - Goal calculation algorithms with TypeScript types
+- **`useMobileDetection.ts`** - Mobile device detection
+
+### What Gets Built as TypeScript Utilities
+
+Pure functions and utilities written in TypeScript (no React):
+
+- **`wordCount.ts`** - Word counting logic
+- **`export.ts`** - Export functionality
+- **`goalCalculation.ts`** - Goal calculation algorithms
+- **`api/drive.ts`** - Drive API client with TypeScript types
+
+### What Gets Built as TypeScript State Management
+
+State management using Zustand with TypeScript:
+
+- **`store/store.ts`** - Zustand store with TypeScript interfaces
+- **`store/types.ts`** - TypeScript type definitions for all state structures
+
+### What Stays the Same (No Changes)
+
+- **Netlify Functions** (backend) - Remain in JavaScript (no changes needed)
+- **Backend API endpoints** - No changes required
+- **Google Drive API integration** - Backend already works, just needs React wrapper
+
+### Example: React Component in TypeScript
+
+```typescript
+// File: src/components/editor/Editor.tsx
+// This is a React component written in TypeScript
+
+import React from 'react';
+import { useStore } from '../../store/store';
+import { Group } from '../../store/types';
+
+interface EditorProps {
+  storyId: string;
+}
+
+export function Editor({ storyId }: EditorProps): JSX.Element {
+  const groups = useStore((state) => state.groups);
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  
+  // Component logic here...
+  
+  return (
+    <div className="editor">
+      {/* JSX here */}
+    </div>
+  );
+}
+```
+
+### Example: React Hook in TypeScript
+
+```typescript
+// File: src/hooks/useDrive.ts
+// This is a React hook written in TypeScript
+
+import { useState, useEffect } from 'react';
+import { DriveFile } from '../api/drive';
+
+interface UseDriveResult {
+  files: DriveFile[];
+  loading: boolean;
+  error: Error | null;
+}
+
+export function useDrive(folderId: string): UseDriveResult {
+  const [files, setFiles] = useState<DriveFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  // Hook logic here...
+  
+  return { files, loading, error };
+}
+```
+
+### Summary
+
+- ✅ **Everything** = React components written in TypeScript
+- ✅ **UI Components** = React (`.tsx` files)
+- ✅ **Business Logic** = React hooks (`.ts` files)
+- ✅ **Utilities** = TypeScript functions (`.ts` files)
+- ✅ **State** = Zustand with TypeScript types
+- ❌ **Backend** = Stays in JavaScript (no changes)
+
+**The plan states**: "This migration will use **TypeScript** throughout. All components, hooks, utilities, and state management will be written in TypeScript."
+
+---
+
 ## Current Project Analysis
 
 ### Codebase Statistics
@@ -80,17 +198,17 @@ This section details exactly which parts of the current codebase can be replaced
 | Component | Current Lines | Library | Savings | What It Replaces |
 |-----------|---------------|---------|---------|------------------|
 | Rich Text Editor | ~1,500-2,000 | TipTap/Slate | ~1,500-2,000 lines | All contentEditable handling, text extraction, formatting logic |
-| Modals (8 total) | ~500-800 | Radix UI Dialog | ~500-800 lines | Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning |
+| Modals (8 total) | ~500-800 | Material UI Dialog | ~500-800 lines | Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning |
 | Drag & Drop | ~300-400 | @dnd-kit | ~300-400 lines | All drag event handlers, drop zones, reordering logic for chapters/snippets |
 | Color Picker | ~150 | react-colorful | ~150 lines | Custom color picker UI, color selection logic, positioning |
-| Tabs | ~100 | Radix UI Tabs | ~100 lines | People/Places/Things tab switching, tab state management |
-| Context Menu | ~150 | Radix UI Context Menu | ~150 lines | Right-click menu for rename/delete, menu positioning |
-| Dropdown Menus | ~100 | Radix UI Dropdown | ~100 lines | Export dropdown menu, positioning, open/close logic |
+| Tabs | ~100 | Material UI Tabs | ~100 lines | People/Places/Things tab switching, tab state management |
+| Context Menu | ~150 | Material UI Menu | ~150 lines | Right-click menu for rename/delete, menu positioning |
+| Dropdown Menus | ~100 | Material UI Menu | ~100 lines | Export dropdown menu, positioning, open/close logic |
 | Forms | ~200 | React Hook Form | ~200 lines | Form validation, form state, error handling for all modals |
-| Date Picker | ~50 | react-datepicker | ~50 lines | Goal deadline date input, date validation |
-| Tooltips | ~50 | Radix UI Tooltip | ~50 lines | All title attributes and custom tooltip implementations |
+| Date Picker | ~50 | Material UI DatePicker | ~50 lines | Goal deadline date input, date validation |
+| Tooltips | ~50 | Material UI Tooltip | ~50 lines | All title attributes and custom tooltip implementations |
 | Toast Notifications | ~100 | react-hot-toast | ~100 lines | Save status updates, error notifications, success messages |
-| Collapsible/Accordion | ~100 | Radix UI Accordion | ~100 lines | Chapter collapse/expand functionality |
+| Collapsible/Accordion | ~100 | Material UI Accordion | ~100 lines | Chapter collapse/expand functionality |
 | **TOTAL** | **~3,300-4,200** | | **~3,300-4,200 lines** | **40-50% of codebase** |
 
 ### Detailed Component Mapping
@@ -115,7 +233,7 @@ This section details exactly which parts of the current codebase can be replaced
 - `editor.js` lines ~669-738 (editor rendering and content management)
 - All contentEditable event listeners throughout `editor.js`
 
-#### 2. Modals → Radix UI Dialog
+#### 2. Modals → Material UI Dialog
 **Current Implementation:**
 - 8 separate modal implementations with custom show/hide logic
 - Modal overlay management
@@ -124,10 +242,10 @@ This section details exactly which parts of the current codebase can be replaced
 - Click-outside-to-close logic
 
 **Replacement:**
-- Radix UI Dialog component handles all modal behavior
+- Material UI Dialog component handles all modal behavior
 - Accessible by default (ARIA, focus management)
 - Keyboard navigation built-in
-- Can style to match existing design
+- Can style to match existing design with theme customization
 
 **Code Locations:**
 - `editor.html` lines 200-571 (all modal HTML structures)
@@ -168,31 +286,33 @@ This section details exactly which parts of the current codebase can be replaced
 - `editor.js` lines 2682-2784 (color picker functions)
 - `editor.html` lines 437-442 (color picker HTML)
 
-#### 5. Tabs → Radix UI Tabs
+#### 5. Tabs → Material UI Tabs
 **Current Implementation:**
 - Custom tab switching for People/Places/Things
 - Tab state management
 - Active tab styling
 
 **Replacement:**
-- Radix UI Tabs handles all tab functionality
+- Material UI Tabs handles all tab functionality
 - Accessible keyboard navigation
 - Built-in active state management
+- Can be styled to match existing design
 
 **Code Locations:**
 - `editor.html` lines 115-139 (tabs HTML)
 - `editor.js` tab switching logic
 
-#### 6. Context Menu → Radix UI Context Menu
+#### 6. Context Menu → Material UI Menu
 **Current Implementation:**
 - Right-click event handling
 - Menu positioning
 - Rename/Delete menu items
 
 **Replacement:**
-- Radix UI Context Menu provides full context menu functionality
+- Material UI Menu provides full context menu functionality
 - Accessible, keyboard navigable
-- Proper positioning
+- Proper positioning with anchor positioning
+- Can be styled to match existing design
 
 **Code Locations:**
 - `editor.html` lines 444-448 (context menu HTML)
@@ -214,16 +334,17 @@ This section details exactly which parts of the current codebase can be replaced
 - All modal forms in `editor.html` and `stories.html`
 - Form validation logic in `editor.js` and `stories.js`
 
-#### 8. Date Picker → react-datepicker
+#### 8. Date Picker → Material UI DatePicker
 **Current Implementation:**
 - Native HTML5 date input
 - Date validation
 - Used in Goal Panel for deadline selection
 
 **Replacement:**
-- react-datepicker provides better UX
+- Material UI DatePicker provides better UX
 - Date range selection
-- Customizable styling
+- Integrated with Material UI theme
+- Accessible and keyboard navigable
 
 **Code Locations:**
 - `editor.html` lines 365-372 (goal deadline input)
@@ -244,16 +365,17 @@ This section details exactly which parts of the current codebase can be replaced
 - `editor.js` lines 1057-1077 (`updateSaveStatus` function)
 - `editor.html` line 108 (save status element)
 
-#### 10. Collapsible/Accordion → Radix UI Accordion
+#### 10. Collapsible/Accordion → Material UI Accordion
 **Current Implementation:**
 - Custom collapse/expand for chapters
 - Collapse state management (localStorage)
 - Icon toggling (arrow up/down)
 
 **Replacement:**
-- Radix UI Accordion handles collapse functionality
+- Material UI Accordion handles collapse functionality
 - Accessible, keyboard navigable
 - Built-in state management
+- Can be styled to match existing design
 
 **Code Locations:**
 - `editor.js` lines 217-262 (collapse state management)
@@ -263,13 +385,14 @@ This section details exactly which parts of the current codebase can be replaced
 ### Benefits of Using Third-Party Libraries
 
 1. **Massive Code Reduction**: ~3,300-4,200 lines of custom code replaced by battle-tested libraries
-2. **Accessibility Built-In**: All Radix UI components are fully accessible (ARIA, keyboard nav)
+2. **Accessibility Built-In**: All Material UI components are fully accessible (ARIA, keyboard nav)
 3. **Type Safety**: All recommended libraries have excellent TypeScript support
 4. **Maintenance**: Libraries are maintained by teams, reducing our maintenance burden
 5. **Performance**: Optimized libraries often perform better than custom implementations
 6. **Documentation**: Well-documented libraries with examples and community support
 7. **Bug Fixes**: Libraries fix edge cases we haven't encountered yet
 8. **Future-Proof**: Libraries evolve with React ecosystem
+9. **Consistent Design System**: Material UI provides a cohesive design system that can be customized
 
 ### Recommended Library Stack
 
@@ -283,18 +406,16 @@ This section details exactly which parts of the current codebase can be replaced
     "react-router-dom": "^6.x",
     "@tiptap/react": "^2.x",
     "@tiptap/starter-kit": "^2.x",
-    "@radix-ui/react-dialog": "^1.x",
-    "@radix-ui/react-dropdown-menu": "^2.x",
-    "@radix-ui/react-context-menu": "^2.x",
-    "@radix-ui/react-tabs": "^1.x",
-    "@radix-ui/react-tooltip": "^1.x",
-    "@radix-ui/react-accordion": "^1.x",
+    "@mui/material": "^5.x",
+    "@mui/icons-material": "^5.x",
+    "@mui/x-date-pickers": "^6.x",
+    "@emotion/react": "^11.x",
+    "@emotion/styled": "^11.x",
     "@dnd-kit/core": "^6.x",
     "@dnd-kit/sortable": "^8.x",
     "@dnd-kit/utilities": "^3.x",
     "react-colorful": "^5.x",
     "react-hook-form": "^7.x",
-    "react-datepicker": "^4.x",
     "react-hot-toast": "^2.x",
     "axios": "^1.x",
     "zustand": "^4.x"
@@ -323,15 +444,17 @@ This section details exactly which parts of the current codebase can be replaced
 - ✅ Handles all text extraction, formatting, and cursor management we currently do manually
 - **Alternative**: Slate.js (more complex but powerful, also has TypeScript support)
 
-#### UI Components: **Radix UI** (Recommended)
-- ✅ Unstyled, accessible components - perfect for matching existing design
+#### UI Components: **Material UI** (Recommended)
+- ✅ Comprehensive component library with consistent design system
 - ✅ Full keyboard navigation built-in
 - ✅ ARIA attributes automatically handled
-- ✅ Can match existing design system exactly
+- ✅ Highly customizable with theme system - can match existing design
 - ✅ **Full TypeScript support** - All components are typed
 - ✅ Replaces ~1,000+ lines of modal, menu, tab, tooltip code
-- ✅ Provides: Dialog (modals), Dropdown Menu, Context Menu, Tabs, Tooltip, Accordion
-- **Alternative**: Headless UI (similar, different API, also TypeScript)
+- ✅ Provides: Dialog (modals), Menu (dropdowns/context menus), Tabs, Tooltip, Accordion, DatePicker, and many more
+- ✅ Includes Material Icons library for consistent iconography
+- ✅ Active development and large community
+- **Alternative**: Radix UI (unstyled, more minimal) or Headless UI (similar, different API)
 
 #### Drag & Drop: **@dnd-kit** (Recommended)
 - ✅ Modern, performant library
@@ -371,7 +494,7 @@ This section details exactly which parts of the current codebase can be replaced
 | Task | Hours | Savings |
 |------|-------|---------|
 | Rich Text Editor (TipTap) | 15-25 | 25-35 hrs |
-| UI Components (Radix UI) | 10-15 | 20-25 hrs |
+| UI Components (Material UI) | 10-15 | 20-25 hrs |
 | Drag & Drop (@dnd-kit) | 4-6 | 11-14 hrs |
 | Forms & Inputs (React Hook Form) | 3-4 | 5-8 hrs |
 | State Management | 20-30 | 0 hrs |
@@ -769,7 +892,7 @@ These areas cannot be replaced with libraries and require custom React code:
 7. **Safer Refactoring**: TypeScript ensures changes don't break existing code
 
 ### User Benefits
-1. **Better Accessibility**: Radix UI components are fully accessible
+1. **Better Accessibility**: Material UI components are fully accessible
 2. **Improved Performance**: React optimizations (memoization, etc.)
 3. **Better UX**: Polished interactions from proven libraries
 4. **Future Features**: Easier to add new features in React
@@ -1134,7 +1257,7 @@ yarny-app/
 - Consider virtual scrolling for long lists
 
 ### Accessibility
-- All Radix UI components are accessible by default
+- All Material UI components are accessible by default
 - Test with screen readers
 - Ensure keyboard navigation works
 - Check color contrast
@@ -1160,7 +1283,7 @@ yarny-app/
 
 ### Documentation
 - [TipTap Documentation](https://tiptap.dev/)
-- [Radix UI Documentation](https://www.radix-ui.com/)
+- [Material UI Documentation](https://mui.com/)
 - [@dnd-kit Documentation](https://docs.dndkit.com/)
 - [React Router Documentation](https://reactrouter.com/)
 - [Zustand Documentation](https://github.com/pmndrs/zustand)

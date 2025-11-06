@@ -43,6 +43,7 @@
         <nav class="sidebar-nav">
           <ul class="sidebar-nav-list">
             <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
+            <li><a href="#typescript-react" class="nav-link">Understanding TypeScript + React</a></li>
             <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
             <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
             <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
@@ -80,6 +81,119 @@
           <h2>Executive Summary</h2>
           <p>This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong>React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
           <p><strong>Note:</strong> This migration will use <strong>TypeScript throughout</strong>. All components, hooks, utilities, and state management will be written in TypeScript.</p>
+        </section>
+
+        <section class="docs-section" id="typescript-react">
+          <h2>Understanding TypeScript + React</h2>
+          
+          <h3>They Work Together, Not Separately</h3>
+          <p><strong>Important</strong>: TypeScript and React are not alternatives—they work together. Everything in this migration will be built using <strong>React components written in TypeScript</strong>.</p>
+          <ul>
+            <li><strong>TypeScript</strong> = The programming language (typed JavaScript)</li>
+            <li><strong>React</strong> = The UI framework/library for building components</li>
+            <li><strong>Result</strong> = React components written in TypeScript (<code>.tsx</code> files)</li>
+          </ul>
+
+          <h3>What Gets Built as React Components (TypeScript)</h3>
+          <p>All UI components will be React components written in TypeScript:</p>
+          <ul>
+            <li><strong>Pages</strong>: <code>LoginPage.tsx</code>, <code>StoriesPage.tsx</code>, <code>EditorPage.tsx</code></li>
+            <li><strong>Editor Components</strong>: <code>Editor.tsx</code>, <code>StorySidebar.tsx</code>, <code>NotesSidebar.tsx</code>, <code>TipTapEditor.tsx</code></li>
+            <li><strong>UI Components</strong>: <code>Modal.tsx</code>, <code>ColorPicker.tsx</code>, <code>ContextMenu.tsx</code>, etc.</li>
+            <li><strong>Shared Components</strong>: <code>Header.tsx</code>, <code>Footer.tsx</code></li>
+          </ul>
+
+          <h3>What Gets Built as React Hooks (TypeScript)</h3>
+          <p>Business logic will be React hooks written in TypeScript:</p>
+          <ul>
+            <li><strong><code>useDrive.ts</code></strong> - Google Drive API wrapper with TypeScript types</li>
+            <li><strong><code>useAuth.ts</code></strong> - Authentication logic with TypeScript types</li>
+            <li><strong><code>useStory.ts</code></strong> - Story management with TypeScript types</li>
+            <li><strong><code>useGoal.ts</code></strong> - Goal calculation algorithms with TypeScript types</li>
+            <li><strong><code>useMobileDetection.ts</code></strong> - Mobile device detection</li>
+          </ul>
+
+          <h3>What Gets Built as TypeScript Utilities</h3>
+          <p>Pure functions and utilities written in TypeScript (no React):</p>
+          <ul>
+            <li><strong><code>wordCount.ts</code></strong> - Word counting logic</li>
+            <li><strong><code>export.ts</code></strong> - Export functionality</li>
+            <li><strong><code>goalCalculation.ts</code></strong> - Goal calculation algorithms</li>
+            <li><strong><code>api/drive.ts</code></strong> - Drive API client with TypeScript types</li>
+          </ul>
+
+          <h3>What Gets Built as TypeScript State Management</h3>
+          <p>State management using Zustand with TypeScript:</p>
+          <ul>
+            <li><strong><code>store/store.ts</code></strong> - Zustand store with TypeScript interfaces</li>
+            <li><strong><code>store/types.ts</code></strong> - TypeScript type definitions for all state structures</li>
+          </ul>
+
+          <h3>What Stays the Same (No Changes)</h3>
+          <ul>
+            <li><strong>Netlify Functions</strong> (backend) - Remain in JavaScript (no changes needed)</li>
+            <li><strong>Backend API endpoints</strong> - No changes required</li>
+            <li><strong>Google Drive API integration</strong> - Backend already works, just needs React wrapper</li>
+          </ul>
+
+          <h3>Example: React Component in TypeScript</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/components/editor/Editor.tsx
+// This is a React component written in TypeScript
+
+import React from 'react';
+import { useStore } from '../../store/store';
+import { Group } from '../../store/types';
+
+interface EditorProps {
+  storyId: string;
+}
+
+export function Editor({ storyId }: EditorProps): JSX.Element {
+  const groups = useStore((state) => state.groups);
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  
+  // Component logic here...
+  
+  return (
+    &lt;div className="editor"&gt;
+      {/* JSX here */}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+          <h3>Example: React Hook in TypeScript</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// File: src/hooks/useDrive.ts
+// This is a React hook written in TypeScript
+
+import { useState, useEffect } from 'react';
+import { DriveFile } from '../api/drive';
+
+interface UseDriveResult {
+  files: DriveFile[];
+  loading: boolean;
+  error: Error | null;
+}
+
+export function useDrive(folderId: string): UseDriveResult {
+  const [files, setFiles] = useState&lt;DriveFile[]&gt;([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState&lt;Error | null&gt;(null);
+  
+  // Hook logic here...
+  
+  return { files, loading, error };
+}</code></pre>
+
+          <h3>Summary</h3>
+          <ul>
+            <li>✅ <strong>Everything</strong> = React components written in TypeScript</li>
+            <li>✅ <strong>UI Components</strong> = React (<code>.tsx</code> files)</li>
+            <li>✅ <strong>Business Logic</strong> = React hooks (<code>.ts</code> files)</li>
+            <li>✅ <strong>Utilities</strong> = TypeScript functions (<code>.ts</code> files)</li>
+            <li>✅ <strong>State</strong> = Zustand with TypeScript types</li>
+            <li>❌ <strong>Backend</strong> = Stays in JavaScript (no changes)</li>
+          </ul>
+          <p><strong>The plan states</strong>: "This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, and state management will be written in TypeScript."</p>
         </section>
 
         <section class="docs-section" id="current-analysis">
@@ -178,7 +292,7 @@
               <tr>
                 <td>Modals (8 total)</td>
                 <td>~500-800</td>
-                <td>Radix UI Dialog</td>
+                <td>Material UI Dialog</td>
                 <td>~500-800 lines</td>
                 <td>Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning</td>
               </tr>
@@ -199,21 +313,21 @@
               <tr>
                 <td>Tabs</td>
                 <td>~100</td>
-                <td>Radix UI Tabs</td>
+                <td>Material UI Tabs</td>
                 <td>~100 lines</td>
                 <td>People/Places/Things tab switching, tab state management</td>
               </tr>
               <tr>
                 <td>Context Menu</td>
                 <td>~150</td>
-                <td>Radix UI Context Menu</td>
+                <td>Material UI Menu</td>
                 <td>~150 lines</td>
                 <td>Right-click menu for rename/delete, menu positioning</td>
               </tr>
               <tr>
                 <td>Dropdown Menus</td>
                 <td>~100</td>
-                <td>Radix UI Dropdown</td>
+                <td>Material UI Menu</td>
                 <td>~100 lines</td>
                 <td>Export dropdown menu, positioning, open/close logic</td>
               </tr>
@@ -227,14 +341,14 @@
               <tr>
                 <td>Date Picker</td>
                 <td>~50</td>
-                <td>react-datepicker</td>
+                <td>Material UI DatePicker</td>
                 <td>~50 lines</td>
                 <td>Goal deadline date input, date validation</td>
               </tr>
               <tr>
                 <td>Tooltips</td>
                 <td>~50</td>
-                <td>Radix UI Tooltip</td>
+                <td>Material UI Tooltip</td>
                 <td>~50 lines</td>
                 <td>All title attributes and custom tooltip implementations</td>
               </tr>
@@ -248,7 +362,7 @@
               <tr>
                 <td>Collapsible/Accordion</td>
                 <td>~100</td>
-                <td>Radix UI Accordion</td>
+                <td>Material UI Accordion</td>
                 <td>~100 lines</td>
                 <td>Chapter collapse/expand functionality</td>
               </tr>
@@ -288,7 +402,7 @@
             <li>All contentEditable event listeners throughout <code>editor.js</code></li>
           </ul>
 
-          <h4>2. Modals → Radix UI Dialog</h4>
+          <h4>2. Modals → Material UI Dialog</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li>8 separate modal implementations with custom show/hide logic</li>
@@ -299,10 +413,10 @@
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>Radix UI Dialog component handles all modal behavior</li>
+            <li>Material UI Dialog component handles all modal behavior</li>
             <li>Accessible by default (ARIA, focus management)</li>
             <li>Keyboard navigation built-in</li>
-            <li>Can style to match existing design</li>
+            <li>Can style to match existing design with theme customization</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
@@ -353,7 +467,7 @@
             <li><code>editor.html</code> lines 437-442 (color picker HTML)</li>
           </ul>
 
-          <h4>5. Tabs → Radix UI Tabs</h4>
+          <h4>5. Tabs → Material UI Tabs</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li>Custom tab switching for People/Places/Things</li>
@@ -362,9 +476,10 @@
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>Radix UI Tabs handles all tab functionality</li>
+            <li>Material UI Tabs handles all tab functionality</li>
             <li>Accessible keyboard navigation</li>
             <li>Built-in active state management</li>
+            <li>Can be styled to match existing design</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
@@ -372,7 +487,7 @@
             <li><code>editor.js</code> tab switching logic</li>
           </ul>
 
-          <h4>6. Context Menu → Radix UI Context Menu</h4>
+          <h4>6. Context Menu → Material UI Menu</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li>Right-click event handling</li>
@@ -381,9 +496,10 @@
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>Radix UI Context Menu provides full context menu functionality</li>
+            <li>Material UI Menu provides full context menu functionality</li>
             <li>Accessible, keyboard navigable</li>
-            <li>Proper positioning</li>
+            <li>Proper positioning with anchor positioning</li>
+            <li>Can be styled to match existing design</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
@@ -411,7 +527,7 @@
             <li>Form validation logic in <code>editor.js</code> and <code>stories.js</code></li>
           </ul>
 
-          <h4>8. Date Picker → react-datepicker</h4>
+          <h4>8. Date Picker → Material UI DatePicker</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li>Native HTML5 date input</li>
@@ -420,9 +536,10 @@
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>react-datepicker provides better UX</li>
+            <li>Material UI DatePicker provides better UX</li>
             <li>Date range selection</li>
-            <li>Customizable styling</li>
+            <li>Integrated with Material UI theme</li>
+            <li>Accessible and keyboard navigable</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
@@ -449,7 +566,7 @@
             <li><code>editor.html</code> line 108 (save status element)</li>
           </ul>
 
-          <h4>10. Collapsible/Accordion → Radix UI Accordion</h4>
+          <h4>10. Collapsible/Accordion → Material UI Accordion</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li>Custom collapse/expand for chapters</li>
@@ -458,9 +575,10 @@
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>Radix UI Accordion handles collapse functionality</li>
+            <li>Material UI Accordion handles collapse functionality</li>
             <li>Accessible, keyboard navigable</li>
             <li>Built-in state management</li>
+            <li>Can be styled to match existing design</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
@@ -472,7 +590,8 @@
           <h3>Benefits of Using Third-Party Libraries</h3>
           <ol>
             <li><strong>Massive Code Reduction</strong>: ~3,300-4,200 lines of custom code replaced by battle-tested libraries</li>
-            <li><strong>Accessibility Built-In</strong>: All Radix UI components are fully accessible (ARIA, keyboard nav)</li>
+            <li><strong>Accessibility Built-In</strong>: All Material UI components are fully accessible (ARIA, keyboard nav)</li>
+            <li><strong>Consistent Design System</strong>: Material UI provides a cohesive design system that can be customized</li>
             <li><strong>Type Safety</strong>: All recommended libraries have excellent TypeScript support</li>
             <li><strong>Maintenance</strong>: Libraries are maintained by teams, reducing our maintenance burden</li>
             <li><strong>Performance</strong>: Optimized libraries often perform better than custom implementations</li>
@@ -490,18 +609,16 @@
     "react-router-dom": "^6.x",
     "@tiptap/react": "^2.x",
     "@tiptap/starter-kit": "^2.x",
-    "@radix-ui/react-dialog": "^1.x",
-    "@radix-ui/react-dropdown-menu": "^2.x",
-    "@radix-ui/react-context-menu": "^2.x",
-    "@radix-ui/react-tabs": "^1.x",
-    "@radix-ui/react-tooltip": "^1.x",
-    "@radix-ui/react-accordion": "^1.x",
+    "@mui/material": "^5.x",
+    "@mui/icons-material": "^5.x",
+    "@mui/x-date-pickers": "^6.x",
+    "@emotion/react": "^11.x",
+    "@emotion/styled": "^11.x",
     "@dnd-kit/core": "^6.x",
     "@dnd-kit/sortable": "^8.x",
     "@dnd-kit/utilities": "^3.x",
     "react-colorful": "^5.x",
     "react-hook-form": "^7.x",
-    "react-datepicker": "^4.x",
     "react-hot-toast": "^2.x",
     "axios": "^1.x",
     "zustand": "^4.x"
@@ -530,16 +647,18 @@
             <li><strong>Alternative</strong>: Slate.js (more complex but powerful, also has TypeScript support)</li>
           </ul>
 
-          <h4>UI Components: <strong>Radix UI</strong> (Recommended)</h4>
+          <h4>UI Components: <strong>Material UI</strong> (Recommended)</h4>
           <ul>
-            <li>✅ Unstyled, accessible components - perfect for matching existing design</li>
+            <li>✅ Comprehensive component library with consistent design system</li>
             <li>✅ Full keyboard navigation built-in</li>
             <li>✅ ARIA attributes automatically handled</li>
-            <li>✅ Can match existing design system exactly</li>
+            <li>✅ Highly customizable with theme system - can match existing design</li>
             <li>✅ <strong>Full TypeScript support</strong> - All components are typed</li>
             <li>✅ Replaces ~1,000+ lines of modal, menu, tab, tooltip code</li>
-            <li>✅ Provides: Dialog (modals), Dropdown Menu, Context Menu, Tabs, Tooltip, Accordion</li>
-            <li><strong>Alternative</strong>: Headless UI (similar, different API, also TypeScript)</li>
+            <li>✅ Provides: Dialog (modals), Menu (dropdowns/context menus), Tabs, Tooltip, Accordion, DatePicker, and many more</li>
+            <li>✅ Includes Material Icons library for consistent iconography</li>
+            <li>✅ Active development and large community</li>
+            <li><strong>Alternative</strong>: Radix UI (unstyled, more minimal) or Headless UI (similar, different API)</li>
           </ul>
 
           <h4>Drag & Drop: <strong>@dnd-kit</strong> (Recommended)</h4>
@@ -652,7 +771,7 @@
                 <td>25-35 hrs</td>
               </tr>
               <tr>
-                <td>UI Components (Radix UI)</td>
+                <td>UI Components (Material UI)</td>
                 <td>10-15</td>
                 <td>20-25 hrs</td>
               </tr>
@@ -1204,7 +1323,7 @@
 
           <h3>User Benefits</h3>
           <ol>
-            <li><strong>Better Accessibility</strong>: Radix UI components are fully accessible</li>
+            <li><strong>Better Accessibility</strong>: Material UI components are fully accessible</li>
             <li><strong>Improved Performance</strong>: React optimizations (memoization, etc.)</li>
             <li><strong>Better UX</strong>: Polished interactions from proven libraries</li>
             <li><strong>Future Features</strong>: Easier to add new features in React</li>
@@ -1296,6 +1415,25 @@ yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
   to = "/react/index.html"
   status = 200</code></pre>
 
+          <h4>Vite Configuration for Base Path</h4>
+          <p>Update <code>vite.config.ts</code> to set base path (TypeScript configuration):</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/react/',  // Important: Set base path for /react deployment
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+  },
+  resolve: {
+    alias: {
+      '@': '/src',  // TypeScript path alias for cleaner imports
+    },
+  },
+})</code></pre>
+
           <h4>TypeScript Configuration</h4>
           <p>Create <code>tsconfig.json</code>:</p>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
@@ -1324,35 +1462,8 @@ yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
   "references": [{ "path": "./tsconfig.node.json" }]
 }</code></pre>
 
-          <h3>Build Scripts</h3>
-          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "netlify:dev": "netlify dev"
-  }
-}</code></pre>
-
-          <h3>Vite Configuration for Base Path</h3>
-          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  base: '/react/',  // Important: Set base path for /react deployment
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-  },
-  resolve: {
-    alias: {
-      '@': '/src',  // TypeScript path alias for cleaner imports
-    },
-  },
-})</code></pre>
-
-          <h3>React Router Configuration</h3>
+          <h4>React Router Configuration</h4>
+          <p>Update React Router to work with <code>/react</code> base path (TypeScript):</p>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In your router setup (App.tsx)
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LoginPage } from './components/auth/LoginPage';
@@ -1369,6 +1480,16 @@ export function App(): JSX.Element {
       &lt;/Routes&gt;
     &lt;/BrowserRouter&gt;
   );
+}</code></pre>
+
+          <h3>Build Scripts</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "netlify:dev": "netlify dev"
+  }
 }</code></pre>
         </section>
 
@@ -1561,7 +1682,7 @@ export function App(): JSX.Element {
 
           <h3>Accessibility</h3>
           <ul>
-            <li>All Radix UI components are accessible by default</li>
+            <li>All Material UI components are accessible by default</li>
             <li>Test with screen readers</li>
             <li>Ensure keyboard navigation works</li>
             <li>Check color contrast</li>
@@ -1590,7 +1711,7 @@ export function App(): JSX.Element {
           <h3>Documentation</h3>
           <ul>
             <li><a href="https://tiptap.dev/" target="_blank" rel="noopener">TipTap Documentation</a></li>
-            <li><a href="https://www.radix-ui.com/" target="_blank" rel="noopener">Radix UI Documentation</a></li>
+            <li><a href="https://mui.com/" target="_blank" rel="noopener">Material UI Documentation</a></li>
             <li><a href="https://docs.dndkit.com/" target="_blank" rel="noopener">@dnd-kit Documentation</a></li>
             <li><a href="https://reactrouter.com/" target="_blank" rel="noopener">React Router Documentation</a></li>
             <li><a href="https://github.com/pmndrs/zustand" target="_blank" rel="noopener">Zustand Documentation</a></li>
