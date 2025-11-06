@@ -55,16 +55,18 @@ html {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 var(--space-4xl) 0 calc(280px + var(--space-lg)); /* Account for sidebar width, match content right padding */
+  padding: 0 var(--space-4xl) 0 var(--space-lg); /* Align with sidebar text content (sidebar starts at 0, text has 16px left padding) */
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
 }
 
-.docs-header-content > div {
+.docs-header-content > div:first-child {
   margin: 0;
   padding: 0;
+  flex-shrink: 0;
+  margin-left: 0;
 }
 
 .docs-header h1 {
