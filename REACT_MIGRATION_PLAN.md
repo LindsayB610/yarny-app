@@ -2343,6 +2343,12 @@ This should be implemented in **Phase 4** (Editor - Tri-Pane Shell & Plain Text 
 
 **What**: Cap cached snippet bodies to N most-recent, evict the rest. This prevents memory bloat during long sessions.
 
+**Memory Budget Target & Eviction Rule** (Documented for Ship Checklist):
+- **Target**: Cache limited to **50 most-recent snippet bodies** (configurable via `DEFAULT_MAX_CACHED_SNIPPETS = 50`)
+- **Eviction Rule**: **LRU (Least Recently Used)** - When cache exceeds 50 snippet bodies, evict the oldest (least recently used) snippet bodies until cache is at or below target
+- **Active Snippet Protection**: Active snippet is **never evicted**, even if cache is full (ensures active snippet always available for editing)
+- **Enforcement**: Cache size checked and eviction triggered when snippet content is loaded or cached
+
 ### Implementation Strategy
 
 #### 1. Memory Guard Configuration
@@ -4497,6 +4503,52 @@ yarny-app/
 - [ ] **Concurrency safety**: Conflicts surfaced for Docs edits and second Yarny tabs; no silent last-writer-wins. (Verified in test checklist.)
 - [ ] **Round-trip integrity**: Paragraphs and soft line breaks round-trip without collapse/duplication; rich-text paste is stripped, special characters preserved.
 - [ ] **Bundle discipline**: Starter-kit removed; only the TipTap extensions actually used are shipped (Document, Paragraph, Text, HardBreak, History).
+
+### Ship Checklist (Critical Deltas)
+
+These items must be verified before production deployment. Each represents a critical edge case or reliability requirement that could cause data loss, user confusion, or performance degradation if not properly implemented.
+
+- [ ] **Offline UX**: 
+  - [ ] Visible offline banner appears when `navigator.onLine === false` (non-blocking, dismissible)
+  - [ ] Queued saves indicator shows "Queued - will save when online" or "Saved locally at X:XX" when offline
+  - [ ] Footer save status shows appropriate variant for offline state (queued vs. saved locally)
+  - [ ] **No lost text on reconnect**: All queued mutations automatically retry when network returns; verify no text loss after going offline → editing → reconnecting
+  - [ ] Test: Go offline → Make edits → Reconnect → Verify all changes saved successfully
+  - [ ] Reference: See "Offline/Spotty-Network Semantics" section for full implementation details
+
+- [ ] **Timezone correctness**: 
+  - [ ] "Today" chip updates correctly at midnight in user's IANA timezone (not UTC)
+  - [ ] Daily rollover verified across DST spring forward boundary (March transition - loses hour)
+  - [ ] Daily rollover verified across DST fall back boundary (November transition - gains hour)
+  - [ ] "Today" chip does not bounce around during DST transitions
+  - [ ] Goal calculations remain correct across DST boundaries
+  - [ ] Test: Set system date to DST transition date → Verify "Today" chip and goal calculations remain stable
+  - [ ] Reference: See "Timezone/DST for 'Goals that Think'" section for implementation details
+
+- [ ] **Order persistence**: 
+  - [ ] Order (groupIds/snippetIds) persisted in Drive metadata (appProperties or structure.json)
+  - [ ] Multi-tab reorder test: Open story in Tab 1 → Reorder chapters/snippets in Tab 2 → Close Tab 2 → Re-open story in Tab 1 → Verify order matches Tab 2's last write (deterministic)
+  - [ ] Order survives concurrent edits (order changes persisted independently of content)
+  - [ ] Order survives background loads (order read from Drive metadata, not just in-memory state)
+  - [ ] Test: Reorder in one tab → Verify order persists after closing/reopening story in another tab
+  - [ ] Reference: See "State Normalization - Order Persistence in Drive Metadata" section for implementation details
+
+- [ ] **RTL snippet passes**: 
+  - [ ] RTL test snippet (Arabic/Hebrew mixed with English) added to test corpus (`test-small`)
+  - [ ] **Caret movement**: Caret moves correctly in RTL text (right-to-left direction); switches correctly between LTR and RTL text
+  - [ ] **Word counting**: Word count includes RTL words correctly; word boundaries detected correctly in RTL text; mixed-script content (English + Arabic + Hebrew) counts words correctly
+  - [ ] **Paste normalization**: Rich text paste with RTL content stripped to plain text; RTL formatting (bold, italic) removed but text content preserved; mixed-script paste (LTR + RTL) handled correctly
+  - [ ] Test: Open RTL test snippet → Type, edit, paste content → Verify caret, word count, and paste behavior are correct
+  - [ ] Reference: See "Right-to-Left (RTL) & Mixed-Script Paste" section for test assertions
+
+- [ ] **Memory bound**: 
+  - [ ] **Target documented**: Cache limited to 50 most-recent snippet bodies (configurable via `DEFAULT_MAX_CACHED_SNIPPETS`)
+  - [ ] **Eviction rule documented**: LRU (Least Recently Used) eviction - oldest snippet bodies evicted when cache exceeds limit
+  - [ ] **Active snippet protection**: Active snippet never evicted, even if cache is full
+  - [ ] Cache never grows beyond target (50 snippet bodies) during long sessions
+  - [ ] Test: Open large project → Make 100+ snippet switches → Verify memory stays bounded, cache never exceeds 50 snippet bodies
+  - [ ] Test: Verify active snippet is never evicted even when cache is full
+  - [ ] Reference: See "Memory Budget & Long Sessions" section for implementation details (target: 50 snippets, LRU eviction, active snippet protection)
 
 ### Should Have
 - [ ] **Accessibility polish beyond MUI defaults**:
