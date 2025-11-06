@@ -82,6 +82,11 @@
                 <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
                 <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
                 <li><a href="#offline-semantics" class="nav-link">Offline/Spotty-Network Semantics (P2)</a></li>
+                <li><a href="#timezone-dst" class="nav-link">Timezone/DST for Goals (P2)</a></li>
+                <li><a href="#rtl-mixed-script" class="nav-link">Right-to-Left & Mixed-Script (P2)</a></li>
+                <li><a href="#memory-budget" class="nav-link">Memory Budget & Long Sessions (P2)</a></li>
+                <li><a href="#unload-safety" class="nav-link">Unload Safety (P2)</a></li>
+                <li><a href="#observability-light" class="nav-link">Observability Light (P2)</a></li>
                 <li><a href="#editor-truth" class="nav-link">Editor Truth & Round-Tripping</a></li>
               </ul>
             </li>
@@ -2485,6 +2490,575 @@ export const queryClient = new QueryClient({
             <li>Add smoke tests for offline scenarios</li>
           </ul>
           <p><strong>LOE</strong>: 4-6 hours (includes network status hook, offline banner, save status updates, and smoke tests)</p>
+        </section>
+
+        <section class="docs-section" id="timezone-dst">
+          <h2 id="timezone-dst-heading">Timezone/DST for "Goals that Think" (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Daily rollover and "Today" calculations must use the user's actual timezone to prevent confusion for travelers and night-owls. DST boundaries (spring forward/fall back) can cause "Today" to bounce around if not handled correctly.</p>
+          <p><strong>What</strong>: Specify that daily rollover uses the user's IANA timezone (<code>Intl.DateTimeFormat().resolvedOptions().timeZone</code>) and test DST boundaries explicitly.</p>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. Timezone Detection</h4>
+          <p>Use browser's IANA timezone identifier:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.ts
+export function getUserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+// Example: "America/New_York", "Europe/London", "Asia/Tokyo"</code></pre>
+
+          <h4>2. Daily Rollover Calculation</h4>
+          <p>Use timezone-aware date calculations for goal rollover:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useGoal.ts
+import { getUserTimezone } from '../utils/timezone';
+
+export function useDailyTarget() {
+  const timezone = getUserTimezone();
+  
+  // Get current date in user's timezone
+  const getTodayInTimezone = (): Date => {
+    const now = new Date();
+    // Use Intl.DateTimeFormat to get date string in user's timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(now);
+    const year = parseInt(parts.find(p => p.type === 'year')!.value);
+    const month = parseInt(parts.find(p => p.type === 'month')!.value) - 1;
+    const day = parseInt(parts.find(p => p.type === 'day')!.value);
+    
+    // Create date at midnight in user's timezone
+    return new Date(Date.UTC(year, month, day));
+  };
+  
+  // Calculate if we've crossed midnight in user's timezone
+  const hasCrossedMidnight = (lastDate: Date): boolean => {
+    const today = getTodayInTimezone();
+    const lastDay = new Date(lastDate);
+    lastDay.setHours(0, 0, 0, 0);
+    
+    return today.getTime() !== lastDay.getTime();
+  };
+}</code></pre>
+
+          <h4>3. DST Boundary Testing</h4>
+          <p>Test DST transitions explicitly:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/timezone.test.ts
+describe('DST Boundary Handling', () => {
+  it('handles spring forward (loses hour)', () => {
+    // Test date: March 10, 2024 2:00 AM EST → 3:00 AM EDT (spring forward)
+    // Verify "Today" doesn't bounce around
+  });
+  
+  it('handles fall back (gains hour)', () => {
+    // Test date: November 3, 2024 2:00 AM EDT → 1:00 AM EST (fall back)
+    // Verify "Today" doesn't bounce around
+  });
+  
+  it('handles timezone changes for travelers', () => {
+    // Simulate user traveling from EST to PST
+    // Verify "Today" updates correctly based on new timezone
+  });
+});</code></pre>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>M. Timezone/DST Handling</strong>:</p>
+          <ul>
+            <li>[ ] <strong>Daily rollover</strong>: Verify "Today" chip updates at midnight in user's timezone (not UTC)</li>
+            <li>[ ] <strong>Spring forward</strong>: Test DST spring forward boundary → Verify "Today" doesn't bounce around</li>
+            <li>[ ] <strong>Fall back</strong>: Test DST fall back boundary → Verify "Today" doesn't bounce around</li>
+            <li>[ ] <strong>Timezone change</strong>: Change system timezone → Verify "Today" updates correctly</li>
+            <li>[ ] <strong>Traveler scenario</strong>: Simulate timezone change (EST → PST) → Verify goal calculations update correctly</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 5</strong> (Library Features & Goals UI) alongside goal calculation logic:</p>
+          <ul>
+            <li>Add timezone detection utility</li>
+            <li>Update goal calculation hooks to use IANA timezone</li>
+            <li>Add DST boundary tests</li>
+            <li>Test with various timezones</li>
+          </ul>
+          <p><strong>LOE</strong>: 2-3 hours (includes timezone detection, DST boundary testing, and smoke tests)</p>
+        </section>
+
+        <section class="docs-section" id="rtl-mixed-script">
+          <h2 id="rtl-mixed-script-heading">Right-to-Left (RTL) & Mixed-Script Paste (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Users may paste content with RTL scripts (Arabic, Hebrew) or mixed-script content. Caret movement, word counting, and paste stripping must behave correctly for RTL content.</p>
+          <p><strong>What</strong>: Add one RTL snippet (Arabic/Hebrew) to the test corpus and assert caret movement, word counting, and paste stripping behave correctly. No architecture change—just tests.</p>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. Test Corpus Addition</h4>
+          <p>Add RTL test snippet to small project (<code>test-small</code>):</p>
+          <p><strong>RTL Test Snippet</strong>:</p>
+          <ul>
+            <li><strong>Title</strong>: "RTL Test Snippet"</li>
+            <li><strong>Content</strong>: Mix of Arabic/Hebrew text with English</li>
+            <li><strong>Purpose</strong>: Test caret movement, word counting, paste stripping</li>
+          </ul>
+          <p>Example content:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>This is English text. هذا نص عربي. This is more English. זה טקסט בעברית.</code></pre>
+
+          <h4>2. Test Assertions</h4>
+          <p><strong>Caret Movement</strong>:</p>
+          <ul>
+            <li>Verify caret moves correctly in RTL text (right-to-left direction)</li>
+            <li>Verify caret moves correctly when switching between LTR and RTL text</li>
+            <li>Verify selection works correctly in RTL text</li>
+          </ul>
+          <p><strong>Word Counting</strong>:</p>
+          <ul>
+            <li>Verify word count includes RTL words correctly</li>
+            <li>Verify word boundaries are detected correctly in RTL text</li>
+            <li>Verify mixed-script content (English + Arabic + Hebrew) counts words correctly</li>
+          </ul>
+          <p><strong>Paste Stripping</strong>:</p>
+          <ul>
+            <li>Verify rich text paste with RTL content is stripped to plain text</li>
+            <li>Verify RTL formatting (bold, italic) is removed but text content is preserved</li>
+            <li>Verify mixed-script paste (LTR + RTL) is handled correctly</li>
+          </ul>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>N. RTL & Mixed-Script Handling</strong>:</p>
+          <ul>
+            <li>[ ] <strong>RTL caret movement</strong>: Type in Arabic/Hebrew snippet → Verify caret moves right-to-left correctly</li>
+            <li>[ ] <strong>Mixed-script caret</strong>: Type in mixed English/Arabic/Hebrew snippet → Verify caret switches direction correctly</li>
+            <li>[ ] <strong>RTL word counting</strong>: Verify word count includes RTL words correctly in test snippet</li>
+            <li>[ ] <strong>RTL paste stripping</strong>: Paste rich text with RTL content → Verify formatting stripped, text preserved</li>
+            <li>[ ] <strong>Mixed-script paste</strong>: Paste mixed LTR/RTL content → Verify handled correctly</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 4</strong> (Editor - Tri-Pane Shell & Plain Text Round-Trip) alongside round-trip testing:</p>
+          <ul>
+            <li>Add RTL test snippet to test corpus</li>
+            <li>Add RTL assertions to smoke tests</li>
+            <li>Test caret movement, word counting, paste stripping</li>
+          </ul>
+          <p><strong>LOE</strong>: 1-2 hours (includes adding RTL snippet to corpus and smoke test assertions)</p>
+        </section>
+
+        <section class="docs-section" id="memory-budget">
+          <h2 id="memory-budget-heading">Memory Budget & Long Sessions (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: All-day sessions on large projects can cause memory to balloon if cached snippet bodies are never evicted. We need a simple memory guard to cap cached snippet bodies.</p>
+          <p><strong>What</strong>: Cap cached snippet bodies to N most-recent, evict the rest. This prevents memory bloat during long sessions.</p>
+          <p><strong>Memory Budget Target & Eviction Rule</strong> (Documented for Ship Checklist):</p>
+          <ul>
+            <li><strong>Target</strong>: Cache limited to <strong>50 most-recent snippet bodies</strong> (configurable via <code>DEFAULT_MAX_CACHED_SNIPPETS = 50</code>)</li>
+            <li><strong>Eviction Rule</strong>: <strong>LRU (Least Recently Used)</strong> - When cache exceeds 50 snippet bodies, evict the oldest (least recently used) snippet bodies until cache is at or below target</li>
+            <li><strong>Active Snippet Protection</strong>: Active snippet is <strong>never evicted</strong>, even if cache is full (ensures active snippet always available for editing)</li>
+            <li><strong>Enforcement</strong>: Cache size checked and eviction triggered when snippet content is loaded or cached</li>
+          </ul>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. Memory Guard Configuration</h4>
+          <p>Create memory budget configuration:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/memory.ts
+const DEFAULT_MAX_CACHED_SNIPPETS = 50; // Keep 50 most-recent snippet bodies in memory
+
+interface MemoryConfig {
+  maxCachedSnippets: number; // Maximum number of snippet bodies to keep in memory
+}
+
+const STORAGE_KEY = 'yarny-memory-config';
+
+export function getMemoryConfig(): MemoryConfig {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        maxCachedSnippets: parsed.maxCachedSnippets ?? DEFAULT_MAX_CACHED_SNIPPETS,
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to load memory config from localStorage', err);
+  }
+  
+  return {
+    maxCachedSnippets: DEFAULT_MAX_CACHED_SNIPPETS,
+  };
+}</code></pre>
+
+          <h4>2. LRU Eviction for Snippet Bodies</h4>
+          <p>Implement LRU (Least Recently Used) eviction in React Query cache:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
+import { QueryClient } from '@tanstack/react-query';
+import { getMemoryConfig } from '../config/memory';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      // Memory guard: Evict oldest snippet bodies when cache exceeds limit
+      gcTime: (query) => {
+        const config = getMemoryConfig();
+        // Count snippet body queries
+        const snippetQueries = queryClient.getQueryCache().getAll().filter(
+          (q) => q.queryKey[0] === 'drive' && q.queryKey[1] === 'file'
+        );
+        
+        if (snippetQueries.length > config.maxCachedSnippets) {
+          // Evict oldest (least recently used) queries
+          const sorted = snippetQueries.sort((a, b) => 
+            (a.state.dataUpdatedAt || 0) - (b.state.dataUpdatedAt || 0)
+          );
+          const toEvict = sorted.slice(0, snippetQueries.length - config.maxCachedSnippets);
+          toEvict.forEach((q) => queryClient.removeQueries({ queryKey: q.queryKey }));
+        }
+        
+        return 10 * 60 * 1000; // Default gcTime
+      },
+    },
+  },
+});</code></pre>
+
+          <h4>3. Active Snippet Protection</h4>
+          <p>Always keep active snippet in memory (never evict):</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In eviction logic, exclude active snippet
+const activeSnippetId = useStore.getState().project.activeSnippetId;
+const toEvict = sorted
+  .filter((q) => {
+    // Don't evict active snippet
+    const fileId = q.queryKey[2] as string;
+    const snippet = Object.values(useStore.getState().snippets).find(
+      (s) => s.driveFileId === fileId
+    );
+    return snippet?.id !== activeSnippetId;
+  })
+  .slice(0, snippetQueries.length - config.maxCachedSnippets);</code></pre>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>O. Memory Budget & Long Sessions</strong>:</p>
+          <ul>
+            <li>[ ] <strong>Memory guard</strong>: Open large project (test-large) → Make 100+ snippet switches → Verify memory doesn't balloon</li>
+            <li>[ ] <strong>LRU eviction</strong>: Verify oldest snippet bodies are evicted when cache exceeds limit</li>
+            <li>[ ] <strong>Active snippet protection</strong>: Verify active snippet is never evicted, even if cache is full</li>
+            <li>[ ] <strong>Long session</strong>: Keep app open for 4+ hours, make many edits → Verify memory stays bounded</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 6</strong> (Lazy Loading & Exports) alongside lazy loading:</p>
+          <ul>
+            <li>Add memory budget configuration</li>
+            <li>Implement LRU eviction for snippet bodies</li>
+            <li>Protect active snippet from eviction</li>
+            <li>Add smoke tests</li>
+          </ul>
+          <p><strong>LOE</strong>: 2-3 hours (includes memory guard implementation and smoke tests)</p>
+        </section>
+
+        <section class="docs-section" id="unload-safety">
+          <h2 id="unload-safety-heading">Unload Safety (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: With optimistic saves/mutations, we need a clear rule for window/tab close while <code>isSaving</code>. Users need predictable behavior when closing the app during saves.</p>
+          <p><strong>What</strong>: Define the rule for window/tab close while <code>isSaving</code>: allow close after queueing to cache, or prompt. Tie to "Saved/Saving" indicator so it's predictable.</p>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. Unload Handler</h4>
+          <p>Create unload safety handler:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useUnloadSafety.ts
+import { useEffect, useRef } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
+import { useStore } from '../store/store';
+
+export function useUnloadSafety() {
+  const isMutating = useIsMutating() > 0;
+  const savingState = useStore((state) => state.editing.savingState);
+  const hasPendingMutations = useRef(false);
+  
+  useEffect(() => {
+    hasPendingMutations.current = isMutating || savingState === 'saving';
+  }, [isMutating, savingState]);
+  
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // If mutations are queued to cache, allow close (React Query will retry on next open)
+      if (hasPendingMutations.current && savingState === 'queued') {
+        // Queued saves are safe to close - they're in React Query's mutation queue
+        return; // Allow close
+      }
+      
+      // If actively saving, prompt user
+      if (hasPendingMutations.current && savingState === 'saving') {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [savingState]);
+}</code></pre>
+
+          <h4>2. Save Status Indicator Integration</h4>
+          <p>Tie unload behavior to save status indicator:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
+export function SaveStatus() {
+  const { saveState, lastSavedAt } = useNetworkStatus();
+  useUnloadSafety(); // Integrate unload safety
+  
+  // Save status indicator shows current state
+  // Unload handler uses same state to determine behavior
+  if (saveState === 'saving') {
+    return &lt;div className="save-status saving"&gt;Saving... (don't close yet)&lt;/div&gt;;
+  }
+  
+  if (saveState === 'queued') {
+    return &lt;div className="save-status queued"&gt;Saved locally at {new Date(lastSavedAt).toLocaleTimeString()} (safe to close)&lt;/div&gt;;
+  }
+  
+  // ... rest of component
+}</code></pre>
+
+          <h4>3. React Query Mutation Queue Persistence</h4>
+          <p>Ensure React Query's mutation queue persists to cache:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      // Persist mutation queue to localStorage for unload safety
+      onMutate: async (variables) => {
+        // Queue mutation to localStorage cache
+        const queue = JSON.parse(localStorage.getItem('yarny-mutation-queue') || '[]');
+        queue.push({
+          type: 'write',
+          variables,
+          timestamp: Date.now(),
+        });
+        localStorage.setItem('yarny-mutation-queue', JSON.stringify(queue));
+      },
+      onSuccess: () => {
+        // Remove from queue on success
+        const queue = JSON.parse(localStorage.getItem('yarny-mutation-queue') || '[]');
+        // Remove completed mutation
+        // ...
+      },
+    },
+  },
+});</code></pre>
+
+          <h3>Behavior Rules</h3>
+          <ol>
+            <li><strong>Queued saves (offline/cached)</strong>: Allow close without prompt - mutations are queued to cache and will retry on next open</li>
+            <li><strong>Active saves (in-flight)</strong>: Prompt user before close - "You have unsaved changes. Are you sure you want to leave?"</li>
+            <li><strong>Saved state</strong>: Allow close without prompt - all changes are saved</li>
+          </ol>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>P. Unload Safety</strong>:</p>
+          <ul>
+            <li>[ ] <strong>Queued save close</strong>: Go offline → Make edits → Close tab → Verify no prompt, changes queued</li>
+            <li>[ ] <strong>Active save close</strong>: Make edits → Close tab while saving → Verify prompt appears</li>
+            <li>[ ] <strong>Saved state close</strong>: Make edits → Wait for save → Close tab → Verify no prompt</li>
+            <li>[ ] <strong>Mutation queue persistence</strong>: Go offline → Make edits → Close tab → Reopen → Verify queued mutations retry</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 6</strong> (Lazy Loading & Exports) alongside auto-save functionality:</p>
+          <ul>
+            <li>Create <code>useUnloadSafety</code> hook</li>
+            <li>Integrate with save status indicator</li>
+            <li>Add mutation queue persistence</li>
+            <li>Add smoke tests</li>
+          </ul>
+          <p><strong>LOE</strong>: 2-3 hours (includes unload handler, mutation queue persistence, and smoke tests)</p>
+        </section>
+
+        <section class="docs-section" id="observability-light">
+          <h2 id="observability-light-heading">Observability Light (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: During migration, we need visibility into migration risks (save latency, conflict hits, retry counts) to validate the performance budgets we've written down. A tiny, privacy-respecting heartbeat helps catch issues early.</p>
+          <p><strong>What</strong>: Consider a tiny, privacy-respecting heartbeat for only migration risks (save latency, conflict hits, retry counts) behind a debug flag. It'll help validate the budgets you wrote down.</p>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. Debug Flag Configuration</h4>
+          <p>Create debug flag for observability:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/config/debug.ts
+const DEBUG_FLAG = 'yarny-debug-observability';
+
+export function isObservabilityEnabled(): boolean {
+  // Enable via localStorage: localStorage.setItem('yarny-debug-observability', 'true')
+  return localStorage.getItem(DEBUG_FLAG) === 'true';
+}</code></pre>
+
+          <h4>2. Observability Metrics</h4>
+          <p>Track only migration risks:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/utils/observability.ts
+interface ObservabilityMetrics {
+  saveLatency: number[]; // Array of save latencies (ms)
+  conflictHits: number; // Count of conflict detections
+  retryCounts: number[]; // Array of retry counts per request
+  timestamp: number; // Last update timestamp
+}
+
+const METRICS_KEY = 'yarny-observability-metrics';
+const MAX_METRICS = 100; // Keep last 100 data points
+
+export function recordSaveLatency(latency: number): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.saveLatency.push(latency);
+  if (metrics.saveLatency.length > MAX_METRICS) {
+    metrics.saveLatency.shift(); // Remove oldest
+  }
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+export function recordConflictHit(): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.conflictHits++;
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+export function recordRetryCount(retryCount: number): void {
+  if (!isObservabilityEnabled()) return;
+  
+  const metrics = getMetrics();
+  metrics.retryCounts.push(retryCount);
+  if (metrics.retryCounts.length > MAX_METRICS) {
+    metrics.retryCounts.shift(); // Remove oldest
+  }
+  metrics.timestamp = Date.now();
+  localStorage.setItem(METRICS_KEY, JSON.stringify(metrics));
+}
+
+function getMetrics(): ObservabilityMetrics {
+  try {
+    const stored = localStorage.getItem(METRICS_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (err) {
+    console.warn('Failed to load observability metrics', err);
+  }
+  
+  return {
+    saveLatency: [],
+    conflictHits: 0,
+    retryCounts: [],
+    timestamp: Date.now(),
+  };
+}
+
+export function getMetricsSummary(): {
+  avgSaveLatency: number;
+  maxSaveLatency: number;
+  conflictHits: number;
+  avgRetryCount: number;
+} {
+  const metrics = getMetrics();
+  
+  return {
+    avgSaveLatency: metrics.saveLatency.length > 0
+      ? metrics.saveLatency.reduce((a, b) => a + b, 0) / metrics.saveLatency.length
+      : 0,
+    maxSaveLatency: metrics.saveLatency.length > 0
+      ? Math.max(...metrics.saveLatency)
+      : 0,
+    conflictHits: metrics.conflictHits,
+    avgRetryCount: metrics.retryCounts.length > 0
+      ? metrics.retryCounts.reduce((a, b) => a + b, 0) / metrics.retryCounts.length
+      : 0,
+  };
+}</code></pre>
+
+          <h4>3. Integration Points</h4>
+          <p>Integrate observability into key operations:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In save hook
+const startTime = Date.now();
+await writeMutation.mutateAsync(data);
+const latency = Date.now() - startTime;
+recordSaveLatency(latency);
+
+// In conflict detection
+if (conflict) {
+  recordConflictHit();
+}
+
+// In React Query retry handler
+recordRetryCount(failureCount);</code></pre>
+
+          <h4>4. Debug View</h4>
+          <p>Add debug view (only when flag enabled):</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/debug/ObservabilityPanel.tsx
+export function ObservabilityPanel() {
+  if (!isObservabilityEnabled()) return null;
+  
+  const summary = getMetricsSummary();
+  
+  return (
+    &lt;div className="observability-panel"&gt;
+      &lt;h3&gt;Migration Risk Metrics&lt;/h3&gt;
+      &lt;div&gt;Avg Save Latency: {summary.avgSaveLatency.toFixed(0)}ms&lt;/div&gt;
+      &lt;div&gt;Max Save Latency: {summary.maxSaveLatency}ms&lt;/div&gt;
+      &lt;div&gt;Conflict Hits: {summary.conflictHits}&lt;/div&gt;
+      &lt;div&gt;Avg Retry Count: {summary.avgRetryCount.toFixed(1)}&lt;/div&gt;
+      &lt;button onClick={() => {
+        localStorage.removeItem(METRICS_KEY);
+        window.location.reload();
+      }}&gt;Clear Metrics&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+          <h3>Privacy Considerations</h3>
+          <ul>
+            <li><strong>Local-only</strong>: All metrics stored in localStorage, never sent to server</li>
+            <li><strong>Opt-in</strong>: Only enabled via debug flag (not enabled by default)</li>
+            <li><strong>No PII</strong>: No user data, only performance metrics</li>
+            <li><strong>Clearable</strong>: User can clear metrics at any time</li>
+          </ul>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>Q. Observability</strong>:</p>
+          <ul>
+            <li>[ ] <strong>Debug flag</strong>: Enable observability flag → Make edits → Verify metrics recorded</li>
+            <li>[ ] <strong>Save latency</strong>: Verify save latency metrics are recorded correctly</li>
+            <li>[ ] <strong>Conflict hits</strong>: Trigger conflict → Verify conflict hit recorded</li>
+            <li>[ ] <strong>Retry counts</strong>: Trigger retry → Verify retry count recorded</li>
+            <li>[ ] <strong>Metrics summary</strong>: Verify metrics summary displays correctly</li>
+            <li>[ ] <strong>Privacy</strong>: Verify metrics never sent to server, only stored locally</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 7</strong> (Accessibility, Performance & Polish) alongside performance testing:</p>
+          <ul>
+            <li>Create observability utilities</li>
+            <li>Integrate into save, conflict, retry operations</li>
+            <li>Add debug panel (optional)</li>
+            <li>Add smoke tests</li>
+          </ul>
+          <p><strong>LOE</strong>: 2-3 hours (includes observability utilities, integration, and smoke tests)</p>
         </section>
 
         <section class="docs-section" id="editor-truth">
