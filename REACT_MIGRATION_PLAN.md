@@ -2304,8 +2304,11 @@ Already included in recommended stack:
 - [ ] **Set up MUI theme customization (`src/theme/theme.ts`) with brand color mappings**
 - [ ] **Customize MUI component defaults to match existing design**
 - [ ] **Set up ThemeProvider in app root**
+- [ ] **Create test corpus folder structure (`Yarny Test Corpus` in Drive)**
+- [ ] **Populate small project with sample data**
+- [ ] **Document smoke test checklist**
 
-**LOE**: 34-48 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, state normalization, and MUI theming)
+**LOE**: 38-54 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, state normalization, MUI theming, and test corpus setup)
 
 ### Phase 2: Authentication (Week 1-2)
 - [ ] Convert login page to React
@@ -2335,10 +2338,13 @@ Already included in recommended stack:
 - [ ] **Implement editor as truth (authoritative while open)**
 - [ ] Basic editor functionality
 - [ ] **Test round-tripping with Google Docs**
+- [ ] **Run smoke tests on small project (test-small) after TipTap integration**
+- [ ] **Validate round-tripping with small project**
+- [ ] **Populate medium project (test-medium)**
 - [ ] **Implement classic UX anchors: Goal Meter, Today Chip, Footer word/character counts**
 - [ ] **Verify visual parity with current app for all preserved elements**
 
-**LOE**: 22-31 hours (includes TipTap integration, conflict detection integration, round-trip testing, and classic UX anchor preservation)
+**LOE**: 24-33 hours (includes TipTap integration, conflict detection integration, round-trip testing, smoke test execution, and classic UX anchor preservation)
 
 ### Phase 5: Editor - Advanced Features (Week 3-4)
 - [ ] Implement drag & drop with @dnd-kit
@@ -2356,18 +2362,24 @@ Already included in recommended stack:
 - [ ] Auto-save functionality using React Query mutations
 - [ ] Conflict resolution
 - [ ] Export functionality
+- [ ] **Run full smoke test suite on small and medium projects**
+- [ ] **Validate all operations work correctly**
+- [ ] **Populate large project (test-large)**
 
-**LOE**: 15-20 hours (Note: Lazy loading is simplified with React Query's built-in prefetching)
+**LOE**: 17-22 hours (Note: Lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
 
 ### Phase 7: Testing & Polish (Week 4-5)
 - [ ] Cross-browser testing
+- [ ] **Run full smoke test suite on all three project sizes (test-small, test-medium, test-large)**
+- [ ] **Performance testing with large project (test-large)**
+- [ ] **Regression testing before production deployment**
 - [ ] Performance optimization
 - [ ] Bug fixes
 - [ ] Accessibility audit
 - [ ] Mobile responsiveness check
 - [ ] Documentation updates
 
-**LOE**: 15-25 hours
+**LOE**: 19-31 hours (includes smoke test execution on all test corpus projects)
 
 ---
 
@@ -2804,6 +2816,190 @@ yarny-app/
 - Test with real Google Drive data
 - Test edge cases (large stories, many snippets, etc.)
 - Cross-browser testing (Chrome, Firefox, Safari, Edge)
+
+### Test Strategy Specific to Drive/Docs (P2 Priority)
+
+**Why**: Google Drive and Google Docs integration is critical to Yarny's functionality. Round-tripping between Yarny's editor and Google Docs can introduce subtle bugs that only appear with real Drive data. A structured test corpus ensures regressions are obvious and all critical paths are validated.
+
+**What**: Create a dedicated test corpus in a separate Google Drive folder with three project sizes (small, medium, large) and document smoke tests that validate all Drive/Docs operations.
+
+#### 1. Test Corpus Setup
+
+Create a dedicated Google Drive folder: **`Yarny Test Corpus`** (separate from production `Yarny Stories` folder)
+
+**Small Project** (`test-small`):
+- 1 story
+- 3 chapters
+- 5 snippets per chapter (15 total snippets)
+- 2 People, 2 Places, 2 Things notes
+- ~5,000 words total
+- **Purpose**: Fast smoke tests, basic operations
+
+**Medium Project** (`test-medium`):
+- 1 story
+- 10 chapters
+- 8 snippets per chapter (80 total snippets)
+- 10 People, 10 Places, 10 Things notes
+- ~25,000 words total
+- **Purpose**: Realistic project size, performance testing
+
+**Large Project** (`test-large`):
+- 1 story
+- 25 chapters
+- 15 snippets per chapter (375 total snippets)
+- 25 People, 25 Places, 25 Things notes
+- ~100,000 words total
+- **Purpose**: Stress testing, virtualization validation, lazy loading
+
+**Test Corpus Structure**:
+```
+Yarny Test Corpus/
+├── test-small/
+│   ├── Chapters/
+│   │   ├── Chapter 1/
+│   │   │   ├── snippet-1.json (metadata)
+│   │   │   └── snippet-1.gdoc (Google Doc)
+│   │   ├── Chapter 2/
+│   │   └── Chapter 3/
+│   ├── People/
+│   ├── Places/
+│   ├── Things/
+│   ├── story.json
+│   └── goal.json
+├── test-medium/
+│   └── (same structure, more content)
+└── test-large/
+    └── (same structure, much more content)
+```
+
+#### 2. Smoke Tests
+
+Document and execute these smoke tests for each project size to validate critical paths:
+
+**A. Create Operations**
+- [ ] Create new story → Verify folder structure in Drive
+- [ ] Create new chapter → Verify chapter folder created
+- [ ] Create new snippet → Verify Google Doc created in correct chapter folder
+- [ ] Create People/Places/Things note → Verify text file created in correct folder
+- [ ] Create story with goal → Verify `goal.json` created and loaded correctly
+
+**B. Rename Operations**
+- [ ] Rename story → Verify folder renamed in Drive, story list updates
+- [ ] Rename chapter → Verify chapter folder renamed, metadata updated
+- [ ] Rename snippet → Verify Google Doc renamed, metadata updated
+- [ ] Rename People/Places/Things note → Verify file renamed, metadata updated
+
+**C. Reorder Operations**
+- [ ] Reorder chapters (drag & drop) → Verify order persisted in Drive, UI reflects order
+- [ ] Reorder snippets within chapter → Verify order persisted in Drive, UI reflects order
+- [ ] Reorder across chapters → Verify snippets moved to correct chapter folders
+
+**D. Edit Operations**
+- [ ] Edit snippet content → Verify changes saved to Google Doc
+- [ ] Edit snippet title/description → Verify metadata updated in Drive
+- [ ] Edit chapter title/description → Verify metadata updated in Drive
+- [ ] Edit story title/genre/description → Verify metadata updated in Drive
+- [ ] Edit goal settings → Verify `goal.json` updated and loaded correctly
+- [ ] Edit People/Places/Things note → Verify text file updated
+
+**E. Export Operations**
+- [ ] Export all chapters → Verify combined Google Doc created with all snippets in order
+- [ ] Export outline → Verify outline document created with titles and descriptions
+- [ ] Export all People → Verify combined document created
+- [ ] Export all Places → Verify combined document created
+- [ ] Export all Things → Verify combined document created
+- [ ] Verify export filenames match user input
+- [ ] Verify exports appear in story folder in Drive
+
+**F. Conflict Resolution**
+- [ ] Edit snippet in Yarny → Edit same snippet in Google Docs (other tab) → Switch snippets → Verify conflict detected
+- [ ] Edit snippet in Google Docs → Focus Yarny window → Verify reconciliation notification appears
+- [ ] Resolve conflict: Keep Yarny version → Verify Yarny version overwrites Drive
+- [ ] Resolve conflict: Use Drive version → Verify Drive version replaces Yarny content
+- [ ] Edit snippet in Yarny → Add comments in Google Docs → Save in Yarny → Verify comments warning appears
+- [ ] Edit snippet in Yarny → Add tracked changes in Google Docs → Save in Yarny → Verify tracked changes warning appears
+
+**G. Round-Trip Testing**
+- [ ] Edit snippet in Yarny → Save → Edit in Google Docs → Switch snippets → Verify no format loss
+- [ ] Edit snippet in Google Docs → Load in Yarny → Verify content matches (plain text only)
+- [ ] Paste rich text in Yarny → Verify stripped to plain text
+- [ ] Test paragraph breaks (`\n\n`) → Verify preserved in round-trip
+- [ ] Test soft line breaks (`\n`) → Verify preserved in round-trip
+- [ ] Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip
+
+**H. Performance & Loading**
+- [ ] Load large project (test-large) → Verify initial load time acceptable (< 5 seconds)
+- [ ] Switch between snippets in large project → Verify no lag
+- [ ] Scroll through chapter list in large project → Verify smooth scrolling (virtualized)
+- [ ] Background loading → Verify non-active snippets load in background without blocking UI
+- [ ] Lazy loading → Verify snippet content only loads when needed
+
+**I. Error Handling**
+- [ ] Network error during save → Verify error message displayed, retry works
+- [ ] Invalid Drive permissions → Verify clear error message
+- [ ] Drive API rate limit → Verify graceful handling, retry logic
+- [ ] Corrupted metadata file → Verify error handling, recovery option
+
+#### 3. Linking to Success Criteria
+
+Map smoke tests to success criteria to ensure regressions are obvious:
+
+| Success Criterion | Smoke Tests | Test Corpus |
+|------------------|-------------|-------------|
+| **Google Drive sync works** | Create, Edit, Rename, Reorder (all) | Small, Medium, Large |
+| **Editor saves correctly** | Edit Operations (all) | Small, Medium, Large |
+| **Export functionality works** | Export Operations (all) | Small, Medium |
+| **Conflict resolution works** | Conflict Resolution (all) | Small, Medium |
+| **Round-tripping works** | Round-Trip Testing (all) | Small, Medium |
+| **Performance is equal or better** | Performance & Loading (all) | Large (especially) |
+| **No regression in functionality** | All smoke tests | All sizes |
+
+#### 4. Test Execution Plan
+
+**Phase 1-2 (Setup & Infrastructure)**:
+- Create test corpus folder structure
+- Populate small project with sample data
+- Document smoke test checklist
+
+**Phase 4 (Editor - Core Structure)**:
+- Run smoke tests on small project after TipTap integration
+- Validate round-tripping with small project
+- Populate medium project
+
+**Phase 5-6 (Editor - Advanced Features & State & Sync)**:
+- Run full smoke test suite on small and medium projects
+- Validate all operations work correctly
+- Populate large project
+
+**Phase 7 (Testing & Polish)**:
+- Run full smoke test suite on all three project sizes
+- Performance testing with large project
+- Regression testing before production deployment
+
+#### 5. Test Corpus Maintenance
+
+- **Version Control**: Document test corpus structure and expected state
+- **Reset Script**: Create script to reset test corpus to known good state
+- **Validation**: Periodically verify test corpus integrity (files exist, metadata correct)
+- **Updates**: Update test corpus when new features are added (e.g., new export types)
+
+#### 6. Benefits
+
+1. **Obvious Regressions**: Test corpus provides baseline for comparison - if something breaks, it's immediately obvious
+2. **Comprehensive Coverage**: Smoke tests ensure all critical paths are validated
+3. **Performance Validation**: Large project validates performance optimizations (virtualization, lazy loading)
+4. **Round-Trip Confidence**: Structured tests ensure Google Docs integration works correctly
+5. **Documentation**: Test corpus serves as living documentation of expected behavior
+
+#### Implementation Timeline
+
+This should be implemented in **Phase 1-2** (Setup & Infrastructure):
+- Create test corpus folder structure
+- Populate small project
+- Document smoke test checklist
+- Integrate smoke tests into Phase 4-7 testing workflow
+
+**LOE**: 4-6 hours (includes creating test corpus structure, populating small/medium projects, documenting smoke tests, and setting up test execution workflow)
 
 ### Performance Considerations
 - Use React.memo for expensive components
@@ -3278,6 +3474,18 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Added "Test Strategy Specific to Drive/Docs" section (P2 Priority)
+  - Created test corpus structure with three project sizes (small, medium, large) in separate Drive folder
+  - Documented comprehensive smoke tests for all Drive/Docs operations (create, rename, reorder, edit, export, conflict resolution)
+  - Linked smoke tests to success criteria to ensure regressions are obvious
+  - Added test execution plan integrated into migration phases
+  - Updated Phase 1 to include test corpus setup
+  - Updated Phase 4 to include smoke test execution on small project
+  - Updated Phase 6 to include smoke test execution on small and medium projects
+  - Updated Phase 7 to include full smoke test suite execution on all project sizes
+  - Added test corpus maintenance guidelines
+  - **Total LOE**: 4-6 hours for test corpus setup and documentation
 
 - **2025-01-XX**: Added "Preserve Classic UX Anchors" section (P1/P2 Priority)
   - Documented preservation requirements for left-rail goal meter and "Today • N" chip

@@ -64,6 +64,7 @@
             <li><a href="#decision-points" class="nav-link">Decision Points</a></li>
             <li><a href="#success-criteria" class="nav-link">Success Criteria</a></li>
             <li><a href="#notes-considerations" class="nav-link">Notes & Considerations</a></li>
+            <li><a href="#test-strategy-drive-docs" class="nav-link">Test Strategy: Drive/Docs (P2)</a></li>
             <li><a href="#questions" class="nav-link">Questions to Resolve</a></li>
             <li><a href="#resources" class="nav-link">Resources</a></li>
             <li><a href="#technical-details" class="nav-link">Technical Details</a></li>
@@ -2560,6 +2561,253 @@ export function App(): JSX.Element {
             <li>Test edge cases (large stories, many snippets, etc.)</li>
             <li>Cross-browser testing (Chrome, Firefox, Safari, Edge)</li>
           </ul>
+
+          <h3 id="test-strategy-drive-docs">Test Strategy Specific to Drive/Docs (P2 Priority)</h3>
+          <p><strong>Why</strong>: Google Drive and Google Docs integration is critical to Yarny's functionality. Round-tripping between Yarny's editor and Google Docs can introduce subtle bugs that only appear with real Drive data. A structured test corpus ensures regressions are obvious and all critical paths are validated.</p>
+          <p><strong>What</strong>: Create a dedicated test corpus in a separate Google Drive folder with three project sizes (small, medium, large) and document smoke tests that validate all Drive/Docs operations.</p>
+
+          <h4>1. Test Corpus Setup</h4>
+          <p>Create a dedicated Google Drive folder: <strong><code>Yarny Test Corpus</code></strong> (separate from production <code>Yarny Stories</code> folder)</p>
+
+          <p><strong>Small Project</strong> (<code>test-small</code>):</p>
+          <ul>
+            <li>1 story</li>
+            <li>3 chapters</li>
+            <li>5 snippets per chapter (15 total snippets)</li>
+            <li>2 People, 2 Places, 2 Things notes</li>
+            <li>~5,000 words total</li>
+            <li><strong>Purpose</strong>: Fast smoke tests, basic operations</li>
+          </ul>
+
+          <p><strong>Medium Project</strong> (<code>test-medium</code>):</p>
+          <ul>
+            <li>1 story</li>
+            <li>10 chapters</li>
+            <li>8 snippets per chapter (80 total snippets)</li>
+            <li>10 People, 10 Places, 10 Things notes</li>
+            <li>~25,000 words total</li>
+            <li><strong>Purpose</strong>: Realistic project size, performance testing</li>
+          </ul>
+
+          <p><strong>Large Project</strong> (<code>test-large</code>):</p>
+          <ul>
+            <li>1 story</li>
+            <li>25 chapters</li>
+            <li>15 snippets per chapter (375 total snippets)</li>
+            <li>25 People, 25 Places, 25 Things notes</li>
+            <li>~100,000 words total</li>
+            <li><strong>Purpose</strong>: Stress testing, virtualization validation, lazy loading</li>
+          </ul>
+
+          <p><strong>Test Corpus Structure</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>Yarny Test Corpus/
+├── test-small/
+│   ├── Chapters/
+│   │   ├── Chapter 1/
+│   │   │   ├── snippet-1.json (metadata)
+│   │   │   └── snippet-1.gdoc (Google Doc)
+│   │   ├── Chapter 2/
+│   │   └── Chapter 3/
+│   ├── People/
+│   ├── Places/
+│   ├── Things/
+│   ├── story.json
+│   └── goal.json
+├── test-medium/
+│   └── (same structure, more content)
+└── test-large/
+    └── (same structure, much more content)</code></pre>
+
+          <h4>2. Smoke Tests</h4>
+          <p>Document and execute these smoke tests for each project size to validate critical paths:</p>
+
+          <p><strong>A. Create Operations</strong></p>
+          <ul>
+            <li>[ ] Create new story → Verify folder structure in Drive</li>
+            <li>[ ] Create new chapter → Verify chapter folder created</li>
+            <li>[ ] Create new snippet → Verify Google Doc created in correct chapter folder</li>
+            <li>[ ] Create People/Places/Things note → Verify text file created in correct folder</li>
+            <li>[ ] Create story with goal → Verify <code>goal.json</code> created and loaded correctly</li>
+          </ul>
+
+          <p><strong>B. Rename Operations</strong></p>
+          <ul>
+            <li>[ ] Rename story → Verify folder renamed in Drive, story list updates</li>
+            <li>[ ] Rename chapter → Verify chapter folder renamed, metadata updated</li>
+            <li>[ ] Rename snippet → Verify Google Doc renamed, metadata updated</li>
+            <li>[ ] Rename People/Places/Things note → Verify file renamed, metadata updated</li>
+          </ul>
+
+          <p><strong>C. Reorder Operations</strong></p>
+          <ul>
+            <li>[ ] Reorder chapters (drag &amp; drop) → Verify order persisted in Drive, UI reflects order</li>
+            <li>[ ] Reorder snippets within chapter → Verify order persisted in Drive, UI reflects order</li>
+            <li>[ ] Reorder across chapters → Verify snippets moved to correct chapter folders</li>
+          </ul>
+
+          <p><strong>D. Edit Operations</strong></p>
+          <ul>
+            <li>[ ] Edit snippet content → Verify changes saved to Google Doc</li>
+            <li>[ ] Edit snippet title/description → Verify metadata updated in Drive</li>
+            <li>[ ] Edit chapter title/description → Verify metadata updated in Drive</li>
+            <li>[ ] Edit story title/genre/description → Verify metadata updated in Drive</li>
+            <li>[ ] Edit goal settings → Verify <code>goal.json</code> updated and loaded correctly</li>
+            <li>[ ] Edit People/Places/Things note → Verify text file updated</li>
+          </ul>
+
+          <p><strong>E. Export Operations</strong></p>
+          <ul>
+            <li>[ ] Export all chapters → Verify combined Google Doc created with all snippets in order</li>
+            <li>[ ] Export outline → Verify outline document created with titles and descriptions</li>
+            <li>[ ] Export all People → Verify combined document created</li>
+            <li>[ ] Export all Places → Verify combined document created</li>
+            <li>[ ] Export all Things → Verify combined document created</li>
+            <li>[ ] Verify export filenames match user input</li>
+            <li>[ ] Verify exports appear in story folder in Drive</li>
+          </ul>
+
+          <p><strong>F. Conflict Resolution</strong></p>
+          <ul>
+            <li>[ ] Edit snippet in Yarny → Edit same snippet in Google Docs (other tab) → Switch snippets → Verify conflict detected</li>
+            <li>[ ] Edit snippet in Google Docs → Focus Yarny window → Verify reconciliation notification appears</li>
+            <li>[ ] Resolve conflict: Keep Yarny version → Verify Yarny version overwrites Drive</li>
+            <li>[ ] Resolve conflict: Use Drive version → Verify Drive version replaces Yarny content</li>
+            <li>[ ] Edit snippet in Yarny → Add comments in Google Docs → Save in Yarny → Verify comments warning appears</li>
+            <li>[ ] Edit snippet in Yarny → Add tracked changes in Google Docs → Save in Yarny → Verify tracked changes warning appears</li>
+          </ul>
+
+          <p><strong>G. Round-Trip Testing</strong></p>
+          <ul>
+            <li>[ ] Edit snippet in Yarny → Save → Edit in Google Docs → Switch snippets → Verify no format loss</li>
+            <li>[ ] Edit snippet in Google Docs → Load in Yarny → Verify content matches (plain text only)</li>
+            <li>[ ] Paste rich text in Yarny → Verify stripped to plain text</li>
+            <li>[ ] Test paragraph breaks (<code>\n\n</code>) → Verify preserved in round-trip</li>
+            <li>[ ] Test soft line breaks (<code>\n</code>) → Verify preserved in round-trip</li>
+            <li>[ ] Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip</li>
+          </ul>
+
+          <p><strong>H. Performance &amp; Loading</strong></p>
+          <ul>
+            <li>[ ] Load large project (test-large) → Verify initial load time acceptable (&lt; 5 seconds)</li>
+            <li>[ ] Switch between snippets in large project → Verify no lag</li>
+            <li>[ ] Scroll through chapter list in large project → Verify smooth scrolling (virtualized)</li>
+            <li>[ ] Background loading → Verify non-active snippets load in background without blocking UI</li>
+            <li>[ ] Lazy loading → Verify snippet content only loads when needed</li>
+          </ul>
+
+          <p><strong>I. Error Handling</strong></p>
+          <ul>
+            <li>[ ] Network error during save → Verify error message displayed, retry works</li>
+            <li>[ ] Invalid Drive permissions → Verify clear error message</li>
+            <li>[ ] Drive API rate limit → Verify graceful handling, retry logic</li>
+            <li>[ ] Corrupted metadata file → Verify error handling, recovery option</li>
+          </ul>
+
+          <h4>3. Linking to Success Criteria</h4>
+          <p>Map smoke tests to success criteria to ensure regressions are obvious:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: var(--space-lg) 0;">
+            <thead>
+              <tr style="background: rgba(0, 0, 0, 0.2);">
+                <th style="padding: var(--space-md); text-align: left; border-bottom: 2px solid rgba(255, 255, 255, 0.2);">Success Criterion</th>
+                <th style="padding: var(--space-md); text-align: left; border-bottom: 2px solid rgba(255, 255, 255, 0.2);">Smoke Tests</th>
+                <th style="padding: var(--space-md); text-align: left; border-bottom: 2px solid rgba(255, 255, 255, 0.2);">Test Corpus</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Google Drive sync works</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Create, Edit, Rename, Reorder (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Small, Medium, Large</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Editor saves correctly</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Edit Operations (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Small, Medium, Large</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Export functionality works</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Export Operations (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Small, Medium</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Conflict resolution works</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Conflict Resolution (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Small, Medium</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Round-tripping works</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Round-Trip Testing (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Small, Medium</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>Performance is equal or better</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Performance &amp; Loading (all)</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Large (especially)</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><strong>No regression in functionality</strong></td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">All smoke tests</td>
+                <td style="padding: var(--space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">All sizes</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>4. Test Execution Plan</h4>
+          <p><strong>Phase 1-2 (Setup &amp; Infrastructure)</strong>:</p>
+          <ul>
+            <li>Create test corpus folder structure</li>
+            <li>Populate small project with sample data</li>
+            <li>Document smoke test checklist</li>
+          </ul>
+
+          <p><strong>Phase 4 (Editor - Core Structure)</strong>:</p>
+          <ul>
+            <li>Run smoke tests on small project after TipTap integration</li>
+            <li>Validate round-tripping with small project</li>
+            <li>Populate medium project</li>
+          </ul>
+
+          <p><strong>Phase 5-6 (Editor - Advanced Features &amp; State &amp; Sync)</strong>:</p>
+          <ul>
+            <li>Run full smoke test suite on small and medium projects</li>
+            <li>Validate all operations work correctly</li>
+            <li>Populate large project</li>
+          </ul>
+
+          <p><strong>Phase 7 (Testing &amp; Polish)</strong>:</p>
+          <ul>
+            <li>Run full smoke test suite on all three project sizes</li>
+            <li>Performance testing with large project</li>
+            <li>Regression testing before production deployment</li>
+          </ul>
+
+          <h4>5. Test Corpus Maintenance</h4>
+          <ul>
+            <li><strong>Version Control</strong>: Document test corpus structure and expected state</li>
+            <li><strong>Reset Script</strong>: Create script to reset test corpus to known good state</li>
+            <li><strong>Validation</strong>: Periodically verify test corpus integrity (files exist, metadata correct)</li>
+            <li><strong>Updates</strong>: Update test corpus when new features are added (e.g., new export types)</li>
+          </ul>
+
+          <h4>6. Benefits</h4>
+          <ol>
+            <li><strong>Obvious Regressions</strong>: Test corpus provides baseline for comparison - if something breaks, it's immediately obvious</li>
+            <li><strong>Comprehensive Coverage</strong>: Smoke tests ensure all critical paths are validated</li>
+            <li><strong>Performance Validation</strong>: Large project validates performance optimizations (virtualization, lazy loading)</li>
+            <li><strong>Round-Trip Confidence</strong>: Structured tests ensure Google Docs integration works correctly</li>
+            <li><strong>Documentation</strong>: Test corpus serves as living documentation of expected behavior</li>
+          </ol>
+
+          <h4>Implementation Timeline</h4>
+          <p>This should be implemented in <strong>Phase 1-2</strong> (Setup &amp; Infrastructure):</p>
+          <ul>
+            <li>Create test corpus folder structure</li>
+            <li>Populate small project</li>
+            <li>Document smoke test checklist</li>
+            <li>Integrate smoke tests into Phase 4-7 testing workflow</li>
+          </ul>
+
+          <p><strong>LOE</strong>: 4-6 hours (includes creating test corpus structure, populating small/medium projects, documenting smoke tests, and setting up test execution workflow)</p>
 
           <h3>Performance Considerations</h3>
           <ul>
