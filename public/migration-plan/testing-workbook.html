@@ -577,6 +577,55 @@
             <label for="test-3-6">Editor is authoritative while snippet is open (external changes ignored)</label>
           </div>
         </div>
+
+        <div class="test-item">
+          <h4>Test 3.7: IME Composition Handling (Japanese/Chinese/Korean Input)</h4>
+          <p>Verify that the editor handles IME (Input Method Editor) composition correctly for Japanese, Chinese, and Korean text input.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Enable Japanese IME on your computer (or use browser dev tools to simulate)</li>
+              <li>Open a snippet in the Yarny editor</li>
+              <li>Start typing in Japanese (e.g., "こんにちは" - konnichiwa)</li>
+              <li>While composing (before pressing Enter to confirm), verify word count does NOT update prematurely</li>
+              <li>Complete the IME composition (press Enter to confirm)</li>
+              <li>Verify word count updates only after composition ends</li>
+              <li>Verify save debouncing respects composition (doesn't save during composition)</li>
+              <li>Repeat with Chinese text (e.g., "你好" - nǐ hǎo)</li>
+              <li>Repeat with Korean text (e.g., "안녕하세요" - annyeonghaseyo)</li>
+              <li>Verify all IME compositions work correctly</li>
+              <li>Save the snippet and verify the text is preserved correctly</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-3-7" name="test-3-7">
+            <label for="test-3-7">IME composition handling works correctly for Japanese/Chinese/Korean input</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 3.8: Emoji and Unicode Input</h4>
+          <p>Verify that the editor handles emoji and Unicode characters correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a snippet in the Yarny editor</li>
+              <li>Type emoji characters (e.g., 😀 🎉 ✨ 📝)</li>
+              <li>Verify emoji appear correctly in the editor</li>
+              <li>Verify word count is calculated correctly (emoji may count as words or characters)</li>
+              <li>Type Unicode characters (e.g., © ® ™ — – …)</li>
+              <li>Verify Unicode characters are preserved</li>
+              <li>Save the snippet</li>
+              <li>Open the Google Doc in Google Drive</li>
+              <li>Verify emoji and Unicode characters are preserved correctly</li>
+              <li>Edit in Google Docs and add more emoji</li>
+              <li>Switch snippets in Yarny and switch back</li>
+              <li>Verify emoji and Unicode are preserved in round-trip</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-3-8" name="test-3-8">
+            <label for="test-3-8">Emoji and Unicode characters are handled correctly</label>
+          </div>
+        </div>
       </div>
 
         <!-- Section 4: Chapters & Snippets Management -->
@@ -1333,6 +1382,30 @@
             <label for="test-9-5">I can export all Things notes</label>
           </div>
         </div>
+
+        <div class="test-item">
+          <h4>Test 9.6: Export Large Chapter (Chunked Writes)</h4>
+          <p>Verify that exporting a very large chapter (50+ snippets) uses chunked writes to handle Google Docs API body size limits.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with a very large chapter (50+ snippets) - use test-large project if available</li>
+              <li>Click "Export" and select "Export All Chapters" (or export just the large chapter)</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a progress indicator appears during export (if chunked writes are used)</li>
+              <li>Verify the export completes successfully without errors</li>
+              <li>Verify all snippets are included in the export (no truncation)</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify all snippets are in the correct order</li>
+              <li>Verify the export order is preserved across chunks (if chunked)</li>
+              <li>Verify the exported document is complete and readable</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-9-6" name="test-9-6">
+            <label for="test-9-6">Large chapter export uses chunked writes correctly</label>
+          </div>
+        </div>
       </div>
 
         <!-- Section 10: Google Drive Integration & Sync -->
@@ -1524,6 +1597,97 @@
             <label for="test-10-8">Yarny warns about comments/tracked changes in Google Docs</label>
           </div>
         </div>
+
+        <div class="test-item">
+          <h4>Test 10.9: Cross-Tab Yarny Conflicts</h4>
+          <p>Verify that Yarny detects and prevents conflicts when the same snippet is edited in multiple Yarny tabs.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Yarny in two browser tabs (Tab 1 and Tab 2)</li>
+              <li>In Tab 1, open a snippet and start editing</li>
+              <li>In Tab 2, try to open the same snippet</li>
+              <li>Verify Tab 2 shows "Editing in another tab" message or read-only indicator</li>
+              <li>Verify Tab 2 is read-only (cannot edit) while Tab 1 is editing</li>
+              <li>Save the snippet in Tab 1</li>
+              <li>Switch to Tab 2</li>
+              <li>Verify Tab 2 updates with the latest content from Tab 1</li>
+              <li>Close Tab 1</li>
+              <li>Verify Tab 2 regains edit capability (no longer read-only)</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-10-9" name="test-10-9">
+            <label for="test-10-9">Cross-tab conflict detection prevents simultaneous editing</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 10.10: Format Normalization (Line Endings, NBSPs, Trailing Spaces)</h4>
+          <p>Verify that Yarny normalizes text format to match Google Docs behavior (mixed line endings, non-breaking spaces, trailing spaces).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Create a snippet with mixed line endings: some lines ending with `\n`, some with `\r\n`, some with `\r`</li>
+              <li>Add non-breaking spaces (NBSP) in the text</li>
+              <li>Add trailing spaces at the end of some lines</li>
+              <li>Save the snippet in Yarny</li>
+              <li>Open the Google Doc in Google Drive</li>
+              <li>Verify all line endings are normalized to `\n` (no `\r\n` or `\r`)</li>
+              <li>Verify NBSPs are normalized to regular spaces</li>
+              <li>Verify trailing spaces are handled correctly (may be collapsed by Google Docs)</li>
+              <li>Edit the snippet in Google Docs and add more mixed formatting</li>
+              <li>Switch snippets in Yarny and switch back</li>
+              <li>Verify the text is normalized correctly after round-trip</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-10-10" name="test-10-10">
+            <label for="test-10-10">Format normalization works correctly (line endings, NBSPs, trailing spaces)</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 10.11: Visibility-Based Request Gating</h4>
+          <p>Verify that Yarny only makes background requests when the browser tab is visible (prevents Drive quota exhaustion).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Yarny in multiple browser tabs</li>
+              <li>Open a story with many snippets in Tab 1</li>
+              <li>Switch to Tab 2 (Tab 1 becomes hidden)</li>
+              <li>Check browser network tab or console</li>
+              <li>Verify Tab 1 stops making background prefetch requests when hidden</li>
+              <li>Switch back to Tab 1 (tab becomes visible)</li>
+              <li>Verify background prefetch requests resume in Tab 1</li>
+              <li>Verify only the visible tab makes background requests</li>
+              <li>Test with mutations (save, delete, rename) in hidden tab</li>
+              <li>Verify mutations also respect visibility gating (may be queued or delayed)</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-10-11" name="test-10-11">
+            <label for="test-10-11">Visibility-based request gating prevents quota exhaustion</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 10.12: Drive API Rate Limiting (429 Errors)</h4>
+          <p>Verify that Yarny handles Drive API rate limit errors (429) gracefully with exponential backoff.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Trigger rate limiting by making rapid requests (or simulate 429 error)</li>
+              <li>Verify Yarny detects the 429 rate limit error</li>
+              <li>Verify exponential backoff with jitter is applied (delays between retries: 1s, 2s, 4s, etc.)</li>
+              <li>Verify retry only happens when tab is visible (background tabs don't retry)</li>
+              <li>Verify a clear error message is displayed to the user</li>
+              <li>Verify automatic retry happens after backoff delay</li>
+              <li>Verify no infinite retry loops (max 3 retries)</li>
+              <li>After successful retry, verify the operation completes</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-10-12" name="test-10-12">
+            <label for="test-10-12">Drive API rate limiting is handled gracefully with exponential backoff</label>
+          </div>
+        </div>
       </div>
 
         <!-- Section 11: UI/UX Elements -->
@@ -1674,6 +1838,29 @@
             <label for="test-11-8">Error messages are clear and helpful</label>
           </div>
         </div>
+
+        <div class="test-item">
+          <h4>Test 11.9: Accessible Focus Rings</h4>
+          <p>Verify that focus rings are visible and accessible when navigating with keyboard (especially on dark cards and pale chips).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Use Tab key to navigate through the interface (don't use mouse)</li>
+              <li>Navigate to elements in the left sidebar (dark card background)</li>
+              <li>Verify focus rings are visible on dark backgrounds (should be lighter color, e.g., primary-light)</li>
+              <li>Navigate to elements on pale chip backgrounds</li>
+              <li>Verify focus rings are visible on light backgrounds (should be darker color, e.g., primary-dark)</li>
+              <li>Navigate through modals and buttons</li>
+              <li>Verify all interactive elements show clear focus indicators</li>
+              <li>Verify focus rings are 2px solid with 2px offset (accessible standard)</li>
+              <li>Test with high contrast mode enabled (if available)</li>
+              <li>Verify focus rings remain visible in all contexts</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-11-9" name="test-11-9">
+            <label for="test-11-9">Focus rings are visible and accessible on all backgrounds</label>
+          </div>
+        </div>
       </div>
 
         <!-- Section 12: Performance & Edge Cases -->
@@ -1716,6 +1903,87 @@
           <div class="checkbox-container">
             <input type="checkbox" id="test-12-2" name="test-12-2">
             <label for="test-12-2">Snippet content loads on demand (lazy loading)</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 12.2a: Performance Budget - Time to First Edit (Hot Path)</h4>
+          <p>Verify that opening a snippet already in cache and starting to type is fast (≤300 ms from click to first character appearing).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story and load a snippet (content is now cached)</li>
+              <li>Switch to a different snippet and back to the first one (ensures it's in cache)</li>
+              <li>Click on the snippet to open it in the editor</li>
+              <li>Start typing immediately</li>
+              <li>Measure time from click to first character appearing (use browser dev tools or stopwatch)</li>
+              <li>Verify latency is ≤300 ms (hot path - snippet already in cache)</li>
+              <li>Repeat with several different snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-12-2a" name="test-12-2a">
+            <label for="test-12-2a">Time to first edit (hot path) is ≤300 ms</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 12.2b: Performance Budget - Time to First Edit (Cold Path)</h4>
+          <p>Verify that opening a snippet not yet loaded and starting to type is acceptable (≤1.5 s from click to first character appearing, includes Drive fetch).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Find a snippet that hasn't been loaded yet (not in cache)</li>
+              <li>Click on the snippet to open it in the editor</li>
+              <li>Start typing immediately</li>
+              <li>Measure time from click to first character appearing (use browser dev tools or stopwatch)</li>
+              <li>Verify latency is ≤1.5 s (cold path - includes Drive fetch)</li>
+              <li>Repeat with several different unloaded snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-12-2b" name="test-12-2b">
+            <label for="test-12-2b">Time to first edit (cold path) is ≤1.5 s</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 12.2c: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
+          <p>Verify that switching to a snippet already in cache is fast (≤300 ms from click to editor ready).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story and load multiple snippets (ensure they're in cache)</li>
+              <li>Click on a snippet that's already been loaded</li>
+              <li>Measure time from click to editor ready (content visible and editable)</li>
+              <li>Verify latency is ≤300 ms (hot path - snippet already in cache)</li>
+              <li>Switch between several cached snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-12-2c" name="test-12-2c">
+            <label for="test-12-2c">Time to switch snippet (hot path) is ≤300 ms</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 12.2d: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
+          <p>Verify that switching to a snippet not yet loaded is acceptable (≤1.5 s from click to editor ready, includes Drive fetch).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Find a snippet that hasn't been loaded yet (not in cache)</li>
+              <li>Click on the snippet to switch to it</li>
+              <li>Measure time from click to editor ready (content visible and editable)</li>
+              <li>Verify latency is ≤1.5 s (cold path - includes Drive fetch)</li>
+              <li>Switch to several different unloaded snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-12-2d" name="test-12-2d">
+            <label for="test-12-2d">Time to switch snippet (cold path) is ≤1.5 s</label>
           </div>
         </div>
 
