@@ -438,7 +438,8 @@ This section details exactly which parts of the current codebase can be replaced
     "axios": "^1.x",
     "zustand": "^4.x",
     "zod": "^3.x",
-    "@tanstack/react-query": "^5.x"
+    "@tanstack/react-query": "^5.x",
+    "@tanstack/react-virtual": "^3.x"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.x",
@@ -2603,6 +2604,308 @@ yarny-app/
 - Optimize re-renders with useMemo/useCallback
 - Consider virtual scrolling for long lists
 
+### Performance Guardrails for Big Projects (P2 Priority)
+
+**Why**: Large stories with many chapters and snippets can cause performance issues. The vanilla app already handles this with lazy loading; we need to carry forward these optimizations and add React-specific performance patterns.
+
+**What**: Implement three key performance optimizations to ensure the React app performs well with large projects:
+
+#### 1. Virtualize Long Lists in the Left Rail
+
+**Problem**: When stories grow to 50+ chapters or 200+ snippets, rendering all list items at once causes:
+- Slow initial render
+- Laggy scrolling
+- High memory usage
+- Poor performance on lower-end devices
+
+**Solution**: Use `@tanstack/react-virtual` (or similar) to virtualize the left rail lists.
+
+**Implementation**:
+- Virtualize the chapter/group list in the left sidebar
+- Virtualize the snippet list within each chapter
+- Only render visible items + small buffer (e.g., 5 items above/below viewport)
+- Works seamlessly with normalized state structure (already planned)
+
+**Code Example**:
+```typescript
+// src/components/editor/StorySidebar.tsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useGroupsList } from '../../store/selectors';
+
+export function StorySidebar() {
+  const groups = useGroupsList();
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useVirtualizer({
+    count: groups.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 60, // Estimated row height
+    overscan: 5, // Render 5 extra items above/below viewport
+  });
+  
+  return (
+    <div ref={parentRef} style={{ height: '100%', overflow: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const group = groups[virtualRow.index];
+          return (
+            <div
+              key={group.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <GroupRow group={group} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+**When to Implement**: 
+- Phase 4 (Editor - Core Structure) or Phase 5 (Editor - Advanced Features)
+- Add when testing with large stories (50+ chapters, 200+ snippets)
+- Can be deferred if initial performance is acceptable, but should be in place before production
+
+**LOE**: 4-6 hours (includes virtualizing both chapter and snippet lists, testing with large datasets)
+
+#### 2. Memoize Expensive List Rows and Editor Shell
+
+**Problem**: Passing anonymous callbacks and inline objects causes unnecessary re-renders:
+- List rows re-render when parent re-renders (even if their data hasn't changed)
+- Editor shell re-renders on every state update
+- Anonymous callbacks create new function references on every render
+- Deep prop drilling causes cascading re-renders
+
+**Solution**: Use `React.memo`, `useMemo`, and `useCallback` strategically to prevent unnecessary re-renders.
+
+**Implementation Strategy**:
+
+**A. Memoize List Row Components**:
+```typescript
+// src/components/editor/GroupRow.tsx
+import React, { memo } from 'react';
+import { Group } from '../../store/types';
+
+interface GroupRowProps {
+  group: Group;
+  onSelect: (groupId: string) => void;
+  onRename: (groupId: string, newTitle: string) => void;
+  isActive: boolean;
+  isCollapsed: boolean;
+}
+
+// Memoize the row component - only re-renders if props change
+export const GroupRow = memo(function GroupRow({
+  group,
+  onSelect,
+  onRename,
+  isActive,
+  isCollapsed,
+}: GroupRowProps) {
+  // Component implementation
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better control
+  return (
+    prevProps.group.id === nextProps.group.id &&
+    prevProps.group.title === nextProps.group.title &&
+    prevProps.group.snippetIds.length === nextProps.group.snippetIds.length &&
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.isCollapsed === nextProps.isCollapsed
+  );
+});
+```
+
+**B. Memoize Editor Shell**:
+```typescript
+// src/components/editor/Editor.tsx
+import React, { memo, useCallback, useMemo } from 'react';
+import { useStore } from '../../store/store';
+
+export const Editor = memo(function Editor({ storyId }: { storyId: string }) {
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  const snippet = useStore((state) => 
+    activeSnippetId ? state.snippets[activeSnippetId] : null
+  );
+  
+  // Memoize callbacks to prevent child re-renders
+  const handleSave = useCallback((content: string) => {
+    // Save logic
+  }, []);
+  
+  const handleSnippetChange = useCallback((snippetId: string) => {
+    // Change snippet logic
+  }, []);
+  
+  // Memoize expensive computations
+  const wordCount = useMemo(() => {
+    return snippet ? countWords(snippet.body) : 0;
+  }, [snippet?.body]);
+  
+  return (
+    <div className="editor-shell">
+      {/* Editor content */}
+    </div>
+  );
+});
+```
+
+**C. Avoid Anonymous Callbacks in Deep Trees**:
+```typescript
+// ❌ DON'T DO THIS - creates new function on every render
+<GroupRow 
+  group={group}
+  onSelect={(id) => handleSelect(id)}  // Anonymous callback
+  onClick={() => handleClick(group.id)} // Anonymous callback
+/>
+
+// ✅ DO THIS - memoized callback
+const handleSelect = useCallback((id: string) => {
+  // Selection logic
+}, []);
+
+const handleGroupClick = useCallback((groupId: string) => {
+  handleClick(groupId);
+}, [handleClick]);
+
+<GroupRow 
+  group={group}
+  onSelect={handleSelect}  // Stable reference
+  onClick={() => handleGroupClick(group.id)} // Still anonymous, but acceptable if group.id is stable
+/>
+
+// ✅ EVEN BETTER - pass groupId directly
+const handleGroupClick = useCallback((groupId: string) => {
+  handleClick(groupId);
+}, [handleClick]);
+
+<GroupRow 
+  group={group}
+  onSelect={handleSelect}
+  onClick={handleGroupClick}  // Stable reference, groupId passed via closure
+  groupId={group.id}  // Or pass as prop if needed
+/>
+```
+
+**When to Implement**: 
+- Phase 4 (Editor - Core Structure) - implement memoization from the start
+- Review and optimize during Phase 7 (Testing & Polish)
+
+**LOE**: 3-4 hours (includes memoizing list rows, editor shell, and reviewing callback patterns)
+
+#### 3. Defer Non-Active Snippet Loads
+
+**Problem**: Loading all snippet content at once causes:
+- Slow initial load
+- High memory usage
+- Unnecessary network requests
+- Poor UX for large stories
+
+**Current Vanilla App Behavior**: 
+- Loads active snippet immediately
+- Background loads remaining snippets with throttling
+- Uses `_contentLoaded` flag to track loaded state
+
+**Solution**: Carry forward this pattern using React Query's prefetching and lazy loading capabilities.
+
+**Implementation**:
+- Use React Query's `useQuery` with `enabled: false` for non-active snippets
+- Prefetch snippets in background using `prefetchQuery` (already planned in React Query section)
+- Only load snippet content when:
+  - Snippet becomes active (user clicks on it)
+  - Snippet is scrolled into view (for virtualized lists)
+  - Background prefetching (throttled, batched)
+
+**Code Example**:
+```typescript
+// src/hooks/useSnippetContent.ts
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useStore } from '../store/store';
+import { useDriveFile } from './useDriveQueries';
+
+export function useSnippetContent(snippetId: string | null, loadImmediately = false) {
+  const snippet = useStore((state) => 
+    snippetId ? state.snippets[snippetId] : null
+  );
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  
+  // Only load if:
+  // 1. Load immediately (active snippet)
+  // 2. Content already loaded (cached)
+  // 3. Explicitly requested
+  const shouldLoad = loadImmediately || 
+                     snippet?._contentLoaded || 
+                     snippetId === activeSnippetId;
+  
+  const { data, isLoading } = useDriveFile(
+    shouldLoad && snippet?.driveFileId ? snippet.driveFileId : null
+  );
+  
+  return {
+    content: data?.content || snippet?.body || '',
+    isLoading: !snippet?._contentLoaded && isLoading,
+    isLoaded: !!snippet?._contentLoaded,
+  };
+}
+
+// Background prefetching (throttled)
+export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay = 500) {
+  const queryClient = useQueryClient();
+  const snippets = useStore((state) => state.snippets);
+  
+  useEffect(() => {
+    // Only prefetch snippets that haven't been loaded
+    const unloadedSnippets = snippetIds.filter(
+      (id) => !snippets[id]?._contentLoaded
+    );
+    
+    // Prefetch in batches with delay
+    unloadedSnippets.forEach((snippetId, index) => {
+      const snippet = snippets[snippetId];
+      if (!snippet?.driveFileId) return;
+      
+      setTimeout(() => {
+        queryClient.prefetchQuery({
+          queryKey: driveKeys.file(snippet.driveFileId),
+          queryFn: () => readDriveFile({ fileId: snippet.driveFileId! }),
+          staleTime: 5 * 60 * 1000,
+        });
+      }, Math.floor(index / batchSize) * delay);
+    });
+  }, [snippetIds, snippets, queryClient]);
+}
+```
+
+**When to Implement**: 
+- Phase 1 (Setup & Infrastructure) - React Query setup already includes this
+- Phase 6 (Editor - State & Sync) - integrate with editor component
+
+**LOE**: Already included in React Query setup (Phase 1) and lazy loading (Phase 6)
+
+#### Summary
+
+| Optimization | Priority | Phase | LOE | Status |
+|-------------|----------|-------|-----|--------|
+| Virtualize long lists | P2 | Phase 4/5 | 4-6 hrs | Deferred until needed |
+| Memoize list rows & editor | P2 | Phase 4 | 3-4 hrs | Implement from start |
+| Defer non-active loads | P2 | Phase 1/6 | Included | Already planned |
+
+**Total Additional LOE**: 7-10 hours (virtualization + memoization)
+
+**Benefits**:
+1. **Scalability**: App performs well with 100+ chapters and 500+ snippets
+2. **Better UX**: Faster initial load, smoother scrolling
+3. **Lower Memory**: Only render visible items, load content on demand
+4. **Future-Proof**: Normalized state + virtualization enables even larger projects
+
 ### Accessibility
 - All Material UI components are accessible by default
 - Test with screen readers
@@ -2830,6 +3133,15 @@ export interface AppState {
     - Updated Phase 1 to include state normalization setup
     - Updated file structure to include `selectors.ts`
     - Updated State Management Architecture section to explicitly call out normalization
+  - **Added Performance Guardrails for Big Projects section (P2 Priority)**:
+    - Virtualize long lists in the left rail using `@tanstack/react-virtual` when stories grow large (50+ chapters, 200+ snippets)
+    - Memoize expensive list rows and editor shell using `React.memo`, `useMemo`, and `useCallback`
+    - Avoid passing anonymous callbacks into deep trees to prevent unnecessary re-renders
+    - Defer non-active snippet loads using React Query's prefetching (carries forward vanilla app's lazy loading pattern)
+    - Added code examples for virtualization, memoization, and lazy loading
+    - Added `@tanstack/react-virtual` to dependencies
+    - Updated Performance Considerations section with detailed implementation strategies
+    - Total additional LOE: 7-10 hours (virtualization + memoization)
 - Document all major decisions and changes here
 
 ---
