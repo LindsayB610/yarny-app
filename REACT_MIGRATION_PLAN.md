@@ -721,19 +721,42 @@ This section details exactly which parts of the current codebase can be replaced
 
 ### Implementation Strategy
 
-#### 1. MUI Theme Customization
+#### 1. MUI Theme Customization (Start in Phase 1)
 
-Create `src/theme/theme.ts` that maps the brand palette to MUI's theme:
+Create `src/theme/theme.ts` that maps the brand palette to MUI's theme. **Critical: Include ALL palette tokens and gradient from the start**:
 
 ```typescript
 import { createTheme } from '@mui/material/styles';
 
-// Import the 12-color palette from the Color System section
+// Import the COMPLETE 12-color palette from the Color System section
+// Include all variants: base, soft, dark, on-solid for each accent color
 const brandColors = {
   primary: '#10B981', // Emerald (matches existing primary)
   primaryLight: '#D1FAE5',
   primaryDark: '#059669',
-  // ... all 12 accent colors with their variants
+  
+  // All 12 accent colors with all variants (base, soft, dark, on-solid)
+  accent: {
+    red: { base: '#EF4444', soft: '#FEE2E2', dark: '#991B1B', onSolid: '#FFFFFF' },
+    orange: { base: '#F97316', soft: '#FFEDD5', dark: '#9A3412', onSolid: '#FFFFFF' },
+    amber: { base: '#F59E0B', soft: '#FEF3C7', dark: '#92400E', onSolid: '#1F2937' },
+    yellow: { base: '#EAB308', soft: '#FEF9C3', dark: '#854D0E', onSolid: '#1F2937' },
+    lime: { base: '#84CC16', soft: '#ECFCCB', dark: '#365314', onSolid: '#0B1220' },
+    emerald: { base: '#10B981', soft: '#D1FAE5', dark: '#065F46', onSolid: '#FFFFFF' },
+    teal: { base: '#14B8A6', soft: '#CCFBF1', dark: '#115E59', onSolid: '#FFFFFF' },
+    cyan: { base: '#06B6D4', soft: '#CFFAFE', dark: '#155E75', onSolid: '#FFFFFF' },
+    blue: { base: '#3B82F6', soft: '#DBEAFE', dark: '#1E40AF', onSolid: '#FFFFFF' },
+    indigo: { base: '#6366F1', soft: '#E0E7FF', dark: '#3730A3', onSolid: '#FFFFFF' },
+    violet: { base: '#8B5CF6', soft: '#EDE9FE', dark: '#5B21B6', onSolid: '#FFFFFF' },
+    fuchsia: { base: '#D946EF', soft: '#FAE8FF', dark: '#86198F', onSolid: '#FFFFFF' },
+  },
+  
+  // Neutral colors (text on soft chips)
+  neutrals: {
+    ink900: '#0F172A',
+    ink700: '#334155',
+    ink500: '#64748B',
+  },
 };
 
 export const theme = createTheme({
@@ -745,24 +768,27 @@ export const theme = createTheme({
     },
     // Map accent colors to MUI's secondary, error, warning, info, success
     // Or create custom palette extensions
+    // Include gradient tokens if applicable
   },
-  // Customize component defaults to match brand
+  // Customize component defaults to match brand BEFORE building components
   components: {
     MuiDialog: {
       styleOverrides: {
         paper: {
-          // Match existing modal styling
+          // Match existing modal styling - use brand colors
+          borderRadius: '8px',
+          border: `1px solid ${brandColors.primary}`,
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          // Match existing button styling
+          // Match existing button styling - use brand colors
         },
       },
     },
-    // ... customize all MUI components used
+    // ... customize all MUI components used with brand tokens
   },
 });
 ```
@@ -1054,33 +1080,49 @@ export interface AppState {
 }
 ```
 
-#### 2. Selectors for Derived Views
+#### 2. Memoized Selectors for Derived Views
 
-Create selectors to derive views from normalized state:
+Create **memoized selectors** to derive views from normalized state. Memoization prevents unnecessary re-renders when unrelated entities change:
 
 ```typescript
 // src/store/selectors.ts
 import { useStore } from './store';
+import { useMemo } from 'react';
 
-// Get groups as array (for left-rail list)
+// Get groups as array (for left-rail list) - MEMOIZED
 export function useGroupsList() {
-  return useStore((state) => {
-    const { project, groups } = state;
-    return project.groupIds
+  const groupIds = useStore((state) => state.project.groupIds);
+  const groups = useStore((state) => state.groups);
+  
+  return useMemo(() => {
+    return groupIds
       .map((id) => groups[id])
       .filter(Boolean); // Filter out any missing groups
-  });
+  }, [groupIds, groups]);
 }
 
-// Get snippets for a specific group
+// Get snippets for a specific group - MEMOIZED
 export function useGroupSnippets(groupId: string) {
-  return useStore((state) => {
-    const group = state.groups[groupId];
+  const group = useStore((state) => state.groups[groupId]);
+  const snippets = useStore((state) => state.snippets);
+  
+  return useMemo(() => {
     if (!group) return [];
     return group.snippetIds
-      .map((id) => state.snippets[id])
+      .map((id) => snippets[id])
       .filter(Boolean);
-  });
+  }, [group, snippets]);
+}
+
+// Get active snippet ONLY - for editor viewport (pure component)
+export function useActiveSnippet() {
+  const activeSnippetId = useStore((state) => state.project.activeSnippetId);
+  const snippet = useStore((state) => 
+    activeSnippetId ? state.snippets[activeSnippetId] : null
+  );
+  
+  // Only re-render when active snippet changes, not when other snippets update
+  return useMemo(() => snippet, [snippet]);
 }
 
 // Get filtered groups (for search)
@@ -1118,13 +1160,16 @@ export function useNotesByType(type: 'person' | 'place' | 'thing') {
 }
 ```
 
-#### 3. Benefits of Normalization
+#### 3. Benefits of Normalization + Memoized Selectors
 
 1. **Cheap Renders**: Components only re-render when their specific entities change, not when unrelated entities update
+   - **Editor viewport as pure component**: Only subscribes to active snippet's slice, not entire state tree
+   - **Memoized selectors**: Prevent unnecessary recalculations when unrelated entities change
 2. **Virtualized Lists**: Normalized structure makes it easy to implement virtual scrolling for long lists later
 3. **Single Source of Truth**: Each entity exists once in the store, eliminating duplication
 4. **Efficient Updates**: Updating a single entity doesn't require re-rendering entire lists
 5. **Type Safety**: TypeScript ensures we access entities correctly via selectors
+6. **Prevents State Churn**: Normalized structure + memoized selectors prevent cascading re-renders during typing
 
 #### 4. Migration from Current Structure
 
@@ -1991,20 +2036,22 @@ Add to `package.json`:
 
 #### 4. Conflict Detection
 
-**Decision**: Set up conflict detection infrastructure early (Phase 1), implement hooks and UI in Phase 6.
+**Decision**: Set up conflict detection infrastructure early (Phase 1), implement hooks and UI in Phase 5 (not later).
 
 **Why**:
 - Conflict detection infrastructure (text extraction utilities) is foundational
 - Need to test round-tripping early (Phase 4)
-- Conflict resolution UI can be implemented after core editor is working (Phase 6)
+- **Conflict resolution modal must be in Phase 5** to catch Editor/Docs mismatch issues early before they compound
+- Testing cross-edits (opening Doc in Google Docs while Yarny is idle) requires conflict modal to be functional
 
 **Implementation**:
 - Phase 1: Create text extraction utilities matching Google Docs format
 - Phase 4: Test round-tripping with TipTap editor
-- Phase 6: Implement conflict detection hooks and conflict resolution UI
+- Phase 5: Implement conflict detection hooks and conflict resolution UI (moved from Phase 6)
 - Use React Query to check file metadata
 - Compare timestamps and content
 - Show conflict resolution modal (reuse existing UI patterns)
+- Test cross-edits: Open Doc in Google Docs while Yarny is idle, make edits, return to Yarny and verify conflict detection
 
 ### Implementation Strategy
 
@@ -2257,10 +2304,16 @@ export function comparePlainText(text1: string, text2: string): boolean {
 ### Testing Strategy
 
 1. **Round-Trip Test**: Edit in Yarny → Save → Edit in Google Docs → Check Yarny → Verify no format loss
-2. **Conflict Test**: Edit in Yarny → Edit in Google Docs → Switch snippets → Verify conflict detection
-3. **Reconciliation Test**: Edit in Google Docs (other tab) → Focus Yarny window → Verify reconciliation
-4. **Format Test**: Paste rich text → Verify it's stripped to plain text
-5. **Line Break Test**: Test paragraph breaks (`\n\n`) and soft breaks (`\n`)
+2. **Cross-Edit Test (Critical)**: 
+   - Open Yarny and load a snippet (make it idle, not actively editing)
+   - Open the same Google Doc in Google Docs in another tab/window
+   - Make edits in Google Docs
+   - Return to Yarny (switch snippets or refocus window)
+   - Verify conflict detection works correctly and conflict modal appears
+3. **Conflict Test**: Edit in Yarny → Edit in Google Docs → Switch snippets → Verify conflict detection
+4. **Reconciliation Test**: Edit in Google Docs (other tab) → Focus Yarny window → Verify reconciliation notification
+5. **Format Test**: Paste rich text → Verify it's stripped to plain text
+6. **Line Break Test**: Test paragraph breaks (`\n\n`) and soft breaks (`\n`)
 
 ### Implementation Timeline
 
@@ -2268,7 +2321,8 @@ This spans multiple phases:
 - **Phase 1**: Set up TipTap with plain text configuration, create text extraction utilities
 - **Phase 2**: Implement reconciliation on window focus
 - **Phase 4**: Integrate TipTap editor with round-trip testing
-- **Phase 6**: Create conflict detection hooks, conflict resolution UI and logic
+- **Phase 5**: Create conflict detection hooks, conflict resolution UI and modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)
+- **Phase 5**: Test cross-edits (open Doc in Google Docs while Yarny is idle, make edits, return to Yarny)
 
 **LOE**: 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)
 
@@ -2357,20 +2411,21 @@ Already included in recommended stack:
 - [ ] **Implement Goals UI: Goal Meter (left-rail) and Goal Panel modal at parity with alpha plan**
 - [ ] **Implement "Today • N" chip with progress bar**
 - [ ] Word count updates
+- [ ] **Create conflict detection hooks (`src/hooks/useConflictDetection.ts`)**
+- [ ] **Conflict resolution UI and modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)**
+- [ ] **Test cross-edits: Open Doc in Google Docs while Yarny is idle, make edits, return to Yarny and verify conflict detection works**
 
-**LOE**: 20-30 hours (includes Goals UI implementation with chip and panel)
+**LOE**: 25-35 hours (includes Goals UI implementation with chip and panel, plus conflict resolution modal)
 
-### Phase 6: Lazy Loading, Conflict Resolution & Exports (Week 4)
+### Phase 6: Lazy Loading & Exports (Week 4)
 - [ ] Lazy loading logic using React Query prefetching and `useQueries`
 - [ ] Auto-save functionality using React Query mutations
-- [ ] **Create conflict detection hooks (`src/hooks/useConflictDetection.ts`)**
-- [ ] Conflict resolution UI and logic
 - [ ] Export functionality
 - [ ] **Run full smoke test suite on small and medium projects**
-- [ ] **Validate all operations work correctly**
+- [ ] **Validate all operations work correctly (including conflict resolution from Phase 5)**
 - [ ] **Populate large project (test-large)**
 
-**LOE**: 17-22 hours (Note: Lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
+**LOE**: 12-17 hours (Note: Conflict resolution moved to Phase 5; lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
 
 ### Phase 7: Accessibility, Performance & Polish (Week 4-5)
 - [ ] Accessibility audit and fixes
@@ -2390,19 +2445,32 @@ Already included in recommended stack:
 ## Risk Factors
 
 ### High Risk
-1. **ContentEditable Complexity & Round-Tripping**
-   - Risk: Plain text editor integration and Google Docs round-tripping may have edge cases
-   - Mitigation: Use TipTap (proven library) configured for plain text only, test round-tripping early
-   - Contingency: Allow extra 5-10 hours for editor edge cases and round-trip testing
+1. **Editor/Docs Mismatch & Round-Tripping**
+   - Risk: Plain text editor integration and Google Docs round-tripping may have edge cases, format mismatches, or conflicts
+   - **Mitigation Strategies**:
+     - **Lock down formatting scope for v1**: TipTap configured for plain text only (no rich formatting) - Document, Paragraph, Text, HardBreak, History extensions only
+     - **Test cross-edits early**: Test by opening a Doc in Google Docs while Yarny is idle, making edits, then returning to Yarny to verify conflict detection works correctly
+     - **Conflict modal in Phase 5**: Ensure conflict resolution modal is implemented in Phase 5 (not later) to catch issues early
+     - **Round-trip testing**: Test editing in Yarny → saving → editing in Google Docs → switching snippets in Yarny → verify no format loss
+   - Contingency: Allow extra 5-10 hours for editor edge cases, round-trip testing, and conflict resolution refinement
 
-2. **State Management Migration**
+2. **State Churn Causing Re-renders**
+   - Risk: React re-renders may be slower than vanilla JS, especially with frequent state updates during typing
+   - **Mitigation Strategies**:
+     - **Normalized store + memoized selectors**: All entities keyed by id in Zustand store; use memoized selectors to derive views (prevents unnecessary re-renders when unrelated entities change)
+     - **Treat editor viewport as "pure" component**: Editor component should only subscribe to the active snippet's slice of state, not the entire state tree
+     - **Memoize list rows**: Use `React.memo` for expensive list components (GroupRow, SnippetRow) with custom comparison functions
+     - **Memoize callbacks**: Use `useCallback` for event handlers passed to child components to prevent re-render cascades
+   - Contingency: Profile with React DevTools, add additional memoization if needed
+
+3. **State Management Migration**
    - Risk: Complex state object with many interdependencies
-   - Mitigation: Use Zustand for simpler migration path than Redux
+   - Mitigation: Use Zustand for simpler migration path than Redux, normalize state structure from the start
    - Contingency: Incremental migration, test thoroughly
 
-3. **Performance with Large Stories**
+4. **Performance with Large Stories**
    - Risk: React re-renders may be slower than vanilla JS
-   - Mitigation: Use React.memo, useMemo, useCallback strategically
+   - Mitigation: Use React.memo, useMemo, useCallback strategically, virtualize long lists when needed
    - Contingency: Profile and optimize as needed
 
 ### Medium Risk
@@ -2416,9 +2484,18 @@ Already included in recommended stack:
    - Mitigation: Create feature checklist, test each feature
    - Contingency: Keep old code until new version is complete
 
-3. **CSS/Styling Migration**
+3. **Design Drift with MUI**
+   - Risk: MUI's default styling may cause visual drift from existing brand design
+   - **Mitigation Strategies**:
+     - **Start theme with palette tokens and gradient from Phase 1**: Create `src/theme/theme.ts` with all 12-color accent palette and gradient tokens mapped to MUI's theme system from the very start
+     - **Brand as source of truth**: Existing 12-color categorical accent system and gradient aesthetic are the design foundation - MUI components will be customized to match this palette, not the other way around
+     - **Theme provider in app root**: Set up ThemeProvider in Phase 1 so all components inherit the brand feel from day one
+     - **Customize component defaults early**: Match MUI component defaults (Dialog, Button, Menu, Tabs, etc.) to existing design in Phase 1, before building components
+   - Contingency: Can adjust theme customization incrementally, but starting early prevents drift
+
+4. **CSS/Styling Migration**
    - Risk: Styling may break during migration
-   - Mitigation: Use CSS modules or styled-components for isolation
+   - Mitigation: Use CSS modules or styled-components for isolation, start with brand palette in MUI theme from Phase 1
    - Contingency: Can reuse existing CSS with minor updates
 
 ### Low Risk
@@ -3479,13 +3556,25 @@ export interface AppState {
 
 ## Changelog
 
+- **2025-01-XX**: Addressed risk mitigation feedback
+  - **Risk Factors Section Enhanced**:
+    - Added detailed mitigation strategies for Editor/Docs mismatch risk: lock down formatting scope for v1, test cross-edits, ensure conflict modal is in Phase 5 (not later)
+    - Added detailed mitigation strategies for State churn causing re-renders: normalized store + memoized selectors, treat editor viewport as "pure" component
+    - Added Design drift with MUI risk: start theme with palette tokens and gradient from Phase 1
+  - **Conflict Modal Moved to Phase 5**: Moved conflict resolution modal from Phase 6 to Phase 5 to catch Editor/Docs mismatch issues early
+  - **MUI Theming Strategy Enhanced**: Emphasized starting with ALL palette tokens and gradient from Phase 1, before building any components
+  - **State Normalization Enhanced**: Added memoized selectors and pure editor component pattern to prevent state churn
+  - **Testing Strategy Enhanced**: Added cross-edit testing (open Doc in Google Docs while Yarny is idle) to catch conflict detection issues early
+  - Updated Phase 5 LOE to 25-35 hours (includes conflict resolution modal)
+  - Updated Phase 6 LOE to 12-17 hours (conflict resolution removed)
+
 - **2025-01-XX**: Reorganized migration phases based on priority feedback
   - **Phase 1** (unchanged): Setup + typed store skeleton + data-fetch layer baseline
   - **Phase 2**: Moved API contract formalization here; added router setup; auth + router + typed API contract
   - **Phase 3**: Added virtualization stub capability (set up infrastructure even if not used yet)
   - **Phase 4**: Reordered priorities - footer counts and save status first; tri-pane editor shell; TipTap constrained to plain text round-trip
-  - **Phase 5**: Library features (drag/drop, dialogs, tabs) and Goals UI (chip + panel) at parity with alpha plan
-  - **Phase 6**: Lazy loading, conflict resolution, exports (moved conflict detection hooks here from Phase 1/2)
+  - **Phase 5**: Library features (drag/drop, dialogs, tabs), Goals UI (chip + panel) at parity with alpha plan, **conflict resolution modal (moved from Phase 6 to catch Editor/Docs mismatch issues early)**
+  - **Phase 6**: Lazy loading, exports (conflict resolution moved to Phase 5)
   - **Phase 7**: Accessibility pass, performance touches, and polish
   - Updated all phase references throughout document (test strategy, performance guardrails, conflict detection timeline)
   - Updated LOE estimates to reflect phase reorganization
