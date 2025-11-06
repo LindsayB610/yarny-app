@@ -47,6 +47,7 @@
             <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
             <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
             <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
+            <li><a href="#mui-theming-strategy" class="nav-link">MUI Theming Strategy (P2)</a></li>
             <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
             <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
             <li><a href="#state-normalization" class="nav-link">State Normalization (P1)</a></li>
@@ -693,6 +694,133 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Handles all the drag/drop logic for chapters and snippets</li>
             <li>✅ Better visual feedback and drop zone detection than native events</li>
           </ul>
+        </section>
+
+        <section class="docs-section" id="mui-theming-strategy">
+          <h2 id="mui-theming-strategy-heading">MUI Theming Strategy: Keep Brand Look, Use MUI for Plumbing (P2)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Principle</strong>: Keep the brand look; let MUI do the plumbing.</p>
+          <p><strong>Why</strong>: MUI is ergonomic but visually opinionated. You've already defined a 12-color system and gradient aesthetic; keep that as the design source of truth while using MUI for accessibility and behaviors. The plan already codifies the palette and usage guidelines—excellent.</p>
+
+          <h3>Design Philosophy</h3>
+          <ol>
+            <li><strong>Brand as Source of Truth</strong>: The existing 12-color categorical accent system and gradient aesthetic are the design foundation. MUI components will be customized to match this palette, not the other way around.</li>
+            <li><strong>MUI for Behaviors</strong>: Use MUI components for:
+              <ul>
+                <li>Accessibility (ARIA attributes, keyboard navigation, focus management)</li>
+                <li>Interaction behaviors (modal open/close, menu positioning, form validation)</li>
+                <li>Component plumbing (Dialog, Menu, Tabs, Tooltip, Accordion, DatePicker)</li>
+                <li>Built-in accessibility features that would be time-consuming to implement from scratch</li>
+              </ul>
+            </li>
+            <li><strong>Customization Over Defaults</strong>: MUI's theme system will be extensively customized to:
+              <ul>
+                <li>Map the 12-color accent palette to MUI's color system</li>
+                <li>Preserve the gradient aesthetic where applicable</li>
+                <li>Maintain the existing visual hierarchy and spacing</li>
+                <li>Keep the minimalist, clean design language</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. MUI Theme Customization</h4>
+          <p>Create <code>src/theme/theme.ts</code> that maps the brand palette to MUI's theme:</p>
+          <pre><code>import { createTheme } from '@mui/material/styles';
+
+// Import the 12-color palette from the Color System section
+const brandColors = {
+  primary: '#10B981', // Emerald (matches existing primary)
+  primaryLight: '#D1FAE5',
+  primaryDark: '#059669',
+  // ... all 12 accent colors with their variants
+};
+
+export const theme = createTheme({
+  palette: {
+    primary: {
+      main: brandColors.primary,
+      light: brandColors.primaryLight,
+      dark: brandColors.primaryDark,
+    },
+    // Map accent colors to MUI's secondary, error, warning, info, success
+    // Or create custom palette extensions
+  },
+  // Customize component defaults to match brand
+  components: {
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          // Match existing modal styling
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          // Match existing button styling
+        },
+      },
+    },
+    // ... customize all MUI components used
+  },
+});</code></pre>
+
+          <h4>2. Component-Level Styling</h4>
+          <p>For components that need exact brand matching:</p>
+          <ul>
+            <li>Use MUI's <code>sx</code> prop for one-off customizations</li>
+            <li>Use <code>styled()</code> API for reusable branded components</li>
+            <li>Keep MUI's accessibility and behavior, override only visual styling</li>
+          </ul>
+          <pre><code>import { Dialog, styled } from '@mui/material';
+
+// Keep MUI Dialog behavior, customize appearance
+const BrandedDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    // Match existing modal design exactly
+    borderRadius: '8px',
+    // Use brand colors
+    border: `1px solid ${theme.palette.primary.main}`,
+  },
+}));</code></pre>
+
+          <h4>3. Color System Integration</h4>
+          <p>The existing 12-color categorical accent system (defined in the Color System section) will be:</p>
+          <ul>
+            <li><strong>Preserved</strong>: All color variants (base, soft, dark, on-solid) remain as defined</li>
+            <li><strong>Mapped</strong>: Integrated into MUI's theme system for consistent usage</li>
+            <li><strong>Extended</strong>: Used in MUI components via theme overrides and custom props</li>
+          </ul>
+
+          <h4>4. Usage Guidelines</h4>
+          <ul>
+            <li><strong>Use MUI components</strong> for: Modals (Dialog), Menus, Tabs, Tooltips, Accordions, DatePickers, Forms</li>
+            <li><strong>Customize appearance</strong> to match: Existing color palette, spacing, typography, border radius, shadows</li>
+            <li><strong>Keep MUI behaviors</strong>: Accessibility, keyboard navigation, focus management, ARIA attributes</li>
+            <li><strong>Preserve brand identity</strong>: Visual design remains consistent with existing app</li>
+          </ul>
+
+          <h3>Benefits</h3>
+          <ol>
+            <li><strong>Accessibility Out of the Box</strong>: MUI components provide full keyboard navigation, ARIA attributes, and focus management without custom implementation</li>
+            <li><strong>Reduced Code</strong>: ~1,000+ lines of modal, menu, tab code replaced by MUI</li>
+            <li><strong>Brand Consistency</strong>: Theme customization ensures visual consistency with existing design</li>
+            <li><strong>Maintainability</strong>: MUI's theming system makes it easy to update brand colors globally</li>
+            <li><strong>Best of Both Worlds</strong>: Brand look + MUI's proven accessibility and behaviors</li>
+          </ol>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 1</strong> (Setup & Infrastructure):</p>
+          <ul>
+            <li>Create <code>src/theme/theme.ts</code> with brand color mappings</li>
+            <li>Customize MUI component defaults to match existing design</li>
+            <li>Set up theme provider in app root</li>
+            <li>Test theme customization with sample components</li>
+          </ul>
+          <p><strong>LOE</strong>: 4-6 hours (adds time but ensures brand consistency and proper MUI integration)</p>
         </section>
 
         <section class="docs-section" id="effort-estimation">
@@ -1827,8 +1955,11 @@ export async function writeDriveFile(
             <li><strong>Create selectors in <code>src/store/selectors.ts</code> to derive views (e.g., left-rail lists)</strong></li>
             <li><strong>Update all components to use selectors instead of direct state access</strong></li>
             <li><strong>Replace all ad-hoc Drive API calls with React Query hooks</strong></li>
+            <li><strong>Set up MUI theme customization (<code>src/theme/theme.ts</code>) with brand color mappings</strong></li>
+            <li><strong>Customize MUI component defaults to match existing design</strong></li>
+            <li><strong>Set up ThemeProvider in app root</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 30-42 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, and state normalization)</p>
+          <p><strong>LOE:</strong> 34-48 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, early conflict detection, state normalization, and MUI theming)</p>
 
           <h3>Phase 2: Authentication (Week 1-2)</h3>
           <ul>
@@ -2165,6 +2296,8 @@ export function App(): JSX.Element {
 │   │   └── ...
 │   ├── lib/
 │   │   └── react-query.ts        # React Query QueryClient configuration
+│   ├── theme/
+│   │   └── theme.ts               # MUI theme customization with brand color mappings
 │   ├── utils/
 │   │   ├── wordCount.ts
 │   │   ├── export.ts
