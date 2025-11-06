@@ -153,7 +153,30 @@
     <!-- Footer -->
     <footer id="footerBar" class="footer-bar">
       <div class="footer-left">
-        <!-- Placeholder icons -->
+        <div class="export-menu">
+          <button id="exportBtn" class="export-button" title="Export">
+            <i class="material-icons">file_download</i>
+            <span>Export</span>
+          </button>
+          <div id="exportDropdown" class="export-dropdown hidden">
+            <button class="export-option" onclick="exportChapters()">
+              <i class="material-icons">auto_stories</i>
+              Export All Chapters
+            </button>
+            <button class="export-option" onclick="exportPeople()">
+              <i class="material-icons">people</i>
+              Export All People
+            </button>
+            <button class="export-option" onclick="exportPlaces()">
+              <i class="material-icons">place</i>
+              Export All Places
+            </button>
+            <button class="export-option" onclick="exportThings()">
+              <i class="material-icons">category</i>
+              Export All Things
+            </button>
+          </div>
+        </div>
       </div>
       <div class="footer-center">
         <span id="wordCount">Words: 0</span>
@@ -169,6 +192,35 @@
         <button id="logoutBtn" class="logout-button" onclick="logout()" title="Sign out">Sign out</button>
       </div>
     </footer>
+
+    <!-- Export Filename Modal -->
+    <div id="exportFilenameModal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Export File Name</h2>
+          <button class="modal-close" onclick="closeExportFilenameModal()">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="exportFilenameInput">File Name</label>
+            <input 
+              type="text" 
+              id="exportFilenameInput" 
+              name="exportFilenameInput"
+              placeholder="Enter file name"
+              autocomplete="off"
+            >
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeExportFilenameModal()">Cancel</button>
+            <button type="button" class="btn-primary" id="exportFilenameConfirmBtn" onclick="confirmExportFilename()">Export</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Story Info Modal -->
     <div id="storyInfoModal" class="modal hidden">

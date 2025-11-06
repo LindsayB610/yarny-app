@@ -5302,5 +5302,293 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Close comments warning modal on overlay click
   document.querySelector('#commentsWarningModal .modal-overlay').addEventListener('click', cancelCommentsWarning);
+  
+  // Export dropdown toggle
+  const exportBtn = document.getElementById('exportBtn');
+  const exportDropdown = document.getElementById('exportDropdown');
+  
+  if (exportBtn && exportDropdown) {
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportDropdown.classList.toggle('hidden');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!exportBtn.contains(e.target) && !exportDropdown.contains(e.target)) {
+        exportDropdown.classList.add('hidden');
+      }
+    });
+  }
+  
+  // Export filename modal keyboard shortcuts
+  const exportFilenameInput = document.getElementById('exportFilenameInput');
+  if (exportFilenameInput) {
+    exportFilenameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmExportFilename();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeExportFilenameModal();
+      }
+    });
+  }
+  
+  // Close export filename modal on overlay click
+  const exportFilenameModal = document.getElementById('exportFilenameModal');
+  if (exportFilenameModal) {
+    exportFilenameModal.querySelector('.modal-overlay')?.addEventListener('click', closeExportFilenameModal);
+  }
 });
+
+// ============================================
+// Export Functionality
+// ============================================
+
+// Store pending export info
+let pendingExport = null;
+
+/**
+ * Open filename modal for chapters export
+ */
+function exportChapters() {
+  if (!state.drive.storyFolderId) {
+    alert('Story folder not found. Please reload the page.');
+    return;
+  }
+  
+  // Check if there are chapters to export
+  const groups = state.project.groupIds
+    .map(id => state.groups[id])
+    .filter(group => group)
+    .sort((a, b) => a.position - b.position);
+  
+  if (groups.length === 0) {
+    alert('No chapters to export.');
+    return;
+  }
+  
+  // Store export info
+  pendingExport = {
+    type: 'chapters',
+    suggestedName: `${state.project.title || 'Untitled Story'} - All Chapters`
+  };
+  
+  // Open modal with suggested name
+  openExportFilenameModal();
+}
+
+/**
+ * Open filename modal for People export
+ */
+function exportPeople() {
+  openExportFilenameModalForKind('person', 'People');
+}
+
+/**
+ * Open filename modal for Places export
+ */
+function exportPlaces() {
+  openExportFilenameModalForKind('place', 'Places');
+}
+
+/**
+ * Open filename modal for Things export
+ */
+function exportThings() {
+  openExportFilenameModalForKind('thing', 'Things');
+}
+
+/**
+ * Helper to open filename modal for kind-based exports
+ */
+function openExportFilenameModalForKind(kind, kindDisplayName) {
+  if (!state.drive.storyFolderId) {
+    alert('Story folder not found. Please reload the page.');
+    return;
+  }
+  
+  // Check if there are snippets to export
+  const snippets = state.project.snippetIds
+    .map(id => state.snippets[id])
+    .filter(snippet => snippet && snippet.kind === kind)
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
+  
+  if (snippets.length === 0) {
+    alert(`No ${kindDisplayName.toLowerCase()} to export.`);
+    return;
+  }
+  
+  // Store export info
+  pendingExport = {
+    type: 'kind',
+    kind: kind,
+    kindDisplayName: kindDisplayName,
+    suggestedName: `${state.project.title || 'Untitled Story'} - All ${kindDisplayName}`
+  };
+  
+  // Open modal with suggested name
+  openExportFilenameModal();
+}
+
+/**
+ * Open the export filename modal
+ */
+function openExportFilenameModal() {
+  const modal = document.getElementById('exportFilenameModal');
+  const input = document.getElementById('exportFilenameInput');
+  
+  if (!modal || !input) return;
+  
+  // Pre-populate with suggested name
+  input.value = pendingExport?.suggestedName || '';
+  
+  // Show modal
+  modal.classList.remove('hidden');
+  
+  // Focus and select the input
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 100);
+  
+  // Close dropdown if open
+  document.getElementById('exportDropdown')?.classList.add('hidden');
+}
+
+/**
+ * Close the export filename modal
+ */
+function closeExportFilenameModal() {
+  const modal = document.getElementById('exportFilenameModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  pendingExport = null;
+}
+
+/**
+ * Confirm export and proceed with the actual export
+ */
+async function confirmExportFilename() {
+  const input = document.getElementById('exportFilenameInput');
+  const filename = input?.value?.trim();
+  
+  if (!filename) {
+    alert('Please enter a file name.');
+    return;
+  }
+  
+  if (!pendingExport) {
+    alert('Export information not found. Please try again.');
+    closeExportFilenameModal();
+    return;
+  }
+  
+  // Close modal
+  closeExportFilenameModal();
+  
+  // Show loading state
+  const exportBtn = document.getElementById('exportBtn');
+  const originalContent = exportBtn.innerHTML;
+  exportBtn.disabled = true;
+  exportBtn.innerHTML = '<i class="material-icons" style="animation: spin 1s linear infinite;">hourglass_empty</i><span>Exporting...</span>';
+  
+  try {
+    let combinedContent = '';
+    
+    if (pendingExport.type === 'chapters') {
+      // Export chapters
+      const groups = state.project.groupIds
+        .map(id => state.groups[id])
+        .filter(group => group)
+        .sort((a, b) => a.position - b.position);
+      
+      groups.forEach((group, groupIndex) => {
+        // Add chapter title
+        combinedContent += `# ${group.title}\n\n`;
+        
+        // Get snippets in this group, sorted by position
+        const snippets = group.snippetIds
+          .map(id => state.snippets[id])
+          .filter(snippet => snippet)
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+        
+        snippets.forEach((snippet) => {
+          // Add snippet title
+          if (snippet.title) {
+            combinedContent += `## ${snippet.title}\n\n`;
+          }
+          
+          // Add snippet body
+          if (snippet.body) {
+            combinedContent += snippet.body.trim() + '\n\n';
+          }
+        });
+        
+        // Add separator between chapters (except after last one)
+        if (groupIndex < groups.length - 1) {
+          combinedContent += '---\n\n';
+        }
+      });
+    } else if (pendingExport.type === 'kind') {
+      // Export by kind (People/Places/Things)
+      const snippets = state.project.snippetIds
+        .map(id => state.snippets[id])
+        .filter(snippet => snippet && snippet.kind === pendingExport.kind)
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+      
+      snippets.forEach((snippet, index) => {
+        // Add snippet title
+        if (snippet.title) {
+          combinedContent += `## ${snippet.title}\n\n`;
+        }
+        
+        // Add snippet body
+        if (snippet.body) {
+          combinedContent += snippet.body.trim() + '\n\n';
+        }
+        
+        // Add separator between snippets (except after last one)
+        if (index < snippets.length - 1) {
+          combinedContent += '---\n\n';
+        }
+      });
+    }
+    
+    // Create Google Doc with user-provided filename
+    await window.driveAPI.write(
+      filename,
+      combinedContent.trim(),
+      null,
+      state.drive.storyFolderId,
+      'application/vnd.google-apps.document'
+    );
+    
+    // Show success
+    exportBtn.innerHTML = '<i class="material-icons">check</i><span>Exported!</span>';
+    setTimeout(() => {
+      exportBtn.innerHTML = originalContent;
+      exportBtn.disabled = false;
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    const exportType = pendingExport?.type === 'chapters' ? 'chapters' : pendingExport?.kindDisplayName?.toLowerCase() || 'content';
+    alert(`Failed to export ${exportType}: ` + (error.message || 'Unknown error'));
+    exportBtn.innerHTML = originalContent;
+    exportBtn.disabled = false;
+  } finally {
+    pendingExport = null;
+  }
+}
+
+// Export functions for global access
+window.exportChapters = exportChapters;
+window.exportPeople = exportPeople;
+window.exportPlaces = exportPlaces;
+window.exportThings = exportThings;
+window.closeExportFilenameModal = closeExportFilenameModal;
+window.confirmExportFilename = confirmExportFilename;
 

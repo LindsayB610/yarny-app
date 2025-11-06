@@ -65,6 +65,11 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 - **Auto-Save**: Automatic saving to Google Drive as you write
 - **Save Status**: Visual indicator showing save state (idle/saving/saved)
 - **Resume Where You Left Off**: Editor automatically opens to the most recently edited snippet (chapters or People/Places/Things) when you return to a story
+- **Export Functionality**: Export combined content to Google Docs
+  - Export all chapters as a single document (combines all chapter snippets in order)
+  - Export all People, Places, or Things as separate combined documents
+  - Custom filename prompt with suggested names based on story title
+  - Files are created in the story folder in Google Drive
 
 ### Keyboard Shortcuts
 - `Cmd/Ctrl + N`: Create new snippet
@@ -285,6 +290,10 @@ yarny-app/
     - **Unified Fields**: The same goal fields appear in both the "New Story" modal and the "Today" goal panel, ensuring consistency
     - **Persistent Storage**: Goal settings are saved to `goal.json` and automatically loaded when editing
 13. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
+14. **Export**: Export combined content to Google Docs with custom filenames
+    - Export all chapters as a single combined document
+    - Export all People, Places, or Things as separate combined documents
+    - Each export creates a Google Doc in the story folder with all snippets combined in order
 
 ## Development
 
@@ -459,6 +468,7 @@ The status updates automatically every 5 minutes. You can also specify a specifi
 - **Timeout Handling**: Added timeout protection to prevent function hangs
 - **Refresh from Drive**: Added manual sync button to remove deleted stories
 - **Google Docs Support**: Full support for creating and editing Google Docs
+- **Export Functionality**: Export combined chapters, people, places, or things to Google Docs with custom filenames
 - **Error Handling**: Improved error handling and logging throughout
 
 ## License

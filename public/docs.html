@@ -45,6 +45,7 @@
             <li><a href="#writing-in-the-editor" class="nav-link">Writing in the Editor</a></li>
             <li><a href="#searching" class="nav-link">Searching</a></li>
             <li><a href="#people-places-things" class="nav-link">People, Places, and Things</a></li>
+            <li><a href="#exporting" class="nav-link">Exporting Content</a></li>
             <li><a href="#word-count-goals" class="nav-link">Word Count and Goals</a></li>
             <li><a href="#google-drive-integration" class="nav-link">Google Drive Integration</a></li>
             <li><a href="#troubleshooting" class="nav-link">Troubleshooting</a></li>
@@ -200,6 +201,53 @@
           <p><strong>Note:</strong> All snippets (chapters and People/Places/Things) now open in the main editor window for a consistent editing experience. Your changes are automatically saved in the background when you switch between snippets.</p>
         </section>
 
+        <section class="docs-section" id="exporting">
+          <h2>Exporting Content</h2>
+          
+          <p>Yarny allows you to export your content as combined Google Docs. This is useful for creating compiled versions of your work, sharing with others, or creating backups.</p>
+          
+          <h3>Export Options</h3>
+          <p>You can export content in four ways:</p>
+          <ul>
+            <li><strong>Export All Chapters</strong>: Combines all chapter snippets in the order they appear in the left rail into a single Google Doc</li>
+            <li><strong>Export All People</strong>: Combines all People snippets into a single Google Doc</li>
+            <li><strong>Export All Places</strong>: Combines all Places snippets into a single Google Doc</li>
+            <li><strong>Export All Things</strong>: Combines all Things snippets into a single Google Doc</li>
+          </ul>
+          
+          <h3>How to Export</h3>
+          <ol>
+            <li>Open the story you want to export content from</li>
+            <li>Click the "Export" button in the footer (left side)</li>
+            <li>Select the export option you want (Chapters, People, Places, or Things)</li>
+            <li>A dialog will appear with a suggested filename (e.g., "My Story - All Chapters")</li>
+            <li>Edit the filename if desired, or use the suggested name</li>
+            <li>Click "Export" to create the file</li>
+          </ol>
+          
+          <h3>Export File Format</h3>
+          <p>Exported files are created as Google Docs in your story folder in Google Drive. The content is formatted as follows:</p>
+          <ul>
+            <li><strong>Chapter Exports</strong>: Chapter titles appear as main headings (#), snippet titles appear as subheadings (##), and snippet content follows in order</li>
+            <li><strong>People/Places/Things Exports</strong>: Snippet titles appear as subheadings (##), followed by snippet content, with separators between entries</li>
+          </ul>
+          
+          <h3>Export Location</h3>
+          <p>All exported files are saved directly in your story folder in Google Drive, making them easy to find alongside your other story files.</p>
+          
+          <h3>Export Behavior</h3>
+          <p>When exporting:</p>
+          <ul>
+            <li>Content is combined in the order it appears in Yarny (based on snippet positions)</li>
+            <li>Empty snippets are skipped</li>
+            <li>The export button shows a loading state while the file is being created</li>
+            <li>You'll see a success message when the export completes</li>
+            <li>If an export fails, you'll see an error message with details</li>
+          </ul>
+          
+          <p><strong>Note:</strong> Exporting does not modify your original snippets - it creates new Google Doc files with combined content.</p>
+        </section>
+
         <section class="docs-section" id="word-count-goals">
           <h2>Word Count and Goals</h2>
           
@@ -306,6 +354,9 @@
 
           <h3>Refreshing from Drive</h3>
           <p>Click the "↻ Refresh" button on the Stories page to sync any changes made outside of Yarny.</p>
+
+          <h3>Exporting to Google Docs</h3>
+          <p>Yarny includes export functionality that creates combined Google Docs from your content. See the <a href="#exporting">Exporting Content</a> section for details on how to export chapters, people, places, and things.</p>
 
           <h3>Comments and Tracked Changes Protection</h3>
           <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin: 16px 0; border-radius: var(--radius-sm);">
@@ -439,6 +490,7 @@
             <li><strong>Switch between snippets freely</strong>: Your changes are automatically saved when switching, so you can move at your own pace</li>
             <li><strong>All snippets work the same</strong>: Whether they're in chapters or People/Places/Things, all snippets open in the main editor</li>
             <li><strong>Set writing goals</strong>: Use the goal meter to track your progress and stay motivated</li>
+            <li><strong>Export your work</strong>: Use the export feature to create combined Google Docs for sharing, backups, or compiling your work</li>
             <li><strong>Use keyboard shortcuts</strong>: Learn the keyboard shortcuts to speed up your workflow</li>
           </ul>
         </section>
