@@ -350,30 +350,34 @@ export function useDrive(folderId: string): UseDriveResult {
           </ul>
 
           <h4>4. Version Slider Affordance</h4>
-          <p><strong>Location</strong>: Footer bar (or editor area, depending on implementation)</p>
-          <p><strong>Current Implementation</strong>:</p>
+          <p><strong>Location</strong>: Footer bar (historical Yarny UI - core affordance)</p>
+          <p><strong>Historical Implementation</strong> (2011-2015 Yarny app):</p>
           <ul>
-            <li><strong>Note</strong>: This may refer to a feature from the original 2011-2015 Yarny app that isn't in the current codebase</li>
-            <li>If present, it would allow users to view/edit different versions of a snippet</li>
-            <li>May be a timeline/history slider or version selector</li>
+            <li><strong>Core Feature</strong>: The version slider was a fundamental UI affordance in the original Yarny app footer</li>
+            <li>Allows users to view/edit different versions of a snippet</li>
+            <li>Timeline/history slider or version selector in the footer area</li>
+            <li><strong>Note</strong>: This feature may not be present in the current codebase but was a core part of Yarny's historical UX</li>
           </ul>
           <p><strong>Preservation Requirements</strong>:</p>
           <ul>
             <li>✅ If present in current app: Preserve exact design and behavior</li>
-            <li>✅ If not present but referenced in original app: Document for future implementation</li>
-            <li>✅ Maintain same visual affordance and interaction pattern</li>
+            <li>✅ If not present: Document for future implementation to restore this core historical affordance</li>
+            <li>✅ Maintain same visual affordance and interaction pattern as original design</li>
+            <li>✅ Reference original 2011-2015 UI documentation for specification details</li>
           </ul>
           <p><strong>Investigation Needed</strong>:</p>
           <ul>
             <li>Check reference documentation for original version slider implementation</li>
-            <li>Verify if this feature exists in current codebase under different name</li>
-            <li>Document findings and implementation plan</li>
+            <li>Verify if this feature exists in current codebase under different name or in a different location</li>
+            <li>Review reference docs (Yarny_UI_Evidence_Book_Annotated_IMAGES.pdf, Yarny_UI_Companion_Notes_and_Spec_Crosswalk.pdf) for version slider specifications</li>
+            <li>Document findings and implementation plan for restoration</li>
           </ul>
           <p><strong>React Implementation</strong>:</p>
           <ul>
-            <li>If feature exists: Create <code>VersionSlider.tsx</code> component</li>
-            <li>Preserve exact design and interaction patterns</li>
-            <li>If not present: Document in migration plan for future consideration</li>
+            <li>If feature exists: Create <code>VersionSlider.tsx</code> component in <code>src/components/shared/</code> (footer area)</li>
+            <li>Preserve exact design and interaction patterns from historical UI</li>
+            <li>If not present: Document as future feature to restore this core historical affordance</li>
+            <li>Anchor specification to original 2011-2015 UI design to ensure it doesn't get lost</li>
           </ul>
 
           <h3>Implementation Strategy</h3>
@@ -427,11 +431,13 @@ export function useDrive(folderId: string): UseDriveResult {
                 <li>Test visual parity with current app</li>
               </ul>
             </li>
-            <li><strong>Version Slider</strong> (if applicable):
+            <li><strong>Version Slider</strong> (historical core affordance):
               <ul>
-                <li>Investigate and document current implementation</li>
-                <li>Create component if feature exists</li>
-                <li>Preserve exact design and behavior</li>
+                <li>Investigate current implementation status</li>
+                <li>Review historical UI documentation for specification</li>
+                <li>Create component if feature exists in current codebase</li>
+                <li>If not present, document for future restoration of this core historical affordance</li>
+                <li>Preserve exact design and behavior from original 2011-2015 UI</li>
               </ul>
             </li>
           </ol>
@@ -468,7 +474,7 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Goal meter looks and behaves identically to current app</li>
             <li>✅ Today chip looks and behaves identically to current app</li>
             <li>✅ Footer word/character counts look and behave identically to current app</li>
-            <li>✅ Version slider (if applicable) looks and behaves identically to current app</li>
+            <li>✅ Version slider (if present) looks and behaves identically to historical/current app, or is documented for future restoration</li>
             <li>✅ Side-by-side visual comparison shows pixel-perfect match</li>
             <li>✅ User testing confirms no "uncanny valley" effect</li>
           </ul>
@@ -477,7 +483,7 @@ export function useDrive(folderId: string): UseDriveResult {
           <ul>
             <li><strong>Documentation & Audit</strong>: 2-3 hours</li>
             <li><strong>Component Implementation</strong>: 4-6 hours (Goal Meter, Today Chip, Footer)</li>
-            <li><strong>Version Slider Investigation</strong>: 1-2 hours (if needed)</li>
+            <li><strong>Version Slider Investigation & Documentation</strong>: 1-2 hours (investigate current status, document historical specification for future restoration if needed)</li>
             <li><strong>Visual Parity Testing</strong>: 2-3 hours</li>
             <li><strong>Total</strong>: 9-14 hours</li>
           </ul>
@@ -867,7 +873,6 @@ export function useDrive(folderId: string): UseDriveResult {
     "react-dom": "^18.x",
     "react-router-dom": "^6.x",
     "@tiptap/react": "^2.x",
-    "@tiptap/starter-kit": "^2.x",
     "@tiptap/extension-document": "^2.x",
     "@tiptap/extension-paragraph": "^2.x",
     "@tiptap/extension-text": "^2.x",
@@ -2235,9 +2240,9 @@ export async function writeDriveFile(
           <p>Already included in recommended stack:</p>
           <ul>
             <li><code>@tiptap/react</code> - Editor framework</li>
-            <li>Individual TipTap extensions: <code>@tiptap/extension-document</code>, <code>@tiptap/extension-paragraph</code>, <code>@tiptap/extension-text</code>, <code>@tiptap/extension-hard-break</code>, <code>@tiptap/extension-history</code></li>
+            <li>Individual TipTap extensions (Document, Paragraph, Text, HardBreak, History) - configured separately</li>
           </ul>
-          <p><strong>Note</strong>: Do NOT use full starter-kit - configure extensions individually to exclude formatting.</p>
+          <p><strong>Note</strong>: Individual extensions are used instead of starter-kit to maintain strict plain text configuration and exclude all formatting capabilities.</p>
         </section>
 
         <section class="docs-section" id="migration-phases">
@@ -3617,7 +3622,7 @@ export interface AppState {
                     <li>Updated Phase 1 to include TipTap plain text configuration and early conflict detection</li>
                     <li>Updated Phase 2 to include reconciliation on window focus</li>
                     <li>Updated Phase 4 to integrate TipTap with conflict detection and test round-tripping</li>
-                    <li>Added TipTap extension dependencies (individual extensions, not full starter-kit)</li>
+                    <li>Added TipTap extension dependencies (individual extensions only - starter-kit explicitly excluded to prevent accidental import drift)</li>
                     <li>Added editor truth and round-tripping to success criteria</li>
                   </ul>
                 </li>

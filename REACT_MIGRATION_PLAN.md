@@ -264,27 +264,31 @@ export function useDrive(folderId: string): UseDriveResult {
 
 #### 4. Version Slider Affordance
 
-**Location**: Footer bar (or editor area, depending on implementation)
+**Location**: Footer bar (historical Yarny UI - core affordance)
 
-**Current Implementation**:
-- **Note**: This may refer to a feature from the original 2011-2015 Yarny app that isn't in the current codebase
-- If present, it would allow users to view/edit different versions of a snippet
-- May be a timeline/history slider or version selector
+**Historical Implementation** (2011-2015 Yarny app):
+- **Core Feature**: The version slider was a fundamental UI affordance in the original Yarny app footer
+- Allows users to view/edit different versions of a snippet
+- Timeline/history slider or version selector in the footer area
+- **Note**: This feature may not be present in the current codebase but was a core part of Yarny's historical UX
 
 **Preservation Requirements**:
 - ✅ If present in current app: Preserve exact design and behavior
-- ✅ If not present but referenced in original app: Document for future implementation
-- ✅ Maintain same visual affordance and interaction pattern
+- ✅ If not present: Document for future implementation to restore this core historical affordance
+- ✅ Maintain same visual affordance and interaction pattern as original design
+- ✅ Reference original 2011-2015 UI documentation for specification details
 
 **Investigation Needed**:
 - Check reference documentation for original version slider implementation
-- Verify if this feature exists in current codebase under different name
-- Document findings and implementation plan
+- Verify if this feature exists in current codebase under different name or in a different location
+- Review reference docs (Yarny_UI_Evidence_Book_Annotated_IMAGES.pdf, Yarny_UI_Companion_Notes_and_Spec_Crosswalk.pdf) for version slider specifications
+- Document findings and implementation plan for restoration
 
 **React Implementation**:
-- If feature exists: Create `VersionSlider.tsx` component
-- Preserve exact design and interaction patterns
-- If not present: Document in migration plan for future consideration
+- If feature exists: Create `VersionSlider.tsx` component in `src/components/shared/` (footer area)
+- Preserve exact design and interaction patterns from historical UI
+- If not present: Document as future feature to restore this core historical affordance
+- Anchor specification to original 2011-2015 UI design to ensure it doesn't get lost
 
 ### Implementation Strategy
 
@@ -323,10 +327,12 @@ export function useDrive(folderId: string): UseDriveResult {
    - Preserve color logic for strict mode
    - Test visual parity with current app
 
-3. **Version Slider** (if applicable):
-   - Investigate and document current implementation
-   - Create component if feature exists
-   - Preserve exact design and behavior
+3. **Version Slider** (historical core affordance):
+   - Investigate current implementation status
+   - Review historical UI documentation for specification
+   - Create component if feature exists in current codebase
+   - If not present, document for future restoration of this core historical affordance
+   - Preserve exact design and behavior from original 2011-2015 UI
 
 #### Phase 7: Visual Parity Testing
 
@@ -353,7 +359,7 @@ export function useDrive(folderId: string): UseDriveResult {
 - [ ] Goal meter looks and behaves identically to current app
 - [ ] Today chip looks and behaves identically to current app
 - [ ] Footer word/character counts look and behave identically to current app
-- [ ] Version slider (if applicable) looks and behaves identically to current app
+- [ ] Version slider (if present) looks and behaves identically to historical/current app, or is documented for future restoration
 - [ ] Side-by-side visual comparison shows pixel-perfect match
 - [ ] User testing confirms no "uncanny valley" effect
 
@@ -361,7 +367,7 @@ export function useDrive(folderId: string): UseDriveResult {
 
 - **Documentation & Audit**: 2-3 hours
 - **Component Implementation**: 4-6 hours (Goal Meter, Today Chip, Footer)
-- **Version Slider Investigation**: 1-2 hours (if needed)
+- **Version Slider Investigation & Documentation**: 1-2 hours (investigate current status, document historical specification for future restoration if needed)
 - **Visual Parity Testing**: 2-3 hours
 - **Total**: 9-14 hours
 
@@ -622,7 +628,6 @@ This section details exactly which parts of the current codebase can be replaced
     "react-dom": "^18.x",
     "react-router-dom": "^6.x",
     "@tiptap/react": "^2.x",
-    "@tiptap/starter-kit": "^2.x",
     "@tiptap/extension-document": "^2.x",
     "@tiptap/extension-paragraph": "^2.x",
     "@tiptap/extension-text": "^2.x",
@@ -2330,9 +2335,9 @@ This spans multiple phases:
 
 Already included in recommended stack:
 - `@tiptap/react` - Editor framework
-- `@tiptap/starter-kit` - Can use selectively (Document, Paragraph, Text, HardBreak, History only)
+- Individual TipTap extensions (Document, Paragraph, Text, HardBreak, History) - configured separately
 
-**Note**: Do NOT use full starter-kit - configure extensions individually to exclude formatting.
+**Note**: Individual extensions are used instead of starter-kit to maintain strict plain text configuration and exclude all formatting capabilities.
 
 ---
 
@@ -3594,7 +3599,7 @@ export interface AppState {
 - **2025-01-XX**: Added "Preserve Classic UX Anchors" section (P1/P2 Priority)
   - Documented preservation requirements for left-rail goal meter and "Today • N" chip
   - Documented preservation requirements for footer word/character counts
-  - Documented version slider affordance (investigation needed)
+  - Documented version slider affordance as historical core feature (investigation needed, documented for future restoration)
   - Added implementation strategy for preserving these elements
   - Updated Phase 4 to include classic UX anchor implementation
   - Updated Success Criteria to include preservation requirements
@@ -3652,7 +3657,7 @@ export interface AppState {
     - Updated Phase 1 to include TipTap plain text configuration and early conflict detection
     - Updated Phase 2 to include reconciliation on window focus
     - Updated Phase 4 to integrate TipTap with conflict detection and test round-tripping
-    - Added TipTap extension dependencies (individual extensions, not full starter-kit)
+    - Added TipTap extension dependencies (individual extensions only - starter-kit explicitly excluded to prevent accidental import drift)
     - Added editor truth and round-tripping to success criteria
   - **Added State Normalization section (P1 Priority)**:
     - Normalize all entities (stories, groups, snippets, notes, tags, goals) keyed by id in Zustand store
