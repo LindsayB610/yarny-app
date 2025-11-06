@@ -1212,6 +1212,35 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       // Don't throw - continue with story creation even if Google Doc fails
       // The snippet will be in data.json, just not as a Google Doc
     }
+    
+    // Create goal.json if goal metadata is provided (outside try-catch so it always runs)
+    if (metadata.goal && metadata.goal.deadline) {
+      const today = getPacificDate();
+      const goalData = {
+        target: metadata.goal.target || metadata.wordGoal || 3000,
+        deadline: metadata.goal.deadline,
+        startDate: today,
+        writingDays: metadata.goal.writingDays || [true, true, true, true, true, true, true],
+        daysOff: metadata.goal.daysOff || [],
+        mode: metadata.goal.mode || 'elastic',
+        ledger: {},
+        lastCalculatedDate: today
+      };
+      
+      try {
+        await window.driveAPI.write(
+          'goal.json',
+          JSON.stringify(goalData, null, 2),
+          null,
+          storyFolderId,
+          'text/plain'
+        );
+        console.log('goal.json created with initial goal settings');
+      } catch (error) {
+        console.warn('Failed to create goal.json (non-critical):', error);
+        // Don't throw - goal.json is optional
+      }
+    }
 
     return { folders: createdFolders, projectData, initialState };
   } catch (error) {
@@ -1580,14 +1609,48 @@ async function initialize() {
     }
     
     const storyGenre = document.getElementById('storyGenre').value.trim() || '';
-    const wordGoal = parseInt(document.getElementById('wordGoal').value) || 3000;
+    const goalTarget = parseInt(document.getElementById('goalTarget').value) || 3000;
+    
+    // Capture goal fields - using same field IDs as goal panel
+    const goalDeadline = document.getElementById('goalDeadline').value.trim();
+    const goalMode = document.getElementById('goalMode').value || 'elastic';
+    const daysOffInput = document.getElementById('daysOffInput').value.trim();
+    
+    // Parse writing days
+    const writingDays = [];
+    for (let i = 0; i < 7; i++) {
+      const checkbox = document.getElementById(`writingDay${i}`);
+      writingDays.push(checkbox ? checkbox.checked : true);
+    }
+    
+    // Parse days off
+    let daysOff = [];
+    if (daysOffInput) {
+      daysOff = daysOffInput.split(',').map(d => d.trim()).filter(d => {
+        // Validate date format YYYY-MM-DD
+        return /^\d{4}-\d{2}-\d{2}$/.test(d);
+      });
+    }
+    
+    // Build goal metadata if deadline is provided (same structure as goal panel saves)
+    const goalMetadata = goalDeadline ? {
+      target: goalTarget,
+      deadline: goalDeadline + 'T23:59:59', // End of day
+      writingDays: writingDays,
+      daysOff: daysOff,
+      mode: goalMode
+    } : null;
     
       const createBtn = document.getElementById('createStoryBtn');
       createBtn.disabled = true;
       createBtn.textContent = 'Creating...';
       
       try {
-        const storyFolder = await createStory(storyName, { genre: storyGenre, wordGoal: wordGoal });
+        const storyFolder = await createStory(storyName, { 
+          genre: storyGenre, 
+          wordGoal: goalTarget, // Keep wordGoal for project.json compatibility
+          goal: goalMetadata
+        });
         
         // If storyFolder is null, it means we redirected for re-auth
         if (storyFolder === null) {

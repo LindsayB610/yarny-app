@@ -34,6 +34,9 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 
 ### Story Management
 - **Create Stories**: Start new writing projects with organized folder structure
+  - Set story name, genre (optional), and word count goal
+  - Optionally configure writing goals at creation: deadline, writing days, mode (Elastic/Strict), and days off
+  - Goal settings are saved to `goal.json` and can be edited later via the "Today" button in the editor
 - **List Stories**: View all your stories with last modified dates
 - **Delete Stories**: Remove stories with confirmation (optional Drive deletion)
 - **Story Organization**: Each story is a folder in Google Drive containing organized subfolders
@@ -56,6 +59,9 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 - **Word Count Tracking**: Real-time word and character counts
 - **Goal Tracking**: Set word count goals with visual progress indicator
 - **Daily Writing Goals**: "Goals that think" - set project targets with deadlines, choose writing days, and track daily progress with automatic quota calculation
+  - Can be configured when creating a new story or edited later via the "Today" button
+  - Settings include: word count target, deadline, writing days (Mon-Sun), mode (Elastic/Strict), and optional days off
+  - All goal data is stored in `goal.json` and shared between the new story modal and goal panel
 - **Auto-Save**: Automatic saving to Google Drive as you write
 - **Save Status**: Visual indicator showing save state (idle/saving/saved)
 - **Resume Where You Left Off**: Editor automatically opens to the most recently edited snippet (chapters or People/Places/Things) when you return to a story
@@ -275,6 +281,9 @@ yarny-app/
 10. **Auto-Save**: Changes are automatically saved to Drive
 11. **Word Count**: Real-time tracking with goal progress indicator
 12. **Daily Writing Goals**: Set project word targets with deadlines, choose writing days (Mon-Sun), mark days off, and track daily progress. Features Elastic mode (rebalances daily targets) and Strict mode (fixed daily targets)
+    - **Goal Configuration**: Can be set when creating a new story or edited anytime via the "Today" button in the editor
+    - **Unified Fields**: The same goal fields appear in both the "New Story" modal and the "Today" goal panel, ensuring consistency
+    - **Persistent Storage**: Goal settings are saved to `goal.json` and automatically loaded when editing
 13. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
 
 ## Development
@@ -439,6 +448,7 @@ The status updates automatically every 5 minutes. You can also specify a specifi
 
 ## Recent Improvements
 
+- **Goal Fields in New Story Modal**: When creating a new story, you can now set writing goal fields (deadline, writing days, mode, days off) that were previously only available via the "Today" button. These fields are shared between both interfaces for consistency.
 - **Daily Writing Goals ("Goals that think")**: Set project targets with deadlines, choose writing days, and track daily progress with automatic quota calculation. Features Elastic mode (rebalances targets) and Strict mode (fixed targets). Includes midnight rollover, external edit detection, and dashboard badges
 - **Comments/Tracked Changes Protection**: Warns users before overwriting Google Docs that contain comments or tracked changes, allowing them to cancel the save to preserve collaborative feedback
 - **Performance Optimizations**: Significantly faster editor loading with parallel file operations, lazy loading of snippet content, and optimized batch processing - UI becomes interactive almost immediately while content loads in the background

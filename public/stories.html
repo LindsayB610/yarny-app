@@ -97,18 +97,81 @@
               >
             </div>
             <div class="form-group">
-              <label for="wordGoal">Word Count Goal</label>
+              <label for="goalTarget">Word Count Target</label>
               <input 
                 type="number" 
-                id="wordGoal" 
-                name="wordGoal" 
+                id="goalTarget" 
+                name="goalTarget" 
                 placeholder="3000"
                 value="3000"
                 min="1"
                 required
                 autocomplete="off"
               >
-              <small class="form-hint">Set a target word count for this story</small>
+              <small class="form-hint">Total words you want to write</small>
+            </div>
+            <div class="form-group">
+              <label for="goalDeadline">Deadline (optional)</label>
+              <input 
+                type="date" 
+                id="goalDeadline" 
+                name="goalDeadline" 
+                autocomplete="off"
+              >
+              <small class="form-hint">When do you want to finish?</small>
+            </div>
+            <div class="form-group">
+              <label>Writing Days (optional)</label>
+              <div class="writing-days-checkboxes">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay0" value="0" checked>
+                  <span>Mon</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay1" value="1" checked>
+                  <span>Tue</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay2" value="2" checked>
+                  <span>Wed</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay3" value="3" checked>
+                  <span>Thu</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay4" value="4" checked>
+                  <span>Fri</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay5" value="5" checked>
+                  <span>Sat</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="writingDay6" value="6" checked>
+                  <span>Sun</span>
+                </label>
+              </div>
+              <small class="form-hint">Which days of the week do you write?</small>
+            </div>
+            <div class="form-group">
+              <label for="goalMode">Mode (optional)</label>
+              <select id="goalMode" name="goalMode">
+                <option value="elastic">Elastic (rebalance daily targets)</option>
+                <option value="strict">Strict (fixed daily target)</option>
+              </select>
+              <small class="form-hint">Elastic adjusts targets based on progress; Strict keeps fixed targets</small>
+            </div>
+            <div class="form-group">
+              <label for="daysOffInput">Days Off (optional)</label>
+              <input 
+                type="text" 
+                id="daysOffInput" 
+                name="daysOffInput" 
+                placeholder="YYYY-MM-DD, YYYY-MM-DD, ..."
+                autocomplete="off"
+              >
+              <small class="form-hint">Comma-separated dates (e.g., 2025-12-25, 2026-01-01)</small>
             </div>
             <div class="form-actions">
               <button type="button" class="btn-secondary" onclick="closeNewStoryModal()">Cancel</button>
