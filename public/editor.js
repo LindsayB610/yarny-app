@@ -268,6 +268,7 @@ function renderStoryList() {
   const listEl = document.getElementById('storyList');
   listEl.innerHTML = '';
 
+  // Preserve exact order from state.project.groupIds - never sort by position
   const groups = state.project.groupIds
     .map(id => state.groups[id])
     .filter(group => {
@@ -285,8 +286,8 @@ function renderStoryList() {
         if (!matchesGroup && !matchesSnippets) return false;
       }
       return true;
-    })
-    .sort((a, b) => a.position - b.position);
+    });
+  // Note: Removed .sort() - we preserve the exact order from state.project.groupIds
 
   groups.forEach(group => {
     const groupEl = document.createElement('div');
