@@ -78,7 +78,7 @@ html {
   align-items: center;
   position: absolute;
   top: calc((var(--space-5xl) + 60px) / 2); /* Center vertically between top and first section */
-  right: var(--space-4xl); /* Align with content blocks right edge */
+  right: calc(100% - 1000px - var(--space-4xl)); /* Align with 1000px max-width sections right edge */
   z-index: 10;
   transform: translateY(-50%); /* Center the buttons on the calculated position */
 }
