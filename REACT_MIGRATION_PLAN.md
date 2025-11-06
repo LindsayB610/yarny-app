@@ -412,10 +412,97 @@ This section details exactly which parts of the current codebase can be replaced
 8. **Comments Warning Modal** - Warn about comments/tracked changes in Google Docs
 
 ### Color System
-- **12 Accent Colors** for chapter/snippet color coding:
-  - Red (#EF4444), Orange (#F97316), Amber (#F59E0B), Yellow (#EAB308)
-  - Lime (#84CC16), Emerald (#10B981), Teal (#14B8A6), Cyan (#06B6D4)
-  - Blue (#3B82F6), Indigo (#6366F1), Violet (#8B5CF6), Fuchsia (#D946EF)
+
+#### Primaries (Brand)
+- **Primary**: `#10B981`
+- **Primary-light**: `#D1FAE5`
+- **Primary-dark**: `#059669`
+
+#### 12 Categorical Accents (Chapter/Snippet Colors)
+
+Each accent color has four variants: base (solid), soft (pale), dark, and on-solid (text color for contrast).
+
+1. **Red**
+   - Base: `#EF4444`
+   - Soft: `#FEE2E2`
+   - Dark: `#991B1B`
+   - On-solid: `#FFFFFF`
+
+2. **Orange**
+   - Base: `#F97316`
+   - Soft: `#FFEDD5`
+   - Dark: `#9A3412`
+   - On-solid: `#FFFFFF`
+
+3. **Amber**
+   - Base: `#F59E0B`
+   - Soft: `#FEF3C7`
+   - Dark: `#92400E`
+   - On-solid: `#1F2937`
+
+4. **Yellow**
+   - Base: `#EAB308`
+   - Soft: `#FEF9C3`
+   - Dark: `#854D0E`
+   - On-solid: `#1F2937`
+
+5. **Lime**
+   - Base: `#84CC16`
+   - Soft: `#ECFCCB`
+   - Dark: `#365314`
+   - On-solid: `#0B1220`
+
+6. **Emerald**
+   - Base: `#10B981`
+   - Soft: `#D1FAE5`
+   - Dark: `#065F46`
+   - On-solid: `#FFFFFF`
+
+7. **Teal**
+   - Base: `#14B8A6`
+   - Soft: `#CCFBF1`
+   - Dark: `#115E59`
+   - On-solid: `#FFFFFF`
+
+8. **Cyan**
+   - Base: `#06B6D4`
+   - Soft: `#CFFAFE`
+   - Dark: `#155E75`
+   - On-solid: `#FFFFFF`
+
+9. **Blue**
+   - Base: `#3B82F6`
+   - Soft: `#DBEAFE`
+   - Dark: `#1E40AF`
+   - On-solid: `#FFFFFF`
+
+10. **Indigo**
+    - Base: `#6366F1`
+    - Soft: `#E0E7FF`
+    - Dark: `#3730A3`
+    - On-solid: `#FFFFFF`
+
+11. **Violet**
+    - Base: `#8B5CF6`
+    - Soft: `#EDE9FE`
+    - Dark: `#5B21B6`
+    - On-solid: `#FFFFFF`
+
+12. **Fuchsia**
+    - Base: `#D946EF`
+    - Soft: `#FAE8FF`
+    - Dark: `#86198F`
+    - On-solid: `#FFFFFF`
+
+#### Neutrals (Text on Soft Chips)
+- **Ink-900**: `#0F172A`
+- **Ink-700**: `#334155`
+- **Ink-500**: `#64748B`
+
+#### Usage Notes
+- **Soft**: Use for left-rail "pale chip" backgrounds and subtle tag pills. Pair with Ink-900 text and a 1px border in the base color.
+- **Base (solid)**: Use for stronger chips, selected rows, or small badges. Use the listed on-solid color to maintain contrast.
+- **Dark**: Use for hover states, borders, or focus rings for the same accent.
 
 ### Export Types
 1. **Export All Chapters** - All chapters with optional snippet names
