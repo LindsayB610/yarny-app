@@ -416,42 +416,7 @@ html {
   color: #78350F !important;
 }
 
-/* ============================================
-   Footer
-   ============================================ */
-
-.docs-footer {
-  background: rgba(31, 41, 55, 0.95);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: var(--space-3xl) 0;
-  margin-top: var(--space-6xl);
-  padding-left: 280px; /* Account for sidebar width */
-}
-
-.docs-footer p {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-md);
-}
-
-.docs-footer-nav {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-lg);
-}
-
-.docs-footer-nav a {
-  color: var(--color-primary);
-  text-decoration: underline;
-  font-size: var(--font-size-sm);
-  transition: color var(--transition-fast);
-}
-
-.docs-footer-nav a:hover {
-  color: var(--color-primary-dark);
-}
+/* Footer styles moved to footer.css */
 
 /* ============================================
    Responsive Design

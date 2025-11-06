@@ -1,0 +1,49 @@
+/* ============================================
+   Shared Footer Styles
+   ============================================ */
+
+.shared-footer {
+  background: rgba(31, 41, 55, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-3xl) 0;
+  margin-top: var(--space-6xl);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.shared-footer p {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-md);
+}
+
+.shared-footer-nav {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+.shared-footer-nav a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-size: var(--font-size-sm);
+  transition: color var(--transition-fast);
+}
+
+.shared-footer-nav a:hover {
+  color: var(--color-primary-dark);
+}
+
+/* Adjustments for docs pages with sidebar */
+.docs-container .shared-footer {
+  padding-left: 280px; /* Account for sidebar width */
+}
+
+@media (max-width: 900px) {
+  .docs-container .shared-footer {
+    padding-left: 0; /* Remove sidebar padding on mobile */
+  }
+}
+
