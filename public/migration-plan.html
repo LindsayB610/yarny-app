@@ -3514,7 +3514,14 @@ export function ObservabilityPanel() {
           <h3>Phase 2: Authentication, Router & API Contract (Week 1-2)</h3>
           <ul>
             <li>Configure React Router with TypeScript</li>
-            <li>Set up routing structure</li>
+            <li>Set up routing structure with loaders</li>
+            <li><strong>Implement route loaders that prefetch Drive API data using React Query</strong>
+              <ul>
+                <li>Stories route loader: prefetch Yarny Stories folder and stories list</li>
+                <li>Editor route loader: prefetch Yarny Stories folder and project.json</li>
+                <li>Add route-level loading states and error boundaries</li>
+              </ul>
+            </li>
             <li><strong>Create API contract module (<code>src/api/contract.ts</code>) with Zod schemas</strong></li>
             <li><strong>Create typed API client (<code>src/api/client.ts</code>)</strong></li>
             <li><strong>Convert Netlify Functions to TypeScript</strong>:
@@ -4123,23 +4130,93 @@ export default defineConfig({
   "references": [{ "path": "./tsconfig.node.json" }]
 }</code></pre>
 
-          <h4>React Router Configuration</h4>
-          <p>Update React Router to work with <code>/react</code> base path (TypeScript):</p>
-          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In your router setup (App.tsx)
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+          <h4>React Router Configuration with Loaders</h4>
+          <p>Update React Router to work with <code>/react</code> base path and use loaders for pre-fetching Drive API data (TypeScript):</p>
+          <p><strong>Why React Router Loaders?</strong></p>
+          <ul>
+            <li><strong>Performance</strong>: Start fetching Drive API data BEFORE route components render, reducing perceived load time</li>
+            <li><strong>Better UX</strong>: Route-level loading states while data is being fetched</li>
+            <li><strong>Integration</strong>: Works seamlessly with React Query - loaders call <code>prefetchQuery()</code>, components use <code>useQuery()</code></li>
+            <li><strong>Error Handling</strong>: Route-level error boundaries for Drive API failures</li>
+          </ul>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/routes.tsx
+import { createBrowserRouter } from 'react-router-dom';
+import { queryClient } from './lib/react-query';
+import { 
+  driveKeys, 
+  getOrCreateYarnyStories, 
+  listDriveFiles,
+  readDriveFile 
+} from './hooks/useDriveQueries';
 import { LoginPage } from './components/auth/LoginPage';
 import { StoriesPage } from './components/stories/StoriesPage';
 import { EditorPage } from './components/editor/EditorPage';
 
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: &lt;LoginPage /&gt;,
+  },
+  {
+    path: '/stories',
+    loader: async () => {
+      // Prefetch Yarny Stories folder before StoriesPage renders
+      const folder = await queryClient.prefetchQuery({
+        queryKey: driveKeys.yarnyStories(),
+        queryFn: () => getOrCreateYarnyStories(),
+      });
+      
+      // Prefetch stories list if folder exists
+      if (folder?.id) {
+        await queryClient.prefetchQuery({
+          queryKey: driveKeys.list(folder.id),
+          queryFn: () => listDriveFiles(folder.id),
+        });
+      }
+      
+      return null;
+    },
+    element: &lt;StoriesPage /&gt;,
+  },
+  {
+    path: '/editor/:storyId?',
+    loader: async ({ params }) => {
+      const { storyId } = params;
+      
+      // Prefetch Yarny Stories folder
+      const folder = await queryClient.prefetchQuery({
+        queryKey: driveKeys.yarnyStories(),
+        queryFn: () => getOrCreateYarnyStories(),
+      });
+      
+      // Prefetch project.json if storyId is provided
+      if (storyId && folder?.id) {
+        const projectFileId = `${storyId}/project.json`;
+        await queryClient.prefetchQuery({
+          queryKey: driveKeys.file(projectFileId),
+          queryFn: () => readDriveFile({ fileId: projectFileId }),
+        });
+      }
+      
+      return null;
+    },
+    element: &lt;EditorPage /&gt;,
+  },
+], {
+  basename: '/react',
+});
+
+// src/App.tsx
+import { RouterProvider } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/react-query';
+import { router } from './routes';
+
 export function App(): JSX.Element {
   return (
-    &lt;BrowserRouter basename="/react"&gt;
-      &lt;Routes&gt;
-        &lt;Route path="/" element={&lt;LoginPage /&gt;} /&gt;
-        &lt;Route path="/stories" element={&lt;StoriesPage /&gt;} /&gt;
-        &lt;Route path="/editor" element={&lt;EditorPage /&gt;} /&gt;
-      &lt;/Routes&gt;
-    &lt;/BrowserRouter&gt;
+    &lt;QueryClientProvider client={queryClient}&gt;
+      &lt;RouterProvider router={router} /&gt;
+    &lt;/QueryClientProvider&gt;
   );
 }</code></pre>
 
@@ -4302,6 +4379,20 @@ export function App(): JSX.Element {
             <li>✅ Smaller bundle sizes</li>
             <li><strong>Alternative</strong>: CRA (if team prefers familiarity)</li>
             <li><strong>Trigger for change</strong>: If Vite's build output has compatibility issues with Netlify deployment or if Vite's plugin ecosystem becomes insufficient for our needs</li>
+          </ul>
+
+          <h3>Routing: React Router with Loaders vs State-Based Navigation</h3>
+          <p><strong>Recommendation: React Router with Loaders</strong> ✅</p>
+          <ul>
+            <li>✅ <strong>Performance</strong>: Start fetching Drive API data BEFORE route components render</li>
+            <li>✅ <strong>Better UX</strong>: Route-level loading states while slow Drive API calls are in progress</li>
+            <li>✅ <strong>Integration</strong>: Loaders use React Query <code>prefetchQuery()</code>, components use <code>useQuery()</code> hooks</li>
+            <li>✅ <strong>Error Handling</strong>: Route-level error boundaries for Drive API failures</li>
+            <li>✅ <strong>Browser History</strong>: Proper back/forward button support and URL management</li>
+            <li>✅ <strong>Future-Proof</strong>: Easy to add more routes, route params, or protected routes later</li>
+            <li><strong>Why not state-based</strong>: Would require data fetching after component mount, adding latency to slow Drive API calls</li>
+            <li><strong>Why not hash routing</strong>: Less clean URLs, no route-level data loading capabilities</li>
+            <li><strong>Trigger for change</strong>: If React Router's bundle size (~10KB) becomes a concern and performance gains don't justify it</li>
           </ul>
 
           <h3>TypeScript: Required</h3>
