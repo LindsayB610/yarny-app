@@ -256,6 +256,13 @@ body {
   margin-bottom: var(--space-sm);
 }
 
+.story-deadline {
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: var(--font-weight-medium);
+}
+
 .story-progress-container {
   margin-top: var(--space-md);
 }

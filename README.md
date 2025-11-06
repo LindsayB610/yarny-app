@@ -37,7 +37,7 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
   - Set story name, genre (optional), and word count goal
   - Optionally configure writing goals at creation: deadline, writing days, mode (Elastic/Strict), and days off
   - Goal settings are saved to `goal.json` and can be edited later via the "Today" button in the editor
-- **List Stories**: View all your stories with last modified dates
+- **List Stories**: View all your stories with last modified dates, deadlines (when set), and progress information
 - **Delete Stories**: Remove stories with confirmation (optional Drive deletion)
 - **Story Organization**: Each story is a folder in Google Drive containing organized subfolders
 

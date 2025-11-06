@@ -824,9 +824,19 @@ async function renderStories(stories, skipLoadingState = false) {
       `;
     }
     
+    // Build deadline display if available
+    let deadlineHtml = '';
+    if (cachedProgress && cachedProgress.goal && cachedProgress.goal.deadline) {
+      const deadlineFormatted = formatDeadline(cachedProgress.goal.deadline);
+      if (deadlineFormatted) {
+        deadlineHtml = `<p class="story-deadline">Deadline: ${deadlineFormatted}</p>`;
+      }
+    }
+    
     contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
       <p class="story-modified">Last modified: ${formatDate(cachedUpdatedAt || story.modifiedTime)}</p>
+      ${deadlineHtml}
       ${progressHtml}
     `;
     
@@ -880,6 +890,35 @@ async function renderStories(stories, skipLoadingState = false) {
           if (modifiedEl) {
             modifiedEl.textContent = `Last modified: ${formatDate(updatedAt)}`;
           }
+        }
+        
+        // Update deadline display
+        let deadlineEl = card.querySelector('.story-deadline');
+        if (progress.goal && progress.goal.deadline) {
+          const deadlineFormatted = formatDeadline(progress.goal.deadline);
+          if (deadlineFormatted) {
+            if (deadlineEl) {
+              deadlineEl.textContent = `Deadline: ${deadlineFormatted}`;
+            } else {
+              // Create new deadline element
+              deadlineEl = document.createElement('p');
+              deadlineEl.className = 'story-deadline';
+              deadlineEl.textContent = `Deadline: ${deadlineFormatted}`;
+              // Insert after the modified date, before the progress container
+              const modifiedEl = card.querySelector('.story-modified');
+              const progressContainer = card.querySelector('.story-progress-container');
+              if (modifiedEl) {
+                if (progressContainer) {
+                  modifiedEl.parentNode.insertBefore(deadlineEl, progressContainer);
+                } else {
+                  modifiedEl.parentNode.appendChild(deadlineEl);
+                }
+              }
+            }
+          }
+        } else if (deadlineEl) {
+          // Remove deadline if it no longer exists
+          deadlineEl.remove();
         }
         
         // Update progress display
@@ -1419,6 +1458,17 @@ function escapeHtml(text) {
 // Format date
 function formatDate(dateString) {
   const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
+// Format deadline date (similar to formatDate but for deadline display)
+function formatDeadline(deadlineString) {
+  if (!deadlineString) return null;
+  const date = new Date(deadlineString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'short', 
