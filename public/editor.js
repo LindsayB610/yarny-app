@@ -4085,9 +4085,21 @@ async function loadStoryFromDrive(storyFolderId) {
   }
   
   try {
+    // Check if this is a newly created story
+    const isNewStory = localStorage.getItem('yarny_newly_created_story') === 'true';
+    if (isNewStory) {
+      // Clear the flag so it doesn't affect future loads
+      localStorage.removeItem('yarny_newly_created_story');
+    }
+    
     // Show prominent loading indicator - make it visible immediately
     const editorContent = document.getElementById('editorContent');
     if (editorContent) {
+      const loadingTitle = isNewStory ? 'Setting up your story...' : 'Loading story...';
+      const loadingMessage = isNewStory 
+        ? 'Creating files in Google Drive' 
+        : 'Fetching your content from Google Drive';
+      
       editorContent.innerHTML = `
         <div style="
           display: flex;
@@ -4103,12 +4115,12 @@ async function loadStoryFromDrive(storyFolderId) {
             font-weight: 600;
             color: var(--color-text-primary);
             margin-bottom: 16px;
-          ">Loading story...</div>
+          ">${loadingTitle}</div>
           <div style="
             font-size: 14px;
             color: var(--color-text-secondary);
             margin-bottom: 24px;
-          ">Fetching your content from Google Drive</div>
+          ">${loadingMessage}</div>
           <div style="
             width: 40px;
             height: 40px;

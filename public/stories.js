@@ -1306,12 +1306,17 @@ async function createStory(storyName, metadata = {}) {
 }
 
 // Open story in editor
-function openStory(storyFolderId, storyName) {
+function openStory(storyFolderId, storyName, isNewStory = false) {
   // Store story info in localStorage for editor to use
   localStorage.setItem('yarny_current_story', JSON.stringify({
     id: storyFolderId,
     name: storyName
   }));
+  
+  // Set flag if this is a newly created story (so editor can show appropriate loading message)
+  if (isNewStory) {
+    localStorage.setItem('yarny_newly_created_story', 'true');
+  }
   
   // Navigate to editor
   window.location.href = '/editor.html';
@@ -1714,8 +1719,8 @@ async function initialize() {
         
         closeNewStoryModal();
       
-      // Open the new story in editor
-      openStory(storyFolder.id, storyFolder.name);
+      // Open the new story in editor (pass true to indicate it's a new story)
+      openStory(storyFolder.id, storyFolder.name, true);
     } catch (error) {
       showError('Failed to create story: ' + error.message);
       createBtn.disabled = false;
