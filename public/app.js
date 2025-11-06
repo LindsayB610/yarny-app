@@ -32,7 +32,7 @@ function isTokenExpired(token) {
 // Check if already authenticated
 function checkAuth() {
   // Skip auth check for public documentation pages
-  const publicPages = ['/docs.html', '/help.html', '/guide.html'];
+  const publicPages = ['/docs.html', '/help.html', '/guide.html', '/migration-plan.html', '/migration-plan'];
   const currentPath = window.location.pathname;
   if (publicPages.some(page => currentPath.includes(page))) {
     return; // Don't run auth checks on docs pages

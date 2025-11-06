@@ -23,6 +23,17 @@
   to = "/stories.html"
   status = 200
 
+# Allow direct access to migration-plan.html (public, no auth required)
+[[redirects]]
+  from = "/migration-plan"
+  to = "/migration-plan.html"
+  status = 200
+
+[[redirects]]
+  from = "/migration-plan.html"
+  to = "/migration-plan.html"
+  status = 200
+
 # Catch-all for other routes (SPA fallback)
 [[redirects]]
   from = "/*"
