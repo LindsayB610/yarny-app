@@ -17,24 +17,20 @@
 </head>
 <body>
   <div class="docs-container">
-    <header class="docs-header">
-      <div class="docs-header-content">
-        <div>
-          <h1>Yarny</h1>
-          <p class="docs-subtitle">Your personal writing tool</p>
-        </div>
-        <nav class="docs-nav">
-          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
-          <a href="/docs.html" class="btn-secondary">Docs</a>
-          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
-        </nav>
-      </div>
-    </header>
+    <nav class="docs-nav">
+      <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+      <a href="/docs.html" class="btn-secondary">Docs</a>
+      <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+    </nav>
 
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
         <div class="sidebar-header">
+          <div class="sidebar-branding">
+            <h1>Yarny</h1>
+            <p class="docs-subtitle">Your personal writing tool</p>
+          </div>
           <a href="/migration-plan/testing-workbook" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
             Testing Workbook
           </a>
@@ -305,9 +301,8 @@ export function useDrive(folderId: string): UseDriveResult {
           </ul>
         </section>
 
-        <section class="docs-section" id="preserve-ux-anchors" style="border-left: 4px solid #F59E0B; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
-          <h2 id="preserve-ux-anchors-heading" style="margin-top: 0; color: #92400E; display: flex; align-items: center; gap: 8px;">
-            <i class="material-icons" style="font-size: 24px;">palette</i>
+        <section class="docs-section" id="preserve-ux-anchors">
+          <h2 id="preserve-ux-anchors-heading">
             Preserve Classic UX Anchors (P1/P2 Priority)
           </h2>
           
@@ -1552,9 +1547,8 @@ const BrandedDialog = styled(Dialog)(({ theme }) => ({
           </ul>
         </section>
 
-        <section class="docs-section" id="state-normalization" style="border-left: 4px solid #10B981; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
-          <h2 id="state-normalization-heading" style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 8px;">
-            <i class="material-icons" style="font-size: 24px;">storage</i>
+        <section class="docs-section" id="state-normalization">
+          <h2 id="state-normalization-heading">
             State Normalization (P1 Priority)
           </h2>
 
@@ -5130,11 +5124,10 @@ export function useGroupsList() {
       const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
       const sections = document.querySelectorAll('.docs-section[id]');
       const sidebar = document.querySelector('.docs-sidebar');
-      const header = document.querySelector('.docs-header');
 
       function updateActiveNav() {
         let current = '';
-        const scrollPos = window.scrollY + 150; // Offset for header
+        const scrollPos = window.scrollY + 100; // Offset for nav buttons
 
         sections.forEach(section => {
           const sectionTop = section.offsetTop;
@@ -5160,7 +5153,7 @@ export function useGroupsList() {
         menuButton.className = 'mobile-menu-toggle';
         menuButton.innerHTML = '☰';
         menuButton.setAttribute('aria-label', 'Toggle menu');
-        header.appendChild(menuButton);
+        document.body.appendChild(menuButton);
       }
 
       function toggleSidebar() {

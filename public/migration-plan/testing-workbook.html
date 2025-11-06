@@ -204,24 +204,20 @@
 </head>
 <body>
   <div class="docs-container">
-    <header class="docs-header">
-      <div class="docs-header-content">
-        <div>
-          <h1>Yarny</h1>
-          <p class="docs-subtitle">Your personal writing tool</p>
-        </div>
-        <nav class="docs-nav">
-          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
-          <a href="/docs.html" class="btn-secondary">Docs</a>
-          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
-        </nav>
-      </div>
-    </header>
+    <nav class="docs-nav">
+      <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+      <a href="/docs.html" class="btn-secondary">Docs</a>
+      <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+    </nav>
 
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
         <div class="sidebar-header">
+          <div class="sidebar-branding">
+            <h1>Yarny</h1>
+            <p class="docs-subtitle">Your personal writing tool</p>
+          </div>
           <a href="/migration-plan" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
             Migration Plan
           </a>
@@ -1389,11 +1385,10 @@
       const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
       const sections = document.querySelectorAll('.test-section[id], .workbook-intro[id], .summary-section[id]');
       const sidebar = document.querySelector('.docs-sidebar');
-      const header = document.querySelector('.docs-header');
 
       function updateActiveNav() {
         let current = '';
-        const scrollPos = window.scrollY + 200; // Offset for header
+        const scrollPos = window.scrollY + 100; // Offset for nav buttons
 
         sections.forEach(section => {
           const sectionTop = section.offsetTop;
@@ -1419,7 +1414,7 @@
         menuButton.className = 'mobile-menu-toggle';
         menuButton.innerHTML = '☰';
         menuButton.setAttribute('aria-label', 'Toggle menu');
-        header.appendChild(menuButton);
+        document.body.appendChild(menuButton);
       }
 
       function toggleSidebar() {
