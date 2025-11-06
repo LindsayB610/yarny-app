@@ -3,454 +3,241 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Yarny React + TypeScript Migration Plan - Lindsay Brunner</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #111827;
-      background: #ffffff;
-      padding: 0;
-    }
-    
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    
-    header {
-      border-bottom: 3px solid #10B981;
-      padding-bottom: 2rem;
-      margin-bottom: 3rem;
-    }
-    
-    h1 {
-      font-size: 2.5rem;
-      color: #111827;
-      margin-bottom: 0.5rem;
-      font-weight: 700;
-    }
-    
-    .subtitle {
-      color: #6B7280;
-      font-size: 1.1rem;
-      margin-top: 0.5rem;
-    }
-    
-    h2 {
-      font-size: 1.75rem;
-      color: #111827;
-      margin-top: 3rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #E5E7EB;
-      font-weight: 600;
-    }
-    
-    h3 {
-      font-size: 1.35rem;
-      color: #374151;
-      margin-top: 2rem;
-      margin-bottom: 0.75rem;
-      font-weight: 600;
-    }
-    
-    h4 {
-      font-size: 1.1rem;
-      color: #4B5563;
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-    
-    p {
-      margin-bottom: 1rem;
-      color: #374151;
-    }
-    
-    ul, ol {
-      margin-left: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    
-    li {
-      margin-bottom: 0.5rem;
-      color: #374151;
-    }
-    
-    strong {
-      color: #111827;
-      font-weight: 600;
-    }
-    
-    code {
-      background: #F3F4F6;
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 0.9em;
-      color: #EF4444;
-    }
-    
-    pre {
-      background: #1F2937;
-      color: #F9FAFB;
-      padding: 1.5rem;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-    
-    pre code {
-      background: transparent;
-      color: #F9FAFB;
-      padding: 0;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5rem 0;
-      font-size: 0.95rem;
-    }
-    
-    th {
-      background: #F9FAFB;
-      padding: 0.75rem;
-      text-align: left;
-      font-weight: 600;
-      color: #111827;
-      border-bottom: 2px solid #E5E7EB;
-    }
-    
-    td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #E5E7EB;
-      color: #374151;
-    }
-    
-    tr:hover {
-      background: #F9FAFB;
-    }
-    
-    .highlight {
-      background: #FEF3C7;
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-    }
-    
-    .badge {
-      display: inline-block;
-      padding: 0.25em 0.6em;
-      border-radius: 4px;
-      font-size: 0.85em;
-      font-weight: 600;
-      margin-right: 0.5rem;
-    }
-    
-    .badge-success {
-      background: #D1FAE5;
-      color: #059669;
-    }
-    
-    .badge-warning {
-      background: #FEF3C7;
-      color: #92400E;
-    }
-    
-    .badge-info {
-      background: #DBEAFE;
-      color: #1E40AF;
-    }
-    
-    .section-divider {
-      height: 1px;
-      background: #E5E7EB;
-      margin: 3rem 0;
-    }
-    
-    .toc {
-      background: #F9FAFB;
-      border-left: 4px solid #10B981;
-      padding: 1.5rem;
-      margin: 2rem 0;
-      border-radius: 4px;
-    }
-    
-    .toc ul {
-      list-style: none;
-      margin-left: 0;
-    }
-    
-    .toc li {
-      margin-bottom: 0.5rem;
-    }
-    
-    .toc a {
-      color: #059669;
-      text-decoration: none;
-    }
-    
-    .toc a:hover {
-      text-decoration: underline;
-    }
-    
-    .key-finding {
-      background: #ECFDF5;
-      border-left: 4px solid #10B981;
-      padding: 1.5rem;
-      margin: 2rem 0;
-      border-radius: 4px;
-    }
-    
-    .key-finding strong {
-      color: #059669;
-      font-size: 1.1em;
-    }
-    
-    .checklist {
-      list-style: none;
-      margin-left: 0;
-    }
-    
-    .checklist li:before {
-      content: "☐ ";
-      margin-right: 0.5rem;
-      color: #6B7280;
-    }
-    
-    .checklist li.checked:before {
-      content: "☑ ";
-      color: #10B981;
-    }
-    
-    @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-      
-      h1 {
-        font-size: 2rem;
-      }
-      
-      h2 {
-        font-size: 1.5rem;
-      }
-      
-      table {
-        font-size: 0.85rem;
-      }
-      
-      pre {
-        font-size: 0.8rem;
-        padding: 1rem;
-      }
-    }
-  </style>
+  <title>Yarny - React + TypeScript Migration Plan</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/docs.css">
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-hQCYhFM-nW3tbKDHDR8Xc.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>React + TypeScript Migration Plan - Yarny App</h1>
-      <p class="subtitle">Comprehensive plan for converting Yarny from vanilla JavaScript to React with TypeScript</p>
+  <div class="docs-container">
+    <header class="docs-header">
+      <div class="docs-header-content">
+        <div>
+          <h1>Yarny</h1>
+          <p class="docs-subtitle">React + TypeScript Migration Plan</p>
+        </div>
+        <nav class="docs-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/docs.html" class="btn-secondary">User Guide</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+        </nav>
+      </div>
     </header>
 
-    <div class="key-finding">
-      <strong>Key Finding:</strong> Using third-party React libraries can reduce the Level of Effort (LOE) by <strong>40-50%</strong>, making the migration significantly more feasible.<br><br>
-      <strong>Technology Stack:</strong> React 18 + TypeScript 5 + Vite
-    </div>
+    <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <div class="status-indicator">
+            <span class="status-dot status-green"></span>
+            <span class="status-text">Planning Phase</span>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
+            <li><a href="#current-analysis" class="nav-link">Current Project Analysis</a></li>
+            <li><a href="#migration-strategy" class="nav-link">Migration Strategy</a></li>
+            <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
+            <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
+            <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
+            <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
+            <li><a href="#risk-factors" class="nav-link">Risk Factors</a></li>
+            <li><a href="#netlify-config" class="nav-link">Netlify Configuration</a></li>
+            <li><a href="#next-steps" class="nav-link">Next Steps</a></li>
+          </ul>
+        </nav>
+      </aside>
 
-    <div class="toc">
-      <h3>Table of Contents</h3>
-      <ul>
-        <li><a href="#executive-summary">Executive Summary</a></li>
-        <li><a href="#current-analysis">Current Project Analysis</a></li>
-        <li><a href="#migration-strategy">Migration Strategy</a></li>
-        <li><a href="#library-replacements">Third-Party Library Replacements</a></li>
-        <li><a href="#effort-estimation">Effort Estimation</a></li>
-        <li><a href="#implementation-details">Implementation Details</a></li>
-        <li><a href="#migration-phases">Migration Phases</a></li>
-        <li><a href="#risk-factors">Risk Factors</a></li>
-        <li><a href="#netlify-config">Netlify Configuration</a></li>
-        <li><a href="#next-steps">Next Steps</a></li>
-      </ul>
-    </div>
+      <div class="docs-content">
+        <section class="docs-section" style="background: #ECFDF5; border-left: 4px solid #10B981; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
+          <h2 style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="font-size: 24px;">lightbulb</i>
+            Key Finding
+          </h2>
+          <p style="margin-bottom: 0; color: #047857;"><strong style="color: #047857;">Using third-party React libraries can reduce the Level of Effort (LOE) by 40-50%</strong>, making the migration significantly more feasible.</p>
+          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong>Technology Stack:</strong> React 18 + TypeScript 5 + Vite</p>
+        </section>
 
-    <h2 id="executive-summary">Executive Summary</h2>
-    <p>This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong>React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
-    <p><strong>Note:</strong> This migration will use <strong>TypeScript throughout</strong>. All components, hooks, utilities, and state management will be written in TypeScript.</p>
+        <section class="docs-section" id="executive-summary">
+          <h2>Executive Summary</h2>
+          <p>This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong>React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
+          <p><strong>Note:</strong> This migration will use <strong>TypeScript throughout</strong>. All components, hooks, utilities, and state management will be written in TypeScript.</p>
+        </section>
 
-    <h2 id="current-analysis">Current Project Analysis</h2>
-    
-    <h3>Codebase Statistics</h3>
-    <ul>
-      <li><strong>Total JavaScript:</strong> ~8,782 lines across 4 main files</li>
-      <li><strong>Largest File:</strong> <code>editor.js</code> - 6,069 lines</li>
-      <li><strong>Other Files:</strong>
-        <ul>
-          <li><code>stories.js</code> - ~1,837 lines</li>
-          <li><code>app.js</code> - ~503 lines</li>
-          <li><code>drive.js</code> - ~269 lines</li>
-        </ul>
-      </li>
-      <li><strong>Architecture:</strong> Vanilla JavaScript with direct DOM manipulation</li>
-      <li><strong>Backend:</strong> Already using Netlify Functions (no changes needed)</li>
-    </ul>
+        <section class="docs-section" id="current-analysis">
+          <h2>Current Project Analysis</h2>
+          
+          <h3>Codebase Statistics</h3>
+          <ul>
+            <li><strong>Total JavaScript:</strong> ~8,782 lines across 4 main files</li>
+            <li><strong>Largest File:</strong> <code>editor.js</code> - 6,069 lines</li>
+            <li><strong>Other Files:</strong>
+              <ul>
+                <li><code>stories.js</code> - ~1,837 lines</li>
+                <li><code>app.js</code> - ~503 lines</li>
+                <li><code>drive.js</code> - ~269 lines</li>
+              </ul>
+            </li>
+            <li><strong>Architecture:</strong> Vanilla JavaScript with direct DOM manipulation</li>
+            <li><strong>Backend:</strong> Already using Netlify Functions (no changes needed)</li>
+          </ul>
 
-    <h3>Current Features</h3>
-    <ul>
-      <li>✅ Rich text editor (contentEditable)</li>
-      <li>✅ Story/Chapter/Snippet management</li>
-      <li>✅ Google Drive integration</li>
-      <li>✅ Google Sign-In authentication</li>
-      <li>✅ Drag & drop reordering</li>
-      <li>✅ Color coding for chapters/snippets (12 accent colors)</li>
-      <li>✅ Word count tracking & goals (elastic/strict modes)</li>
-      <li>✅ Search functionality</li>
-      <li>✅ Export functionality (chapters, outline, people, places, things)</li>
-      <li>✅ Notes system (People/Places/Things)</li>
-      <li>✅ Multiple modals and UI components</li>
-      <li>✅ Context menus</li>
-      <li>✅ Real-time save status</li>
-      <li>✅ Mobile device detection & warning</li>
-      <li>✅ Error logging to localStorage</li>
-      <li>✅ Lazy loading of snippet content</li>
-      <li>✅ Background loading optimization</li>
-      <li>✅ Conflict resolution (Yarny vs Google Docs)</li>
-      <li>✅ Comments/tracked changes detection</li>
-    </ul>
+          <h3>Current Features</h3>
+          <ul>
+            <li>✅ Rich text editor (contentEditable)</li>
+            <li>✅ Story/Chapter/Snippet management</li>
+            <li>✅ Google Drive integration</li>
+            <li>✅ Google Sign-In authentication</li>
+            <li>✅ Drag & drop reordering</li>
+            <li>✅ Color coding for chapters/snippets (12 accent colors)</li>
+            <li>✅ Word count tracking & goals (elastic/strict modes)</li>
+            <li>✅ Search functionality</li>
+            <li>✅ Export functionality (chapters, outline, people, places, things)</li>
+            <li>✅ Notes system (People/Places/Things)</li>
+            <li>✅ Multiple modals and UI components</li>
+            <li>✅ Context menus</li>
+            <li>✅ Real-time save status</li>
+            <li>✅ Mobile device detection & warning</li>
+            <li>✅ Error logging to localStorage</li>
+            <li>✅ Lazy loading of snippet content</li>
+            <li>✅ Background loading optimization</li>
+            <li>✅ Conflict resolution (Yarny vs Google Docs)</li>
+            <li>✅ Comments/tracked changes detection</li>
+          </ul>
+        </section>
 
-    <h2 id="migration-strategy">Migration Strategy</h2>
-    
-    <h3>Approach: Incremental Migration</h3>
-    <ol>
-      <li>Set up React infrastructure alongside existing code</li>
-      <li>Migrate page by page (index → stories → editor)</li>
-      <li>Use third-party libraries to replace custom implementations</li>
-      <li>Maintain feature parity throughout migration</li>
-    </ol>
+        <section class="docs-section" id="migration-strategy">
+          <h2>Migration Strategy</h2>
+          
+          <h3>Approach: Incremental Migration</h3>
+          <ol>
+            <li>Set up React infrastructure alongside existing code</li>
+            <li>Migrate page by page (index → stories → editor)</li>
+            <li>Use third-party libraries to replace custom implementations</li>
+            <li>Maintain feature parity throughout migration</li>
+          </ol>
 
-    <h3>Deployment Strategy: Parallel Development</h3>
-    <ul>
-      <li><strong>New React App:</strong> Deploy to <code>yarny.lindsaybrunner.com/react</code></li>
-      <li><strong>Existing App:</strong> Remains live at <code>yarny.lindsaybrunner.com</code> (root)</li>
-      <li><strong>Benefits:</strong>
-        <ul>
-          <li>Keep existing app fully functional during development</li>
-          <li>Enable side-by-side testing and comparison</li>
-          <li>Allow gradual user migration</li>
-          <li>Easy rollback if needed</li>
-          <li>Test with real users before full migration</li>
-        </ul>
-      </li>
-    </ul>
+          <h3>Deployment Strategy: Parallel Development</h3>
+          <ul>
+            <li><strong>New React App:</strong> Deploy to <code>yarny.lindsaybrunner.com/react</code></li>
+            <li><strong>Existing App:</strong> Remains live at <code>yarny.lindsaybrunner.com</code> (root)</li>
+            <li><strong>Benefits:</strong>
+              <ul>
+                <li>Keep existing app fully functional during development</li>
+                <li>Enable side-by-side testing and comparison</li>
+                <li>Allow gradual user migration</li>
+                <li>Easy rollback if needed</li>
+                <li>Test with real users before full migration</li>
+              </ul>
+            </li>
+          </ul>
+        </section>
 
-    <h2 id="library-replacements">Third-Party Library Replacements</h2>
-    
-    <h3>Replaceable Components & Estimated Savings</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Component</th>
-          <th>Current Lines</th>
-          <th>Library</th>
-          <th>Savings</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Rich Text Editor</td>
-          <td>~1,500-2,000</td>
-          <td>TipTap/Slate</td>
-          <td>~1,500-2,000 lines</td>
-        </tr>
-        <tr>
-          <td>Modals (8 total)</td>
-          <td>~500-800</td>
-          <td>Radix UI Dialog</td>
-          <td>~500-800 lines</td>
-        </tr>
-        <tr>
-          <td>Drag & Drop</td>
-          <td>~300-400</td>
-          <td>@dnd-kit</td>
-          <td>~300-400 lines</td>
-        </tr>
-        <tr>
-          <td>Color Picker</td>
-          <td>~150</td>
-          <td>react-colorful</td>
-          <td>~150 lines</td>
-        </tr>
-        <tr>
-          <td>Tabs</td>
-          <td>~100</td>
-          <td>Radix UI Tabs</td>
-          <td>~100 lines</td>
-        </tr>
-        <tr>
-          <td>Context Menu</td>
-          <td>~150</td>
-          <td>Radix UI Context Menu</td>
-          <td>~150 lines</td>
-        </tr>
-        <tr>
-          <td>Dropdown Menus</td>
-          <td>~100</td>
-          <td>Radix UI Dropdown</td>
-          <td>~100 lines</td>
-        </tr>
-        <tr>
-          <td>Forms</td>
-          <td>~200</td>
-          <td>React Hook Form</td>
-          <td>~200 lines</td>
-        </tr>
-        <tr>
-          <td>Date Picker</td>
-          <td>~50</td>
-          <td>react-datepicker</td>
-          <td>~50 lines</td>
-        </tr>
-        <tr>
-          <td>Tooltips</td>
-          <td>~50</td>
-          <td>Radix UI Tooltip</td>
-          <td>~50 lines</td>
-        </tr>
-        <tr>
-          <td>Toast Notifications</td>
-          <td>~100</td>
-          <td>react-hot-toast</td>
-          <td>~100 lines</td>
-        </tr>
-        <tr>
-          <td>Collapsible/Accordion</td>
-          <td>~100</td>
-          <td>Radix UI Accordion</td>
-          <td>~100 lines</td>
-        </tr>
-        <tr>
-          <td><strong>TOTAL</strong></td>
-          <td><strong>~3,300-4,200</strong></td>
-          <td></td>
-          <td><strong>~3,300-4,200 lines</strong></td>
-        </tr>
-      </tbody>
-    </table>
+        <section class="docs-section" id="library-replacements">
+          <h2>Third-Party Library Replacements</h2>
+          
+          <h3>Replaceable Components & Estimated Savings</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Current Lines</th>
+                <th>Library</th>
+                <th>Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Rich Text Editor</td>
+                <td>~1,500-2,000</td>
+                <td>TipTap/Slate</td>
+                <td>~1,500-2,000 lines</td>
+              </tr>
+              <tr>
+                <td>Modals (8 total)</td>
+                <td>~500-800</td>
+                <td>Radix UI Dialog</td>
+                <td>~500-800 lines</td>
+              </tr>
+              <tr>
+                <td>Drag & Drop</td>
+                <td>~300-400</td>
+                <td>@dnd-kit</td>
+                <td>~300-400 lines</td>
+              </tr>
+              <tr>
+                <td>Color Picker</td>
+                <td>~150</td>
+                <td>react-colorful</td>
+                <td>~150 lines</td>
+              </tr>
+              <tr>
+                <td>Tabs</td>
+                <td>~100</td>
+                <td>Radix UI Tabs</td>
+                <td>~100 lines</td>
+              </tr>
+              <tr>
+                <td>Context Menu</td>
+                <td>~150</td>
+                <td>Radix UI Context Menu</td>
+                <td>~150 lines</td>
+              </tr>
+              <tr>
+                <td>Dropdown Menus</td>
+                <td>~100</td>
+                <td>Radix UI Dropdown</td>
+                <td>~100 lines</td>
+              </tr>
+              <tr>
+                <td>Forms</td>
+                <td>~200</td>
+                <td>React Hook Form</td>
+                <td>~200 lines</td>
+              </tr>
+              <tr>
+                <td>Date Picker</td>
+                <td>~50</td>
+                <td>react-datepicker</td>
+                <td>~50 lines</td>
+              </tr>
+              <tr>
+                <td>Tooltips</td>
+                <td>~50</td>
+                <td>Radix UI Tooltip</td>
+                <td>~50 lines</td>
+              </tr>
+              <tr>
+                <td>Toast Notifications</td>
+                <td>~100</td>
+                <td>react-hot-toast</td>
+                <td>~100 lines</td>
+              </tr>
+              <tr>
+                <td>Collapsible/Accordion</td>
+                <td>~100</td>
+                <td>Radix UI Accordion</td>
+                <td>~100 lines</td>
+              </tr>
+              <tr>
+                <td><strong>TOTAL</strong></td>
+                <td><strong>~3,300-4,200</strong></td>
+                <td></td>
+                <td><strong>~3,300-4,200 lines</strong></td>
+              </tr>
+            </tbody>
+          </table>
 
-    <h3>Recommended Library Stack</h3>
-    <pre><code>{
+          <h3>Recommended Library Stack</h3>
+          <p><strong>Note:</strong> This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, and state management will be written in TypeScript.</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
   "dependencies": {
     "react": "^18.x",
     "react-dom": "^18.x",
@@ -470,264 +257,291 @@
     "react-hook-form": "^7.x",
     "react-datepicker": "^4.x",
     "react-hot-toast": "^2.x",
-    "axios": "^1.x"
+    "axios": "^1.x",
+    "zustand": "^4.x"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.x",
+    "vite": "^5.x",
+    "typescript": "^5.x",
+    "@types/react": "^18.x",
+    "@types/react-dom": "^18.x",
+    "@types/node": "^20.x"
   }
 }</code></pre>
+        </section>
 
-    <h2 id="effort-estimation">Effort Estimation</h2>
-    
-    <h3>Revised LOE (With Third-Party Libraries)</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Task</th>
-          <th>Hours</th>
-          <th>Savings</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Rich Text Editor (TipTap)</td>
-          <td>15-25</td>
-          <td>25-35 hrs</td>
-        </tr>
-        <tr>
-          <td>UI Components (Radix UI)</td>
-          <td>10-15</td>
-          <td>20-25 hrs</td>
-        </tr>
-        <tr>
-          <td>Drag & Drop (@dnd-kit)</td>
-          <td>4-6</td>
-          <td>11-14 hrs</td>
-        </tr>
-        <tr>
-          <td>Forms & Inputs (React Hook Form)</td>
-          <td>3-4</td>
-          <td>5-8 hrs</td>
-        </tr>
-        <tr>
-          <td>State Management</td>
-          <td>20-30</td>
-          <td>0 hrs</td>
-        </tr>
-        <tr>
-          <td>Stories Page</td>
-          <td>8-12</td>
-          <td>4-6 hrs</td>
-        </tr>
-        <tr>
-          <td>Authentication Flow</td>
-          <td>6-8</td>
-          <td>2-4 hrs</td>
-        </tr>
-        <tr>
-          <td>Google Drive Integration</td>
-          <td>6-8</td>
-          <td>2-4 hrs</td>
-        </tr>
-        <tr>
-          <td>CSS/Styling Updates</td>
-          <td>8-10</td>
-          <td>2-5 hrs</td>
-        </tr>
-        <tr>
-          <td>Docs Page</td>
-          <td>2-3</td>
-          <td>2-3 hrs</td>
-        </tr>
-        <tr>
-          <td>Export Functionality</td>
-          <td>4-6</td>
-          <td>2-4 hrs</td>
-        </tr>
-        <tr>
-          <td>Goal Tracking</td>
-          <td>6-8</td>
-          <td>2-4 hrs</td>
-        </tr>
-        <tr>
-          <td>React Setup & Configuration</td>
-          <td>6-8</td>
-          <td>2-4 hrs</td>
-        </tr>
-        <tr>
-          <td>Testing & Bug Fixes</td>
-          <td>15-25</td>
-          <td>5 hrs</td>
-        </tr>
-        <tr>
-          <td><strong>TOTAL</strong></td>
-          <td><strong>105-160</strong></td>
-          <td><strong>66-87 hrs saved</strong></td>
-        </tr>
-      </tbody>
-    </table>
+        <section class="docs-section" id="effort-estimation">
+          <h2>Effort Estimation</h2>
+          
+          <h3>Revised LOE (With Third-Party Libraries)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Hours</th>
+                <th>Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Rich Text Editor (TipTap)</td>
+                <td>15-25</td>
+                <td>25-35 hrs</td>
+              </tr>
+              <tr>
+                <td>UI Components (Radix UI)</td>
+                <td>10-15</td>
+                <td>20-25 hrs</td>
+              </tr>
+              <tr>
+                <td>Drag & Drop (@dnd-kit)</td>
+                <td>4-6</td>
+                <td>11-14 hrs</td>
+              </tr>
+              <tr>
+                <td>Forms & Inputs (React Hook Form)</td>
+                <td>3-4</td>
+                <td>5-8 hrs</td>
+              </tr>
+              <tr>
+                <td>State Management</td>
+                <td>20-30</td>
+                <td>0 hrs</td>
+              </tr>
+              <tr>
+                <td>Stories Page</td>
+                <td>8-12</td>
+                <td>4-6 hrs</td>
+              </tr>
+              <tr>
+                <td>Authentication Flow</td>
+                <td>6-8</td>
+                <td>2-4 hrs</td>
+              </tr>
+              <tr>
+                <td>Google Drive Integration</td>
+                <td>6-8</td>
+                <td>2-4 hrs</td>
+              </tr>
+              <tr>
+                <td>CSS/Styling Updates</td>
+                <td>8-10</td>
+                <td>2-5 hrs</td>
+              </tr>
+              <tr>
+                <td>Docs Page</td>
+                <td>2-3</td>
+                <td>2-3 hrs</td>
+              </tr>
+              <tr>
+                <td>Export Functionality</td>
+                <td>4-6</td>
+                <td>2-4 hrs</td>
+              </tr>
+              <tr>
+                <td>Goal Tracking</td>
+                <td>6-8</td>
+                <td>2-4 hrs</td>
+              </tr>
+              <tr>
+                <td>React Setup & Configuration</td>
+                <td>8-12</td>
+                <td>0 hrs (includes TS setup)</td>
+              </tr>
+              <tr>
+                <td>TypeScript Type Definitions</td>
+                <td>8-12</td>
+                <td>-8-12 hrs (adds time but saves debugging)</td>
+              </tr>
+              <tr>
+                <td>Testing & Bug Fixes</td>
+                <td>12-20</td>
+                <td>8 hrs (TypeScript catches errors earlier)</td>
+              </tr>
+              <tr>
+                <td><strong>TOTAL</strong></td>
+                <td><strong>105-160</strong></td>
+                <td><strong>66-87 hrs saved</strong></td>
+              </tr>
+            </tbody>
+          </table>
 
-    <h3>Timeline Estimates</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Scenario</th>
-          <th>Hours</th>
-          <th>Weeks (40hr)</th>
-          <th>Weeks (20hr)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>Optimistic</strong></td>
-          <td>67</td>
-          <td>1.7</td>
-          <td>3.3</td>
-        </tr>
-        <tr>
-          <td><strong>Realistic</strong></td>
-          <td>86</td>
-          <td>2.1</td>
-          <td>4.3</td>
-        </tr>
-        <tr>
-          <td><strong>Pessimistic</strong></td>
-          <td>105</td>
-          <td>2.6</td>
-          <td>5.3</td>
-        </tr>
-      </tbody>
-    </table>
+          <h3>Timeline Estimates</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Hours</th>
+                <th>Weeks (40hr)</th>
+                <th>Weeks (20hr)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Optimistic</strong></td>
+                <td>67</td>
+                <td>1.7</td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td><strong>Realistic</strong></td>
+                <td>86</td>
+                <td>2.1</td>
+                <td>4.3</td>
+              </tr>
+              <tr>
+                <td><strong>Pessimistic</strong></td>
+                <td>105</td>
+                <td>2.6</td>
+                <td>5.3</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
-    <h2 id="implementation-details">Implementation Details</h2>
-    
-    <h3>Modals (8 Total)</h3>
-    <ol>
-      <li><strong>Story Info Modal</strong> - Edit story title, genre, description, word goal</li>
-      <li><strong>Export Filename Modal</strong> - User-provided filename for exports</li>
-      <li><strong>Description Edit Modal</strong> - Edit chapter/snippet descriptions</li>
-      <li><strong>Goal Panel Modal</strong> - Set writing goals (target, deadline, days, mode)</li>
-      <li><strong>Rename Modal</strong> - Rename chapters/snippets</li>
-      <li><strong>Delete Confirmation Modal</strong> - Confirm deletion</li>
-      <li><strong>Snippet Conflict Resolution Modal</strong> - Resolve Yarny vs Google Docs conflicts</li>
-      <li><strong>Comments Warning Modal</strong> - Warn about comments/tracked changes in Google Docs</li>
-    </ol>
+        <section class="docs-section" id="implementation-details">
+          <h2>Implementation Details</h2>
+          
+          <h3>Modals (8 Total)</h3>
+          <ol>
+            <li><strong>Story Info Modal</strong> - Edit story title, genre, description, word goal</li>
+            <li><strong>Export Filename Modal</strong> - User-provided filename for exports</li>
+            <li><strong>Description Edit Modal</strong> - Edit chapter/snippet descriptions</li>
+            <li><strong>Goal Panel Modal</strong> - Set writing goals (target, deadline, days, mode)</li>
+            <li><strong>Rename Modal</strong> - Rename chapters/snippets</li>
+            <li><strong>Delete Confirmation Modal</strong> - Confirm deletion</li>
+            <li><strong>Snippet Conflict Resolution Modal</strong> - Resolve Yarny vs Google Docs conflicts</li>
+            <li><strong>Comments Warning Modal</strong> - Warn about comments/tracked changes in Google Docs</li>
+          </ol>
 
-    <h3>Color System</h3>
-    <p><strong>12 Accent Colors</strong> for chapter/snippet color coding:</p>
-    <ul>
-      <li>Red (#EF4444), Orange (#F97316), Amber (#F59E0B), Yellow (#EAB308)</li>
-      <li>Lime (#84CC16), Emerald (#10B981), Teal (#14B8A6), Cyan (#06B6D4)</li>
-      <li>Blue (#3B82F6), Indigo (#6366F1), Violet (#8B5CF6), Fuchsia (#D946EF)</li>
-    </ul>
+          <h3>Color System</h3>
+          <p><strong>12 Accent Colors</strong> for chapter/snippet color coding:</p>
+          <ul>
+            <li>Red (#EF4444), Orange (#F97316), Amber (#F59E0B), Yellow (#EAB308)</li>
+            <li>Lime (#84CC16), Emerald (#10B981), Teal (#14B8A6), Cyan (#06B6D4)</li>
+            <li>Blue (#3B82F6), Indigo (#6366F1), Violet (#8B5CF6), Fuchsia (#D946EF)</li>
+          </ul>
 
-    <h3>Export Types</h3>
-    <ol>
-      <li><strong>Export All Chapters</strong> - All chapters with optional snippet names</li>
-      <li><strong>Export Outline</strong> - Chapter and snippet titles with descriptions</li>
-      <li><strong>Export All People</strong> - All person snippets</li>
-      <li><strong>Export All Places</strong> - All place snippets</li>
-      <li><strong>Export All Things</strong> - All thing snippets</li>
-    </ol>
+          <h3>Export Types</h3>
+          <ol>
+            <li><strong>Export All Chapters</strong> - All chapters with optional snippet names</li>
+            <li><strong>Export Outline</strong> - Chapter and snippet titles with descriptions</li>
+            <li><strong>Export All People</strong> - All person snippets</li>
+            <li><strong>Export All Places</strong> - All place snippets</li>
+            <li><strong>Export All Things</strong> - All thing snippets</li>
+          </ol>
+        </section>
 
-    <h2 id="migration-phases">Migration Phases</h2>
-    
-    <h3>Phase 1: Setup & Infrastructure (Week 1)</h3>
-    <ul class="checklist">
-      <li>Set up React + Vite build system</li>
-      <li>Configure React Router</li>
-      <li>Set up Netlify build configuration</li>
-      <li>Install and configure all libraries</li>
-      <li>Create base component structure</li>
-      <li>Set up state management (Context/Zustand)</li>
-      <li>Create custom hooks for Drive API</li>
-    </ul>
-    <p><strong>LOE:</strong> 6-8 hours</p>
+        <section class="docs-section" id="migration-phases">
+          <h2>Migration Phases</h2>
+          
+          <h3>Phase 1: Setup & Infrastructure (Week 1)</h3>
+          <ul>
+            <li>Set up React + TypeScript + Vite build system</li>
+            <li>Configure TypeScript (tsconfig.json)</li>
+            <li>Set up type definitions for all libraries</li>
+            <li>Configure React Router with TypeScript</li>
+            <li>Set up Netlify build configuration</li>
+            <li>Install and configure all libraries</li>
+            <li>Create base component structure with TypeScript</li>
+            <li>Set up state management (Zustand) with TypeScript types</li>
+            <li>Create TypeScript interfaces/types for state structure</li>
+            <li>Create custom hooks for Drive API with TypeScript</li>
+          </ul>
+          <p><strong>LOE:</strong> 8-12 hours (includes TypeScript setup and type definitions)</p>
 
-    <h3>Phase 2: Authentication (Week 1-2)</h3>
-    <ul class="checklist">
-      <li>Convert login page to React</li>
-      <li>Integrate Google Sign-In SDK</li>
-      <li>Create Auth context/provider</li>
-      <li>Handle auth state and redirects</li>
-      <li>Test authentication flow</li>
-    </ul>
-    <p><strong>LOE:</strong> 6-8 hours</p>
+          <h3>Phase 2: Authentication (Week 1-2)</h3>
+          <ul>
+            <li>Convert login page to React</li>
+            <li>Integrate Google Sign-In SDK</li>
+            <li>Create Auth context/provider</li>
+            <li>Handle auth state and redirects</li>
+            <li>Test authentication flow</li>
+          </ul>
+          <p><strong>LOE:</strong> 6-8 hours</p>
 
-    <h3>Phase 3: Stories Page (Week 2)</h3>
-    <ul class="checklist">
-      <li>Convert stories list to React components</li>
-      <li>Implement search/filtering</li>
-      <li>Add modals (new story, delete confirmation)</li>
-      <li>Integrate with Drive API hooks</li>
-      <li>Test story management</li>
-    </ul>
-    <p><strong>LOE:</strong> 8-12 hours</p>
+          <h3>Phase 3: Stories Page (Week 2)</h3>
+          <ul>
+            <li>Convert stories list to React components</li>
+            <li>Implement search/filtering</li>
+            <li>Add modals (new story, delete confirmation)</li>
+            <li>Integrate with Drive API hooks</li>
+            <li>Test story management</li>
+          </ul>
+          <p><strong>LOE:</strong> 8-12 hours</p>
 
-    <h3>Phase 4: Editor - Core Structure (Week 2-3)</h3>
-    <ul class="checklist">
-      <li>Set up three-column layout (Story/Editor/Notes)</li>
-      <li>Convert story list sidebar</li>
-      <li>Convert notes sidebar with tabs</li>
-      <li>Set up TipTap editor</li>
-      <li>Basic editor functionality</li>
-    </ul>
-    <p><strong>LOE:</strong> 15-20 hours</p>
+          <h3>Phase 4: Editor - Core Structure (Week 2-3)</h3>
+          <ul>
+            <li>Set up three-column layout (Story/Editor/Notes)</li>
+            <li>Convert story list sidebar</li>
+            <li>Convert notes sidebar with tabs</li>
+            <li>Set up TipTap editor</li>
+            <li>Basic editor functionality</li>
+          </ul>
+          <p><strong>LOE:</strong> 15-20 hours</p>
 
-    <h3>Phase 5: Editor - Advanced Features (Week 3-4)</h3>
-    <ul class="checklist">
-      <li>Implement drag & drop with @dnd-kit</li>
-      <li>Color picker integration</li>
-      <li>Context menus</li>
-      <li>All modals (story info, rename, delete, etc.)</li>
-      <li>Goal tracking UI</li>
-      <li>Word count updates</li>
-    </ul>
-    <p><strong>LOE:</strong> 20-30 hours</p>
+          <h3>Phase 5: Editor - Advanced Features (Week 3-4)</h3>
+          <ul>
+            <li>Implement drag & drop with @dnd-kit</li>
+            <li>Color picker integration</li>
+            <li>Context menus</li>
+            <li>All modals (story info, rename, delete, etc.)</li>
+            <li>Goal tracking UI</li>
+            <li>Word count updates</li>
+          </ul>
+          <p><strong>LOE:</strong> 20-30 hours</p>
 
-    <h3>Phase 6: Editor - State & Sync (Week 4)</h3>
-    <ul class="checklist">
-      <li>Implement state management for groups/snippets</li>
-      <li>Lazy loading logic</li>
-      <li>Auto-save functionality</li>
-      <li>Conflict resolution</li>
-      <li>Export functionality</li>
-    </ul>
-    <p><strong>LOE:</strong> 15-20 hours</p>
+          <h3>Phase 6: Editor - State & Sync (Week 4)</h3>
+          <ul>
+            <li>Implement state management for groups/snippets</li>
+            <li>Lazy loading logic</li>
+            <li>Auto-save functionality</li>
+            <li>Conflict resolution</li>
+            <li>Export functionality</li>
+          </ul>
+          <p><strong>LOE:</strong> 15-20 hours</p>
 
-    <h3>Phase 7: Testing & Polish (Week 4-5)</h3>
-    <ul class="checklist">
-      <li>Cross-browser testing</li>
-      <li>Performance optimization</li>
-      <li>Bug fixes</li>
-      <li>Accessibility audit</li>
-      <li>Mobile responsiveness check</li>
-      <li>Documentation updates</li>
-    </ul>
-    <p><strong>LOE:</strong> 15-25 hours</p>
+          <h3>Phase 7: Testing & Polish (Week 4-5)</h3>
+          <ul>
+            <li>Cross-browser testing</li>
+            <li>Performance optimization</li>
+            <li>Bug fixes</li>
+            <li>Accessibility audit</li>
+            <li>Mobile responsiveness check</li>
+            <li>Documentation updates</li>
+          </ul>
+          <p><strong>LOE:</strong> 15-25 hours</p>
+        </section>
 
-    <h2 id="risk-factors">Risk Factors</h2>
-    
-    <h3>High Risk</h3>
-    <ul>
-      <li><strong>ContentEditable Complexity</strong> - Rich text editor integration may have edge cases. Mitigation: Use TipTap (proven library).</li>
-      <li><strong>State Management Migration</strong> - Complex state object with many interdependencies. Mitigation: Use Zustand for simpler migration path.</li>
-      <li><strong>Performance with Large Stories</strong> - React re-renders may be slower. Mitigation: Use React.memo, useMemo, useCallback strategically.</li>
-    </ul>
+        <section class="docs-section" id="risk-factors">
+          <h2>Risk Factors</h2>
+          
+          <h3>High Risk</h3>
+          <ul>
+            <li><strong>ContentEditable Complexity</strong> - Rich text editor integration may have edge cases. Mitigation: Use TipTap (proven library).</li>
+            <li><strong>State Management Migration</strong> - Complex state object with many interdependencies. Mitigation: Use Zustand for simpler migration path.</li>
+            <li><strong>Performance with Large Stories</strong> - React re-renders may be slower. Mitigation: Use React.memo, useMemo, useCallback strategically.</li>
+          </ul>
 
-    <h3>Medium Risk</h3>
-    <ul>
-      <li><strong>Google Drive API Integration</strong> - React hooks may need different error handling. Status: Low risk, mostly wrapping existing code.</li>
-      <li><strong>Feature Parity</strong> - Missing features during migration. Mitigation: Create feature checklist, test each feature.</li>
-      <li><strong>CSS/Styling Migration</strong> - Styling may break during migration. Mitigation: Use CSS modules or styled-components for isolation.</li>
-    </ul>
+          <h3>Medium Risk</h3>
+          <ul>
+            <li><strong>Google Drive API Integration</strong> - React hooks may need different error handling. Status: Low risk, mostly wrapping existing code.</li>
+            <li><strong>Feature Parity</strong> - Missing features during migration. Mitigation: Create feature checklist, test each feature.</li>
+            <li><strong>CSS/Styling Migration</strong> - Styling may break during migration. Mitigation: Use CSS modules or styled-components for isolation.</li>
+          </ul>
+        </section>
 
-    <h2 id="netlify-config">Netlify Configuration</h2>
-    
-    <h3>Deployment Strategy: Parallel Paths</h3>
-    <p>The React app will be deployed to <code>/react</code> path while keeping the existing app at root:</p>
-    <pre><code>yarny.lindsaybrunner.com/          → Existing vanilla JS app (public/)
+        <section class="docs-section" id="netlify-config">
+          <h2>Netlify Configuration</h2>
+          
+          <h3>Deployment Strategy: Parallel Paths</h3>
+          <p>The React app will be deployed to <code>/react</code> path while keeping the existing app at root:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny.lindsaybrunner.com/          → Existing vanilla JS app (public/)
 yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
 
-    <h3>Vite Configuration for Base Path</h3>
-    <pre><code>import { defineConfig } from 'vite'
+          <h3>Vite Configuration for Base Path</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -737,51 +551,212 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
   },
+  resolve: {
+    alias: {
+      '@': '/src',  // TypeScript path alias for cleaner imports
+    },
+  },
 })</code></pre>
 
-    <h3>React Router Configuration</h3>
-    <pre><code>// In your router setup
-&lt;BrowserRouter basename="/react"&gt;
-  &lt;Routes&gt;
-    {/* routes */}
-  &lt;/Routes&gt;
-&lt;/BrowserRouter&gt;</code></pre>
+          <h3>React Router Configuration</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In your router setup (App.tsx)
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LoginPage } from './components/auth/LoginPage';
+import { StoriesPage } from './components/stories/StoriesPage';
+import { EditorPage } from './components/editor/EditorPage';
 
-    <h2 id="next-steps">Next Steps</h2>
-    <ol>
-      <li><strong>Review & Approve Plan</strong> - Get stakeholder buy-in</li>
-      <li><strong>Set Up Development Environment</strong> - Install dependencies, configure build</li>
-      <li><strong>Configure Netlify for Parallel Deployment</strong> - Set up <code>/react</code> path routing</li>
-      <li><strong>Create Proof of Concept</strong> - Migrate one small component to validate approach</li>
-      <li><strong>Deploy to <code>/react</code> Path</strong> - Test deployment and routing</li>
-      <li><strong>Begin Phase 1</strong> - Set up infrastructure</li>
-      <li><strong>Iterate</strong> - Follow migration phases</li>
-    </ol>
+export function App(): JSX.Element {
+  return (
+    &lt;BrowserRouter basename="/react"&gt;
+      &lt;Routes&gt;
+        &lt;Route path="/" element={&lt;LoginPage /&gt;} /&gt;
+        &lt;Route path="/stories" element={&lt;StoriesPage /&gt;} /&gt;
+        &lt;Route path="/editor" element={&lt;EditorPage /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/BrowserRouter&gt;
+  );
+}</code></pre>
+        </section>
 
-    <h3>Testing Strategy with Parallel Deployment</h3>
-    <ul>
-      <li><strong>Development:</strong> Test React app locally at <code>localhost:5173/react</code></li>
-      <li><strong>Staging:</strong> Deploy React app to <code>yarny.lindsaybrunner.com/react</code></li>
-      <li><strong>Comparison:</strong> Side-by-side testing with existing app</li>
-      <li><strong>User Testing:</strong> Invite users to test React version at <code>/react</code> path</li>
-      <li><strong>Migration:</strong> Once validated, can switch root to React app or keep both</li>
-    </ul>
+        <section class="docs-section" id="next-steps">
+          <h2>Next Steps</h2>
+          <ol>
+            <li><strong>Review & Approve Plan</strong> - Get stakeholder buy-in</li>
+            <li><strong>Set Up Development Environment</strong> - Install dependencies, configure build</li>
+            <li><strong>Configure Netlify for Parallel Deployment</strong> - Set up <code>/react</code> path routing</li>
+            <li><strong>Create Proof of Concept</strong> - Migrate one small component to validate approach</li>
+            <li><strong>Deploy to <code>/react</code> Path</strong> - Test deployment and routing</li>
+            <li><strong>Begin Phase 1</strong> - Set up infrastructure</li>
+            <li><strong>Iterate</strong> - Follow migration phases</li>
+          </ol>
 
-    <div class="section-divider"></div>
+          <h3>Testing Strategy with Parallel Deployment</h3>
+          <ul>
+            <li><strong>Development:</strong> Test React app locally at <code>localhost:5173/react</code></li>
+            <li><strong>Staging:</strong> Deploy React app to <code>yarny.lindsaybrunner.com/react</code></li>
+            <li><strong>Comparison:</strong> Side-by-side testing with existing app</li>
+            <li><strong>User Testing:</strong> Invite users to test React version at <code>/react</code> path</li>
+            <li><strong>Migration:</strong> Once validated, can switch root to React app or keep both</li>
+          </ul>
+        </section>
+      </div>
+    </main>
 
-    <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #E5E7EB; color: #6B7280; font-size: 0.9rem;">
-      <p>For questions or updates to this plan, please refer to the full markdown document in the repository.</p>
-      <p style="margin-top: 1rem;">Last updated: <span id="date"></span></p>
+    <footer class="docs-footer">
+      <p>&copy; 2025 Yarny. Your personal writing tool.</p>
+      <nav class="docs-footer-nav">
+        <a href="/stories.html" id="footerStoriesLink" style="display: none;">My Stories</a>
+        <a href="/docs.html">User Guide</a>
+        <a href="/" id="footerLoginLink">Back to Login</a>
+      </nav>
     </footer>
   </div>
-
   <script>
-    document.getElementById('date').textContent = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    // Check if user is logged in
+    function isTokenExpired(token) {
+      if (!token) return true;
+      
+      try {
+        const decoded = atob(token);
+        const parts = decoded.split(':');
+        
+        if (parts.length !== 2) return true;
+        
+        const timestamp = parseInt(parts[1], 10);
+        if (isNaN(timestamp)) return true;
+        
+        // Check if token is within 48 hours
+        const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
+        const now = Date.now();
+        const age = now - timestamp;
+        
+        return age > SESSION_DURATION_MS;
+      } catch (error) {
+        console.error('Error checking token expiration:', error);
+        return true;
+      }
+    }
+
+    function checkAuthStatus() {
+      const authToken = localStorage.getItem('yarny_auth');
+      const isLoggedIn = authToken && !isTokenExpired(authToken);
+      
+      const storiesLink = document.getElementById('storiesNavLink');
+      const loginLink = document.getElementById('loginNavLink');
+      const footerStoriesLink = document.getElementById('footerStoriesLink');
+      const footerLoginLink = document.getElementById('footerLoginLink');
+      
+      if (isLoggedIn) {
+        if (storiesLink) storiesLink.style.display = 'inline-block';
+        if (loginLink) loginLink.style.display = 'none';
+        if (footerStoriesLink) footerStoriesLink.style.display = 'inline-block';
+        if (footerLoginLink) footerLoginLink.style.display = 'none';
+      } else {
+        if (storiesLink) storiesLink.style.display = 'none';
+        if (loginLink) loginLink.style.display = 'inline-block';
+        if (footerStoriesLink) footerStoriesLink.style.display = 'none';
+        if (footerLoginLink) footerLoginLink.style.display = 'inline-block';
+      }
+    }
+
+    // Highlight active navigation item based on scroll position
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check auth status on page load
+      checkAuthStatus();
+      
+      const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+      const sections = document.querySelectorAll('.docs-section[id]');
+      const sidebar = document.querySelector('.docs-sidebar');
+      const header = document.querySelector('.docs-header');
+
+      function updateActiveNav() {
+        let current = '';
+        const scrollPos = window.scrollY + 150; // Offset for header
+
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      // Mobile menu toggle
+      const menuButton = document.querySelector('.mobile-menu-toggle') || document.createElement('button');
+      const backdrop = document.querySelector('.sidebar-backdrop');
+      
+      if (!menuButton.parentNode) {
+        menuButton.className = 'mobile-menu-toggle';
+        menuButton.innerHTML = '☰';
+        menuButton.setAttribute('aria-label', 'Toggle menu');
+        header.appendChild(menuButton);
+      }
+
+      function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        if (backdrop) {
+          backdrop.classList.toggle('active');
+        }
+      }
+
+      menuButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSidebar();
+      });
+
+      // Close sidebar when clicking backdrop
+      if (backdrop) {
+        backdrop.addEventListener('click', function() {
+          sidebar.classList.remove('open');
+          backdrop.classList.remove('active');
+        });
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+          if (!sidebar.contains(e.target) && !e.target.classList.contains('mobile-menu-toggle')) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        }
+      });
+
+      // Close sidebar when clicking a nav link on mobile
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          if (window.innerWidth <= 900) {
+            sidebar.classList.remove('open');
+            if (backdrop) {
+              backdrop.classList.remove('active');
+            }
+          }
+        });
+      });
+
+      window.addEventListener('scroll', updateActiveNav);
+      window.addEventListener('resize', function() {
+        // Only auto-close sidebar if we're above mobile breakpoint
+        if (window.innerWidth > 900) {
+          sidebar.classList.remove('open');
+          if (backdrop) {
+            backdrop.classList.remove('active');
+          }
+        }
+      });
+
+      updateActiveNav(); // Initial call
     });
   </script>
 </body>
 </html>
-
