@@ -33,44 +33,38 @@ exports.handler = async (event, context) => {
     // Escape single quotes in folder names for the query
     const escapeQuery = (name) => name.replace(/'/g, "\\'");
     
-    // First, search for "Yarny Stories" folder (new name)
-    let query = `name='${escapeQuery(YARNY_STORIES_FOLDER)}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    console.log(`Searching for "${YARNY_STORIES_FOLDER}" folder for user ${email}`);
-    let existingFolders = await drive.files.list({
+    // OPTIMIZATION: Search for both folder names in a single query
+    // This reduces API calls from 2 to 1 for new accounts
+    const escapedNew = escapeQuery(YARNY_STORIES_FOLDER);
+    const escapedOld = escapeQuery(OLD_YARNY_FOLDER);
+    const query = `(name='${escapedNew}' or name='${escapedOld}') and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    
+    console.log(`Searching for "${YARNY_STORIES_FOLDER}" or "${OLD_YARNY_FOLDER}" folder for user ${email}`);
+    const existingFolders = await drive.files.list({
       q: query,
       fields: 'files(id, name)',
       spaces: 'drive'
     });
 
-    if (existingFolders.data.files && existingFolders.data.files.length > 0) {
-      // "Yarny Stories" folder exists, return it
-      console.log(`Found "${YARNY_STORIES_FOLDER}" folder: ${existingFolders.data.files[0].id}`);
+    // Check if "Yarny Stories" folder exists (new name - preferred)
+    const newFolder = existingFolders.data.files?.find(f => f.name === YARNY_STORIES_FOLDER);
+    if (newFolder) {
+      console.log(`Found "${YARNY_STORIES_FOLDER}" folder: ${newFolder.id}`);
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: existingFolders.data.files[0].id,
-          name: existingFolders.data.files[0].name,
+          id: newFolder.id,
+          name: newFolder.name,
           created: false
         })
       };
     }
 
-    // "Yarny Stories" doesn't exist, check for old "Yarny" folder (migration)
-    query = `name='${escapeQuery(OLD_YARNY_FOLDER)}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    console.log(`"Yarny Stories" not found, searching for old "${OLD_YARNY_FOLDER}" folder for user ${email}`);
-    existingFolders = await drive.files.list({
-      q: query,
-      fields: 'files(id, name)',
-      spaces: 'drive'
-    });
-
-    console.log(`Found ${existingFolders.data.files?.length || 0} folder(s) matching "${OLD_YARNY_FOLDER}"`);
-
-    if (existingFolders.data.files && existingFolders.data.files.length > 0) {
-      // Old "Yarny" folder exists, rename it to "Yarny Stories"
-      const oldFolder = existingFolders.data.files[0];
-      console.log(`Migrating folder "${OLD_YARNY_FOLDER}" (id: ${oldFolder.id}) to "${YARNY_STORIES_FOLDER}" for user ${email}`);
+    // Check if old "Yarny" folder exists (migration)
+    const oldFolder = existingFolders.data.files?.find(f => f.name === OLD_YARNY_FOLDER);
+    if (oldFolder) {
+      console.log(`Found old "${OLD_YARNY_FOLDER}" folder (id: ${oldFolder.id}), migrating to "${YARNY_STORIES_FOLDER}" for user ${email}`);
       
       try {
         await drive.files.update({

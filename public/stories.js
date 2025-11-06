@@ -303,17 +303,19 @@ function checkAuth() {
 }
 
 // Check Drive authorization status
+// OPTIMIZED: Reduced wait time and improved error handling
 async function checkDriveAuth() {
   // Wait for driveAPI to be available
   if (!window.driveAPI) {
     console.log('driveAPI not loaded yet, waiting...');
-    // Wait up to 2 seconds for driveAPI to load
-    for (let i = 0; i < 20; i++) {
+    // OPTIMIZATION: Reduced from 2 seconds to 1 second max wait time
+    // drive.js should load quickly since it's loaded in the HTML before stories.js
+    for (let i = 0; i < 10; i++) {
       await new Promise(resolve => setTimeout(resolve, 100));
       if (window.driveAPI) break;
     }
     if (!window.driveAPI) {
-      console.error('driveAPI failed to load');
+      console.error('driveAPI failed to load after 1 second');
       return false;
     }
   }
@@ -407,6 +409,8 @@ async function createDriveFolder(folderName, parentFolderId) {
 }
 
 // List folders (stories) in Yarny Stories directory
+// OPTIMIZED: Returns basic story info without enrichment to speed up initial load
+// Enrichment (updatedAt, progress) happens in renderStories() to avoid duplicate API calls
 async function listStories() {
   try {
     if (!yarnyStoriesFolderId) {
@@ -421,56 +425,14 @@ async function listStories() {
       !file.trashed
     );
     
-    // Enrich stories with updatedAt from project.json
-    // This gives us the actual last modified time (when files were saved), not just folder modifiedTime
-    const enrichedStories = await Promise.all(storyFolders.map(async (story) => {
-      try {
-        // List files in story folder to find project.json
-        const files = await window.driveAPI.list(story.id);
-        const fileMap = {};
-        (files.files || []).forEach(file => {
-          fileMap[file.name] = file.id;
-        });
-        
-        // Read project.json to get updatedAt
-        if (fileMap['project.json']) {
-          try {
-            const projectData = await window.driveAPI.read(fileMap['project.json']);
-            if (projectData.content) {
-              const project = JSON.parse(projectData.content);
-              // Use updatedAt from project.json as the actual last modified time
-              // Fall back to folder modifiedTime if project.json doesn't have updatedAt
-              story.updatedAt = project.updatedAt || story.modifiedTime;
-            } else {
-              // If project.json exists but has no content, use folder modifiedTime
-              story.updatedAt = story.modifiedTime;
-            }
-          } catch (error) {
-            console.warn(`Failed to read project.json for story ${story.name}:`, error);
-            // Fall back to folder modifiedTime if we can't read project.json
-            story.updatedAt = story.modifiedTime;
-          }
-        } else {
-          // No project.json yet, use folder modifiedTime
-          story.updatedAt = story.modifiedTime;
-        }
-      } catch (error) {
-        console.warn(`Failed to list files for story ${story.name}:`, error);
-        // Fall back to folder modifiedTime if we can't list files
-        story.updatedAt = story.modifiedTime;
-      }
-      
-      return story;
-    }));
-    
-    // Sort by updatedAt (most recent first)
-    enrichedStories.sort((a, b) => {
-      const timeA = new Date(a.updatedAt || 0).getTime();
-      const timeB = new Date(b.updatedAt || 0).getTime();
+    // Sort by folder modifiedTime (most recent first) - we'll update with project.json updatedAt later
+    storyFolders.sort((a, b) => {
+      const timeA = new Date(a.modifiedTime || 0).getTime();
+      const timeB = new Date(b.modifiedTime || 0).getTime();
       return timeB - timeA; // Descending order (most recent first)
     });
     
-    return enrichedStories;
+    return storyFolders;
   } catch (error) {
     console.error('Error listing stories:', error);
     throw error;
@@ -648,100 +610,90 @@ function calculateDailyGoalInfo(goal, totalWords) {
   }
 }
 
-// Fetch story progress data (word count and goal)
-async function fetchStoryProgress(storyFolderId, useCache = true) {
+// Fetch story progress data (word count and goal) and enrichment (updatedAt)
+// OPTIMIZED: Returns both progress and updatedAt in a single call to avoid duplicate file listings
+async function fetchStoryProgressAndEnrichment(storyFolderId, fileMap = null, useCache = true) {
   // Check cache first
   if (useCache) {
     const cached = getCachedStoryProgress(storyFolderId);
     if (cached) {
-      return cached;
+      // Return cached progress with updatedAt if available
+      return {
+        progress: cached,
+        updatedAt: cached.updatedAt || null
+      };
     }
   }
   
   try {
-    // List files in the story folder
-    const files = await window.driveAPI.list(storyFolderId);
-    const fileMap = {};
-    (files.files || []).forEach(file => {
-      fileMap[file.name] = file.id;
-    });
+    // List files if not provided (allows reuse of file listings)
+    if (!fileMap) {
+      const files = await window.driveAPI.list(storyFolderId);
+      fileMap = {};
+      (files.files || []).forEach(file => {
+        fileMap[file.name] = file.id;
+      });
+    }
     
     let wordGoal = 3000; // Default goal
     let totalWords = 0;
     let goal = null;
+    let updatedAt = null;
     
-    // Read project.json to get word goal
+    // Read project.json, goal.json, and data.json in parallel
+    const readPromises = [];
+    
     if (fileMap['project.json']) {
-      try {
-        const projectData = await window.driveAPI.read(fileMap['project.json']);
-        if (projectData.content) {
-          const project = JSON.parse(projectData.content);
-          wordGoal = project.wordGoal || 3000;
-        }
-      } catch (error) {
-        console.warn(`Failed to read project.json for story ${storyFolderId}:`, error);
-      }
+      readPromises.push(
+        window.driveAPI.read(fileMap['project.json'])
+          .then(projectData => {
+            if (projectData.content) {
+              const project = JSON.parse(projectData.content);
+              wordGoal = project.wordGoal || 3000;
+              updatedAt = project.updatedAt || null;
+            }
+          })
+          .catch(error => {
+            console.warn(`Failed to read project.json for story ${storyFolderId}:`, error);
+          })
+      );
     }
     
-    // Read goal.json if it exists
     if (fileMap['goal.json']) {
-      try {
-        const goalData = await window.driveAPI.read(fileMap['goal.json']);
-        if (goalData.content) {
-          goal = JSON.parse(goalData.content);
-        }
-      } catch (error) {
-        console.warn(`Failed to read goal.json for story ${storyFolderId}:`, error);
-      }
+      readPromises.push(
+        window.driveAPI.read(fileMap['goal.json'])
+          .then(goalData => {
+            if (goalData.content) {
+              goal = JSON.parse(goalData.content);
+            }
+          })
+          .catch(error => {
+            console.warn(`Failed to read goal.json for story ${storyFolderId}:`, error);
+          })
+      );
     }
     
-    // Trust data.json for word counts (editor keeps them up-to-date)
-    // Use shared calculation function to ensure consistency with editor progress meter
-    let data = null;
     if (fileMap['data.json']) {
-      try {
-        const dataContent = await window.driveAPI.read(fileMap['data.json']);
-        if (dataContent.content) {
-          data = JSON.parse(dataContent.content);
-          
-          // Debug: Log what we found in data.json
-          const allSnippets = data.snippets ? Object.keys(data.snippets).length : 0;
-          const allGroups = data.groups ? Object.keys(data.groups).length : 0;
-          console.log(`Reading data.json for ${storyFolderId}: ${allSnippets} total snippets, ${allGroups} groups`);
-          
-          // Debug: Log all chapter snippets
-          if (data.snippets) {
-            const chapterSnippets = Object.values(data.snippets).filter(snippet => {
-              const group = snippet.groupId ? data.groups?.[snippet.groupId] : null;
-              return !!group;
-            });
-            console.log(`Chapter snippets found:`, chapterSnippets.map(s => ({
-              id: s.id,
-              title: s.title,
-              words: s.words,
-              groupId: s.groupId,
-              hasGroup: !!data.groups?.[s.groupId]
-            })));
-          }
-          
-          // Use shared calculation function - same logic as editor progress meter
-          if (data.snippets && data.groups) {
-            totalWords = window.calculateStoryWordCount(data.snippets, data.groups);
-            const chapterSnippetCount = Object.values(data.snippets).filter(snippet => {
-              const group = snippet.groupId ? data.groups[snippet.groupId] : null;
-              return !!group;
-            }).length;
-            console.log(`✅ Calculated ${totalWords} words from ${chapterSnippetCount} chapter snippets using data.json word counts for story ${storyFolderId}`);
-          }
-        }
-      } catch (error) {
-        console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
-      }
+      readPromises.push(
+        window.driveAPI.read(fileMap['data.json'])
+          .then(dataContent => {
+            if (dataContent.content) {
+              const data = JSON.parse(dataContent.content);
+              
+              // Use shared calculation function - same logic as editor progress meter
+              if (data.snippets && data.groups) {
+                totalWords = window.calculateStoryWordCount(data.snippets, data.groups);
+              }
+            }
+          })
+          .catch(error => {
+            console.warn(`Failed to read data.json for story ${storyFolderId}:`, error);
+          })
+      );
     }
     
-    if (!data || !data.snippets || !data.groups) {
-      console.warn(`No data.json or missing snippets/groups for story ${storyFolderId}`);
-    }
+    // Wait for all reads to complete in parallel
+    await Promise.all(readPromises);
     
     const percentage = wordGoal > 0 ? Math.min(100, Math.round((totalWords / wordGoal) * 100)) : 0;
     
@@ -753,20 +705,34 @@ async function fetchStoryProgress(storyFolderId, useCache = true) {
       totalWords,
       percentage,
       goal,
-      dailyInfo
+      dailyInfo,
+      updatedAt // Include updatedAt in progress cache
     };
     
     // Cache the result
     cacheStoryProgress(storyFolderId, progress);
     
-    return progress;
+    return {
+      progress,
+      updatedAt
+    };
   } catch (error) {
     console.warn(`Failed to fetch progress for story ${storyFolderId}:`, error);
-    return null;
+    return {
+      progress: null,
+      updatedAt: null
+    };
   }
 }
 
+// Legacy function for backward compatibility
+async function fetchStoryProgress(storyFolderId, useCache = true) {
+  const result = await fetchStoryProgressAndEnrichment(storyFolderId, null, useCache);
+  return result.progress;
+}
+
 // Render stories list
+// OPTIMIZED: Shows stories immediately, then fetches progress in parallel
 async function renderStories(stories, skipLoadingState = false) {
   const listEl = document.getElementById('storiesList');
   const emptyState = document.getElementById('emptyState');
@@ -785,7 +751,8 @@ async function renderStories(stories, skipLoadingState = false) {
   emptyState.classList.add('hidden');
   listEl.innerHTML = '';
   
-  // Create story cards first, showing cached progress immediately if available
+  // OPTIMIZATION: Show stories immediately with cached data or loading state
+  // This makes the page interactive much faster
   const storyCards = stories.map(story => {
     const storyCard = document.createElement('div');
     storyCard.className = 'story-card';
@@ -793,13 +760,13 @@ async function renderStories(stories, skipLoadingState = false) {
     
     // Try to get cached progress for immediate display
     const cachedProgress = getCachedStoryProgress(story.id);
+    const cachedUpdatedAt = cachedProgress?.updatedAt || null;
     
     const contentDiv = document.createElement('div');
     contentDiv.className = 'story-card-content';
     
     // Show cached progress if available, otherwise show loading
     let progressHtml = '';
-    let todayBadgeHtml = '';
     
     if (cachedProgress) {
       const percentage = cachedProgress.wordGoal > 0 
@@ -859,7 +826,7 @@ async function renderStories(stories, skipLoadingState = false) {
     
     contentDiv.innerHTML = `
       <h3>${escapeHtml(story.name)}</h3>
-      <p class="story-modified">Last modified: ${formatDate(story.updatedAt || story.modifiedTime)}</p>
+      <p class="story-modified">Last modified: ${formatDate(cachedUpdatedAt || story.modifiedTime)}</p>
       ${progressHtml}
     `;
     
@@ -889,14 +856,32 @@ async function renderStories(stories, skipLoadingState = false) {
     return { story, card: storyCard, hasCachedProgress: !!cachedProgress };
   });
   
-  // Fetch fresh progress data in the background (skip cache to get latest)
-  // Only fetch if we don't have cached data or if cache is stale
-  const progressPromises = storyCards.map(async ({ story, card, hasCachedProgress }) => {
-    // If we have cached data, still fetch fresh but don't wait for it
-    // If we don't have cached data, fetch is already in progress
-    try {
-      const progress = await fetchStoryProgress(story.id, false); // false = don't use cache, get fresh data
+  // OPTIMIZATION: Fetch progress for each story independently and update as data arrives
+  // This allows stories to update progressively rather than waiting for all to complete
+  storyCards.forEach(({ story, card, hasCachedProgress }) => {
+    // Start fetching progress immediately for each story (fire and forget)
+    // Each story updates independently as its data arrives
+    (async () => {
+      try {
+        // List files for this story
+        const files = await window.driveAPI.list(story.id);
+        const fileMap = {};
+        (files.files || []).forEach(file => {
+          fileMap[file.name] = file.id;
+        });
+        
+        // Fetch progress and updatedAt together (reuses fileMap to avoid duplicate listing)
+        const { progress, updatedAt } = await fetchStoryProgressAndEnrichment(story.id, fileMap, false);
+      
       if (progress) {
+        // Update updatedAt in the modified date display
+        if (updatedAt) {
+          const modifiedEl = card.querySelector('.story-modified');
+          if (modifiedEl) {
+            modifiedEl.textContent = `Last modified: ${formatDate(updatedAt)}`;
+          }
+        }
+        
         // Update progress display
         const progressContainer = card.querySelector('.story-progress-container');
         if (!progressContainer) {
@@ -992,27 +977,25 @@ async function renderStories(stories, skipLoadingState = false) {
         console.warn(`No progress data returned for story ${story.name}`);
         // Hide progress if we couldn't fetch it
         const progressContainer = card.querySelector('.story-progress-container');
-        if (progressContainer) {
+        if (progressContainer && !hasCachedProgress) {
           progressContainer.style.display = 'none';
         }
       }
-    } catch (error) {
-      console.error(`Error fetching progress for story ${story.name}:`, error);
-      // Only hide progress if we don't have cached data showing
-      if (!hasCachedProgress) {
-        const progressContainer = card.querySelector('.story-progress-container');
-        if (progressContainer) {
-          progressContainer.style.display = 'none';
+      } catch (error) {
+        console.error(`Error fetching progress for story ${story.name}:`, error);
+        // Only hide progress if we don't have cached data showing
+        if (!hasCachedProgress) {
+          const progressContainer = card.querySelector('.story-progress-container');
+          if (progressContainer) {
+            progressContainer.style.display = 'none';
+          }
         }
       }
-    }
+    })();
   });
   
-  // Don't wait for progress - let it load in background after cards are shown
-  // This allows the page to be interactive immediately
-  Promise.allSettled(progressPromises).catch(() => {
-    // Ignore errors - they're already handled in individual promises
-  });
+  // Stories are now shown and will update progressively as data arrives
+  // No need to wait - the page is immediately interactive
 }
 
 // Get a random opening sentence
@@ -1548,13 +1531,25 @@ async function initialize() {
   document.getElementById('driveAuthPrompt').classList.add('hidden');
   document.getElementById('storiesContent').classList.remove('hidden');
   
-  // Initialize folder ID from cache if available (faster than API call)
-  const cachedFolderId = getCachedYarnyFolderId();
-  if (cachedFolderId) {
-    yarnyStoriesFolderId = cachedFolderId;
+  // OPTIMIZATION: Initialize folder ID proactively and cache it
+  // This prevents listStories() from making a redundant folder lookup call
+  try {
+    const cachedFolderId = getCachedYarnyFolderId();
+    if (cachedFolderId) {
+      yarnyStoriesFolderId = cachedFolderId;
+      console.log('Using cached folder ID:', cachedFolderId);
+    } else {
+      // Get or create folder ID now (before listing stories) to avoid duplicate call
+      console.log('Getting or creating Yarny Stories folder...');
+      yarnyStoriesFolderId = await getOrCreateYarnyStoriesFolder();
+      console.log('Folder ID obtained:', yarnyStoriesFolderId);
+    }
+  } catch (error) {
+    console.error('Error getting folder ID:', error);
+    // Continue anyway - listStories() will try again if needed
   }
   
-  // Load stories
+  // Load stories (will use cached yarnyStoriesFolderId if available)
   try {
     const stories = await listStories();
     if (stories && stories.length >= 0) {

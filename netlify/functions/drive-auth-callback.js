@@ -259,6 +259,45 @@ exports.handler = async (event, context) => {
     
     console.log('Tokens saved successfully for:', email);
 
+    // OPTIMIZATION: Proactively create the Yarny Stories folder during callback
+    // This saves a round trip when the user first lands on the stories page
+    // We do this in the background and don't wait for it to complete
+    // The folder will be created/retrieved on stories page load anyway
+    const { getAuthenticatedDriveClient } = require('./drive-client');
+    (async () => {
+      try {
+        const drive = await getAuthenticatedDriveClient(email);
+        const YARNY_STORIES_FOLDER = 'Yarny Stories';
+        const OLD_YARNY_FOLDER = 'Yarny';
+        
+        const escapeQuery = (name) => name.replace(/'/g, "\\'");
+        const escapedNew = escapeQuery(YARNY_STORIES_FOLDER);
+        const escapedOld = escapeQuery(OLD_YARNY_FOLDER);
+        const query = `(name='${escapedNew}' or name='${escapedOld}') and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+        
+        const existingFolders = await drive.files.list({
+          q: query,
+          fields: 'files(id, name)',
+          spaces: 'drive'
+        });
+        
+        // If folder doesn't exist, create it
+        if (!existingFolders.data.files || existingFolders.data.files.length === 0) {
+          await drive.files.create({
+            requestBody: {
+              name: YARNY_STORIES_FOLDER,
+              mimeType: 'application/vnd.google-apps.folder'
+            },
+            fields: 'id, name'
+          });
+          console.log('Proactively created Yarny Stories folder for:', email);
+        }
+      } catch (error) {
+        // Non-critical - folder will be created on stories page load if this fails
+        console.warn('Failed to proactively create folder during callback:', error.message);
+      }
+    })();
+
     // Clear state cookie (with SameSite=Lax to match original cookie)
     const clearStateCookie = 'drive_auth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;';
 
