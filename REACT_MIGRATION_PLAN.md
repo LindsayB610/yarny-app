@@ -728,7 +728,7 @@ This section details exactly which parts of the current codebase can be replaced
 
 #### 1. MUI Theme Customization (Start in Phase 1)
 
-Create `src/theme/theme.ts` that maps the brand palette to MUI's theme. **Critical: Include ALL palette tokens and gradient from the start**:
+Create `src/theme/theme.ts` that maps the brand palette to MUI's theme. **Critical: Include ALL palette tokens and gradient from the start, plus accessible focus rings**:
 
 ```typescript
 import { createTheme } from '@mui/material/styles';
@@ -762,6 +762,12 @@ const brandColors = {
     ink700: '#334155',
     ink500: '#64748B',
   },
+  
+  // Dark backgrounds for cards (used in left rail)
+  darkCardBg: '#1F2937',
+  
+  // Pale chip backgrounds (used in left rail)
+  paleChipBg: '#F3F4F6',
 };
 
 export const theme = createTheme({
@@ -790,6 +796,58 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           // Match existing button styling - use brand colors
+          '&:focus-visible': {
+            // Accessible focus ring: 2px solid primary color with 2px offset
+            outline: `2px solid ${brandColors.primary}`,
+            outlineOffset: '2px',
+          },
+        },
+      },
+    },
+    // Global focus ring styling for all interactive elements
+    MuiCssBaseline: {
+      styleOverrides: {
+        '*:focus-visible': {
+          // Ensure focus rings are visible against dark cards and pale chips
+          outline: `2px solid ${brandColors.primary}`,
+          outlineOffset: '2px',
+          // For dark backgrounds, use lighter outline
+          '@media (prefers-contrast: high)': {
+            outlineColor: brandColors.primaryLight,
+          },
+        },
+        // Custom focus rings for dark cards
+        '.dark-card:focus-visible': {
+          outline: `2px solid ${brandColors.primaryLight}`, // Lighter outline for dark backgrounds
+          outlineOffset: '2px',
+        },
+        // Custom focus rings for pale chips
+        '.pale-chip:focus-visible': {
+          outline: `2px solid ${brandColors.primaryDark}`, // Darker outline for light backgrounds
+          outlineOffset: '2px',
+        },
+      },
+    },
+    // Customize focus rings for specific components that may appear on dark cards or pale chips
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focusVisible': {
+            // Ensure focus ring is visible on dark card backgrounds
+            outline: `2px solid ${brandColors.primaryLight}`,
+            outlineOffset: '2px',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)', // Subtle background highlight
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focusVisible': {
+            outline: `2px solid ${brandColors.primary}`,
+            outlineOffset: '2px',
+          },
         },
       },
     },
@@ -1264,13 +1322,16 @@ These areas cannot be replaced with libraries and require custom React code:
 ### 5. Export Functionality
 - **Current**: Custom export logic for chapters/outline/notes
 - **React**: Convert to utility functions or hooks
-- **Complexity**: Medium
-- **Lines**: ~200-300 lines
+- **Complexity**: Medium-High
+- **Lines**: ~300-400 lines (includes chunking logic)
 - **Details**: 
   - Exports to Google Docs format
   - Supports 5 export types (chapters, outline, people, places, things)
   - Optional snippet name inclusion
   - User-provided filenames
+  - **Chunked writes for large chapters**: When a chapter contains many snippets (50+), split export into multiple batchUpdate requests to avoid Google Docs API body size limits
+  - **Batch size calculation**: Estimate request size and chunk accordingly (typically ~100KB per batchUpdate request)
+  - **Progress indication**: Show progress during chunked exports
 
 ### 6. Search/Filtering Logic
 - **Current**: Inline filtering in render functions
@@ -1364,23 +1425,86 @@ These areas cannot be replaced with libraries and require custom React code:
 
 #### 1. React Query Setup
 
-Create `src/lib/react-query.ts` to configure React Query:
+Create `src/lib/react-query.ts` to configure React Query with visibility-based gating and rate limit handling:
 
 ```typescript
 import { QueryClient } from '@tanstack/react-query';
+import axios, { AxiosError } from 'axios';
+
+// Check if tab is visible (for visibility-based gating)
+const isTabVisible = (): boolean => {
+  if (typeof document === 'undefined') return true;
+  return !document.hidden;
+};
+
+// Custom retry function with exponential backoff and rate limit detection
+const retryWithBackoff = (failureCount: number, error: unknown): boolean => {
+  // Don't retry if tab is not visible (prevents request storms in background tabs)
+  if (!isTabVisible()) {
+    return false;
+  }
+
+  // Don't retry on 4xx errors (except 429 rate limit)
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status && status >= 400 && status < 500 && status !== 429) {
+      return false;
+    }
+    
+    // For 429 (rate limit), use exponential backoff with jitter
+    if (status === 429) {
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
+      const delay = Math.min(1000 * 2 ** failureCount, 30000);
+      // Add jitter (0-20% of delay) to prevent thundering herd
+      const jitter = Math.random() * delay * 0.2;
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(true), delay + jitter);
+      }) as unknown as boolean;
+    }
+  }
+
+  // Retry up to 3 times with exponential backoff
+  if (failureCount < 3) {
+    return true;
+  }
+  
+  return false;
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh for 5 min
       gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 min (formerly cacheTime)
-      retry: 3, // Retry failed requests 3 times
+      retry: retryWithBackoff, // Custom retry with visibility gating and rate limit handling
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       refetchOnWindowFocus: false, // Don't refetch on window focus (Drive data doesn't change that often)
       refetchOnReconnect: true, // Refetch when network reconnects
+      // Only refetch when tab is visible (prevents request storms in background tabs)
+      refetchInterval: false, // Disable automatic refetching (use manual prefetching instead)
     },
     mutations: {
-      retry: 1, // Retry mutations once on failure
+      retry: (failureCount, error) => {
+        // Don't retry mutations if tab is not visible
+        if (!isTabVisible()) {
+          return false;
+        }
+        
+        // Retry once on failure (excluding 4xx errors except 429)
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          if (status && status >= 400 && status < 500 && status !== 429) {
+            return false;
+          }
+          
+          // For 429 (rate limit), retry once with exponential backoff
+          if (status === 429 && failureCount < 1) {
+            return true;
+          }
+        }
+        
+        return failureCount < 1;
+      },
     },
   },
 });
@@ -1545,17 +1669,28 @@ export function useCreateFolder() {
 }
 ```
 
-#### 3. Prefetching for Lazy Loading
+#### 3. Prefetching for Lazy Loading (Visibility-Gated)
 
-For background loading of snippet content, use React Query's prefetching:
+For background loading of snippet content, use React Query's prefetching with visibility-based gating:
 
 ```typescript
 // In Editor component or hook
 import { queryClient } from '../lib/react-query';
 import { driveKeys } from '../hooks/useDriveQueries';
 
-// Prefetch snippet content in background
+// Check if tab is visible (prevents request storms in background tabs)
+const isTabVisible = (): boolean => {
+  if (typeof document === 'undefined') return true;
+  return !document.hidden;
+};
+
+// Prefetch snippet content in background (only if tab is visible)
 function prefetchSnippetContent(fileId: string) {
+  // Only prefetch if tab is visible (prevents quota exhaustion in background tabs)
+  if (!isTabVisible()) {
+    return;
+  }
+  
   queryClient.prefetchQuery({
     queryKey: driveKeys.file(fileId),
     queryFn: () => readDriveFile({ fileId }),
@@ -1563,11 +1698,19 @@ function prefetchSnippetContent(fileId: string) {
   });
 }
 
-// Prefetch multiple snippets in background (throttled)
+// Prefetch multiple snippets in background (throttled, visibility-gated)
 function prefetchSnippetsBatch(fileIds: string[], batchSize = 5, delay = 500) {
+  // Only prefetch if tab is visible
+  if (!isTabVisible()) {
+    return;
+  }
+  
   fileIds.forEach((fileId, index) => {
     setTimeout(() => {
-      prefetchSnippetContent(fileId);
+      // Re-check visibility before each prefetch (user may have switched tabs)
+      if (isTabVisible()) {
+        prefetchSnippetContent(fileId);
+      }
     }, index * delay);
   });
 }
@@ -2631,12 +2774,15 @@ Already included in recommended stack:
 **LOE**: 25-35 hours (includes Goals UI implementation with chip and panel, plus conflict resolution modal)
 
 ### Phase 6: Lazy Loading & Exports (Week 4)
-- [ ] Lazy loading logic using React Query prefetching and `useQueries`
-- [ ] Auto-save functionality using React Query mutations
-- [ ] Export functionality
+- [ ] Lazy loading logic using React Query prefetching and `useQueries` (visibility-gated)
+- [ ] Auto-save functionality using React Query mutations (visibility-gated)
+- [ ] Export functionality with chunked writes for large chapters
+- [ ] **Implement chunked export logic for chapters exceeding batchUpdate body limits**
+- [ ] **Add progress indication for chunked exports**
 - [ ] **Run full smoke test suite on small and medium projects**
 - [ ] **Validate all operations work correctly (including conflict resolution from Phase 5)**
-- [ ] **Populate large project (test-large)**
+- [ ] **Populate large project (test-large) with very large chapter (50+ snippets)**
+- [ ] **Test export of very large chapter to validate chunking**
 
 **LOE**: 12-17 hours (Note: Conflict resolution moved to Phase 5; lazy loading is simplified with React Query's built-in prefetching; includes smoke test execution)
 
@@ -2992,7 +3138,9 @@ yarny-app/
 │   ├── store/
 │   │   ├── store.ts (Zustand)
 │   │   ├── types.ts (Normalized state types)
-│   │   └── selectors.ts (Selectors for derived views)
+│   │   └── selectors.ts (Selectors for derived views - see example below)
+│   │       # Example: useGroupsList() derives array from normalized groups Record
+│   │       # Convention: "derive, don't duplicate" - views computed via selectors, not stored in state
 │   ├── api/
 │   │   ├── contract.ts      # API contract definitions (types + Zod schemas)
 │   │   ├── client.ts        # Typed API client functions
@@ -3022,6 +3170,7 @@ yarny-app/
 - ✅ Good TypeScript support
 - ✅ Small bundle size
 - **Alternative**: Context API (if team prefers built-in solution)
+- **Trigger for change**: If Zustand's API becomes too limiting for complex state updates or if React Context performance becomes acceptable for our use case
 
 ### Text Editor: TipTap vs Slate vs Draft.js
 
@@ -3032,6 +3181,7 @@ yarny-app/
 - ✅ Good performance
 - ✅ **Configured for plain text only** - matches Yarny's minimalist model and Google Docs round-tripping requirements
 - **Alternative**: Slate (if need more customization, but plain text constraint still applies)
+- **Trigger for change**: If TipTap's plain text extraction diverges from Google Docs API format and cannot be normalized, or if TipTap introduces breaking changes that conflict with our plain text constraint
 
 ### Build Tool: Vite vs Create React App vs Webpack
 
@@ -3041,6 +3191,7 @@ yarny-app/
 - ✅ Great TypeScript support
 - ✅ Smaller bundle sizes
 - **Alternative**: CRA (if team prefers familiarity)
+- **Trigger for change**: If Vite's build output has compatibility issues with Netlify deployment or if Vite's plugin ecosystem becomes insufficient for our needs
 
 ### TypeScript: Required
 
@@ -3053,6 +3204,7 @@ yarny-app/
 - ✅ Easier to maintain and refactor large codebases
 - ✅ All recommended libraries have excellent TypeScript support
 - ✅ TypeScript is now the industry standard for React projects
+- **Trigger for change**: None - TypeScript is a hard requirement for this migration
 
 ---
 
@@ -3070,13 +3222,16 @@ yarny-app/
 
 ### Should Have
 - [ ] Better accessibility (ARIA attributes)
+- [ ] **Accessible focus rings**: Focus states remain visible against dark cards and pale chips (test with keyboard navigation)
 - [ ] Improved error handling
 - [ ] Better loading states
 - [ ] Complete TypeScript type coverage (all components, hooks, utilities)
 - [ ] Type-safe API calls and state management
 - [ ] **API contract formalization with runtime validation (Zod schemas)**
-- [ ] **TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, and stale-while-revalidate**
+- [ ] **TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, stale-while-revalidate, visibility-based gating, and rate limit handling**
 - [ ] **Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus**
+- [ ] **Configurable virtualization thresholds**: Virtualization thresholds (50+ chapters, 200+ snippets) exposed as settings for tuning without redeployment
+- [ ] **Chunked export writes**: Large chapter exports handle batchUpdate body limits with chunked writes
 
 ### Nice to Have
 - [ ] Performance improvements
@@ -3159,9 +3314,10 @@ Create a dedicated Google Drive folder: **`Yarny Test Corpus`** (separate from p
 - 1 story
 - 25 chapters
 - 15 snippets per chapter (375 total snippets)
+- **1 very large chapter**: 1 chapter with 50+ snippets (tests export chunking and batchUpdate body limits)
 - 25 People, 25 Places, 25 Things notes
 - ~100,000 words total
-- **Purpose**: Stress testing, virtualization validation, lazy loading
+- **Purpose**: Stress testing, virtualization validation, lazy loading, export chunking validation
 
 **Test Corpus Structure**:
 ```
@@ -3222,6 +3378,13 @@ Document and execute these smoke tests for each project size to validate critica
 - [ ] Export all Things → Verify combined document created
 - [ ] Verify export filenames match user input
 - [ ] Verify exports appear in story folder in Drive
+- [ ] **Export very large chapter (50+ snippets)**: 
+  - [ ] Verify export handles batchUpdate body limits correctly
+  - [ ] Verify chunked writes are used when chapter exceeds batchUpdate size limit
+  - [ ] Verify all snippets are included in export (no truncation)
+  - [ ] Verify export completes successfully without errors
+  - [ ] Verify export order is preserved across chunks
+  - [ ] Verify progress indication during chunked export
 
 **F. Conflict Resolution**
 - [ ] Edit snippet in Yarny → Edit same snippet in Google Docs (other tab) → Switch snippets → Verify conflict detected
@@ -3244,7 +3407,10 @@ Document and execute these smoke tests for each project size to validate critica
 
 **H. Performance & Loading**
 - [ ] Load large project (test-large) → Verify initial load time acceptable (< 5 seconds)
-- [ ] Switch between snippets in large project → Verify no lag
+- [ ] **Time-to-first-edit (hot path)**: Open snippet already in cache → Start typing → Verify latency ≤300 ms from click to first character appearing
+- [ ] **Time-to-first-edit (cold path)**: Open snippet not yet loaded → Start typing → Verify latency ≤1.5 s from click to first character appearing (includes Drive fetch)
+- [ ] **Time-to-switch-snippet (hot path)**: Switch to snippet already in cache → Verify latency ≤300 ms from click to editor ready
+- [ ] **Time-to-switch-snippet (cold path)**: Switch to snippet not yet loaded → Verify latency ≤1.5 s from click to editor ready (includes Drive fetch)
 - [ ] Scroll through chapter list in large project → Verify smooth scrolling (virtualized)
 - [ ] Background loading → Verify non-active snippets load in background without blocking UI
 - [ ] Lazy loading → Verify snippet content only loads when needed
@@ -3264,11 +3430,22 @@ Document and execute these smoke tests for each project size to validate critica
 - [ ] Close Tab 1 → Verify Tab 2 regains edit capability
 - [ ] Test BroadcastChannel fallback → Verify localStorage heartbeat works if BroadcastChannel unavailable
 
-**I. Error Handling**
+**I. Error Handling & Rate Limiting**
 - [ ] Network error during save → Verify error message displayed, retry works
 - [ ] Invalid Drive permissions → Verify clear error message
-- [ ] Drive API rate limit → Verify graceful handling, retry logic
+- [ ] **Drive API rate limit (429)**: 
+  - [ ] Trigger rate limit (rapid requests) → Verify exponential backoff with jitter is applied
+  - [ ] Verify retry happens only when tab is visible (background tabs don't retry)
+  - [ ] Verify error message displayed to user with clear explanation
+  - [ ] Verify automatic retry after backoff delay completes
+  - [ ] Verify no infinite retry loops (max 3 retries)
 - [ ] Corrupted metadata file → Verify error handling, recovery option
+
+**L. Visibility-Based Request Gating**
+- [ ] Open Yarny in multiple tabs → Verify only visible tab makes background prefetch requests
+- [ ] Switch between tabs → Verify background prefetching pauses in hidden tab, resumes in visible tab
+- [ ] Verify no request storms when tab is in background (prevents Drive quota exhaustion)
+- [ ] Verify mutations (save, delete, rename) also respect visibility gating
 
 #### 3. Linking to Success Criteria
 
@@ -3351,31 +3528,105 @@ This should be implemented in **Phase 1** (Setup & Infrastructure):
 - High memory usage
 - Poor performance on lower-end devices
 
-**Solution**: Use `@tanstack/react-virtual` (or similar) to virtualize the left rail lists.
+**Solution**: Use `@tanstack/react-virtual` (or similar) to virtualize the left rail lists with **configurable thresholds**.
 
 **Implementation**:
 - Virtualize the chapter/group list in the left sidebar
 - Virtualize the snippet list within each chapter
 - Only render visible items + small buffer (e.g., 5 items above/below viewport)
 - Works seamlessly with normalized state structure (already planned)
+- **Expose virtualization thresholds as configurable settings** (stored in localStorage) so they can be tuned without redeploying
+
+**Configuration**:
+Create `src/config/virtualization.ts` with configurable thresholds:
+
+```typescript
+// src/config/virtualization.ts
+const DEFAULT_CHAPTER_THRESHOLD = 50;
+const DEFAULT_SNIPPET_THRESHOLD = 200;
+
+interface VirtualizationConfig {
+  chapterThreshold: number; // Enable virtualization when chapters >= this number
+  snippetThreshold: number; // Enable virtualization when snippets >= this number
+}
+
+const STORAGE_KEY = 'yarny-virtualization-config';
+
+export function getVirtualizationConfig(): VirtualizationConfig {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        chapterThreshold: parsed.chapterThreshold ?? DEFAULT_CHAPTER_THRESHOLD,
+        snippetThreshold: parsed.snippetThreshold ?? DEFAULT_SNIPPET_THRESHOLD,
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to load virtualization config from localStorage', err);
+  }
+  
+  return {
+    chapterThreshold: DEFAULT_CHAPTER_THRESHOLD,
+    snippetThreshold: DEFAULT_SNIPPET_THRESHOLD,
+  };
+}
+
+export function setVirtualizationConfig(config: Partial<VirtualizationConfig>): void {
+  try {
+    const current = getVirtualizationConfig();
+    const updated = { ...current, ...config };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.warn('Failed to save virtualization config to localStorage', err);
+  }
+}
+
+export function shouldVirtualizeChapters(chapterCount: number): boolean {
+  const config = getVirtualizationConfig();
+  return chapterCount >= config.chapterThreshold;
+}
+
+export function shouldVirtualizeSnippets(snippetCount: number): boolean {
+  const config = getVirtualizationConfig();
+  return snippetCount >= config.snippetThreshold;
+}
+```
 
 **Code Example**:
 ```typescript
 // src/components/editor/StorySidebar.tsx
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useGroupsList } from '../../store/selectors';
+import { shouldVirtualizeChapters } from '../../config/virtualization';
 
 export function StorySidebar() {
   const groups = useGroupsList();
   const parentRef = useRef<HTMLDivElement>(null);
+  
+  // Check if virtualization should be enabled (configurable threshold)
+  const shouldVirtualize = shouldVirtualizeChapters(groups.length);
   
   const virtualizer = useVirtualizer({
     count: groups.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60, // Estimated row height
     overscan: 5, // Render 5 extra items above/below viewport
+    enabled: shouldVirtualize, // Only enable if threshold is met
   });
   
+  // If virtualization is disabled, render normally
+  if (!shouldVirtualize) {
+    return (
+      <div style={{ height: '100%', overflow: 'auto' }}>
+        {groups.map((group) => (
+          <GroupRow key={group.id} group={group} />
+        ))}
+      </div>
+    );
+  }
+  
+  // Virtualized rendering
   return (
     <div ref={parentRef} style={{ height: '100%', overflow: 'auto' }}>
       <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
@@ -3804,6 +4055,16 @@ export interface AppState {
 ---
 
 ## Changelog
+
+- **2025-01-XX**: Addressed feedback on Drive quota, virtualization, focus rings, and export chunking
+  - **Drive Quota & Request Storms**: Added visibility-based gating to React Query (only refetch/prefetch when tab is visible), exponential backoff with jitter for rate limit (429) responses, explicit "Drive rate limit" test with behavior validation
+  - **Virtualization Threshold**: Made virtualization thresholds (50+ chapters, 200+ snippets) configurable via localStorage settings, allowing tuning without redeployment
+  - **MUI Focus Rings**: Added accessible focus ring customization to theme (visible against dark cards and pale chips), added "accessible focus rings" to success criteria
+  - **Export Request Size**: Added "very large chapter" (50+ snippets) to large test corpus, added chunked write logic for exports exceeding batchUpdate body limits, added chunked export tests to smoke test checklist
+  - Updated React Query setup to include visibility gating and rate limit handling
+  - Updated export functionality section to include chunking logic and progress indication
+  - Updated test corpus section to include very large chapter for export validation
+  - Updated Phase 6 to include chunked export implementation and testing
 
 - **2025-01-XX**: Added new gotchas and edge cases
   - **Google Docs Newline Semantics**: Added normalization for mixed `\n`/`\r\n` line endings, NBSPs, and trailing spaces in text extraction utilities

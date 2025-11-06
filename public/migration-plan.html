@@ -1709,14 +1709,17 @@ const groupsList = useGroupsList(); // Returns array of groups</code></pre>
           <ul>
             <li><strong>Current</strong>: Custom export logic for chapters/outline/notes</li>
             <li><strong>React</strong>: Convert to utility functions or hooks</li>
-            <li><strong>Complexity</strong>: Medium</li>
-            <li><strong>Lines</strong>: ~200-300 lines</li>
+            <li><strong>Complexity</strong>: Medium-High</li>
+            <li><strong>Lines</strong>: ~300-400 lines (includes chunking logic)</li>
             <li><strong>Details</strong>:
               <ul>
                 <li>Exports to Google Docs format</li>
                 <li>Supports 5 export types (chapters, outline, people, places, things)</li>
                 <li>Optional snippet name inclusion</li>
                 <li>User-provided filenames</li>
+                <li><strong>Chunked writes for large chapters</strong>: When a chapter contains many snippets (50+), split export into multiple batchUpdate requests to avoid Google Docs API body size limits</li>
+                <li><strong>Batch size calculation</strong>: Estimate request size and chunk accordingly (typically ~100KB per batchUpdate request)</li>
+                <li><strong>Progress indication</strong>: Show progress during chunked exports</li>
               </ul>
             </li>
           </ul>
@@ -1843,10 +1846,13 @@ const groupsList = useGroupsList(); // Returns array of groups</code></pre>
           <ol>
             <li><strong>No Duplicate Requests</strong>: Multiple components reading the same file share one request</li>
             <li><strong>Automatic Retries</strong>: Failed requests retry automatically with exponential backoff</li>
+            <li><strong>Visibility-Based Gating</strong>: Only refetch/prefetch when tab is visible (prevents request storms in background tabs)</li>
+            <li><strong>Rate Limit Handling</strong>: Exponential backoff with jitter for 429 responses, prevents quota exhaustion</li>
             <li><strong>Stale-While-Revalidate</strong>: Show cached data immediately, update in background</li>
             <li><strong>Cache Invalidation</strong>: Mutations automatically invalidate related queries</li>
             <li><strong>Loading States</strong>: Built-in <code>isLoading</code>, <code>isFetching</code>, <code>isError</code> states</li>
-            <li><strong>Background Refetching</strong>: Keep data fresh without blocking UI</li>
+            <li><strong>Background Refetching</strong>: Keep data fresh without blocking UI (only when tab is visible)</li>
+            <li><strong>Optimistic Updates</strong>: Can implement optimistic UI updates for better UX</li>
             <li><strong>Type Safety</strong>: Full TypeScript support with typed queries and mutations</li>
           </ol>
 
@@ -2784,13 +2790,16 @@ export function App(): JSX.Element {
           <h3>Should Have</h3>
           <ul>
             <li>Better accessibility (ARIA attributes)</li>
+            <li><strong>Accessible focus rings</strong>: Focus states remain visible against dark cards and pale chips (test with keyboard navigation)</li>
             <li>Improved error handling</li>
             <li>Better loading states</li>
             <li>Complete TypeScript type coverage (all components, hooks, utilities)</li>
             <li>Type-safe API calls and state management</li>
             <li><strong>API contract formalization with runtime validation (Zod schemas)</strong></li>
-            <li><strong>TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, and stale-while-revalidate</strong></li>
+            <li><strong>TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, stale-while-revalidate, visibility-based gating, and rate limit handling</strong></li>
             <li><strong>Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus</strong></li>
+            <li><strong>Configurable virtualization thresholds</strong>: Virtualization thresholds (50+ chapters, 200+ snippets) exposed as settings for tuning without redeployment</li>
+            <li><strong>Chunked export writes</strong>: Large chapter exports handle batchUpdate body limits with chunked writes</li>
           </ul>
 
           <h3>Nice to Have</h3>
@@ -2879,9 +2888,10 @@ export function App(): JSX.Element {
             <li>1 story</li>
             <li>25 chapters</li>
             <li>15 snippets per chapter (375 total snippets)</li>
+            <li><strong>1 very large chapter</strong>: 1 chapter with 50+ snippets (tests export chunking and batchUpdate body limits)</li>
             <li>25 People, 25 Places, 25 Things notes</li>
             <li>~100,000 words total</li>
-            <li><strong>Purpose</strong>: Stress testing, virtualization validation, lazy loading</li>
+            <li><strong>Purpose</strong>: Stress testing, virtualization validation, lazy loading, export chunking validation</li>
           </ul>
 
           <p><strong>Test Corpus Structure</strong>:</p>
@@ -2949,6 +2959,16 @@ export function App(): JSX.Element {
             <li>[ ] Export all Things → Verify combined document created</li>
             <li>[ ] Verify export filenames match user input</li>
             <li>[ ] Verify exports appear in story folder in Drive</li>
+            <li>[ ] <strong>Export very large chapter (50+ snippets)</strong>:
+              <ul>
+                <li>[ ] Verify export handles batchUpdate body limits correctly</li>
+                <li>[ ] Verify chunked writes are used when chapter exceeds batchUpdate size limit</li>
+                <li>[ ] Verify all snippets are included in export (no truncation)</li>
+                <li>[ ] Verify export completes successfully without errors</li>
+                <li>[ ] Verify export order is preserved across chunks</li>
+                <li>[ ] Verify progress indication during chunked export</li>
+              </ul>
+            </li>
           </ul>
 
           <p><strong>F. Conflict Resolution</strong></p>
@@ -2983,12 +3003,28 @@ export function App(): JSX.Element {
             <li>[ ] Lazy loading → Verify snippet content only loads when needed</li>
           </ul>
 
-          <p><strong>I. Error Handling</strong></p>
+          <p><strong>I. Error Handling &amp; Rate Limiting</strong></p>
           <ul>
             <li>[ ] Network error during save → Verify error message displayed, retry works</li>
             <li>[ ] Invalid Drive permissions → Verify clear error message</li>
-            <li>[ ] Drive API rate limit → Verify graceful handling, retry logic</li>
+            <li>[ ] <strong>Drive API rate limit (429)</strong>:
+              <ul>
+                <li>[ ] Trigger rate limit (rapid requests) → Verify exponential backoff with jitter is applied</li>
+                <li>[ ] Verify retry happens only when tab is visible (background tabs don't retry)</li>
+                <li>[ ] Verify error message displayed to user with clear explanation</li>
+                <li>[ ] Verify automatic retry after backoff delay completes</li>
+                <li>[ ] Verify no infinite retry loops (max 3 retries)</li>
+              </ul>
+            </li>
             <li>[ ] Corrupted metadata file → Verify error handling, recovery option</li>
+          </ul>
+
+          <p><strong>L. Visibility-Based Request Gating</strong></p>
+          <ul>
+            <li>[ ] Open Yarny in multiple tabs → Verify only visible tab makes background prefetch requests</li>
+            <li>[ ] Switch between tabs → Verify background prefetching pauses in hidden tab, resumes in visible tab</li>
+            <li>[ ] Verify no request storms when tab is in background (prevents Drive quota exhaustion)</li>
+            <li>[ ] Verify mutations (save, delete, rename) also respect visibility gating</li>
           </ul>
 
           <p><strong>J. IME Composition &amp; Internationalization</strong></p>
@@ -3136,14 +3172,17 @@ export function App(): JSX.Element {
             <li>High memory usage</li>
             <li>Poor performance on lower-end devices</li>
           </ul>
-          <p><strong>Solution</strong>: Use <code>@tanstack/react-virtual</code> (or similar) to virtualize the left rail lists.</p>
+          <p><strong>Solution</strong>: Use <code>@tanstack/react-virtual</code> (or similar) to virtualize the left rail lists with <strong>configurable thresholds</strong>.</p>
           <p><strong>Implementation</strong>:</p>
           <ul>
             <li>Virtualize the chapter/group list in the left sidebar</li>
             <li>Virtualize the snippet list within each chapter</li>
             <li>Only render visible items + small buffer (e.g., 5 items above/below viewport)</li>
             <li>Works seamlessly with normalized state structure (already planned)</li>
+            <li><strong>Expose virtualization thresholds as configurable settings</strong> (stored in localStorage) so they can be tuned without redeploying</li>
           </ul>
+          <p><strong>Configuration</strong>:</p>
+          <p>Create <code>src/config/virtualization.ts</code> with configurable thresholds that can be adjusted via localStorage (default: 50+ chapters, 200+ snippets). This allows tuning performance thresholds without code changes or redeployment.</p>
           <p><strong>Code Example</strong>:</p>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/StorySidebar.tsx
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -3615,7 +3654,20 @@ export interface AppState {
 
         <section class="docs-section" id="changelog">
           <h2 id="changelog-heading">Changelog</h2>
+          
           <ul>
+            <li><strong>2025-01-XX</strong>: Addressed feedback on Drive quota, virtualization, focus rings, and export chunking
+              <ul>
+                <li><strong>Drive Quota & Request Storms</strong>: Added visibility-based gating to React Query (only refetch/prefetch when tab is visible), exponential backoff with jitter for rate limit (429) responses, explicit "Drive rate limit" test with behavior validation</li>
+                <li><strong>Virtualization Threshold</strong>: Made virtualization thresholds (50+ chapters, 200+ snippets) configurable via localStorage settings, allowing tuning without redeployment</li>
+                <li><strong>MUI Focus Rings</strong>: Added accessible focus ring customization to theme (visible against dark cards and pale chips), added "accessible focus rings" to success criteria</li>
+                <li><strong>Export Request Size</strong>: Added "very large chapter" (50+ snippets) to large test corpus, added chunked write logic for exports exceeding batchUpdate body limits, added chunked export tests to smoke test checklist</li>
+                <li>Updated React Query setup to include visibility gating and rate limit handling</li>
+                <li>Updated export functionality section to include chunking logic and progress indication</li>
+                <li>Updated test corpus section to include very large chapter for export validation</li>
+                <li>Updated Phase 6 to include chunked export implementation and testing</li>
+              </ul>
+            </li>
             <li><strong>2025-01-XX</strong>: Added new gotchas and edge cases
               <ul>
                 <li><strong>Google Docs Newline Semantics</strong>: Added normalization for mixed <code>\n</code>/<code>\r\n</code> line endings, NBSPs, and trailing spaces in text extraction utilities</li>
