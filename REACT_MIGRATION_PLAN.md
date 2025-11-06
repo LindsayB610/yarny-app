@@ -2816,6 +2816,210 @@ Already included in recommended stack:
 
 **Phase 7 Risk Checkpoint**: Final risk assessment before production deployment. Re-rate all risks and verify mitigation strategies are effective.
 
+### Phase 8: Test Automation (Week 5-6)
+
+**Goal**: Automate as many tests from the testing workbook as possible to reduce manual testing burden and enable continuous regression testing.
+
+**Strategy**: Use Playwright for end-to-end testing with mocked Google Drive API, plus React Testing Library for component-level tests. Focus on automating functional tests that don't require subjective human judgment.
+
+#### Test Categorization
+
+Based on analysis of the testing workbook (`public/migration-plan/testing-workbook.html`), tests fall into three categories:
+
+**1. Fully Automatable (60-70% of tests)**:
+- API contract validation (can use Zod schemas)
+- State management operations (CRUD operations)
+- Data persistence and round-trips
+- Word count calculations
+- Goal calculations (elastic/strict modes)
+- Search functionality
+- Export operations (verify file creation, content structure)
+- Conflict detection logic
+- Format normalization (line endings, NBSPs)
+- Session persistence
+- Error handling and edge cases
+- Performance metrics (time to first edit, time to switch snippet)
+
+**2. Partially Automatable (20-25% of tests)**:
+- UI rendering and layout (can automate visual regression with pixel-diff)
+- Modal open/close behavior
+- Drag & drop operations
+- Keyboard navigation
+- Focus management
+- Loading states
+- Error message display
+
+**3. Requires Human Testing (10-15% of tests)**:
+- Subjective UX evaluation ("looks and behaves identically to original")
+- Visual design parity (colors, spacing, typography - though pixel-diff can help)
+- Accessibility with screen readers (requires human verification)
+- Mobile device warning (requires actual device or emulator)
+- Cross-browser visual consistency
+- IME composition (Japanese/Chinese/Korean) - can be partially automated but needs human verification
+
+#### Implementation Plan
+
+**A. Set Up Testing Infrastructure**:
+- [ ] Install Playwright (`@playwright/test`)
+- [ ] Install React Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)
+- [ ] Install Vitest for unit tests (`vitest`)
+- [ ] Set up test configuration files
+- [ ] Create test utilities and helpers
+- [ ] Set up mock Google Drive API server (using MSW - Mock Service Worker)
+- [ ] Create test data fixtures matching test corpus structure
+
+**B. Component-Level Tests (React Testing Library)**:
+- [ ] Test all modal components (open, close, form submission)
+- [ ] Test context menus (open, select options)
+- [ ] Test color picker (select colors, verify state)
+- [ ] Test goal meter calculations (elastic/strict modes)
+- [ ] Test word count calculations
+- [ ] Test search functionality (filtering, highlighting)
+- [ ] Test drag & drop operations (using `@testing-library/user-event`)
+- [ ] Test keyboard shortcuts
+- [ ] Test form validations
+
+**C. Integration Tests (React Testing Library + MSW)**:
+- [ ] Test API contract validation (Zod schemas)
+- [ ] Test state management operations (create, read, update, delete stories/chapters/snippets/notes)
+- [ ] Test Google Drive sync (mocked API calls)
+- [ ] Test conflict detection logic
+- [ ] Test format normalization
+- [ ] Test session persistence (localStorage/cookies)
+- [ ] Test error handling (network errors, API errors, rate limiting)
+
+**D. End-to-End Tests (Playwright)**:
+- [ ] Test authentication flow (mocked Google Sign-In)
+- [ ] Test story management (create, edit, delete, refresh)
+- [ ] Test editor operations (open snippet, edit, save, auto-save)
+- [ ] Test chapter/snippet management (create, rename, delete, reorder)
+- [ ] Test color coding (assign colors to chapters/snippets)
+- [ ] Test search (chapters, snippets, content)
+- [ ] Test goals (set goal, verify calculations, elastic/strict modes)
+- [ ] Test notes (People/Places/Things CRUD operations)
+- [ ] Test export operations (verify file creation, content structure)
+- [ ] Test conflict resolution (simulate external edits, verify conflict modal)
+- [ ] Test round-tripping (edit in Yarny → verify in Drive → edit in Drive → verify in Yarny)
+- [ ] Test performance budgets (time to first edit ≤300ms hot path, ≤1.5s cold path)
+- [ ] Test visibility-based request gating (hidden tabs don't make requests)
+- [ ] Test rate limiting handling (simulate 429 errors, verify exponential backoff)
+
+**E. Visual Regression Tests (Playwright + Pixel-Diff)**:
+- [ ] Set up visual regression testing with `@playwright/test` screenshot comparison
+- [ ] Test classic UX anchors (goal meter, "Today • N" chip, footer counts) - compare against reference screenshots
+- [ ] Test modal layouts
+- [ ] Test responsive layouts
+- [ ] Test color coding display
+- [ ] Test loading states
+- [ ] Test error states
+
+**F. Performance Tests (Playwright)**:
+- [ ] Test time to first edit (hot path: ≤300ms, cold path: ≤1.5s)
+- [ ] Test time to switch snippet (hot path: ≤300ms, cold path: ≤1.5s)
+- [ ] Test large story performance (25+ chapters, 200+ snippets)
+- [ ] Test lazy loading behavior
+- [ ] Test virtualization thresholds (verify virtualization activates at configured thresholds)
+
+**G. Test Data Management**:
+- [ ] Create test corpus fixtures (small, medium, large projects)
+- [ ] Create test data generators for edge cases
+- [ ] Set up test data reset utilities
+- [ ] Document test data structure
+
+**H. CI/CD Integration**:
+- [ ] Set up GitHub Actions workflow for test execution
+- [ ] Configure test execution on PR and main branch
+- [ ] Set up test result reporting
+- [ ] Configure visual regression test failure notifications
+
+#### Test Coverage Goals
+
+- **Component Tests**: 80%+ coverage of UI components
+- **Integration Tests**: 90%+ coverage of business logic (hooks, utilities, state management)
+- **E2E Tests**: 70%+ coverage of user workflows (automated tests from workbook)
+- **Visual Regression**: 100% coverage of classic UX anchors and critical UI elements
+
+#### Mock Strategy
+
+**Google Drive API Mocking**:
+- Use MSW (Mock Service Worker) to intercept Drive API calls
+- Create mock handlers for all Drive operations (list, read, write, delete, rename, create folder, check comments)
+- Support test scenarios: success, errors, rate limiting, conflicts
+- Enable test data manipulation without real Drive API calls
+
+**Google Sign-In Mocking**:
+- Mock Google Identity Services (GSI) authentication flow
+- Simulate successful sign-in, token refresh, sign-out
+- Support test scenarios: valid tokens, expired tokens, invalid tokens
+
+#### Test Execution Strategy
+
+**Local Development**:
+- Run component and integration tests during development (`npm run test:watch`)
+- Run E2E tests before committing (`npm run test:e2e`)
+- Run visual regression tests before release (`npm run test:visual`)
+
+**CI/CD Pipeline**:
+- Run all tests on PR creation/update
+- Run full test suite on merge to main
+- Block PR merge if tests fail
+- Generate test coverage reports
+
+**Pre-Release**:
+- Run full test suite (component + integration + E2E + visual)
+- Run performance tests
+- Compare against baseline metrics
+- Generate test report
+
+#### Manual Testing Remaining
+
+After automation, manual testing focuses on:
+- **Subjective UX evaluation**: Does it "feel" like the original app?
+- **Visual design parity**: Side-by-side comparison with original app
+- **Accessibility**: Screen reader testing, keyboard-only navigation
+- **Cross-browser**: Visual consistency across Chrome, Firefox, Safari, Edge
+- **IME composition**: Japanese/Chinese/Korean input (can be partially automated but needs human verification)
+- **Mobile device warning**: Actual device testing
+- **Edge cases**: Unusual user behaviors, error recovery
+
+#### Benefits
+
+1. **Faster Feedback**: Automated tests run in minutes vs. hours of manual testing
+2. **Regression Prevention**: Catch bugs before they reach production
+3. **Confidence in Refactoring**: Automated tests enable safe code changes
+4. **Documentation**: Tests serve as living documentation of expected behavior
+5. **Continuous Testing**: Tests run on every PR and deployment
+6. **Reduced Manual Burden**: 60-70% of tests automated, freeing human testers for subjective evaluation
+
+#### LOE Breakdown
+
+- **Infrastructure Setup**: 8-12 hours (Playwright, React Testing Library, MSW, test configuration)
+- **Component Tests**: 12-18 hours (modal, context menu, color picker, goal meter, word count, search, drag & drop)
+- **Integration Tests**: 10-15 hours (API contract, state management, Drive sync, conflict detection, format normalization)
+- **E2E Tests**: 20-30 hours (authentication, story management, editor, chapters/snippets, goals, notes, export, conflict resolution, round-tripping, performance)
+- **Visual Regression Tests**: 6-10 hours (classic UX anchors, modals, responsive layouts, loading/error states)
+- **Test Data Management**: 4-6 hours (fixtures, generators, reset utilities)
+- **CI/CD Integration**: 4-6 hours (GitHub Actions, reporting, notifications)
+
+**Total LOE**: 64-97 hours (8-12 days)
+
+#### Timeline
+
+- **Week 5**: Infrastructure setup, component tests, integration tests
+- **Week 6**: E2E tests, visual regression tests, CI/CD integration, documentation
+
+#### Success Criteria
+
+- [ ] 60%+ of testing workbook tests are automated
+- [ ] All critical user workflows have E2E test coverage
+- [ ] All classic UX anchors have visual regression tests
+- [ ] Performance budgets are validated automatically
+- [ ] Tests run in CI/CD pipeline on every PR
+- [ ] Test coverage reports are generated and tracked
+- [ ] Manual testing checklist is updated to reflect automated tests
+
+**Phase 8 Risk Checkpoint**: Verify test automation coverage meets goals, CI/CD integration works correctly, and manual testing burden is reduced.
+
 ---
 
 ## Risk Factors
@@ -4268,6 +4472,14 @@ This pattern ensures:
     - Added `@tanstack/react-virtual` to dependencies
     - Updated Performance Considerations section with detailed implementation strategies
     - Total additional LOE: 7-10 hours (virtualization + memoization)
+  - **Added Phase 8: Test Automation (Week 5-6)**:
+    - Comprehensive test automation strategy using Playwright (E2E), React Testing Library (component), and MSW (API mocking)
+    - Categorized testing workbook tests: 60-70% fully automatable, 20-25% partially automatable, 10-15% requires human testing
+    - Detailed implementation plan covering infrastructure setup, component tests, integration tests, E2E tests, visual regression tests, performance tests, test data management, and CI/CD integration
+    - Test coverage goals: 80%+ component tests, 90%+ integration tests, 70%+ E2E tests, 100% visual regression for classic UX anchors
+    - Mock strategy for Google Drive API and Google Sign-In using MSW
+    - Total LOE: 64-97 hours (8-12 days)
+    - Enables continuous regression testing and reduces manual testing burden by 60-70%
 - Document all major decisions and changes here
 
 ---
