@@ -1084,7 +1084,8 @@ async function initializeStoryStructure(storyFolderId, metadata = {}) {
       snippetIds: [snippetId],
       groupIds: [groupId],
       wordGoal: metadata.wordGoal || 3000,
-      genre: metadata.genre || ''
+      genre: metadata.genre || '',
+      description: metadata.description || ''
     };
 
     // OPTIMIZATION: Create Chapter 1 folder and project.json in parallel
@@ -1444,6 +1445,17 @@ function openNewStoryModal() {
   document.getElementById('newStoryModal').classList.remove('hidden');
   document.getElementById('storyName').focus();
   hideError();
+  
+  // Reset and setup character counter for story description
+  const descInput = document.getElementById('storyDescription');
+  const charCount = document.getElementById('storyDescriptionCharCount');
+  if (descInput && charCount) {
+    descInput.value = '';
+    charCount.textContent = '0';
+    descInput.addEventListener('input', () => {
+      charCount.textContent = descInput.value.length;
+    });
+  }
 }
 
 // Close new story modal
@@ -1659,6 +1671,7 @@ async function initialize() {
     }
     
     const storyGenre = document.getElementById('storyGenre').value.trim() || '';
+    const storyDescription = document.getElementById('storyDescription').value.trim() || '';
     const goalTarget = parseInt(document.getElementById('goalTarget').value) || 3000;
     
     // Capture goal fields - using same field IDs as goal panel
@@ -1697,7 +1710,8 @@ async function initialize() {
       
       try {
         const storyFolder = await createStory(storyName, { 
-          genre: storyGenre, 
+          genre: storyGenre,
+          description: storyDescription,
           wordGoal: goalTarget, // Keep wordGoal for project.json compatibility
           goal: goalMetadata
         });

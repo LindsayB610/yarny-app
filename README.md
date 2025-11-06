@@ -34,9 +34,10 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 
 ### Story Management
 - **Create Stories**: Start new writing projects with organized folder structure
-  - Set story name, genre (optional), and word count goal
+  - Set story name, genre (optional), story description (optional), and word count goal
   - Optionally configure writing goals at creation: deadline, writing days, mode (Elastic/Strict), and days off
   - Goal settings are saved to `goal.json` and can be edited later via the "Today" button in the editor
+  - Story descriptions can be added when creating a story or edited later via the Story Info & Settings modal
 - **List Stories**: View all your stories with last modified dates, deadlines (when set), and progress information
 - **Delete Stories**: Remove stories with confirmation (optional Drive deletion)
 - **Story Organization**: Each story is a folder in Google Drive containing organized subfolders
@@ -44,7 +45,9 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 ### Rich Text Editor
 - **Chapters (Groups)**: Organize your writing into chapters or groups
 - **Chapter Color Coding**: Color-code chapters with 12 accent colors using an interactive color picker
+- **Chapter Descriptions**: Add optional descriptions to chapters (300 character limit) - click the description icon next to chapter titles
 - **Snippets**: Individual writing snippets within chapters
+- **Snippet Descriptions**: Add optional descriptions to snippets (300 character limit) - click the description icon next to snippet titles
 - **Instant Snippet Creation**: New snippets appear immediately - start typing while Drive file creation happens in the background
 - **Drag & Drop**: Reorder chapters and snippets by dragging - changes are automatically saved to Google Drive
 - **Chapter Collapse/Expand**: Minimize chapters you're not working on to focus on specific sections
@@ -292,6 +295,7 @@ yarny-app/
 13. **Comments/Tracked Changes Protection**: Before saving a snippet that has comments or tracked changes in Google Docs, Yarny will warn you and allow you to cancel the save to preserve that collaborative feedback. If you proceed, comments and tracked changes will be lost (only plain text is preserved).
 14. **Export**: Export combined content to Google Docs with custom filenames
     - Export all chapters as a single combined document
+    - Export outline (chapter and snippet titles with descriptions) - includes story, chapter, and snippet descriptions when available
     - Export all People, Places, or Things as separate combined documents
     - Each export creates a Google Doc in the story folder with all snippets combined in order
 
@@ -457,6 +461,7 @@ The status updates automatically every 5 minutes. You can also specify a specifi
 
 ## Recent Improvements
 
+- **Story, Chapter, and Snippet Descriptions**: Add optional descriptions to stories (500 characters), chapters (300 characters), and snippets (300 characters). Descriptions can be added when creating a story or edited later via the Story Info & Settings modal (stories) or description icons (chapters/snippets). Descriptions are included in outline exports to create structured story overviews.
 - **Goal Fields in New Story Modal**: When creating a new story, you can now set writing goal fields (deadline, writing days, mode, days off) that were previously only available via the "Today" button. These fields are shared between both interfaces for consistency.
 - **Daily Writing Goals ("Goals that think")**: Set project targets with deadlines, choose writing days, and track daily progress with automatic quota calculation. Features Elastic mode (rebalances targets) and Strict mode (fixed targets). Includes midnight rollover, external edit detection, and dashboard badges
 - **Comments/Tracked Changes Protection**: Warns users before overwriting Google Docs that contain comments or tracked changes, allowing them to cancel the save to preserve collaborative feedback

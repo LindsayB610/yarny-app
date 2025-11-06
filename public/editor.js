@@ -137,6 +137,7 @@ const state = {
     title: 'Untitled Project',
     wordGoal: 3000,
     genre: '',
+    description: '',
     groupIds: [],
     snippetIds: [], // Unified: includes both chapter snippets and People/Places/Things snippets
     activeSnippetId: null, // Unified: active snippet (chapter or People/Places/Things)
@@ -331,6 +332,20 @@ function renderStoryList() {
     countSpan.className = 'group-snippet-count';
     countSpan.textContent = `${group.snippetIds.length} snippets`;
     
+    const editDescBtn = document.createElement('button');
+    editDescBtn.className = 'edit-desc-btn';
+    editDescBtn.title = 'Edit chapter description';
+    editDescBtn.style.cssText = 'background: none; border: none; padding: 4px; cursor: pointer; color: #6B7280; display: flex; align-items: center;';
+    const editDescIcon = document.createElement('i');
+    editDescIcon.className = 'material-icons';
+    editDescIcon.textContent = 'description';
+    editDescIcon.style.fontSize = '16px';
+    editDescBtn.appendChild(editDescIcon);
+    editDescBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDescriptionEditModal('group', group.id, group.description || '');
+    });
+    
     const addBtn = document.createElement('button');
     addBtn.className = 'add-snippet-btn';
     addBtn.title = 'Add snippet to this chapter';
@@ -347,6 +362,7 @@ function renderStoryList() {
     headerEl.appendChild(colorChip);
     headerEl.appendChild(titleSpan);
     headerEl.appendChild(countSpan);
+    headerEl.appendChild(editDescBtn);
     headerEl.appendChild(addBtn);
     
     // Drag & drop handlers
@@ -393,10 +409,32 @@ function renderStoryList() {
       snippetEl.dataset.snippetId = snippet.id;
       snippetEl.draggable = true;
       snippetEl.title = 'Drag to reorder snippets';
-      snippetEl.innerHTML = `
-        <span class="snippet-title">${escapeHtml(snippet.title)}</span>
-        <span class="snippet-word-count">${snippet.words !== undefined ? snippet.words : 0} words</span>
-      `;
+      
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'snippet-title';
+      titleSpan.textContent = snippet.title;
+      
+      const wordCountSpan = document.createElement('span');
+      wordCountSpan.className = 'snippet-word-count';
+      wordCountSpan.textContent = `${snippet.words !== undefined ? snippet.words : 0} words`;
+      
+      const editDescBtn = document.createElement('button');
+      editDescBtn.className = 'edit-desc-btn';
+      editDescBtn.title = 'Edit snippet description';
+      editDescBtn.style.cssText = 'background: none; border: none; padding: 4px; cursor: pointer; color: #6B7280; display: flex; align-items: center; margin-left: auto;';
+      const editDescIcon = document.createElement('i');
+      editDescIcon.className = 'material-icons';
+      editDescIcon.textContent = 'description';
+      editDescIcon.style.fontSize = '16px';
+      editDescBtn.appendChild(editDescIcon);
+      editDescBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDescriptionEditModal('snippet', snippet.id, snippet.description || '');
+      });
+      
+      snippetEl.appendChild(titleSpan);
+      snippetEl.appendChild(wordCountSpan);
+      snippetEl.appendChild(editDescBtn);
       
       snippetEl.addEventListener('click', async () => {
         // Cancel any pending autosave timeout (we'll save manually)
@@ -753,9 +791,30 @@ function renderSnippetsList() {
       excerptEl.className = 'note-excerpt';
       excerptEl.textContent = escapeHtml(snippet.body ? (snippet.body.substring(0, 60) + (snippet.body.length > 60 ? '...' : '')) : 'Loading...');
       
-      // Append color chip, title, and excerpt
+      // Create edit description button
+      const editDescBtn = document.createElement('button');
+      editDescBtn.className = 'edit-desc-btn';
+      editDescBtn.title = 'Edit snippet description';
+      editDescBtn.style.cssText = 'background: none; border: none; padding: 4px; cursor: pointer; color: #6B7280; display: flex; align-items: center; margin-left: auto;';
+      const editDescIcon = document.createElement('i');
+      editDescIcon.className = 'material-icons';
+      editDescIcon.textContent = 'description';
+      editDescIcon.style.fontSize = '16px';
+      editDescBtn.appendChild(editDescIcon);
+      editDescBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDescriptionEditModal('snippet', snippet.id, snippet.description || '');
+      });
+      
+      // Create title container
+      const titleContainer = document.createElement('div');
+      titleContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%;';
+      titleContainer.appendChild(titleEl);
+      titleContainer.appendChild(editDescBtn);
+      
+      // Append color chip, title container, and excerpt
       snippetEl.appendChild(colorChip);
-      snippetEl.appendChild(titleEl);
+      snippetEl.appendChild(titleContainer);
       snippetEl.appendChild(excerptEl);
 
       snippetEl.addEventListener('click', async () => {
@@ -2224,6 +2283,7 @@ async function saveStoryDataToDrive() {
       groupIds: state.project.groupIds,
       wordGoal: state.project.wordGoal || 3000,
       genre: state.project.genre || '',
+      description: state.project.description || '',
       // Store folder IDs so they persist even if folders are renamed
       driveFolderIds: state.drive.folderIds || {}
     };
@@ -3135,12 +3195,27 @@ function openStoryInfoModal() {
   const modal = document.getElementById('storyInfoModal');
   const titleInput = document.getElementById('storyTitle');
   const genreInput = document.getElementById('storyGenreInfo');
+  const descriptionInput = document.getElementById('storyDescriptionInfo');
   const wordGoalInput = document.getElementById('wordGoalInfo');
+  const charCount = document.getElementById('storyDescriptionInfoCharCount');
   
   // Populate form with current values
   titleInput.value = state.project.title || '';
   genreInput.value = state.project.genre || '';
+  descriptionInput.value = state.project.description || '';
   wordGoalInput.value = state.project.wordGoal || 3000;
+  
+  // Update character count
+  if (charCount) {
+    charCount.textContent = descriptionInput.value.length;
+  }
+  
+  // Setup character counter
+  if (descriptionInput && charCount) {
+    descriptionInput.addEventListener('input', () => {
+      charCount.textContent = descriptionInput.value.length;
+    });
+  }
   
   // Hide error message
   document.getElementById('storyInfoError').classList.add('hidden');
@@ -3158,6 +3233,7 @@ function closeStoryInfoModal() {
 async function saveStoryInfo() {
   const titleInput = document.getElementById('storyTitle');
   const genreInput = document.getElementById('storyGenreInfo');
+  const descriptionInput = document.getElementById('storyDescriptionInfo');
   const wordGoalInput = document.getElementById('wordGoalInfo');
   const errorEl = document.getElementById('storyInfoError');
   const saveBtn = document.getElementById('saveStoryInfoBtn');
@@ -3166,6 +3242,7 @@ async function saveStoryInfo() {
   
   const title = titleInput.value.trim();
   const genre = genreInput.value.trim();
+  const description = descriptionInput.value.trim();
   const wordGoal = parseInt(wordGoalInput.value);
   
   if (!title) {
@@ -3187,6 +3264,7 @@ async function saveStoryInfo() {
     // Update state
     state.project.title = title;
     state.project.genre = genre;
+    state.project.description = description;
     state.project.wordGoal = wordGoal;
     
     // Sync goal target with project word goal (they should always be the same)
@@ -3222,6 +3300,113 @@ async function saveStoryInfo() {
 // Make functions globally accessible
 window.openStoryInfoModal = openStoryInfoModal;
 window.closeStoryInfoModal = closeStoryInfoModal;
+
+// ============================================
+// Description Edit Modal (for chapters and snippets)
+// ============================================
+
+let pendingDescriptionEdit = null; // { type: 'group'|'snippet', id: string }
+
+function openDescriptionEditModal(type, id, currentDescription = '') {
+  const modal = document.getElementById('descriptionEditModal');
+  const titleEl = document.getElementById('descriptionEditTitle');
+  const labelEl = document.getElementById('descriptionEditLabel');
+  const inputEl = document.getElementById('descriptionEditInput');
+  const charCountEl = document.getElementById('descriptionEditCharCount');
+  const errorEl = document.getElementById('descriptionEditError');
+  
+  // Store pending edit info
+  pendingDescriptionEdit = { type, id };
+  
+  // Set title and label based on type
+  if (type === 'group') {
+    const group = state.groups[id];
+    titleEl.textContent = `Edit Chapter Description: ${group?.title || 'Chapter'}`;
+    labelEl.textContent = 'Chapter Description (optional)';
+  } else if (type === 'snippet') {
+    const snippet = state.snippets[id];
+    titleEl.textContent = `Edit Snippet Description: ${snippet?.title || 'Snippet'}`;
+    labelEl.textContent = 'Snippet Description (optional)';
+  }
+  
+  // Set current value
+  inputEl.value = currentDescription || '';
+  charCountEl.textContent = inputEl.value.length;
+  
+  // Hide error
+  errorEl.classList.add('hidden');
+  
+  // Setup character counter
+  inputEl.addEventListener('input', () => {
+    charCountEl.textContent = inputEl.value.length;
+  });
+  
+  modal.classList.remove('hidden');
+  inputEl.focus();
+}
+
+function closeDescriptionEditModal() {
+  const modal = document.getElementById('descriptionEditModal');
+  modal.classList.add('hidden');
+  document.getElementById('descriptionEditError').classList.add('hidden');
+  pendingDescriptionEdit = null;
+}
+
+async function saveDescription() {
+  if (!pendingDescriptionEdit) {
+    console.error('No pending description edit');
+    return;
+  }
+  
+  const inputEl = document.getElementById('descriptionEditInput');
+  const errorEl = document.getElementById('descriptionEditError');
+  const saveBtn = document.getElementById('saveDescriptionBtn');
+  
+  errorEl.classList.add('hidden');
+  
+  const description = inputEl.value.trim();
+  const { type, id } = pendingDescriptionEdit;
+  
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+  
+  try {
+    if (type === 'group') {
+      const group = state.groups[id];
+      if (!group) {
+        throw new Error('Chapter not found');
+      }
+      group.description = description;
+    } else if (type === 'snippet') {
+      const snippet = state.snippets[id];
+      if (!snippet) {
+        throw new Error('Snippet not found');
+      }
+      snippet.description = description;
+    }
+    
+    // Save to Drive
+    await saveStoryDataToDrive();
+    
+    // Update UI
+    renderStoryList();
+    renderSnippetsList();
+    
+    closeDescriptionEditModal();
+  } catch (error) {
+    console.error('Error saving description:', error);
+    errorEl.textContent = 'Failed to save: ' + error.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
+}
+
+// Make functions globally accessible
+window.openDescriptionEditModal = openDescriptionEditModal;
+window.closeDescriptionEditModal = closeDescriptionEditModal;
+window.saveDescription = saveDescription;
 
 // Goal Panel Modal Functions
 function openGoalPanel() {
@@ -4162,6 +4347,7 @@ async function loadStoryFromDrive(storyFolderId) {
           Object.assign(state.project, {
             wordGoal: 3000,
             genre: '',
+            description: '',
             title: 'Untitled Project',
             ...parsed,
             title: parsed.name || parsed.title || 'Untitled Project'
@@ -5326,6 +5512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Close modal on overlay click
   document.querySelector('#storyInfoModal .modal-overlay').addEventListener('click', closeStoryInfoModal);
+  document.querySelector('#descriptionEditModal .modal-overlay').addEventListener('click', closeDescriptionEditModal);
   document.querySelector('#goalPanelModal .modal-overlay').addEventListener('click', closeGoalPanel);
 
   // Close color picker on outside click
@@ -5771,7 +5958,13 @@ async function confirmExportFilename() {
         }
       });
     } else if (exportInfo.type === 'outline') {
-      // Export outline (just chapter and snippet titles) - preserve exact order
+      // Export outline (chapter and snippet titles with descriptions) - preserve exact order
+      
+      // Add story description at the beginning if it exists
+      if (state.project.description && state.project.description.trim()) {
+        combinedContent += `## Story Description\n\n${state.project.description.trim()}\n\n---\n\n`;
+      }
+      
       const groups = state.project.groupIds
         .map(id => state.groups[id])
         .filter(group => group);
@@ -5780,15 +5973,25 @@ async function confirmExportFilename() {
         // Add chapter title
         combinedContent += `# ${group.title}\n\n`;
         
+        // Add chapter description if it exists
+        if (group.description && group.description.trim()) {
+          combinedContent += `${group.description.trim()}\n\n`;
+        }
+        
         // Get snippets in this group - preserve exact order from group.snippetIds
         const snippets = group.snippetIds
           .map(id => state.snippets[id])
           .filter(snippet => snippet);
         
         snippets.forEach((snippet) => {
-          // Add snippet title (only titles, no body)
+          // Add snippet title
           if (snippet.title) {
             combinedContent += `## ${snippet.title}\n\n`;
+          }
+          
+          // Add snippet description if it exists
+          if (snippet.description && snippet.description.trim()) {
+            combinedContent += `${snippet.description.trim()}\n\n`;
           }
         });
         

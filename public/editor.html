@@ -271,6 +271,18 @@
               >
             </div>
             <div class="form-group">
+              <label for="storyDescriptionInfo">Story Description (optional)</label>
+              <textarea 
+                id="storyDescriptionInfo" 
+                name="storyDescriptionInfo" 
+                placeholder="A brief description of your story..."
+                rows="3"
+                maxlength="500"
+                autocomplete="off"
+              ></textarea>
+              <small class="form-hint"><span id="storyDescriptionInfoCharCount">0</span>/500 characters</small>
+            </div>
+            <div class="form-group">
               <label for="wordGoalInfo">Word Count Goal</label>
               <input 
                 type="number" 
@@ -288,6 +300,38 @@
               <button type="submit" class="btn-primary" id="saveStoryInfoBtn">Save Changes</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description Edit Modal -->
+    <div id="descriptionEditModal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="descriptionEditTitle">Edit Description</h2>
+          <button class="modal-close" onclick="closeDescriptionEditModal()">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="descriptionEditError" class="error-message hidden"></div>
+          <div class="form-group">
+            <label id="descriptionEditLabel" for="descriptionEditInput">Description (optional)</label>
+            <textarea 
+              id="descriptionEditInput" 
+              name="descriptionEditInput"
+              placeholder="Enter a brief description..."
+              rows="3"
+              maxlength="300"
+              autocomplete="off"
+            ></textarea>
+            <small class="form-hint"><span id="descriptionEditCharCount">0</span>/300 characters</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeDescriptionEditModal()">Cancel</button>
+            <button type="button" class="btn-primary" id="saveDescriptionBtn" onclick="saveDescription()">Save</button>
+          </div>
         </div>
       </div>
     </div>

@@ -97,6 +97,18 @@
               >
             </div>
             <div class="form-group">
+              <label for="storyDescription">Story Description (optional)</label>
+              <textarea 
+                id="storyDescription" 
+                name="storyDescription" 
+                placeholder="A brief description of your story..."
+                rows="3"
+                maxlength="500"
+                autocomplete="off"
+              ></textarea>
+              <small class="form-hint"><span id="storyDescriptionCharCount">0</span>/500 characters</small>
+            </div>
+            <div class="form-group">
               <label for="goalTarget">Word Count Target</label>
               <input 
                 type="number" 
