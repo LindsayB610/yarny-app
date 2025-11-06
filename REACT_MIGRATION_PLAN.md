@@ -73,23 +73,203 @@ This document outlines the plan and effort estimation for converting the Yarny w
 
 ## Third-Party Library Replacements
 
+This section details exactly which parts of the current codebase can be replaced by proven React libraries, significantly reducing development time and maintenance burden.
+
 ### Replaceable Components & Estimated Savings
 
-| Component | Current Lines | Library | Savings |
-|-----------|---------------|---------|---------|
-| Rich Text Editor | ~1,500-2,000 | TipTap/Slate | ~1,500-2,000 lines |
-| Modals (8 total) | ~500-800 | Radix UI Dialog | ~500-800 lines |
-| Drag & Drop | ~300-400 | @dnd-kit | ~300-400 lines |
-| Color Picker | ~150 | react-colorful | ~150 lines |
-| Tabs | ~100 | Radix UI Tabs | ~100 lines |
-| Context Menu | ~150 | Radix UI Context Menu | ~150 lines |
-| Dropdown Menus | ~100 | Radix UI Dropdown | ~100 lines |
-| Forms | ~200 | React Hook Form | ~200 lines |
-| Date Picker | ~50 | react-datepicker | ~50 lines |
-| Tooltips | ~50 | Radix UI Tooltip | ~50 lines |
-| Toast Notifications | ~100 | react-hot-toast | ~100 lines |
-| Collapsible/Accordion | ~100 | Radix UI Accordion | ~100 lines |
-| **TOTAL** | **~3,300-4,200** | | **~3,300-4,200 lines** |
+| Component | Current Lines | Library | Savings | What It Replaces |
+|-----------|---------------|---------|---------|------------------|
+| Rich Text Editor | ~1,500-2,000 | TipTap/Slate | ~1,500-2,000 lines | All contentEditable handling, text extraction, formatting logic |
+| Modals (8 total) | ~500-800 | Radix UI Dialog | ~500-800 lines | Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning |
+| Drag & Drop | ~300-400 | @dnd-kit | ~300-400 lines | All drag event handlers, drop zones, reordering logic for chapters/snippets |
+| Color Picker | ~150 | react-colorful | ~150 lines | Custom color picker UI, color selection logic, positioning |
+| Tabs | ~100 | Radix UI Tabs | ~100 lines | People/Places/Things tab switching, tab state management |
+| Context Menu | ~150 | Radix UI Context Menu | ~150 lines | Right-click menu for rename/delete, menu positioning |
+| Dropdown Menus | ~100 | Radix UI Dropdown | ~100 lines | Export dropdown menu, positioning, open/close logic |
+| Forms | ~200 | React Hook Form | ~200 lines | Form validation, form state, error handling for all modals |
+| Date Picker | ~50 | react-datepicker | ~50 lines | Goal deadline date input, date validation |
+| Tooltips | ~50 | Radix UI Tooltip | ~50 lines | All title attributes and custom tooltip implementations |
+| Toast Notifications | ~100 | react-hot-toast | ~100 lines | Save status updates, error notifications, success messages |
+| Collapsible/Accordion | ~100 | Radix UI Accordion | ~100 lines | Chapter collapse/expand functionality |
+| **TOTAL** | **~3,300-4,200** | | **~3,300-4,200 lines** | **40-50% of codebase** |
+
+### Detailed Component Mapping
+
+#### 1. Rich Text Editor → TipTap
+**Current Implementation:**
+- `editor.js`: `getEditorTextContent()`, `setEditorTextContent()`, contentEditable event handlers
+- Complex text extraction logic handling `<br>`, `<div>`, `<p>` tags
+- Line break normalization
+- Cursor position management
+- Content synchronization with state
+
+**Replacement:**
+- TipTap provides all contentEditable functionality out of the box
+- Built-in text extraction and formatting
+- Type-safe editor API
+- Extensible with plugins
+- Handles all edge cases we currently manage manually
+
+**Code Locations:**
+- `editor.js` lines ~590-670 (text content extraction)
+- `editor.js` lines ~669-738 (editor rendering and content management)
+- All contentEditable event listeners throughout `editor.js`
+
+#### 2. Modals → Radix UI Dialog
+**Current Implementation:**
+- 8 separate modal implementations with custom show/hide logic
+- Modal overlay management
+- Focus trapping
+- Escape key handling
+- Click-outside-to-close logic
+
+**Replacement:**
+- Radix UI Dialog component handles all modal behavior
+- Accessible by default (ARIA, focus management)
+- Keyboard navigation built-in
+- Can style to match existing design
+
+**Code Locations:**
+- `editor.html` lines 200-571 (all modal HTML structures)
+- `editor.js` modal open/close functions throughout
+
+#### 3. Drag & Drop → @dnd-kit
+**Current Implementation:**
+- Native HTML5 drag events (`dragstart`, `dragover`, `drop`, `dragend`)
+- Custom drop zone detection
+- Visual feedback during drag
+- Reordering logic for groups and snippets
+
+**Replacement:**
+- @dnd-kit provides sortable list functionality
+- Touch device support
+- Better performance than native drag events
+- Built-in visual feedback
+
+**Code Locations:**
+- `editor.js` lines ~300, 368-376 (group drag handlers)
+- `editor.js` lines ~410, 526-534 (snippet drag handlers)
+- `editor.js` lines ~766, 905-910 (notes drag handlers)
+- All `handleGroupDragStart`, `handleSnippetDragStart`, `handleDragOver`, etc. functions
+
+#### 4. Color Picker → react-colorful
+**Current Implementation:**
+- Custom color picker UI with 12 color grid
+- Positioning logic relative to color chip
+- Click-outside-to-close handling
+- Color selection and application
+
+**Replacement:**
+- react-colorful provides pre-built color picker
+- Can be styled to match 12-color palette
+- Simpler integration
+
+**Code Locations:**
+- `editor.js` lines 2682-2784 (color picker functions)
+- `editor.html` lines 437-442 (color picker HTML)
+
+#### 5. Tabs → Radix UI Tabs
+**Current Implementation:**
+- Custom tab switching for People/Places/Things
+- Tab state management
+- Active tab styling
+
+**Replacement:**
+- Radix UI Tabs handles all tab functionality
+- Accessible keyboard navigation
+- Built-in active state management
+
+**Code Locations:**
+- `editor.html` lines 115-139 (tabs HTML)
+- `editor.js` tab switching logic
+
+#### 6. Context Menu → Radix UI Context Menu
+**Current Implementation:**
+- Right-click event handling
+- Menu positioning
+- Rename/Delete menu items
+
+**Replacement:**
+- Radix UI Context Menu provides full context menu functionality
+- Accessible, keyboard navigable
+- Proper positioning
+
+**Code Locations:**
+- `editor.html` lines 444-448 (context menu HTML)
+- `editor.js` context menu show/hide logic
+
+#### 7. Forms → React Hook Form
+**Current Implementation:**
+- Manual form validation
+- Form state management
+- Error message display
+- Used in: Story Info, New Story, Goal Panel, Rename, Description Edit modals
+
+**Replacement:**
+- React Hook Form handles validation, state, and errors
+- TypeScript integration
+- Better performance (uncontrolled components)
+
+**Code Locations:**
+- All modal forms in `editor.html` and `stories.html`
+- Form validation logic in `editor.js` and `stories.js`
+
+#### 8. Date Picker → react-datepicker
+**Current Implementation:**
+- Native HTML5 date input
+- Date validation
+- Used in Goal Panel for deadline selection
+
+**Replacement:**
+- react-datepicker provides better UX
+- Date range selection
+- Customizable styling
+
+**Code Locations:**
+- `editor.html` lines 365-372 (goal deadline input)
+- `stories.html` deadline input in new story modal
+
+#### 9. Toast Notifications → react-hot-toast
+**Current Implementation:**
+- Custom save status updates ("Saving...", "Saved at X:XX")
+- Manual status element updates
+- Status styling and transitions
+
+**Replacement:**
+- react-hot-toast provides toast notifications
+- Auto-dismiss, positioning, animations
+- Success/error/info variants
+
+**Code Locations:**
+- `editor.js` lines 1057-1077 (`updateSaveStatus` function)
+- `editor.html` line 108 (save status element)
+
+#### 10. Collapsible/Accordion → Radix UI Accordion
+**Current Implementation:**
+- Custom collapse/expand for chapters
+- Collapse state management (localStorage)
+- Icon toggling (arrow up/down)
+
+**Replacement:**
+- Radix UI Accordion handles collapse functionality
+- Accessible, keyboard navigable
+- Built-in state management
+
+**Code Locations:**
+- `editor.js` lines 217-262 (collapse state management)
+- `editor.js` lines 303-316 (collapse button rendering)
+- `editor.js` lines 254-262 (`toggleGroupCollapse` function)
+
+### Benefits of Using Third-Party Libraries
+
+1. **Massive Code Reduction**: ~3,300-4,200 lines of custom code replaced by battle-tested libraries
+2. **Accessibility Built-In**: All Radix UI components are fully accessible (ARIA, keyboard nav)
+3. **Type Safety**: All recommended libraries have excellent TypeScript support
+4. **Maintenance**: Libraries are maintained by teams, reducing our maintenance burden
+5. **Performance**: Optimized libraries often perform better than custom implementations
+6. **Documentation**: Well-documented libraries with examples and community support
+7. **Bug Fixes**: Libraries fix edge cases we haven't encountered yet
+8. **Future-Proof**: Libraries evolve with React ecosystem
 
 ### Recommended Library Stack
 
@@ -139,21 +319,28 @@ This document outlines the plan and effort estimation for converting the Yarny w
 - ✅ Active community and maintenance
 - ✅ Handles contentEditable complexity
 - ✅ Type-safe editor extensions and commands
+- ✅ Replaces ~1,500-2,000 lines of custom contentEditable code
+- ✅ Handles all text extraction, formatting, and cursor management we currently do manually
 - **Alternative**: Slate.js (more complex but powerful, also has TypeScript support)
 
 #### UI Components: **Radix UI** (Recommended)
-- ✅ Unstyled, accessible components
-- ✅ Full keyboard navigation
-- ✅ ARIA attributes built-in
-- ✅ Can match existing design system
+- ✅ Unstyled, accessible components - perfect for matching existing design
+- ✅ Full keyboard navigation built-in
+- ✅ ARIA attributes automatically handled
+- ✅ Can match existing design system exactly
 - ✅ **Full TypeScript support** - All components are typed
+- ✅ Replaces ~1,000+ lines of modal, menu, tab, tooltip code
+- ✅ Provides: Dialog (modals), Dropdown Menu, Context Menu, Tabs, Tooltip, Accordion
 - **Alternative**: Headless UI (similar, different API, also TypeScript)
 
 #### Drag & Drop: **@dnd-kit** (Recommended)
-- ✅ Modern, performant
-- ✅ Better than react-beautiful-dnd (unmaintained)
-- ✅ Supports sortable lists
-- ✅ Touch device support
+- ✅ Modern, performant library
+- ✅ Better than react-beautiful-dnd (which is unmaintained)
+- ✅ Supports sortable lists out of the box
+- ✅ Touch device support for tablets
+- ✅ Replaces ~300-400 lines of native drag event handling
+- ✅ Handles all the drag/drop logic for chapters and snippets
+- ✅ Better visual feedback and drop zone detection than native events
 
 ---
 

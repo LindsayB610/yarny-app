@@ -25,7 +25,7 @@
         </div>
         <nav class="docs-nav">
           <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
-          <a href="/docs.html" class="btn-secondary">User Guide</a>
+          <a href="/docs.html" class="btn-secondary">Docs</a>
           <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
         </nav>
       </div>
@@ -48,9 +48,19 @@
             <li><a href="#library-replacements" class="nav-link">Library Replacements</a></li>
             <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
             <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
+            <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
             <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
             <li><a href="#risk-factors" class="nav-link">Risk Factors</a></li>
+            <li><a href="#benefits" class="nav-link">Benefits of Migration</a></li>
             <li><a href="#netlify-config" class="nav-link">Netlify Configuration</a></li>
+            <li><a href="#file-structure" class="nav-link">File Structure</a></li>
+            <li><a href="#decision-points" class="nav-link">Decision Points</a></li>
+            <li><a href="#success-criteria" class="nav-link">Success Criteria</a></li>
+            <li><a href="#notes-considerations" class="nav-link">Notes & Considerations</a></li>
+            <li><a href="#questions" class="nav-link">Questions to Resolve</a></li>
+            <li><a href="#resources" class="nav-link">Resources</a></li>
+            <li><a href="#technical-details" class="nav-link">Technical Details</a></li>
+            <li><a href="#changelog" class="nav-link">Changelog</a></li>
             <li><a href="#next-steps" class="nav-link">Next Steps</a></li>
           </ul>
         </nav>
@@ -144,6 +154,8 @@
         <section class="docs-section" id="library-replacements">
           <h2>Third-Party Library Replacements</h2>
           
+          <p>This section details exactly which parts of the current codebase can be replaced by proven React libraries, significantly reducing development time and maintenance burden.</p>
+
           <h3>Replaceable Components & Estimated Savings</h3>
           <table>
             <thead>
@@ -152,6 +164,7 @@
                 <th>Current Lines</th>
                 <th>Library</th>
                 <th>Savings</th>
+                <th>What It Replaces</th>
               </tr>
             </thead>
             <tbody>
@@ -160,81 +173,313 @@
                 <td>~1,500-2,000</td>
                 <td>TipTap/Slate</td>
                 <td>~1,500-2,000 lines</td>
+                <td>All contentEditable handling, text extraction, formatting logic</td>
               </tr>
               <tr>
                 <td>Modals (8 total)</td>
                 <td>~500-800</td>
                 <td>Radix UI Dialog</td>
                 <td>~500-800 lines</td>
+                <td>Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning</td>
               </tr>
               <tr>
                 <td>Drag & Drop</td>
                 <td>~300-400</td>
                 <td>@dnd-kit</td>
                 <td>~300-400 lines</td>
+                <td>All drag event handlers, drop zones, reordering logic for chapters/snippets</td>
               </tr>
               <tr>
                 <td>Color Picker</td>
                 <td>~150</td>
                 <td>react-colorful</td>
                 <td>~150 lines</td>
+                <td>Custom color picker UI, color selection logic, positioning</td>
               </tr>
               <tr>
                 <td>Tabs</td>
                 <td>~100</td>
                 <td>Radix UI Tabs</td>
                 <td>~100 lines</td>
+                <td>People/Places/Things tab switching, tab state management</td>
               </tr>
               <tr>
                 <td>Context Menu</td>
                 <td>~150</td>
                 <td>Radix UI Context Menu</td>
                 <td>~150 lines</td>
+                <td>Right-click menu for rename/delete, menu positioning</td>
               </tr>
               <tr>
                 <td>Dropdown Menus</td>
                 <td>~100</td>
                 <td>Radix UI Dropdown</td>
                 <td>~100 lines</td>
+                <td>Export dropdown menu, positioning, open/close logic</td>
               </tr>
               <tr>
                 <td>Forms</td>
                 <td>~200</td>
                 <td>React Hook Form</td>
                 <td>~200 lines</td>
+                <td>Form validation, form state, error handling for all modals</td>
               </tr>
               <tr>
                 <td>Date Picker</td>
                 <td>~50</td>
                 <td>react-datepicker</td>
                 <td>~50 lines</td>
+                <td>Goal deadline date input, date validation</td>
               </tr>
               <tr>
                 <td>Tooltips</td>
                 <td>~50</td>
                 <td>Radix UI Tooltip</td>
                 <td>~50 lines</td>
+                <td>All title attributes and custom tooltip implementations</td>
               </tr>
               <tr>
                 <td>Toast Notifications</td>
                 <td>~100</td>
                 <td>react-hot-toast</td>
                 <td>~100 lines</td>
+                <td>Save status updates, error notifications, success messages</td>
               </tr>
               <tr>
                 <td>Collapsible/Accordion</td>
                 <td>~100</td>
                 <td>Radix UI Accordion</td>
                 <td>~100 lines</td>
+                <td>Chapter collapse/expand functionality</td>
               </tr>
               <tr>
                 <td><strong>TOTAL</strong></td>
                 <td><strong>~3,300-4,200</strong></td>
                 <td></td>
                 <td><strong>~3,300-4,200 lines</strong></td>
+                <td><strong>40-50% of codebase</strong></td>
               </tr>
             </tbody>
           </table>
+
+          <h3>Detailed Component Mapping</h3>
+          
+          <h4>1. Rich Text Editor → TipTap</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li><code>editor.js</code>: <code>getEditorTextContent()</code>, <code>setEditorTextContent()</code>, contentEditable event handlers</li>
+            <li>Complex text extraction logic handling <code>&lt;br&gt;</code>, <code>&lt;div&gt;</code>, <code>&lt;p&gt;</code> tags</li>
+            <li>Line break normalization</li>
+            <li>Cursor position management</li>
+            <li>Content synchronization with state</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>TipTap provides all contentEditable functionality out of the box</li>
+            <li>Built-in text extraction and formatting</li>
+            <li>Type-safe editor API</li>
+            <li>Extensible with plugins</li>
+            <li>Handles all edge cases we currently manage manually</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.js</code> lines ~590-670 (text content extraction)</li>
+            <li><code>editor.js</code> lines ~669-738 (editor rendering and content management)</li>
+            <li>All contentEditable event listeners throughout <code>editor.js</code></li>
+          </ul>
+
+          <h4>2. Modals → Radix UI Dialog</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>8 separate modal implementations with custom show/hide logic</li>
+            <li>Modal overlay management</li>
+            <li>Focus trapping</li>
+            <li>Escape key handling</li>
+            <li>Click-outside-to-close logic</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>Radix UI Dialog component handles all modal behavior</li>
+            <li>Accessible by default (ARIA, focus management)</li>
+            <li>Keyboard navigation built-in</li>
+            <li>Can style to match existing design</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.html</code> lines 200-571 (all modal HTML structures)</li>
+            <li><code>editor.js</code> modal open/close functions throughout</li>
+          </ul>
+
+          <h4>3. Drag & Drop → @dnd-kit</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Native HTML5 drag events (<code>dragstart</code>, <code>dragover</code>, <code>drop</code>, <code>dragend</code>)</li>
+            <li>Custom drop zone detection</li>
+            <li>Visual feedback during drag</li>
+            <li>Reordering logic for groups and snippets</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>@dnd-kit provides sortable list functionality</li>
+            <li>Touch device support</li>
+            <li>Better performance than native drag events</li>
+            <li>Built-in visual feedback</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.js</code> lines ~300, 368-376 (group drag handlers)</li>
+            <li><code>editor.js</code> lines ~410, 526-534 (snippet drag handlers)</li>
+            <li><code>editor.js</code> lines ~766, 905-910 (notes drag handlers)</li>
+            <li>All <code>handleGroupDragStart</code>, <code>handleSnippetDragStart</code>, <code>handleDragOver</code>, etc. functions</li>
+          </ul>
+
+          <h4>4. Color Picker → react-colorful</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Custom color picker UI with 12 color grid</li>
+            <li>Positioning logic relative to color chip</li>
+            <li>Click-outside-to-close handling</li>
+            <li>Color selection and application</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>react-colorful provides pre-built color picker</li>
+            <li>Can be styled to match 12-color palette</li>
+            <li>Simpler integration</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.js</code> lines 2682-2784 (color picker functions)</li>
+            <li><code>editor.html</code> lines 437-442 (color picker HTML)</li>
+          </ul>
+
+          <h4>5. Tabs → Radix UI Tabs</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Custom tab switching for People/Places/Things</li>
+            <li>Tab state management</li>
+            <li>Active tab styling</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>Radix UI Tabs handles all tab functionality</li>
+            <li>Accessible keyboard navigation</li>
+            <li>Built-in active state management</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.html</code> lines 115-139 (tabs HTML)</li>
+            <li><code>editor.js</code> tab switching logic</li>
+          </ul>
+
+          <h4>6. Context Menu → Radix UI Context Menu</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Right-click event handling</li>
+            <li>Menu positioning</li>
+            <li>Rename/Delete menu items</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>Radix UI Context Menu provides full context menu functionality</li>
+            <li>Accessible, keyboard navigable</li>
+            <li>Proper positioning</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.html</code> lines 444-448 (context menu HTML)</li>
+            <li><code>editor.js</code> context menu show/hide logic</li>
+          </ul>
+
+          <h4>7. Forms → React Hook Form</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Manual form validation</li>
+            <li>Form state management</li>
+            <li>Error message display</li>
+            <li>Used in: Story Info, New Story, Goal Panel, Rename, Description Edit modals</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>React Hook Form handles validation, state, and errors</li>
+            <li>TypeScript integration</li>
+            <li>Better performance (uncontrolled components)</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li>All modal forms in <code>editor.html</code> and <code>stories.html</code></li>
+            <li>Form validation logic in <code>editor.js</code> and <code>stories.js</code></li>
+          </ul>
+
+          <h4>8. Date Picker → react-datepicker</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Native HTML5 date input</li>
+            <li>Date validation</li>
+            <li>Used in Goal Panel for deadline selection</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>react-datepicker provides better UX</li>
+            <li>Date range selection</li>
+            <li>Customizable styling</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.html</code> lines 365-372 (goal deadline input)</li>
+            <li><code>stories.html</code> deadline input in new story modal</li>
+          </ul>
+
+          <h4>9. Toast Notifications → react-hot-toast</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Custom save status updates ("Saving...", "Saved at X:XX")</li>
+            <li>Manual status element updates</li>
+            <li>Status styling and transitions</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>react-hot-toast provides toast notifications</li>
+            <li>Auto-dismiss, positioning, animations</li>
+            <li>Success/error/info variants</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.js</code> lines 1057-1077 (<code>updateSaveStatus</code> function)</li>
+            <li><code>editor.html</code> line 108 (save status element)</li>
+          </ul>
+
+          <h4>10. Collapsible/Accordion → Radix UI Accordion</h4>
+          <p><strong>Current Implementation:</strong></p>
+          <ul>
+            <li>Custom collapse/expand for chapters</li>
+            <li>Collapse state management (localStorage)</li>
+            <li>Icon toggling (arrow up/down)</li>
+          </ul>
+          <p><strong>Replacement:</strong></p>
+          <ul>
+            <li>Radix UI Accordion handles collapse functionality</li>
+            <li>Accessible, keyboard navigable</li>
+            <li>Built-in state management</li>
+          </ul>
+          <p><strong>Code Locations:</strong></p>
+          <ul>
+            <li><code>editor.js</code> lines 217-262 (collapse state management)</li>
+            <li><code>editor.js</code> lines 303-316 (collapse button rendering)</li>
+            <li><code>editor.js</code> lines 254-262 (<code>toggleGroupCollapse</code> function)</li>
+          </ul>
+
+          <h3>Benefits of Using Third-Party Libraries</h3>
+          <ol>
+            <li><strong>Massive Code Reduction</strong>: ~3,300-4,200 lines of custom code replaced by battle-tested libraries</li>
+            <li><strong>Accessibility Built-In</strong>: All Radix UI components are fully accessible (ARIA, keyboard nav)</li>
+            <li><strong>Type Safety</strong>: All recommended libraries have excellent TypeScript support</li>
+            <li><strong>Maintenance</strong>: Libraries are maintained by teams, reducing our maintenance burden</li>
+            <li><strong>Performance</strong>: Optimized libraries often perform better than custom implementations</li>
+            <li><strong>Documentation</strong>: Well-documented libraries with examples and community support</li>
+            <li><strong>Bug Fixes</strong>: Libraries fix edge cases we haven't encountered yet</li>
+            <li><strong>Future-Proof</strong>: Libraries evolve with React ecosystem</li>
+          </ol>
 
           <h3>Recommended Library Stack</h3>
           <p><strong>Note:</strong> This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, and state management will be written in TypeScript.</p>
@@ -270,11 +515,127 @@
     "@types/node": "^20.x"
   }
 }</code></pre>
+
+          <h3>Library Selection Rationale</h3>
+          
+          <h4>Rich Text Editor: <strong>TipTap</strong> (Recommended)</h4>
+          <ul>
+            <li>✅ Modern, extensible, built for React</li>
+            <li>✅ <strong>Excellent TypeScript support</strong> - Full type definitions included</li>
+            <li>✅ Active community and maintenance</li>
+            <li>✅ Handles contentEditable complexity</li>
+            <li>✅ Type-safe editor extensions and commands</li>
+            <li>✅ Replaces ~1,500-2,000 lines of custom contentEditable code</li>
+            <li>✅ Handles all text extraction, formatting, and cursor management we currently do manually</li>
+            <li><strong>Alternative</strong>: Slate.js (more complex but powerful, also has TypeScript support)</li>
+          </ul>
+
+          <h4>UI Components: <strong>Radix UI</strong> (Recommended)</h4>
+          <ul>
+            <li>✅ Unstyled, accessible components - perfect for matching existing design</li>
+            <li>✅ Full keyboard navigation built-in</li>
+            <li>✅ ARIA attributes automatically handled</li>
+            <li>✅ Can match existing design system exactly</li>
+            <li>✅ <strong>Full TypeScript support</strong> - All components are typed</li>
+            <li>✅ Replaces ~1,000+ lines of modal, menu, tab, tooltip code</li>
+            <li>✅ Provides: Dialog (modals), Dropdown Menu, Context Menu, Tabs, Tooltip, Accordion</li>
+            <li><strong>Alternative</strong>: Headless UI (similar, different API, also TypeScript)</li>
+          </ul>
+
+          <h4>Drag & Drop: <strong>@dnd-kit</strong> (Recommended)</h4>
+          <ul>
+            <li>✅ Modern, performant library</li>
+            <li>✅ Better than react-beautiful-dnd (which is unmaintained)</li>
+            <li>✅ Supports sortable lists out of the box</li>
+            <li>✅ Touch device support for tablets</li>
+            <li>✅ Replaces ~300-400 lines of native drag event handling</li>
+            <li>✅ Handles all the drag/drop logic for chapters and snippets</li>
+            <li>✅ Better visual feedback and drop zone detection than native events</li>
+          </ul>
         </section>
 
         <section class="docs-section" id="effort-estimation">
           <h2>Effort Estimation</h2>
           
+          <h3>Original LOE (Without Libraries)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Hours</th>
+                <th>Complexity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Editor Component (6,069 lines)</td>
+                <td>40-60</td>
+                <td>Very High</td>
+              </tr>
+              <tr>
+                <td>State Management Migration</td>
+                <td>20-30</td>
+                <td>High</td>
+              </tr>
+              <tr>
+                <td>ContentEditable Integration</td>
+                <td>15-25</td>
+                <td>High</td>
+              </tr>
+              <tr>
+                <td>Stories Page</td>
+                <td>12-18</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Authentication Flow</td>
+                <td>8-12</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Google Drive Integration</td>
+                <td>8-12</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>CSS/Styling Updates</td>
+                <td>10-15</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Docs Page</td>
+                <td>4-6</td>
+                <td>Low</td>
+              </tr>
+              <tr>
+                <td>Export Functionality</td>
+                <td>6-10</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Goal Tracking & UI Components</td>
+                <td>8-12</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>React Setup & Configuration</td>
+                <td>8-12</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>Testing & Bug Fixes</td>
+                <td>20-30</td>
+                <td>High</td>
+              </tr>
+              <tr>
+                <td><strong>TOTAL</strong></td>
+                <td><strong>159-220</strong></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <p><strong>Timeline:</strong> 4-11 weeks (depending on hours/week)</p>
+
           <h3>Revised LOE (With Third-Party Libraries)</h3>
           <table>
             <thead>
@@ -432,6 +793,177 @@
             <li><strong>Export All Places</strong> - All place snippets</li>
             <li><strong>Export All Things</strong> - All thing snippets</li>
           </ol>
+
+          <h3>Goal System Features</h3>
+          <ul>
+            <li><strong>Target</strong>: Total word count goal</li>
+            <li><strong>Deadline</strong>: Target completion date</li>
+            <li><strong>Writing Days</strong>: Selectable days of week (Mon-Sun)</li>
+            <li><strong>Mode</strong>:
+              <ul>
+                <li>Elastic: Rebalances daily targets based on progress</li>
+                <li>Strict: Fixed daily targets regardless of progress</li>
+              </ul>
+            </li>
+            <li><strong>Days Off</strong>: Comma-separated dates to exclude</li>
+            <li><strong>Midnight Rollover</strong>: Handles day boundary crossings</li>
+          </ul>
+
+          <h3>Code Statistics</h3>
+          <ul>
+            <li><strong>Total Functions</strong>: ~987 functions across all JS files</li>
+            <li><strong>Error Logging</strong>: Custom system with localStorage persistence</li>
+            <li><strong>Background Loading</strong>: Optimized batch loading with throttled updates</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="custom-implementation">
+          <h2>What Needs Custom Implementation</h2>
+          <p>These areas cannot be replaced with libraries and require custom React code:</p>
+
+          <h3>1. State Management Architecture</h3>
+          <ul>
+            <li><strong>Current</strong>: Global <code>state</code> object with direct mutations</li>
+            <li><strong>React + TypeScript</strong>: Zustand with TypeScript interfaces</li>
+            <li><strong>Complexity</strong>: High</li>
+            <li><strong>Lines</strong>: ~500-800 lines of state logic + type definitions</li>
+            <li><strong>TypeScript</strong>: Will create interfaces for all state structures (Group, Snippet, Project, Goal, etc.)</li>
+          </ul>
+
+          <h3>2. Google Drive Integration</h3>
+          <ul>
+            <li><strong>Current</strong>: API calls in <code>drive.js</code></li>
+            <li><strong>React + TypeScript</strong>: Convert to custom hooks (<code>useDrive</code>, <code>useAuth</code>) with TypeScript types</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Status</strong>: Backend already works, just needs React wrapper</li>
+            <li><strong>TypeScript</strong>: Will create interfaces for API responses and request parameters</li>
+          </ul>
+
+          <h3>3. Word Counting Logic</h3>
+          <ul>
+            <li><strong>Current</strong>: <code>countWords()</code> function</li>
+            <li><strong>React</strong>: Can be reused as-is or converted to hook</li>
+            <li><strong>Complexity</strong>: Low</li>
+            <li><strong>Lines</strong>: ~50-100 lines</li>
+          </ul>
+
+          <h3>4. Goal Calculation Algorithms</h3>
+          <ul>
+            <li><strong>Current</strong>: Complex date/word calculation logic</li>
+            <li><strong>React</strong>: Convert to hooks (<code>useGoal</code>, <code>useDailyTarget</code>)</li>
+            <li><strong>Complexity</strong>: Medium-High</li>
+            <li><strong>Lines</strong>: ~200-300 lines</li>
+          </ul>
+
+          <h3>5. Export Functionality</h3>
+          <ul>
+            <li><strong>Current</strong>: Custom export logic for chapters/outline/notes</li>
+            <li><strong>React</strong>: Convert to utility functions or hooks</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Lines</strong>: ~200-300 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>Exports to Google Docs format</li>
+                <li>Supports 5 export types (chapters, outline, people, places, things)</li>
+                <li>Optional snippet name inclusion</li>
+                <li>User-provided filenames</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>6. Search/Filtering Logic</h3>
+          <ul>
+            <li><strong>Current</strong>: Inline filtering in render functions</li>
+            <li><strong>React</strong>: Convert to <code>useMemo</code> hooks</li>
+            <li><strong>Complexity</strong>: Low-Medium</li>
+            <li><strong>Lines</strong>: ~100-150 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>Searches group titles, snippet titles, and snippet body content</li>
+                <li>Case-insensitive matching</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>7. Authentication Flow</h3>
+          <ul>
+            <li><strong>Current</strong>: Google Sign-In SDK integration</li>
+            <li><strong>React</strong>: Convert to context + hooks</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Lines</strong>: ~200-300 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>48-hour session expiration</li>
+                <li>Token validation</li>
+                <li>Auto-redirect logic</li>
+                <li>Dev mode bypass for localhost</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>8. Lazy Loading Logic</h3>
+          <ul>
+            <li><strong>Current</strong>: Background loading of snippet content</li>
+            <li><strong>React</strong>: Convert to React Query or custom hooks</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Lines</strong>: ~300-400 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>Loads active snippet first, then background loads remaining</li>
+                <li>Throttled updates during background loading</li>
+                <li>Prevents UI blocking</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>9. Mobile Detection</h3>
+          <ul>
+            <li><strong>Current</strong>: User agent and touch detection</li>
+            <li><strong>React</strong>: Convert to custom hook (<code>useMobileDetection</code>)</li>
+            <li><strong>Complexity</strong>: Low</li>
+            <li><strong>Lines</strong>: ~50 lines</li>
+            <li><strong>Details</strong>: Shows warning message for mobile devices</li>
+          </ul>
+
+          <h3>10. Error Logging System</h3>
+          <ul>
+            <li><strong>Current</strong>: Custom localStorage-based error logging</li>
+            <li><strong>React</strong>: Can reuse or convert to error boundary + logging service</li>
+            <li><strong>Complexity</strong>: Low-Medium</li>
+            <li><strong>Lines</strong>: ~100 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>Logs errors to localStorage (max 50)</li>
+                <li>Captures console errors, unhandled rejections</li>
+                <li>Exposes <code>viewYarnyErrors()</code> function</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h3>11. Midnight Rollover Handling</h3>
+          <ul>
+            <li><strong>Current</strong>: Handles goal calculation across day boundaries</li>
+            <li><strong>React</strong>: Convert to hook with date change detection</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Lines</strong>: ~100-150 lines</li>
+            <li><strong>Details</strong>: Recalculates daily targets when crossing midnight</li>
+          </ul>
+
+          <h3>12. Goal Calculation Modes</h3>
+          <ul>
+            <li><strong>Current</strong>: Elastic (rebalances) vs Strict (fixed) modes</li>
+            <li><strong>React</strong>: Convert to hook with mode-specific logic</li>
+            <li><strong>Complexity</strong>: Medium</li>
+            <li><strong>Lines</strong>: ~200-300 lines</li>
+            <li><strong>Details</strong>:
+              <ul>
+                <li>Elastic: Adjusts daily targets based on progress</li>
+                <li>Strict: Fixed daily targets</li>
+                <li>Writing days selection (Mon-Sun)</li>
+                <li>Days off support</li>
+              </ul>
+            </li>
+          </ul>
         </section>
 
         <section class="docs-section" id="migration-phases">
@@ -531,15 +1063,159 @@
             <li><strong>Feature Parity</strong> - Missing features during migration. Mitigation: Create feature checklist, test each feature.</li>
             <li><strong>CSS/Styling Migration</strong> - Styling may break during migration. Mitigation: Use CSS modules or styled-components for isolation.</li>
           </ul>
+
+          <h3>Low Risk</h3>
+          <ul>
+            <li><strong>Build Configuration</strong> - Netlify build may need adjustments. Mitigation: Netlify has good React support, standard config. Status: Well-documented, low risk.</li>
+            <li><strong>Third-Party Library Issues</strong> - Libraries may have bugs or incompatibilities. Mitigation: Use well-maintained, popular libraries. Status: All recommended libraries are stable.</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="benefits">
+          <h2>Benefits of Migration</h2>
+          
+          <h3>Development Benefits</h3>
+          <ol>
+            <li><strong>Reduced Code</strong>: ~3,300-4,200 lines replaced by libraries</li>
+            <li><strong>Better Maintainability</strong>: React's component model is easier to maintain</li>
+            <li><strong>Type Safety</strong>: TypeScript provides compile-time error checking and better IDE support</li>
+            <li><strong>Developer Experience</strong>: Hot reload, better tooling, autocomplete, refactoring support</li>
+            <li><strong>Easier Testing</strong>: React Testing Library makes testing easier, TypeScript catches errors before runtime</li>
+            <li><strong>Better Documentation</strong>: TypeScript types serve as inline documentation</li>
+            <li><strong>Safer Refactoring</strong>: TypeScript ensures changes don't break existing code</li>
+          </ol>
+
+          <h3>User Benefits</h3>
+          <ol>
+            <li><strong>Better Accessibility</strong>: Radix UI components are fully accessible</li>
+            <li><strong>Improved Performance</strong>: React optimizations (memoization, etc.)</li>
+            <li><strong>Better UX</strong>: Polished interactions from proven libraries</li>
+            <li><strong>Future Features</strong>: Easier to add new features in React</li>
+          </ol>
+
+          <h3>Business Benefits</h3>
+          <ol>
+            <li><strong>Faster Development</strong>: Future features will be faster to build</li>
+            <li><strong>Easier Hiring</strong>: More developers know React than vanilla JS</li>
+            <li><strong>Ecosystem</strong>: Access to React ecosystem of tools and libraries</li>
+            <li><strong>Long-term Maintainability</strong>: React is a stable, long-term choice</li>
+          </ol>
         </section>
 
         <section class="docs-section" id="netlify-config">
           <h2>Netlify Configuration</h2>
           
+          <h3>Current Setup</h3>
+          <ul>
+            <li>✅ Netlify Functions already configured</li>
+            <li>✅ Build settings in <code>netlify.toml</code></li>
+            <li>✅ Redirects configured</li>
+            <li>✅ Existing app served from <code>public/</code> directory</li>
+          </ul>
+
           <h3>Deployment Strategy: Parallel Paths</h3>
           <p>The React app will be deployed to <code>/react</code> path while keeping the existing app at root:</p>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny.lindsaybrunner.com/          → Existing vanilla JS app (public/)
 yarny.lindsaybrunner.com/react/*   → New React app (dist/)</code></pre>
+
+          <h3>Required Changes</h3>
+          
+          <h4>Option 1: Separate Build Directory (Recommended)</h4>
+          <p>Create a new <code>netlify-react.toml</code> for React app deployment:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code># netlify-react.toml (for React app at /react path)
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Serve React app at /react path
+[[redirects]]
+  from = "/react/*"
+  to = "/react/index.html"
+  status = 200
+
+# Ensure React app assets are accessible
+[[redirects]]
+  from = "/react/assets/*"
+  to = "/react/assets/:splat"
+  status = 200</code></pre>
+
+          <h4>Option 2: Combined Configuration</h4>
+          <p>Update existing <code>netlify.toml</code> to handle both:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>[build]
+  command = "npm run build"
+  publish = "dist"  # React app builds to dist/
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Serve existing app at root (from public/ directory)
+# Note: This requires keeping public/ as static files
+# or using a different build process
+
+# Serve React app at /react path
+[[redirects]]
+  from = "/react/*"
+  to = "/react/index.html"
+  status = 200
+
+# Existing app routes (unchanged)
+[[redirects]]
+  from = "/editor.html"
+  to = "/editor.html"
+  status = 200
+
+[[redirects]]
+  from = "/stories.html"
+  to = "/stories.html"
+  status = 200
+
+# Catch-all for React Router (only for /react path)
+[[redirects]]
+  from = "/react/*"
+  to = "/react/index.html"
+  status = 200</code></pre>
+
+          <h4>TypeScript Configuration</h4>
+          <p>Create <code>tsconfig.json</code>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}</code></pre>
+
+          <h3>Build Scripts</h3>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "netlify:dev": "netlify dev"
+  }
+}</code></pre>
 
           <h3>Vite Configuration for Base Path</h3>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>import { defineConfig } from 'vite'
@@ -600,6 +1276,338 @@ export function App(): JSX.Element {
             <li><strong>Migration:</strong> Once validated, can switch root to React app or keep both</li>
           </ul>
         </section>
+
+        <section class="docs-section" id="file-structure">
+          <h2>File Structure (Proposed)</h2>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny-app/
+├── src/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── LoginPage.tsx
+│   │   │   └── AuthProvider.tsx
+│   │   ├── editor/
+│   │   │   ├── Editor.tsx
+│   │   │   ├── StorySidebar.tsx
+│   │   │   ├── NotesSidebar.tsx
+│   │   │   ├── TipTapEditor.tsx
+│   │   │   └── ...
+│   │   ├── stories/
+│   │   │   ├── StoriesList.tsx
+│   │   │   ├── StoryCard.tsx
+│   │   │   └── ...
+│   │   ├── ui/
+│   │   │   ├── Modal.tsx
+│   │   │   ├── ColorPicker.tsx
+│   │   │   ├── ContextMenu.tsx
+│   │   │   └── ...
+│   │   └── shared/
+│   │       ├── Header.tsx
+│   │       └── Footer.tsx
+│   ├── hooks/
+│   │   ├── useDrive.ts
+│   │   ├── useAuth.ts
+│   │   ├── useStory.ts
+│   │   ├── useGoal.ts
+│   │   └── ...
+│   ├── utils/
+│   │   ├── wordCount.ts
+│   │   ├── export.ts
+│   │   ├── goalCalculation.ts
+│   │   └── ...
+│   ├── store/
+│   │   ├── store.ts (Zustand)
+│   │   └── types.ts
+│   ├── api/
+│   │   └── drive.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── routes.tsx
+├── public/
+│   └── (static assets)
+├── netlify/
+│   └── functions/ (unchanged)
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+└── netlify.toml</code></pre>
+        </section>
+
+        <section class="docs-section" id="decision-points">
+          <h2>Decision Points</h2>
+          
+          <h3>State Management: Context API vs Zustand vs Redux</h3>
+          <p><strong>Recommendation: Zustand</strong></p>
+          <ul>
+            <li>✅ Simpler than Redux, more powerful than Context</li>
+            <li>✅ Easy migration from global state object</li>
+            <li>✅ Good TypeScript support</li>
+            <li>✅ Small bundle size</li>
+            <li><strong>Alternative</strong>: Context API (if team prefers built-in solution)</li>
+          </ul>
+
+          <h3>Rich Text Editor: TipTap vs Slate vs Draft.js</h3>
+          <p><strong>Recommendation: TipTap</strong></p>
+          <ul>
+            <li>✅ Modern, React-first</li>
+            <li>✅ Excellent documentation</li>
+            <li>✅ Active development</li>
+            <li>✅ Good performance</li>
+            <li><strong>Alternative</strong>: Slate (if need more customization)</li>
+          </ul>
+
+          <h3>Build Tool: Vite vs Create React App vs Webpack</h3>
+          <p><strong>Recommendation: Vite</strong></p>
+          <ul>
+            <li>✅ Fastest development experience</li>
+            <li>✅ Modern, simple configuration</li>
+            <li>✅ Great TypeScript support</li>
+            <li>✅ Smaller bundle sizes</li>
+            <li><strong>Alternative</strong>: CRA (if team prefers familiarity)</li>
+          </ul>
+
+          <h3>TypeScript: Required</h3>
+          <p><strong>Decision: TypeScript from the start</strong> ✅</p>
+          <ul>
+            <li>✅ Better developer experience with autocomplete and IntelliSense</li>
+            <li>✅ Catch errors at compile-time, not runtime</li>
+            <li>✅ Better IDE support (refactoring, navigation, find references)</li>
+            <li>✅ Type safety prevents common bugs</li>
+            <li>✅ Self-documenting code through types</li>
+            <li>✅ Easier to maintain and refactor large codebases</li>
+            <li>✅ All recommended libraries have excellent TypeScript support</li>
+            <li>✅ TypeScript is now the industry standard for React projects</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="success-criteria">
+          <h2>Success Criteria</h2>
+          
+          <h3>Must Have (MVP)</h3>
+          <ul>
+            <li>All existing features work</li>
+            <li>No regression in functionality</li>
+            <li>Performance is equal or better</li>
+            <li>Authentication works</li>
+            <li>Google Drive sync works</li>
+            <li>Editor saves correctly</li>
+            <li>Export functionality works</li>
+          </ul>
+
+          <h3>Should Have</h3>
+          <ul>
+            <li>Better accessibility (ARIA attributes)</li>
+            <li>Improved error handling</li>
+            <li>Better loading states</li>
+            <li>Complete TypeScript type coverage (all components, hooks, utilities)</li>
+            <li>Type-safe API calls and state management</li>
+          </ul>
+
+          <h3>Nice to Have</h3>
+          <ul>
+            <li>Performance improvements</li>
+            <li>Better mobile experience</li>
+            <li>Additional features enabled by React</li>
+            <li>Advanced TypeScript features (discriminated unions, branded types)</li>
+            <li>TypeScript strict mode enabled</li>
+            <li>Generated API types from OpenAPI/Swagger (if applicable)</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="notes-considerations">
+          <h2>Notes & Considerations</h2>
+          
+          <h3>Keeping Old Code</h3>
+          <ul>
+            <li>Keep existing <code>public/</code> files until migration is complete</li>
+            <li>Deploy React app to <code>/react</code> path for parallel testing</li>
+            <li>Existing app remains at root (<code>yarny.lindsaybrunner.com</code>)</li>
+            <li>Can run both versions side-by-side during migration</li>
+            <li>Switch over when new version is feature-complete</li>
+            <li>Option to keep both versions permanently or gradually migrate users</li>
+          </ul>
+
+          <h3>Testing Strategy</h3>
+          <ul>
+            <li>Manual testing for each feature</li>
+            <li>Test with real Google Drive data</li>
+            <li>Test edge cases (large stories, many snippets, etc.)</li>
+            <li>Cross-browser testing (Chrome, Firefox, Safari, Edge)</li>
+          </ul>
+
+          <h3>Performance Considerations</h3>
+          <ul>
+            <li>Use React.memo for expensive components</li>
+            <li>Lazy load routes with React.lazy</li>
+            <li>Optimize re-renders with useMemo/useCallback</li>
+            <li>Consider virtual scrolling for long lists</li>
+          </ul>
+
+          <h3>Accessibility</h3>
+          <ul>
+            <li>All Radix UI components are accessible by default</li>
+            <li>Test with screen readers</li>
+            <li>Ensure keyboard navigation works</li>
+            <li>Check color contrast</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="questions">
+          <h2>Questions to Resolve</h2>
+          <ul>
+            <li>✅ TypeScript from start or add later? ✅ <strong>TypeScript from the start</strong></li>
+            <li>State management choice (Zustand vs Context)? <strong>Recommendation: Zustand</strong></li>
+            <li>✅ Should we keep old code as reference? ✅ <strong>Yes - parallel deployment at /react</strong></li>
+            <li>Timeline constraints?</li>
+            <li>Team size and availability?</li>
+            <li>Testing requirements?</li>
+            <li>When to migrate users from root to /react? (or keep both?)</li>
+            <li>How to handle shared Netlify Functions? (should work for both)</li>
+            <li>TypeScript strict mode level? (recommend: strict)</li>
+            <li>ESLint + TypeScript ESLint configuration preferences?</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="resources">
+          <h2>Resources</h2>
+          
+          <h3>Documentation</h3>
+          <ul>
+            <li><a href="https://tiptap.dev/" target="_blank" rel="noopener">TipTap Documentation</a></li>
+            <li><a href="https://www.radix-ui.com/" target="_blank" rel="noopener">Radix UI Documentation</a></li>
+            <li><a href="https://docs.dndkit.com/" target="_blank" rel="noopener">@dnd-kit Documentation</a></li>
+            <li><a href="https://reactrouter.com/" target="_blank" rel="noopener">React Router Documentation</a></li>
+            <li><a href="https://github.com/pmndrs/zustand" target="_blank" rel="noopener">Zustand Documentation</a></li>
+          </ul>
+
+          <h3>Migration Guides</h3>
+          <ul>
+            <li><a href="https://react.dev/learn/start-a-new-react-project" target="_blank" rel="noopener">React Migration Guide</a></li>
+            <li><a href="https://vitejs.dev/guide/" target="_blank" rel="noopener">Vite Migration Guide</a></li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="technical-details">
+          <h2>Additional Technical Details</h2>
+          
+          <h3>State Structure</h3>
+          <p>The current global <code>state</code> object will be converted to TypeScript interfaces:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// types/state.ts
+export interface Group {
+  id: string;
+  title: string;
+  description?: string;
+  color: string;
+  snippetIds: string[];
+  position?: number;
+}
+
+export interface Snippet {
+  id: string;
+  title: string;
+  body: string;
+  description?: string;
+  groupId?: string;
+  kind?: 'person' | 'place' | 'thing';
+  color?: string;
+  words: number;
+  chars: number;
+  driveFileId?: string;
+  updatedAt?: string;
+  lastKnownDriveModifiedTime?: string;
+  _contentLoaded?: boolean;
+}
+
+export interface Project {
+  groupIds: string[];
+  snippetIds: string[];
+  activeSnippetId: string | null;
+  activeRightTab: 'people' | 'places' | 'things';
+  filters: {
+    search: string;
+  };
+}
+
+export interface Goal {
+  target: number | null;
+  deadline: string | null;
+  mode: 'elastic' | 'strict';
+  writingDays: number[];
+  daysOff: string[];
+}
+
+export interface AppState {
+  groups: Record&lt;string, Group&gt;;
+  snippets: Record&lt;string, Snippet&gt;;
+  project: Project;
+  drive: {
+    storyFolderId: string | null;
+  };
+  goal: Goal;
+  collapsedGroups: Set&lt;string&gt;;
+  editing: {
+    savingState: 'idle' | 'saving' | 'saved';
+    lastSavedAt: string | null;
+  };
+}</code></pre>
+
+          <h3>Key Algorithms</h3>
+          <ol>
+            <li><strong>Word Counting</strong>: Custom function handling various text formats</li>
+            <li><strong>Goal Calculation</strong>: Complex date/word math for daily targets</li>
+            <li><strong>Conflict Detection</strong>: Compares local vs Drive modified times</li>
+            <li><strong>Lazy Loading</strong>: Loads active snippet first, then batches remaining</li>
+            <li><strong>Midnight Rollover</strong>: Detects day changes and recalculates goals</li>
+          </ol>
+
+          <h3>Performance Optimizations</h3>
+          <ul>
+            <li>Throttled updates during background loading</li>
+            <li>Lazy content loading (only load when snippet is active)</li>
+            <li>Batch background loading with delays</li>
+            <li>Preserved order from saved data (no unnecessary sorting)</li>
+            <li>Word count caching in snippet objects</li>
+          </ul>
+
+          <h3>Browser Compatibility</h3>
+          <ul>
+            <li><strong>Current</strong>: Works in modern browsers (Chrome, Firefox, Safari, Edge)</li>
+            <li><strong>React</strong>: Same browser support expected</li>
+            <li><strong>Mobile</strong>: Currently shows warning, not fully supported</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="changelog">
+          <h2>Changelog</h2>
+          <ul>
+            <li><strong>2025-01-XX</strong>: Initial plan created
+              <ul>
+                <li>Added implementation details section</li>
+                <li>Added modal list (8 total)</li>
+                <li>Added color system details</li>
+                <li>Added export types breakdown</li>
+                <li>Added goal system features</li>
+                <li>Added code statistics</li>
+                <li>Added technical details section</li>
+                <li><strong>Added parallel deployment strategy</strong>: React app at <code>/react</code> path, existing app at root</li>
+                <li>Added Netlify configuration for <code>/react</code> path deployment</li>
+                <li>Added Vite and React Router base path configuration</li>
+                <li>Added testing strategy for parallel deployment</li>
+                <li><strong>Updated to require TypeScript</strong>: Changed from optional to required</li>
+                <li>Added TypeScript configuration examples</li>
+                <li>Updated file structure to show all <code>.tsx</code> and <code>.ts</code> files</li>
+                <li>Added TypeScript type definitions for state structure</li>
+                <li>Updated LOE estimates to include TypeScript setup time</li>
+                <li>Updated decision points to make TypeScript mandatory</li>
+              </ul>
+            </li>
+            <li>Document all major decisions and changes here</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="contact">
+          <h2>Contact & Support</h2>
+          <p>For questions or updates to this plan, please document changes here and update the changelog.</p>
+        </section>
       </div>
     </main>
 
@@ -607,7 +1615,7 @@ export function App(): JSX.Element {
       <p>&copy; 2025 Yarny. Your personal writing tool.</p>
       <nav class="shared-footer-nav">
         <a href="/stories.html" id="footerStoriesLink" style="display: none;">My Stories</a>
-        <a href="/docs.html">User Guide</a>
+        <a href="/docs.html">Docs</a>
         <a href="/migration-plan">Migration Plan</a>
         <a href="/" id="footerLoginLink">Back to Login</a>
       </nav>
