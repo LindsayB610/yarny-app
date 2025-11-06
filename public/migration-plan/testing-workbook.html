@@ -1222,21 +1222,31 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 12.6: Network Interruption</h4>
-          <p>Verify that the app handles network interruptions gracefully.</p>
+          <h4>Test 12.6: Offline/Spotty-Network Semantics</h4>
+          <p>Verify that the app handles offline and spotty network conditions gracefully with clear user feedback.</p>
           <div class="test-steps">
             <ol>
-              <li>While using Yarny, disconnect your internet (or use browser dev tools to simulate offline)</li>
-              <li>Try to save a snippet</li>
-              <li>Verify an error message appears</li>
-              <li>Reconnect internet</li>
-              <li>Verify the app retries or allows you to retry</li>
-              <li>Verify changes are saved once connection is restored</li>
+              <li><strong>Go offline</strong>: Disable network (or use browser dev tools to simulate offline)</li>
+              <li>Edit a snippet while offline</li>
+              <li>Verify editor remains editable (you can continue typing)</li>
+              <li><strong>Offline banner</strong>: Verify offline banner appears at top of editor (non-blocking, dismissible)</li>
+              <li>Verify banner message says "You're offline. Changes will be saved when connection is restored."</li>
+              <li><strong>Queued save</strong>: Verify save status shows "Queued - will save when online" (no timestamp)</li>
+              <li>Make multiple edits while offline</li>
+              <li><strong>Reconnect</strong>: Re-enable network</li>
+              <li>Verify queued saves automatically retry and complete</li>
+              <li><strong>Save status on reconnect</strong>: Verify "Saved at X:XX" appears after successful save</li>
+              <li><strong>Stale cache warning</strong>: Go offline again → Wait 5+ minutes → Verify "Using cached data" or "Last synced: X:XX" warning appears</li>
+              <li><strong>Network flapping</strong>: Rapidly toggle network on/off multiple times → Verify save queue handles multiple toggles correctly, no data loss</li>
+              <li><strong>Retry exhaustion</strong>: Simulate network error with no retries remaining → Verify mutation is queued (not lost), shows queued status</li>
+              <li><strong>Multiple queued saves</strong>: Go offline → Make multiple edits to different snippets → Reconnect → Verify all saves complete in order</li>
+              <li><strong>Cache staleness</strong>: Load a snippet → Go offline → Wait 10+ minutes → Verify "Last synced: X:XX" appears instead of "Saved at X:XX"</li>
+              <li>Verify editor remains editable even with stale cache (but shows warning)</li>
             </ol>
           </div>
           <div class="checkbox-container">
             <input type="checkbox" id="test-12-6" name="test-12-6">
-            <label for="test-12-6">App handles network interruptions gracefully</label>
+            <label for="test-12-6">App handles offline/spotty-network conditions gracefully with clear feedback</label>
           </div>
         </div>
       </div>
