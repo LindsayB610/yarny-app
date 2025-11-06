@@ -418,7 +418,8 @@ This section details exactly which parts of the current codebase can be replaced
     "react-hook-form": "^7.x",
     "react-hot-toast": "^2.x",
     "axios": "^1.x",
-    "zustand": "^4.x"
+    "zustand": "^4.x",
+    "zod": "^3.x"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.x",
@@ -759,6 +760,298 @@ These areas cannot be replaced with libraries and require custom React code:
 
 ---
 
+## API Contract Formalization (P1 Priority)
+
+### Overview
+
+**Why**: TypeScript on the client is only half the story. We need a typed boundary with runtime validation so Drive/Docs responses don't surprise us during the migration. This reduces "works in dev, breaks in prod" bugs during the cut-over.
+
+**What**: Define a minimal "API contract" (types + runtime validation) for every endpoint we hit (auth, Drive metadata, snapshot list). Keep it central and use it consistently.
+
+### Implementation Strategy
+
+#### 1. Centralized API Contract Module
+
+Create `src/api/contract.ts` that defines:
+- **TypeScript types** for all request/response shapes
+- **Zod schemas** for runtime validation
+- **Single source of truth** for all API contracts
+
+**Why Zod?**
+- TypeScript-first schema validation
+- Automatic type inference from schemas
+- Small bundle size (~8KB)
+- Excellent error messages
+- Can generate TypeScript types from schemas
+
+#### 2. API Client Wrapper
+
+Create `src/api/client.ts` that:
+- Provides typed functions for each endpoint
+- Automatically validates requests and responses using Zod
+- Handles errors consistently
+- Provides type-safe API calls throughout the app
+
+#### 3. File Structure
+
+```
+src/api/
+├── contract.ts      # Type definitions + Zod schemas for all endpoints
+├── client.ts       # Typed API client functions
+└── types.ts        # Shared TypeScript types (if needed)
+```
+
+### Endpoints to Cover
+
+#### Authentication Endpoints
+- `POST /.netlify/functions/verify-google` - Verify Google ID token
+- `POST /.netlify/functions/logout` - Clear session
+- `GET /.netlify/functions/config` - Get Google Client ID
+
+#### Drive Integration Endpoints
+- `GET /.netlify/functions/drive-list` - List files/folders
+- `POST /.netlify/functions/drive-read` - Read file content
+- `POST /.netlify/functions/drive-write` - Write/update file
+- `POST /.netlify/functions/drive-check-comments` - Check for comments/tracked changes
+- `POST /.netlify/functions/drive-create-folder` - Create folder
+- `POST /.netlify/functions/drive-delete-story` - Delete story folder
+- `GET /.netlify/functions/drive-get-or-create-yarny-stories` - Get or create Yarny Stories folder
+- `POST /.netlify/functions/drive-delete-file` - Delete file
+- `POST /.netlify/functions/drive-rename-file` - Rename file
+- `GET /.netlify/functions/drive-auth` - Initiate Drive OAuth (redirect)
+- `GET /.netlify/functions/drive-auth-callback` - OAuth callback (redirect)
+
+#### Status Endpoints
+- `GET /.netlify/functions/uptime-status` - Get uptime status
+
+### Example Implementation
+
+```typescript
+// src/api/contract.ts
+import { z } from 'zod';
+
+// Request/Response schemas using Zod
+export const VerifyGoogleRequestSchema = z.object({
+  token: z.string().min(1),
+});
+
+export const VerifyGoogleResponseSchema = z.object({
+  verified: z.boolean(),
+  user: z.string().email(),
+  name: z.string().optional(),
+  picture: z.string().url().optional(),
+  token: z.string(),
+});
+
+// Infer TypeScript types from schemas
+export type VerifyGoogleRequest = z.infer<typeof VerifyGoogleRequestSchema>;
+export type VerifyGoogleResponse = z.infer<typeof VerifyGoogleResponseSchema>;
+
+// Drive file metadata schema
+export const DriveFileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  mimeType: z.string(),
+  modifiedTime: z.string().optional(),
+  size: z.string().optional(),
+  trashed: z.boolean().optional(),
+});
+
+export const DriveListResponseSchema = z.object({
+  files: z.array(DriveFileSchema),
+  nextPageToken: z.string().optional(),
+});
+
+export type DriveFile = z.infer<typeof DriveFileSchema>;
+export type DriveListResponse = z.infer<typeof DriveListResponseSchema>;
+
+// Drive read request/response
+export const DriveReadRequestSchema = z.object({
+  fileId: z.string().min(1),
+});
+
+export const DriveReadResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  mimeType: z.string(),
+  modifiedTime: z.string().optional(),
+  content: z.string(),
+});
+
+export type DriveReadRequest = z.infer<typeof DriveReadRequestSchema>;
+export type DriveReadResponse = z.infer<typeof DriveReadResponseSchema>;
+
+// Drive write request/response
+export const DriveWriteRequestSchema = z.object({
+  fileId: z.string().optional(),
+  fileName: z.string().min(1),
+  content: z.string(),
+  parentFolderId: z.string().optional(),
+  mimeType: z.string().default('text/plain'),
+});
+
+export const DriveWriteResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  modifiedTime: z.string().optional(),
+});
+
+export type DriveWriteRequest = z.infer<typeof DriveWriteRequestSchema>;
+export type DriveWriteResponse = z.infer<typeof DriveWriteResponseSchema>;
+
+// Error response schema (common across all endpoints)
+export const ApiErrorResponseSchema = z.object({
+  error: z.string(),
+  message: z.string().optional(),
+  requiresReauth: z.boolean().optional(),
+});
+
+export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
+```
+
+```typescript
+// src/api/client.ts
+import axios from 'axios';
+import { z } from 'zod';
+import {
+  VerifyGoogleRequestSchema,
+  VerifyGoogleResponseSchema,
+  DriveListResponseSchema,
+  DriveReadRequestSchema,
+  DriveReadResponseSchema,
+  DriveWriteRequestSchema,
+  DriveWriteResponseSchema,
+  ApiErrorResponseSchema,
+  type VerifyGoogleRequest,
+  type VerifyGoogleResponse,
+  type DriveListResponse,
+  type DriveReadRequest,
+  type DriveReadResponse,
+  type DriveWriteRequest,
+  type DriveWriteResponse,
+} from './contract';
+
+const API_BASE = '/.netlify/functions';
+
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+
+// Generic API call helper with validation
+async function apiCall<TRequest, TResponse>(
+  endpoint: string,
+  request: TRequest,
+  requestSchema: z.ZodSchema<TRequest>,
+  responseSchema: z.ZodSchema<TResponse>,
+  method: 'GET' | 'POST' = 'POST'
+): Promise<TResponse> {
+  // Validate request
+  const validatedRequest = requestSchema.parse(request);
+
+  try {
+    const response = await (method === 'GET'
+      ? axios.get(`${API_BASE}${endpoint}`, { params: validatedRequest })
+      : axios.post(`${API_BASE}${endpoint}`, validatedRequest));
+
+    // Validate response
+    const validatedResponse = responseSchema.parse(response.data);
+    return validatedResponse;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      // Try to parse error response
+      const errorData = ApiErrorResponseSchema.safeParse(error.response.data);
+      if (errorData.success) {
+        throw new Error(errorData.data.error);
+      }
+      throw new Error(error.response.data?.error || 'API request failed');
+    }
+    if (error instanceof z.ZodError) {
+      // Validation error - this is a contract violation
+      console.error('API contract violation:', error.errors);
+      throw new Error(`Invalid API response: ${error.errors.map(e => e.message).join(', ')}`);
+    }
+    throw error;
+  }
+}
+
+// Typed API functions
+export async function verifyGoogle(
+  request: VerifyGoogleRequest
+): Promise<VerifyGoogleResponse> {
+  return apiCall(
+    '/verify-google',
+    request,
+    VerifyGoogleRequestSchema,
+    VerifyGoogleResponseSchema
+  );
+}
+
+export async function listDriveFiles(
+  folderId?: string,
+  pageToken?: string
+): Promise<DriveListResponse> {
+  const params = { folderId, pageToken };
+  // For GET requests, we'll handle validation differently
+  const response = await axios.get(`${API_BASE}/drive-list`, { params });
+  return DriveListResponseSchema.parse(response.data);
+}
+
+export async function readDriveFile(
+  request: DriveReadRequest
+): Promise<DriveReadResponse> {
+  return apiCall(
+    '/drive-read',
+    request,
+    DriveReadRequestSchema,
+    DriveReadResponseSchema
+  );
+}
+
+export async function writeDriveFile(
+  request: DriveWriteRequest
+): Promise<DriveWriteResponse> {
+  return apiCall(
+    '/drive-write',
+    request,
+    DriveWriteRequestSchema,
+    DriveWriteResponseSchema
+  );
+}
+
+// ... additional endpoint functions
+```
+
+### Benefits
+
+1. **Type Safety**: Compile-time checking ensures we use correct request/response shapes
+2. **Runtime Validation**: Zod catches shape mismatches at runtime, preventing "works in dev, breaks in prod" issues
+3. **Centralized Contracts**: Single source of truth makes it easy to update when endpoints change
+4. **Better Error Messages**: Zod provides clear validation error messages
+5. **Self-Documenting**: Types serve as inline documentation
+6. **Migration Safety**: During cut-over, validation ensures backend changes don't break the frontend silently
+
+### Implementation Timeline
+
+This should be implemented in **Phase 1** (Setup & Infrastructure) as it's foundational:
+- Create `src/api/contract.ts` with all endpoint schemas
+- Create `src/api/client.ts` with typed API functions
+- Update hooks (`useDrive`, `useAuth`) to use the typed client
+- Add `zod` to dependencies
+
+**LOE**: 4-6 hours (adds time but saves debugging during migration)
+
+### Dependencies
+
+Add to `package.json`:
+```json
+{
+  "dependencies": {
+    "zod": "^3.x"
+  }
+}
+```
+
+---
+
 ## Migration Phases
 
 ### Phase 1: Setup & Infrastructure (Week 1)
@@ -768,12 +1061,14 @@ These areas cannot be replaced with libraries and require custom React code:
 - [ ] Configure React Router with TypeScript
 - [ ] Set up Netlify build configuration
 - [ ] Install and configure all libraries
+- [ ] **Create API contract module (`src/api/contract.ts`) with Zod schemas**
+- [ ] **Create typed API client (`src/api/client.ts`)**
 - [ ] Create base component structure with TypeScript
 - [ ] Set up state management (Zustand) with TypeScript types
 - [ ] Create TypeScript interfaces/types for state structure
-- [ ] Create custom hooks for Drive API with TypeScript
+- [ ] Create custom hooks for Drive API with TypeScript (using typed API client)
 
-**LOE**: 8-12 hours (includes TypeScript setup and type definitions)
+**LOE**: 12-18 hours (includes TypeScript setup, type definitions, and API contract formalization)
 
 ### Phase 2: Authentication (Week 1-2)
 - [ ] Convert login page to React
@@ -1127,7 +1422,9 @@ yarny-app/
 │   │   ├── store.ts (Zustand)
 │   │   └── types.ts
 │   ├── api/
-│   │   └── drive.ts
+│   │   ├── contract.ts      # API contract definitions (types + Zod schemas)
+│   │   ├── client.ts        # Typed API client functions
+│   │   └── types.ts         # Shared API types (if needed)
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── routes.tsx
@@ -1203,6 +1500,7 @@ yarny-app/
 - [ ] Better loading states
 - [ ] Complete TypeScript type coverage (all components, hooks, utilities)
 - [ ] Type-safe API calls and state management
+- [ ] **API contract formalization with runtime validation (Zod schemas)**
 
 ### Nice to Have
 - [ ] Performance improvements
@@ -1402,6 +1700,15 @@ export interface AppState {
   - Added TypeScript type definitions for state structure
   - Updated LOE estimates to include TypeScript setup time
   - Updated decision points to make TypeScript mandatory
+  - **Added API Contract Formalization section (P1 Priority)**: 
+    - Defined centralized API contract module with Zod schemas
+    - Created typed API client wrapper with runtime validation
+    - Documented all endpoints to be covered (auth, Drive, status)
+    - Added example implementation code
+    - Updated Phase 1 to include API contract setup
+    - Added `zod` to dependencies
+    - Updated file structure to show API contract files
+    - Added API contract formalization to success criteria
 - Document all major decisions and changes here
 
 ---
