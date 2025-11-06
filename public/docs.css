@@ -77,9 +77,10 @@ html {
   gap: var(--space-md);
   align-items: center;
   position: fixed;
-  top: var(--space-lg);
-  right: var(--space-4xl);
+  top: calc((var(--space-5xl) + 60px) / 2 - 20px); /* Center between top of page and first section */
+  right: var(--space-4xl); /* Align with content area right edge (matches content padding-right) */
   z-index: 200;
+  transform: translateY(-50%); /* Center vertically on the calculated position */
 }
 
 .docs-nav .btn-secondary {
