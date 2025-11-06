@@ -50,7 +50,9 @@
             <li><a href="#effort-estimation" class="nav-link">Effort Estimation</a></li>
             <li><a href="#implementation-details" class="nav-link">Implementation Details</a></li>
             <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
+            <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
             <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
+            <li><a href="#editor-truth" class="nav-link">Editor Truth & Round-Tripping</a></li>
             <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
             <li><a href="#risk-factors" class="nav-link">Risk Factors</a></li>
             <li><a href="#benefits" class="nav-link">Benefits of Migration</a></li>
@@ -211,7 +213,7 @@ export function useDrive(folderId: string): UseDriveResult {
 
           <h3>Current Features</h3>
           <ul>
-            <li>✅ Rich text editor (contentEditable)</li>
+            <li>✅ Plain text editor (contentEditable, minimalist formatting)</li>
             <li>✅ Story/Chapter/Snippet management</li>
             <li>✅ Google Drive integration</li>
             <li>✅ Google Sign-In authentication</li>
@@ -278,11 +280,11 @@ export function useDrive(folderId: string): UseDriveResult {
             </thead>
             <tbody>
               <tr>
-                <td>Rich Text Editor</td>
+                <td>Text Editor (Plain Text)</td>
                 <td>~1,500-2,000</td>
-                <td>TipTap/Slate</td>
+                <td>TipTap (Plain Text Only)</td>
                 <td>~1,500-2,000 lines</td>
-                <td>All contentEditable handling, text extraction, formatting logic</td>
+                <td>All contentEditable handling, text extraction, plain text formatting logic</td>
               </tr>
               <tr>
                 <td>Modals (8 total)</td>
@@ -373,7 +375,7 @@ export function useDrive(folderId: string): UseDriveResult {
 
           <h3>Detailed Component Mapping</h3>
           
-          <h4>1. Rich Text Editor → TipTap</h4>
+          <h4>1. Rich Text Editor → TipTap (Constrained to Plain Text)</h4>
           <p><strong>Current Implementation:</strong></p>
           <ul>
             <li><code>editor.js</code>: <code>getEditorTextContent()</code>, <code>setEditorTextContent()</code>, contentEditable event handlers</li>
@@ -381,19 +383,33 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>Line break normalization</li>
             <li>Cursor position management</li>
             <li>Content synchronization with state</li>
+            <li><strong>Content Format</strong>: Plain text with line breaks (<code>\n</code>), stored as <code>snippet.body</code> string</li>
+            <li><strong>Storage</strong>: Google Docs API (for snippets) or plain text (for notes)</li>
+            <li><strong>Conflict Detection</strong>: Compares plain text content and timestamps</li>
           </ul>
           <p><strong>Replacement:</strong></p>
           <ul>
-            <li>TipTap provides all contentEditable functionality out of the box</li>
-            <li>Built-in text extraction and formatting</li>
+            <li>TipTap configured for <strong>minimalist plain text only</strong> (no rich formatting)</li>
+            <li><strong>Format Constraint</strong>: Plain paragraphs and soft line breaks only (matches current model)</li>
+            <li><strong>Editor as Truth</strong>: Editor is authoritative while Yarny is open</li>
+            <li><strong>Reconciliation</strong>: Check for external changes on window focus, reconcile if needed</li>
+            <li><strong>Early Conflict Detection</strong>: Bring conflict detection forward to Phase 1/2</li>
             <li>Type-safe editor API</li>
-            <li>Extensible with plugins</li>
-            <li>Handles all edge cases we currently manage manually</li>
+            <li>Handles cursor management and content synchronization</li>
+          </ul>
+          <p><strong>Critical Constraints:</strong></p>
+          <ul>
+            <li><strong>NO rich formatting</strong> (bold, italic, colors, etc.) - Google Docs API doesn't handle arbitrary HTML well</li>
+            <li><strong>Plain text only</strong> - matches Yarny's minimalist model</li>
+            <li><strong>Paragraph breaks</strong> - use TipTap's paragraph support for <code>\n\n</code> (paragraph breaks)</li>
+            <li><strong>Soft line breaks</strong> - use TipTap's line break support for <code>\n</code> (single line breaks)</li>
+            <li><strong>Text extraction</strong> - must extract plain text that matches Google Docs API output format</li>
           </ul>
           <p><strong>Code Locations:</strong></p>
           <ul>
             <li><code>editor.js</code> lines ~590-670 (text content extraction)</li>
             <li><code>editor.js</code> lines ~669-738 (editor rendering and content management)</li>
+            <li><code>editor.js</code> lines ~1160-1383 (conflict detection and resolution)</li>
             <li>All contentEditable event listeners throughout <code>editor.js</code></li>
           </ul>
 
@@ -604,6 +620,12 @@ export function useDrive(folderId: string): UseDriveResult {
     "react-router-dom": "^6.x",
     "@tiptap/react": "^2.x",
     "@tiptap/starter-kit": "^2.x",
+    "@tiptap/extension-document": "^2.x",
+    "@tiptap/extension-paragraph": "^2.x",
+    "@tiptap/extension-text": "^2.x",
+    "@tiptap/extension-hard-break": "^2.x",
+    "@tiptap/extension-history": "^2.x",
+    "@tanstack/react-query": "^5.x",
     "@mui/material": "^5.x",
     "@mui/icons-material": "^5.x",
     "@mui/x-date-pickers": "^6.x",
@@ -631,7 +653,7 @@ export function useDrive(folderId: string): UseDriveResult {
 
           <h3>Library Selection Rationale</h3>
           
-          <h4>Rich Text Editor: <strong>TipTap</strong> (Recommended)</h4>
+          <h4>Text Editor: <strong>TipTap</strong> (Recommended - Plain Text Only)</h4>
           <ul>
             <li>✅ Modern, extensible, built for React</li>
             <li>✅ <strong>Excellent TypeScript support</strong> - Full type definitions included</li>
@@ -639,7 +661,10 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Handles contentEditable complexity</li>
             <li>✅ Type-safe editor extensions and commands</li>
             <li>✅ Replaces ~1,500-2,000 lines of custom contentEditable code</li>
-            <li>✅ Handles all text extraction, formatting, and cursor management we currently do manually</li>
+            <li>✅ <strong>Configured for plain text only</strong> - matches Yarny's minimalist model</li>
+            <li>✅ Handles text extraction matching Google Docs API format</li>
+            <li>✅ Supports paragraph breaks and soft line breaks (no rich formatting)</li>
+            <li><strong>Note</strong>: Will be configured with only Document, Paragraph, Text, HardBreak, History extensions (no Bold, Italic, etc.)</li>
             <li><strong>Alternative</strong>: Slate.js (more complex but powerful, also has TypeScript support)</li>
           </ul>
 
@@ -762,7 +787,7 @@ export function useDrive(folderId: string): UseDriveResult {
             </thead>
             <tbody>
               <tr>
-                <td>Rich Text Editor (TipTap)</td>
+                <td>Text Editor (TipTap - Plain Text Only)</td>
                 <td>15-25</td>
                 <td>25-35 hrs</td>
               </tr>
@@ -1065,10 +1090,12 @@ export function useDrive(folderId: string): UseDriveResult {
           <h3>2. Google Drive Integration</h3>
           <ul>
             <li><strong>Current</strong>: API calls in <code>drive.js</code></li>
-            <li><strong>React + TypeScript</strong>: Convert to custom hooks (<code>useDrive</code>, <code>useAuth</code>) with TypeScript types</li>
+            <li><strong>React + TypeScript</strong>: Convert to React Query hooks using TanStack Query for ALL Drive I/O operations</li>
             <li><strong>Complexity</strong>: Medium</li>
-            <li><strong>Status</strong>: Backend already works, just needs React wrapper</li>
+            <li><strong>Status</strong>: Backend already works, just needs React Query wrapper</li>
             <li><strong>TypeScript</strong>: Will create interfaces for API responses and request parameters</li>
+            <li><strong>Critical</strong>: ALL Drive operations (read, write, list, delete, rename, check comments, etc.) MUST use React Query, not ad-hoc useEffect hooks</li>
+            <li><strong>Benefits</strong>: Automatic deduplication, retries, stale-while-revalidate, cache invalidation, loading/error states</li>
           </ul>
 
           <h3>3. Word Counting Logic</h3>
@@ -1136,14 +1163,16 @@ export function useDrive(folderId: string): UseDriveResult {
           <h3>8. Lazy Loading Logic</h3>
           <ul>
             <li><strong>Current</strong>: Background loading of snippet content</li>
-            <li><strong>React</strong>: Convert to React Query or custom hooks</li>
+            <li><strong>React</strong>: Convert to React Query with prefetching and background refetching</li>
             <li><strong>Complexity</strong>: Medium</li>
             <li><strong>Lines</strong>: ~300-400 lines</li>
             <li><strong>Details</strong>:
               <ul>
                 <li>Loads active snippet first, then background loads remaining</li>
-                <li>Throttled updates during background loading</li>
-                <li>Prevents UI blocking</li>
+                <li>Uses React Query's <code>prefetchQuery</code> and <code>useQueries</code> for batch loading</li>
+                <li>React Query handles throttling and prevents duplicate requests automatically</li>
+                <li>Prevents UI blocking with React Query's built-in background refetching</li>
+                <li><strong>Note</strong>: This is part of the broader React Query strategy for ALL Drive I/O</li>
               </ul>
             </li>
           </ul>
@@ -1198,11 +1227,52 @@ export function useDrive(folderId: string): UseDriveResult {
           </ul>
         </section>
 
-        <section class="docs-section" id="api-contract" style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
-          <h2 id="api-contract-heading" style="margin-top: 0; color: #92400E; display: flex; align-items: center; gap: 8px;">
-            <i class="material-icons" style="font-size: 24px;">verified</i>
-            API Contract Formalization (P1 Priority)
-          </h2>
+        <section class="docs-section" id="fetch-caching">
+          <h2 id="fetch-caching-heading">Fetch/Caching Layer with TanStack Query (P1 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Multiple components will read/write the same Drive resources. Manual <code>useEffect</code> trees are brittle and lead to duplicate API calls, no automatic retry logic, manual cache management, inconsistent loading/error states, and race conditions.</p>
+          <p><strong>What</strong>: Adopt <strong>TanStack Query (React Query)</strong> as the fetch/caching layer for ALL Drive I/O operations. This provides automatic deduplication, retries, stale-while-revalidate, cache invalidation, loading/error states, and background refetching.</p>
+
+          <h3>Drive Operations Covered</h3>
+          <p>ALL of these operations MUST use React Query (not ad-hoc useEffect):</p>
+          <ol>
+            <li>✅ <strong>List files/folders</strong> - <code>useDriveFiles()</code></li>
+            <li>✅ <strong>Read file content</strong> - <code>useDriveFile()</code>, <code>useDriveFilesBatch()</code></li>
+            <li>✅ <strong>Write/update file</strong> - <code>useWriteDriveFile()</code> mutation</li>
+            <li>✅ <strong>Delete file</strong> - <code>useDeleteDriveFile()</code> mutation</li>
+            <li>✅ <strong>Rename file</strong> - <code>useRenameDriveFile()</code> mutation</li>
+            <li>✅ <strong>Check comments/changes</strong> - <code>useDriveComments()</code></li>
+            <li>✅ <strong>Create folder</strong> - <code>useCreateFolder()</code> mutation</li>
+            <li>✅ <strong>Get/create Yarny Stories folder</strong> - <code>useYarnyStoriesFolder()</code></li>
+            <li>✅ <strong>Background/lazy loading</strong> - <code>prefetchQuery()</code> and <code>useQueries()</code></li>
+          </ol>
+
+          <h3>Benefits</h3>
+          <ol>
+            <li><strong>No Duplicate Requests</strong>: Multiple components reading the same file share one request</li>
+            <li><strong>Automatic Retries</strong>: Failed requests retry automatically with exponential backoff</li>
+            <li><strong>Stale-While-Revalidate</strong>: Show cached data immediately, update in background</li>
+            <li><strong>Cache Invalidation</strong>: Mutations automatically invalidate related queries</li>
+            <li><strong>Loading States</strong>: Built-in <code>isLoading</code>, <code>isFetching</code>, <code>isError</code> states</li>
+            <li><strong>Background Refetching</strong>: Keep data fresh without blocking UI</li>
+            <li><strong>Type Safety</strong>: Full TypeScript support with typed queries and mutations</li>
+          </ol>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 1</strong> (Setup & Infrastructure) alongside API contract formalization:</p>
+          <ul>
+            <li>Install <code>@tanstack/react-query</code></li>
+            <li>Set up <code>QueryClient</code> and <code>QueryClientProvider</code></li>
+            <li>Create <code>useDriveQueries.ts</code> with all Drive operation hooks</li>
+            <li>Update all components to use React Query hooks instead of direct API calls</li>
+            <li>Replace lazy loading logic with React Query prefetching</li>
+          </ul>
+          <p><strong>LOE:</strong> 6-8 hours (adds time but saves significant debugging and provides better UX)</p>
+        </section>
+
+        <section class="docs-section" id="api-contract">
+          <h2 id="api-contract-heading">API Contract Formalization (P1 Priority)</h2>
           
           <h3>Overview</h3>
           <p><strong>Why</strong>: TypeScript on the client is only half the story. We need a typed boundary with runtime validation so Drive/Docs responses don't surprise us during the migration. This reduces "works in dev, breaks in prod" bugs during the cut-over.</p>
@@ -1490,6 +1560,88 @@ export async function writeDriveFile(
 }</code></pre>
         </section>
 
+        <section class="docs-section" id="editor-truth">
+          <h2 id="editor-truth-heading">Editor Truth and Google Docs Round-Tripping (P1 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: TipTap is a great editor, but Google Docs is the storage of record. The Google Docs API doesn't speak arbitrary HTML; even if you keep content plain-text, small mismatches can creep in during round-tripping between the editor and Google Docs.</p>
+          <p><strong>What</strong>: For v1 React migration, constrain TipTap formatting to Yarny's minimalist model (plain paragraphs, soft line-breaks) and establish clear rules for editor authority and reconciliation.</p>
+
+          <h3>Design Decisions</h3>
+          
+          <h4>1. Format Constraint: Plain Text Only</h4>
+          <p><strong>Decision</strong>: TipTap will be configured to support <strong>only plain text</strong> - no rich formatting (bold, italic, colors, etc.).</p>
+          <p><strong>Why</strong>:</p>
+          <ul>
+            <li>Google Docs API doesn't handle arbitrary HTML well</li>
+            <li>Current Yarny model is minimalist (plain text with line breaks)</li>
+            <li>Reduces round-tripping issues and format mismatches</li>
+            <li>Simpler implementation for v1</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <ul>
+            <li>Use TipTap's <code>Document</code> extension (required)</li>
+            <li>Use <code>Paragraph</code> extension for paragraph breaks (<code>\n\n</code>)</li>
+            <li>Use <code>HardBreak</code> extension for soft line breaks (<code>\n</code>)</li>
+            <li><strong>Disable</strong> all formatting extensions (Bold, Italic, Heading, etc.)</li>
+            <li>Configure TipTap to extract plain text that matches Google Docs API output</li>
+          </ul>
+
+          <h4>2. Editor as Truth While Open</h4>
+          <p><strong>Decision</strong>: While Yarny is open and a snippet is being edited, <strong>the editor is authoritative</strong>. Changes made in Google Docs while Yarny is open are ignored until the user switches snippets or closes Yarny.</p>
+          <p><strong>Why</strong>:</p>
+          <ul>
+            <li>Prevents conflicts while actively editing</li>
+            <li>Better UX - user's current edits take precedence</li>
+            <li>Matches current behavior (editor content is saved to Drive, overwriting Drive version)</li>
+          </ul>
+
+          <h4>3. Reconciliation on Window Focus</h4>
+          <p><strong>Decision</strong>: When the window regains focus, check if any open snippets were modified externally in Google Docs. If so, reconcile the changes.</p>
+          <p><strong>Why</strong>:</p>
+          <ul>
+            <li>User might have edited in Google Docs in another tab/window</li>
+            <li>Need to detect and handle external changes</li>
+            <li>Better than only checking on snippet switch (catches changes sooner)</li>
+          </ul>
+
+          <h4>4. Early Conflict Detection</h4>
+          <p><strong>Decision</strong>: Bring conflict detection forward to <strong>Phase 1/2</strong> (early in migration), not wait until Phase 6.</p>
+          <p><strong>Why</strong>:</p>
+          <ul>
+            <li>Conflict detection is foundational - affects how editor works</li>
+            <li>Need to test round-tripping early</li>
+            <li>Better to catch issues during migration than after</li>
+          </ul>
+
+          <h3>Round-Tripping Flow</h3>
+          <ol>
+            <li><strong>Load from Drive</strong>: Google Docs content → Plain text → TipTap editor</li>
+            <li><strong>Edit in TipTap</strong>: User edits → TipTap onChange → Plain text → State update</li>
+            <li><strong>Save to Drive</strong>: Plain text → Google Docs API → Google Docs updated</li>
+            <li><strong>Reconciliation</strong>: On focus/switch, check if Drive changed → Compare plain text → Resolve if different</li>
+          </ol>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 1/2</strong> (early in migration):</p>
+          <ul>
+            <li><strong>Phase 1</strong>: Set up TipTap with plain text configuration</li>
+            <li><strong>Phase 2</strong>: Implement conflict detection hooks</li>
+            <li><strong>Phase 2</strong>: Implement reconciliation on window focus</li>
+            <li><strong>Phase 4</strong>: Integrate TipTap editor with conflict detection</li>
+            <li><strong>Phase 6</strong>: Test and refine round-tripping</li>
+          </ul>
+          <p><strong>LOE:</strong> 8-12 hours (includes TipTap configuration, conflict detection, reconciliation, and testing)</p>
+
+          <h3>Dependencies</h3>
+          <p>Already included in recommended stack:</p>
+          <ul>
+            <li><code>@tiptap/react</code> - Editor framework</li>
+            <li>Individual TipTap extensions: <code>@tiptap/extension-document</code>, <code>@tiptap/extension-paragraph</code>, <code>@tiptap/extension-text</code>, <code>@tiptap/extension-hard-break</code>, <code>@tiptap/extension-history</code></li>
+          </ul>
+          <p><strong>Note</strong>: Do NOT use full starter-kit - configure extensions individually to exclude formatting.</p>
+        </section>
+
         <section class="docs-section" id="migration-phases">
           <h2 id="migration-phases-heading">Migration Phases</h2>
           
@@ -1503,12 +1655,17 @@ export async function writeDriveFile(
             <li>Install and configure all libraries</li>
             <li><strong>Create API contract module (<code>src/api/contract.ts</code>) with Zod schemas</strong></li>
             <li><strong>Create typed API client (<code>src/api/client.ts</code>)</strong></li>
+            <li><strong>Set up TanStack Query (React Query) with QueryClient and QueryClientProvider</strong></li>
+            <li><strong>Create React Query hooks for ALL Drive I/O operations (<code>src/hooks/useDriveQueries.ts</code>)</strong></li>
+            <li><strong>Configure TipTap for plain text only (no rich formatting)</strong></li>
+            <li><strong>Create conflict detection hooks (<code>src/hooks/useConflictDetection.ts</code>)</strong></li>
+            <li><strong>Create text extraction utilities matching Google Docs format</strong></li>
             <li>Create base component structure with TypeScript</li>
             <li>Set up state management (Zustand) with TypeScript types</li>
             <li>Create TypeScript interfaces/types for state structure</li>
-            <li>Create custom hooks for Drive API with TypeScript (using typed API client)</li>
+            <li><strong>Replace all ad-hoc Drive API calls with React Query hooks</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 12-18 hours (includes TypeScript setup, type definitions, and API contract formalization)</p>
+          <p><strong>LOE:</strong> 26-36 hours (includes TypeScript setup, type definitions, API contract formalization, React Query setup, TipTap plain text configuration, and early conflict detection)</p>
 
           <h3>Phase 2: Authentication (Week 1-2)</h3>
           <ul>
@@ -1516,9 +1673,10 @@ export async function writeDriveFile(
             <li>Integrate Google Sign-In SDK</li>
             <li>Create Auth context/provider</li>
             <li>Handle auth state and redirects</li>
+            <li><strong>Implement reconciliation on window focus (<code>src/hooks/useWindowFocusReconciliation.ts</code>)</strong></li>
             <li>Test authentication flow</li>
           </ul>
-          <p><strong>LOE:</strong> 6-8 hours</p>
+          <p><strong>LOE:</strong> 8-12 hours (includes reconciliation hook implementation)</p>
 
           <h3>Phase 3: Stories Page (Week 2)</h3>
           <ul>
@@ -1535,10 +1693,13 @@ export async function writeDriveFile(
             <li>Set up three-column layout (Story/Editor/Notes)</li>
             <li>Convert story list sidebar</li>
             <li>Convert notes sidebar with tabs</li>
-            <li>Set up TipTap editor</li>
+            <li><strong>Set up TipTap editor with plain text configuration</strong></li>
+            <li><strong>Integrate TipTap with conflict detection</strong></li>
+            <li><strong>Implement editor as truth (authoritative while open)</strong></li>
             <li>Basic editor functionality</li>
+            <li><strong>Test round-tripping with Google Docs</strong></li>
           </ul>
-          <p><strong>LOE:</strong> 15-20 hours</p>
+          <p><strong>LOE:</strong> 18-25 hours (includes TipTap integration, conflict detection integration, and round-trip testing)</p>
 
           <h3>Phase 5: Editor - Advanced Features (Week 3-4)</h3>
           <ul>
@@ -1554,12 +1715,12 @@ export async function writeDriveFile(
           <h3>Phase 6: Editor - State & Sync (Week 4)</h3>
           <ul>
             <li>Implement state management for groups/snippets</li>
-            <li>Lazy loading logic</li>
-            <li>Auto-save functionality</li>
+            <li>Lazy loading logic using React Query prefetching and <code>useQueries</code></li>
+            <li>Auto-save functionality using React Query mutations</li>
             <li>Conflict resolution</li>
             <li>Export functionality</li>
           </ul>
-          <p><strong>LOE:</strong> 15-20 hours</p>
+          <p><strong>LOE:</strong> 15-20 hours (Note: Lazy loading is simplified with React Query's built-in prefetching)</p>
 
           <h3>Phase 7: Testing & Polish (Week 4-5)</h3>
           <ul>
@@ -1578,7 +1739,7 @@ export async function writeDriveFile(
           
           <h3>High Risk</h3>
           <ul>
-            <li><strong>ContentEditable Complexity</strong> - Rich text editor integration may have edge cases. Mitigation: Use TipTap (proven library).</li>
+            <li><strong>ContentEditable Complexity & Round-Tripping</strong> - Plain text editor integration and Google Docs round-tripping may have edge cases. Mitigation: Use TipTap (proven library) configured for plain text only, test round-tripping early. Contingency: Allow extra 5-10 hours for editor edge cases and round-trip testing.</li>
             <li><strong>State Management Migration</strong> - Complex state object with many interdependencies. Mitigation: Use Zustand for simpler migration path.</li>
             <li><strong>Performance with Large Stories</strong> - React re-renders may be slower. Mitigation: Use React.memo, useMemo, useCallback strategically.</li>
           </ul>
@@ -1817,7 +1978,7 @@ export function App(): JSX.Element {
 │   │   │   ├── Editor.tsx
 │   │   │   ├── StorySidebar.tsx
 │   │   │   ├── NotesSidebar.tsx
-│   │   │   ├── TipTapEditor.tsx
+│   │   │   ├── TipTapEditor.tsx        # Plain text only configuration
 │   │   │   └── ...
 │   │   ├── stories/
 │   │   │   ├── StoriesList.tsx
@@ -1832,15 +1993,20 @@ export function App(): JSX.Element {
 │   │       ├── Header.tsx
 │   │       └── Footer.tsx
 │   ├── hooks/
-│   │   ├── useDrive.ts
+│   │   ├── useDriveQueries.ts              # React Query hooks for ALL Drive I/O
+│   │   ├── useConflictDetection.ts         # Conflict detection between Yarny and Drive
+│   │   ├── useWindowFocusReconciliation.ts # Reconciliation on window focus
 │   │   ├── useAuth.ts
 │   │   ├── useStory.ts
 │   │   ├── useGoal.ts
 │   │   └── ...
+│   ├── lib/
+│   │   └── react-query.ts        # React Query QueryClient configuration
 │   ├── utils/
 │   │   ├── wordCount.ts
 │   │   ├── export.ts
 │   │   ├── goalCalculation.ts
+│   │   ├── textExtraction.ts     # Plain text extraction matching Google Docs format
 │   │   └── ...
 │   ├── store/
 │   │   ├── store.ts (Zustand)
@@ -1875,14 +2041,15 @@ export function App(): JSX.Element {
             <li><strong>Alternative</strong>: Context API (if team prefers built-in solution)</li>
           </ul>
 
-          <h3>Rich Text Editor: TipTap vs Slate vs Draft.js</h3>
-          <p><strong>Recommendation: TipTap</strong></p>
+          <h3>Text Editor: TipTap vs Slate vs Draft.js</h3>
+          <p><strong>Recommendation: TipTap (Plain Text Only)</strong></p>
           <ul>
             <li>✅ Modern, React-first</li>
             <li>✅ Excellent documentation</li>
             <li>✅ Active development</li>
             <li>✅ Good performance</li>
-            <li><strong>Alternative</strong>: Slate (if need more customization)</li>
+            <li>✅ <strong>Configured for plain text only</strong> - matches Yarny's minimalist model and Google Docs round-tripping requirements</li>
+            <li><strong>Alternative</strong>: Slate (if need more customization, but plain text constraint still applies)</li>
           </ul>
 
           <h3>Build Tool: Vite vs Create React App vs Webpack</h3>
@@ -1931,6 +2098,8 @@ export function App(): JSX.Element {
             <li>Complete TypeScript type coverage (all components, hooks, utilities)</li>
             <li>Type-safe API calls and state management</li>
             <li><strong>API contract formalization with runtime validation (Zod schemas)</strong></li>
+            <li><strong>TanStack Query (React Query) for ALL Drive I/O operations with deduplication, retries, and stale-while-revalidate</strong></li>
+            <li><strong>Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus</strong></li>
           </ul>
 
           <h3>Nice to Have</h3>
@@ -2129,6 +2298,49 @@ export interface AppState {
                 <li>Added TypeScript type definitions for state structure</li>
                 <li>Updated LOE estimates to include TypeScript setup time</li>
                 <li>Updated decision points to make TypeScript mandatory</li>
+                <li><strong>Added API Contract Formalization section (P1 Priority)</strong>:
+                  <ul>
+                    <li>Defined centralized API contract module with Zod schemas</li>
+                    <li>Created typed API client wrapper with runtime validation</li>
+                    <li>Documented all endpoints to be covered (auth, Drive, status)</li>
+                    <li>Added example implementation code</li>
+                    <li>Updated Phase 1 to include API contract setup</li>
+                    <li>Added <code>zod</code> to dependencies</li>
+                    <li>Updated file structure to show API contract files</li>
+                    <li>Added API contract formalization to success criteria</li>
+                  </ul>
+                </li>
+                <li><strong>Added Fetch/Caching Layer with TanStack Query section (P1 Priority)</strong>:
+                  <ul>
+                    <li>Adopted TanStack Query (React Query) as the fetch/caching layer for ALL Drive I/O</li>
+                    <li>Replaced ad-hoc useEffect hooks with React Query hooks</li>
+                    <li>Documented all Drive operations that must use React Query (read, write, list, delete, rename, check comments, create folder, etc.)</li>
+                    <li>Added React Query setup and configuration</li>
+                    <li>Created <code>useDriveQueries.ts</code> hook structure with examples</li>
+                    <li>Updated lazy loading to use React Query prefetching and <code>useQueries</code></li>
+                    <li>Added <code>@tanstack/react-query</code> to dependencies</li>
+                    <li>Updated Phase 1 to include React Query setup</li>
+                    <li>Updated Phase 6 to use React Query for lazy loading</li>
+                    <li>Added React Query to success criteria</li>
+                    <li><strong>Key change</strong>: ALL Drive I/O operations now use React Query, not just background loads</li>
+                  </ul>
+                </li>
+                <li><strong>Added Editor Truth and Google Docs Round-Tripping section (P1 Priority)</strong>:
+                  <ul>
+                    <li>Constrained TipTap to plain text only (no rich formatting) to match Yarny's minimalist model</li>
+                    <li>Established editor as authoritative while Yarny is open</li>
+                    <li>Added reconciliation on window focus to detect external changes</li>
+                    <li>Brought conflict detection forward to Phase 1/2 (early in migration)</li>
+                    <li>Created text extraction utilities matching Google Docs API format</li>
+                    <li>Updated TipTap configuration to use only Document, Paragraph, Text, HardBreak, History extensions</li>
+                    <li>Added conflict detection and reconciliation hooks</li>
+                    <li>Updated Phase 1 to include TipTap plain text configuration and early conflict detection</li>
+                    <li>Updated Phase 2 to include reconciliation on window focus</li>
+                    <li>Updated Phase 4 to integrate TipTap with conflict detection and test round-tripping</li>
+                    <li>Added TipTap extension dependencies (individual extensions, not full starter-kit)</li>
+                    <li>Added editor truth and round-tripping to success criteria</li>
+                  </ul>
+                </li>
               </ul>
             </li>
             <li>Document all major decisions and changes here</li>
