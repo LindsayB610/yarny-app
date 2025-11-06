@@ -69,7 +69,7 @@
 
       <div class="docs-content">
         <section class="docs-section" style="background: #ECFDF5; border-left: 4px solid #10B981; padding: var(--space-lg); margin-bottom: var(--space-2xl); border-radius: var(--radius-lg);">
-          <h2 style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 8px;">
+          <h2 id="key-finding" style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 8px;">
             <i class="material-icons" style="font-size: 24px;">lightbulb</i>
             Key Finding
           </h2>
@@ -78,13 +78,13 @@
         </section>
 
         <section class="docs-section" id="executive-summary">
-          <h2>Executive Summary</h2>
+          <h2 id="executive-summary-heading">Executive Summary</h2>
           <p>This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong>React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
           <p><strong>Note:</strong> This migration will use <strong>TypeScript throughout</strong>. All components, hooks, utilities, and state management will be written in TypeScript.</p>
         </section>
 
         <section class="docs-section" id="typescript-react">
-          <h2>Understanding TypeScript + React</h2>
+          <h2 id="understanding-typescript-react">Understanding TypeScript + React</h2>
           
           <h3>They Work Together, Not Separately</h3>
           <p><strong>Important</strong>: TypeScript and React are not alternatives—they work together. Everything in this migration will be built using <strong>React components written in TypeScript</strong>.</p>
@@ -197,7 +197,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="current-analysis">
-          <h2>Current Project Analysis</h2>
+          <h2 id="current-project-analysis">Current Project Analysis</h2>
           
           <h3>Codebase Statistics</h3>
           <ul>
@@ -239,7 +239,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="migration-strategy">
-          <h2>Migration Strategy</h2>
+          <h2 id="migration-strategy-heading">Migration Strategy</h2>
           
           <h3>Approach: Incremental Migration</h3>
           <ol>
@@ -266,7 +266,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="library-replacements">
-          <h2>Third-Party Library Replacements</h2>
+          <h2 id="third-party-library-replacements">Third-Party Library Replacements</h2>
           
           <p>This section details exactly which parts of the current codebase can be replaced by proven React libraries, significantly reducing development time and maintenance burden.</p>
 
@@ -674,7 +674,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="effort-estimation">
-          <h2>Effort Estimation</h2>
+          <h2 id="effort-estimation-heading">Effort Estimation</h2>
           
           <h3>Original LOE (Without Libraries)</h3>
           <table>
@@ -882,7 +882,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="implementation-details">
-          <h2>Implementation Details</h2>
+          <h2 id="implementation-details-heading">Implementation Details</h2>
           
           <h3>Modals (8 Total)</h3>
           <ol>
@@ -1054,7 +1054,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="custom-implementation">
-          <h2>What Needs Custom Implementation</h2>
+          <h2 id="what-needs-custom-implementation">What Needs Custom Implementation</h2>
           <p>These areas cannot be replaced with libraries and require custom React code:</p>
 
           <h3>1. State Management Architecture</h3>
@@ -1203,7 +1203,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="migration-phases">
-          <h2>Migration Phases</h2>
+          <h2 id="migration-phases-heading">Migration Phases</h2>
           
           <h3>Phase 1: Setup & Infrastructure (Week 1)</h3>
           <ul>
@@ -1284,7 +1284,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="risk-factors">
-          <h2>Risk Factors</h2>
+          <h2 id="risk-factors-heading">Risk Factors</h2>
           
           <h3>High Risk</h3>
           <ul>
@@ -1308,7 +1308,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="benefits">
-          <h2>Benefits of Migration</h2>
+          <h2 id="benefits-of-migration">Benefits of Migration</h2>
           
           <h3>Development Benefits</h3>
           <ol>
@@ -1339,7 +1339,7 @@ export function useDrive(folderId: string): UseDriveResult {
         </section>
 
         <section class="docs-section" id="netlify-config">
-          <h2>Netlify Configuration</h2>
+          <h2 id="netlify-configuration">Netlify Configuration</h2>
           
           <h3>Current Setup</h3>
           <ul>
@@ -1494,7 +1494,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="next-steps">
-          <h2>Next Steps</h2>
+          <h2 id="next-steps-heading">Next Steps</h2>
           <ol>
             <li><strong>Review & Approve Plan</strong> - Get stakeholder buy-in</li>
             <li><strong>Set Up Development Environment</strong> - Install dependencies, configure build</li>
@@ -1516,7 +1516,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="file-structure">
-          <h2>File Structure (Proposed)</h2>
+          <h2 id="file-structure-proposed">File Structure (Proposed)</h2>
           <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>yarny-app/
 ├── src/
 │   ├── components/
@@ -1571,7 +1571,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="decision-points">
-          <h2>Decision Points</h2>
+          <h2 id="decision-points-heading">Decision Points</h2>
           
           <h3>State Management: Context API vs Zustand vs Redux</h3>
           <p><strong>Recommendation: Zustand</strong></p>
@@ -1618,7 +1618,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="success-criteria">
-          <h2>Success Criteria</h2>
+          <h2 id="success-criteria-heading">Success Criteria</h2>
           
           <h3>Must Have (MVP)</h3>
           <ul>
@@ -1652,7 +1652,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="notes-considerations">
-          <h2>Notes & Considerations</h2>
+          <h2 id="notes-considerations-heading">Notes & Considerations</h2>
           
           <h3>Keeping Old Code</h3>
           <ul>
@@ -1690,7 +1690,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="questions">
-          <h2>Questions to Resolve</h2>
+          <h2 id="questions-to-resolve">Questions to Resolve</h2>
           <ul>
             <li>✅ TypeScript from start or add later? ✅ <strong>TypeScript from the start</strong></li>
             <li>State management choice (Zustand vs Context)? <strong>Recommendation: Zustand</strong></li>
@@ -1706,7 +1706,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="resources">
-          <h2>Resources</h2>
+          <h2 id="resources-heading">Resources</h2>
           
           <h3>Documentation</h3>
           <ul>
@@ -1725,7 +1725,7 @@ export function App(): JSX.Element {
         </section>
 
         <section class="docs-section" id="technical-details">
-          <h2>Additional Technical Details</h2>
+          <h2 id="additional-technical-details">Additional Technical Details</h2>
           
           <h3>State Structure</h3>
           <p>The current global <code>state</code> object will be converted to TypeScript interfaces:</p>
@@ -1815,7 +1815,7 @@ export interface AppState {
         </section>
 
         <section class="docs-section" id="changelog">
-          <h2>Changelog</h2>
+          <h2 id="changelog-heading">Changelog</h2>
           <ul>
             <li><strong>2025-01-XX</strong>: Initial plan created
               <ul>
@@ -1843,7 +1843,7 @@ export interface AppState {
         </section>
 
         <section class="docs-section" id="contact">
-          <h2>Contact & Support</h2>
+          <h2 id="contact-support">Contact & Support</h2>
           <p>For questions or updates to this plan, please document changes here and update the changelog.</p>
         </section>
       </div>
