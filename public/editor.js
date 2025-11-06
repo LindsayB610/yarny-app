@@ -384,11 +384,8 @@ function renderStoryList() {
         }
         return true;
       })
-      .sort((a, b) => {
-        const aIndex = group.snippetIds.indexOf(a.id);
-        const bIndex = group.snippetIds.indexOf(b.id);
-        return aIndex - bIndex;
-      });
+      // Preserve exact order from group.snippetIds - no sorting needed
+      // The map already preserves order since group.snippetIds is in the correct order
 
     snippets.forEach(snippet => {
       const snippetEl = document.createElement('div');
@@ -4827,17 +4824,29 @@ async function loadStoryFromDrive(storyFolderId) {
     const loadedGroups = {};
     console.log('Processing groups - state.groups:', Object.keys(state.groups), 'state.project.groupIds:', state.project.groupIds);
     
-    // CRITICAL: First, rebuild snippetIds for all groups from mergedSnippets
+    // CRITICAL: Preserve snippetIds order - only add new snippets that weren't in original list
     // This ensures groups include all snippets that were loaded from Google Docs
+    // while preserving the exact order from the saved data
     Object.keys(state.groups).forEach(groupId => {
       const group = state.groups[groupId];
+      // Preserve original order from group.snippetIds
+      const originalSnippetIds = group.snippetIds || [];
+      
       // Find all snippets in mergedSnippets that belong to this group
       const snippetsInGroup = Object.values(mergedSnippets).filter(s => s.groupId === groupId);
-      if (snippetsInGroup.length > 0) {
-        // Rebuild snippetIds from mergedSnippets
-        group.snippetIds = snippetsInGroup.map(s => s.id);
-        console.log(`Rebuilt group ${groupId} snippetIds from mergedSnippets:`, group.snippetIds);
-      }
+      const allSnippetIds = new Set(snippetsInGroup.map(s => s.id));
+      
+      // Preserve original order, filtering to only include snippets that exist in mergedSnippets
+      const preservedOrder = originalSnippetIds.filter(id => allSnippetIds.has(id));
+      
+      // Add any new snippets that weren't in the original list (at the end)
+      const newSnippetIds = snippetsInGroup
+        .map(s => s.id)
+        .filter(id => !originalSnippetIds.includes(id));
+      
+      // Combine: preserved order first, then new snippets
+      group.snippetIds = [...preservedOrder, ...newSnippetIds];
+      console.log(`Preserved snippetIds order for group ${groupId}:`, group.snippetIds);
     });
     
     Object.keys(state.groups).forEach(groupId => {
@@ -5456,11 +5465,10 @@ async function exportChapters() {
     return;
   }
   
-  // Check if there are chapters to export
+  // Check if there are chapters to export - preserve exact order
   const groups = state.project.groupIds
     .map(id => state.groups[id])
-    .filter(group => group)
-    .sort((a, b) => a.position - b.position);
+    .filter(group => group);
   
   if (groups.length === 0) {
     alert('No chapters to export.');
@@ -5731,21 +5739,19 @@ async function confirmExportFilename() {
     let combinedContent = '';
     
     if (exportInfo.type === 'chapters') {
-      // Export chapters
+      // Export chapters - preserve exact order from state.project.groupIds
       const groups = state.project.groupIds
         .map(id => state.groups[id])
-        .filter(group => group)
-        .sort((a, b) => a.position - b.position);
+        .filter(group => group);
       
       groups.forEach((group, groupIndex) => {
         // Add chapter title
         combinedContent += `# ${group.title}\n\n`;
         
-        // Get snippets in this group, sorted by position
+        // Get snippets in this group - preserve exact order from group.snippetIds
         const snippets = group.snippetIds
           .map(id => state.snippets[id])
-          .filter(snippet => snippet)
-          .sort((a, b) => (a.position || 0) - (b.position || 0));
+          .filter(snippet => snippet);
         
         snippets.forEach((snippet) => {
           // Add snippet title only if checkbox is checked
@@ -5765,21 +5771,19 @@ async function confirmExportFilename() {
         }
       });
     } else if (exportInfo.type === 'outline') {
-      // Export outline (just chapter and snippet titles)
+      // Export outline (just chapter and snippet titles) - preserve exact order
       const groups = state.project.groupIds
         .map(id => state.groups[id])
-        .filter(group => group)
-        .sort((a, b) => a.position - b.position);
+        .filter(group => group);
       
       groups.forEach((group, groupIndex) => {
         // Add chapter title
         combinedContent += `# ${group.title}\n\n`;
         
-        // Get snippets in this group, sorted by position
+        // Get snippets in this group - preserve exact order from group.snippetIds
         const snippets = group.snippetIds
           .map(id => state.snippets[id])
-          .filter(snippet => snippet)
-          .sort((a, b) => (a.position || 0) - (b.position || 0));
+          .filter(snippet => snippet);
         
         snippets.forEach((snippet) => {
           // Add snippet title (only titles, no body)
