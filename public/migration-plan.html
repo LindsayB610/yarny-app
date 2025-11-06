@@ -54,6 +54,7 @@
             <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
             <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
             <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
+            <li><a href="#offline-semantics" class="nav-link">Offline/Spotty-Network Semantics (P2)</a></li>
             <li><a href="#editor-truth" class="nav-link">Editor Truth & Round-Tripping</a></li>
             <li><a href="#migration-phases" class="nav-link">Migration Phases</a></li>
             <li><a href="#phase-8" class="nav-link">Phase 8: Test Automation</a></li>
@@ -302,6 +303,7 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ Same color logic (green/red in strict mode, primary color otherwise)</li>
             <li>✅ Same click behavior (opens goal panel)</li>
             <li>✅ Always visible (even when no goal set, shows "—")</li>
+            <li>✅ <strong>Enhanced UX</strong>: Expose "ahead/behind by N words" in chip state (e.g., "Today • 250 (+50 ahead)" or "Today • 150 (-50 behind)") so benefit is visible even when users don't open goal panel</li>
           </ul>
           <p><strong>Code Locations</strong>:</p>
           <ul>
@@ -1461,6 +1463,7 @@ const BrandedDialog = styled(Dialog)(({ theme }) => ({
             <li><strong>Export All Places</strong> - All place snippets</li>
             <li><strong>Export All Things</strong> - All thing snippets</li>
           </ol>
+          <p><strong>Note on Large Exports</strong>: For "Export All" operations on large stories (25+ chapters, 200+ snippets), consider batching on the server (Netlify Function) to avoid client-side rate limits and improve reliability. Show progress toast during server-side batch exports, with Drive links to completed exports as they land.</p>
 
           <h3>Goal System Features</h3>
           <ul>
@@ -1605,7 +1608,38 @@ export function useNotesByType(type: 'person' | 'place' | 'thing') {
   });
 }</code></pre>
 
-          <h4>3. Benefits of Normalization + Memoized Selectors</h4>
+          <h4>3. Order Persistence in Drive Metadata</h4>
+          <p><strong>Critical</strong>: Order (groupIds/snippetIds) is a <strong>first-class field</strong> that must be persisted in Drive metadata. This ensures:</p>
+          <ul>
+            <li>Reorders survive concurrent edits (order changes are persisted independently of content)</li>
+            <li>Order doesn't revert after background loads (order is stored in Drive, not just in-memory state)</li>
+            <li>Order is authoritative source of truth (Drive metadata determines display order)</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <ul>
+            <li>Store order in Drive metadata files (e.g., <code>story.json</code> contains <code>groupIds</code> array, <code>chapter.json</code> contains <code>snippetIds</code> array)</li>
+            <li>When reordering chapters/snippets, update both in-memory state AND Drive metadata</li>
+            <li>On load, read order from Drive metadata first, then populate entities</li>
+            <li>Order changes trigger Drive write operations (not just in-memory updates)</li>
+          </ul>
+          <p><strong>Drive Metadata Structure</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// story.json in Drive
+{
+  "id": "story-1",
+  "title": "My Story",
+  "groupIds": ["group-1", "group-2", "group-3"], // ORDER IS PERSISTED HERE
+  // ... other story fields
+}
+
+// chapter.json in Drive
+{
+  "id": "group-1",
+  "title": "Chapter 1",
+  "snippetIds": ["snippet-1", "snippet-2", "snippet-3"], // ORDER IS PERSISTED HERE
+  // ... other chapter fields
+}</code></pre>
+
+          <h4>4. Benefits of Normalization + Memoized Selectors</h4>
           <ol>
             <li><strong>Cheap Renders</strong>: Components only re-render when their specific entities change, not when unrelated entities update
               <ul>
@@ -2158,6 +2192,240 @@ export async function writeDriveFile(
     "zod": "^3.x"
   }
 }</code></pre>
+        </section>
+
+        <section class="docs-section" id="offline-semantics">
+          <h2 id="offline-semantics-heading">Offline/Spotty-Network Semantics (P2 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Network connectivity issues (offline, spotty WiFi, flapping connections) are common in real-world usage. Users need clear feedback about save status, queued operations, and when the app is read-only vs. editable. React Query's retry/backoff and cache staleness policies must be tied to visible UX indicators.</p>
+          <p><strong>What</strong>: Define explicit UX behavior for network states: queued saves, read-only mode, offline banners, and "Saved at..." indicator behavior tied to React Query's retry/backoff and cache staleness.</p>
+
+          <h3>Network State Detection</h3>
+          <p>Use React Query's <code>useIsFetching</code>, <code>useIsMutating</code>, and browser <code>navigator.onLine</code> API to detect network state:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/hooks/useNetworkStatus.ts
+import { useIsFetching, useIsMutating } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+
+export interface NetworkStatus {
+  isOnline: boolean;
+  isFetching: boolean;
+  isMutating: boolean;
+  hasPendingMutations: boolean;
+  lastSavedAt: string | null;
+  saveState: 'idle' | 'saving' | 'saved' | 'queued' | 'error';
+}
+
+export function useNetworkStatus(): NetworkStatus {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isFetching = useIsFetching() > 0;
+  const isMutating = useIsMutating() > 0;
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  // Determine save state based on network and mutation status
+  const saveState: NetworkStatus['saveState'] = 
+    !isOnline ? 'queued' :
+    isMutating ? 'saving' :
+    'idle';
+  
+  return {
+    isOnline,
+    isFetching,
+    isMutating,
+    hasPendingMutations: isMutating,
+    lastSavedAt: null, // Will be set by save hook
+    saveState,
+  };
+}</code></pre>
+
+          <h3>UX Behavior Definitions</h3>
+          
+          <h4>1. Queued Saves (Offline/Network Error)</h4>
+          <p><strong>When</strong>: User edits while offline or network request fails (after retries exhausted)</p>
+          <p><strong>Behavior</strong>:</p>
+          <ul>
+            <li><strong>Editor remains editable</strong>: User can continue typing and editing</li>
+            <li><strong>Save state indicator</strong>: Shows "Queued" or "Waiting for connection..." instead of "Saved at X:XX"</li>
+            <li><strong>Save queue</strong>: Mutations are queued in React Query's mutation queue (automatic via React Query)</li>
+            <li><strong>Auto-retry on reconnect</strong>: When network returns, React Query automatically retries queued mutations</li>
+            <li><strong>Visual indicator</strong>: Offline banner appears at top of editor (non-blocking, dismissible)</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// In Editor component
+const { isOnline, saveState } = useNetworkStatus();
+const writeMutation = useWriteDriveFile();
+
+// Show queued state in save indicator
+{saveState === 'queued' && (
+  &lt;div className="save-status queued"&gt;
+    Waiting for connection... ({queuedCount} changes queued)
+  &lt;/div&gt;
+)}
+
+// Offline banner
+{!isOnline && (
+  &lt;div className="offline-banner"&gt;
+    You're offline. Changes will be saved when connection is restored.
+  &lt;/div&gt;
+)}</code></pre>
+
+          <h4>2. Read-Only Mode (Stale Cache)</h4>
+          <p><strong>When</strong>: Network is offline AND cache is stale (data older than <code>staleTime</code>)</p>
+          <p><strong>Behavior</strong>:</p>
+          <ul>
+            <li><strong>Editor remains editable</strong>: User can type, but see warning that changes may conflict</li>
+            <li><strong>Cache staleness indicator</strong>: Show "Using cached data" or "Last synced: X:XX" in footer</li>
+            <li><strong>Read-only warning</strong>: If cache is very stale (&gt; 10 minutes), show warning: "You're viewing cached data. Some changes may not be saved."</li>
+            <li><strong>Auto-refresh on reconnect</strong>: When network returns, React Query automatically refetches stale data</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// Check cache staleness
+const { data: file, dataUpdatedAt, isStale } = useDriveFile(fileId);
+
+// Show staleness warning
+{isStale && !isOnline && (
+  &lt;div className="stale-cache-warning"&gt;
+    Using cached data. Last synced: {new Date(dataUpdatedAt).toLocaleTimeString()}
+  &lt;/div&gt;
+)}</code></pre>
+
+          <h4>3. Offline Banner</h4>
+          <p><strong>When</strong>: <code>navigator.onLine === false</code> or network request fails with no retries remaining</p>
+          <p><strong>Behavior</strong>:</p>
+          <ul>
+            <li><strong>Non-blocking</strong>: Banner appears at top of editor, doesn't block editing</li>
+            <li><strong>Dismissible</strong>: User can dismiss banner (but it reappears if still offline)</li>
+            <li><strong>Auto-dismiss</strong>: Banner disappears when network returns</li>
+            <li><strong>Message</strong>: "You're offline. Changes will be saved when connection is restored."</li>
+            <li><strong>Visual style</strong>: Subtle background color (e.g., amber/yellow), not red/error</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/shared/OfflineBanner.tsx
+export function OfflineBanner() {
+  const { isOnline } = useNetworkStatus();
+  const [dismissed, setDismissed] = useState(false);
+  
+  if (isOnline || dismissed) return null;
+  
+  return (
+    &lt;div className="offline-banner"&gt;
+      &lt;span&gt;You're offline. Changes will be saved when connection is restored.&lt;/span&gt;
+      &lt;button onClick={() => setDismissed(true)}&gt;Dismiss&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+          <h4>4. "Saved at..." Indicator Behavior</h4>
+          <p><strong>When</strong>: Save operation completes (success or queued)</p>
+          <p><strong>Behavior</strong>:</p>
+          <ul>
+            <li><strong>Online + successful save</strong>: Show "Saved at X:XX" (current time)</li>
+            <li><strong>Offline + queued</strong>: Show "Queued - will save when online" (no timestamp)</li>
+            <li><strong>Network error + retrying</strong>: Show "Saving... (retrying)" with retry count</li>
+            <li><strong>Network error + exhausted</strong>: Show "Queued - will save when online" (no timestamp)</li>
+            <li><strong>Stale cache</strong>: Show "Last synced: X:XX" instead of "Saved at X:XX"</li>
+          </ul>
+          <p><strong>Implementation</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/components/editor/SaveStatus.tsx
+export function SaveStatus() {
+  const { isOnline, saveState, lastSavedAt } = useNetworkStatus();
+  const writeMutation = useWriteDriveFile();
+  
+  if (saveState === 'saving') {
+    return &lt;div className="save-status saving"&gt;Saving...&lt;/div&gt;;
+  }
+  
+  if (saveState === 'queued') {
+    return &lt;div className="save-status queued"&gt;Queued - will save when online&lt;/div&gt;;
+  }
+  
+  if (saveState === 'saved' && lastSavedAt) {
+    return &lt;div className="save-status saved"&gt;Saved at {new Date(lastSavedAt).toLocaleTimeString()}&lt;/div&gt;;
+  }
+  
+  return null;
+}</code></pre>
+
+          <h4>5. React Query Integration</h4>
+          <p><strong>Tie UX to React Query's retry/backoff and cache staleness</strong>:</p>
+          <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// src/lib/react-query.ts (update existing config)
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh for 5 min
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 min
+      retry: retryWithBackoff, // Custom retry with visibility gating
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true, // Auto-refetch when network reconnects
+      // Network-aware: Don't retry if offline
+      networkMode: 'online', // Only run queries when online
+    },
+    mutations: {
+      retry: (failureCount, error) => {
+        // Don't retry if offline
+        if (!navigator.onLine) {
+          return false; // Queue mutation instead
+        }
+        
+        // Retry once on failure (excluding 4xx errors except 429)
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          if (status && status >= 400 && status < 500 && status !== 429) {
+            return false;
+          }
+          
+          if (status === 429 && failureCount < 1) {
+            return true;
+          }
+        }
+        
+        return failureCount < 1;
+      },
+      // Queue mutations when offline (React Query handles this automatically)
+      networkMode: 'online', // Only run mutations when online, queue when offline
+    },
+  },
+});</code></pre>
+
+          <h3>Smoke Tests</h3>
+          <p>Add to smoke test checklist:</p>
+          <p><strong>L. Offline/Spotty-Network Semantics</strong>:</p>
+          <ul>
+            <li>[ ] <strong>Go offline</strong>: Disable network → Edit snippet → Verify editor remains editable</li>
+            <li>[ ] <strong>Offline banner</strong>: Verify offline banner appears at top of editor</li>
+            <li>[ ] <strong>Queued save</strong>: Verify save status shows "Queued - will save when online"</li>
+            <li>[ ] <strong>Reconnect</strong>: Re-enable network → Verify queued saves automatically retry and complete</li>
+            <li>[ ] <strong>Save status on reconnect</strong>: Verify "Saved at X:XX" appears after successful save</li>
+            <li>[ ] <strong>Stale cache warning</strong>: Go offline → Wait 5+ minutes → Verify "Using cached data" warning appears</li>
+            <li>[ ] <strong>Network flapping</strong>: Rapidly toggle network on/off → Verify save queue handles multiple toggles correctly</li>
+            <li>[ ] <strong>Retry exhaustion</strong>: Simulate network error with no retries → Verify mutation is queued (not lost)</li>
+            <li>[ ] <strong>Multiple queued saves</strong>: Go offline → Make multiple edits → Reconnect → Verify all saves complete in order</li>
+            <li>[ ] <strong>Cache staleness</strong>: Load snippet → Go offline → Wait 10+ minutes → Verify "Last synced: X:XX" appears instead of "Saved at X:XX"</li>
+          </ul>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 6</strong> (Lazy Loading & Exports) alongside auto-save functionality:</p>
+          <ul>
+            <li>Create <code>useNetworkStatus</code> hook</li>
+            <li>Create <code>OfflineBanner</code> component</li>
+            <li>Update <code>SaveStatus</code> component to handle offline/queued states</li>
+            <li>Update React Query config with network-aware settings</li>
+            <li>Add smoke tests for offline scenarios</li>
+          </ul>
+          <p><strong>LOE</strong>: 4-6 hours (includes network status hook, offline banner, save status updates, and smoke tests)</p>
         </section>
 
         <section class="docs-section" id="editor-truth">
@@ -3064,7 +3332,14 @@ export function App(): JSX.Element {
           <ul>
             <li>All existing features work</li>
             <li>No regression in functionality</li>
-            <li>Performance is equal or better</li>
+            <li><strong>Performance budgets met</strong>:
+              <ul>
+                <li>Time-to-first-keystroke after editor mount ≤ 800 ms</li>
+                <li>Snippet switch to interactive ≤ 300 ms (medium corpus, hot path)</li>
+                <li>Background load never blocks typing (no jank &gt; 16 ms frames)</li>
+                <li>Budgets met on medium corpus; virtualization kicks in automatically for large corpus</li>
+              </ul>
+            </li>
             <li>Authentication works</li>
             <li>Google Drive sync works</li>
             <li>Editor saves correctly</li>
@@ -3072,13 +3347,23 @@ export function App(): JSX.Element {
             <li><strong>Classic UX anchors preserved</strong>: Goal meter, Today chip, footer word/character counts look and behave identically</li>
             <li><strong>Phase 1 Definition of Done</strong>: TanStack Query (React Query) fully configured and used for ALL Drive I/O operations</li>
             <li><strong>Phase 1 Definition of Done</strong>: API contract formalization with Zod schemas and runtime validation implemented</li>
-            <li><strong>Classic UX anchors visual parity</strong>: Pixel-diff or side-by-side visual comparison confirms pixel-perfect match for goal meter, "Today" chip, and footer counts before closing editor phase</li>
+            <li><strong>Visual parity</strong>: Side-by-side <code>/react</code> vs. root checks pass for: goal meter, Today chip, footer counts, story cards, and modal spacing. Document "diff" screenshots as artifacts.</li>
+            <li><strong>Concurrency safety</strong>: Conflicts surfaced for Docs edits and second Yarny tabs; no silent last-writer-wins. (Verified in test checklist.)</li>
+            <li><strong>Round-trip integrity</strong>: Paragraphs and soft line breaks round-trip without collapse/duplication; rich-text paste is stripped, special characters preserved.</li>
+            <li><strong>Bundle discipline</strong>: Starter-kit removed; only the TipTap extensions actually used are shipped (Document, Paragraph, Text, HardBreak, History).</li>
           </ul>
 
           <h3>Should Have</h3>
           <ul>
-            <li>Better accessibility (ARIA attributes)</li>
-            <li><strong>Accessible focus rings</strong>: Focus states remain visible against dark cards and pale chips (test with keyboard navigation)</li>
+            <li><strong>Accessibility polish beyond MUI defaults</strong>:
+              <ul>
+                <li>Minimum contrast ratios: 4.5:1 for text, 3:1 for UI chrome (tested against soft chips and dark surfaces)</li>
+                <li>Visible focus rings on all actionable items (especially left rail and modal footers)</li>
+                <li>Keyboard-only flows for reordering lists (dnd-kit keyboard navigation intentionally wired)</li>
+                <li><strong>Keyboard-only completion of core tasks</strong>: Create/rename/reorder/export operations completable via keyboard only</li>
+                <li><strong>Contrast checks on every chip color</strong>: All 12 accent colors (base, soft, dark variants) meet contrast requirements</li>
+              </ul>
+            </li>
             <li>Improved error handling</li>
             <li>Better loading states</li>
             <li>Complete TypeScript type coverage (all components, hooks, utilities)</li>
@@ -3086,6 +3371,7 @@ export function App(): JSX.Element {
             <li><strong>Editor truth and Google Docs round-tripping: plain text only, editor authoritative while open, reconciliation on focus</strong></li>
             <li><strong>Configurable virtualization thresholds</strong>: Virtualization thresholds (50+ chapters, 200+ snippets) exposed as settings for tuning without redeployment</li>
             <li><strong>Chunked export writes</strong>: Large chapter exports handle batchUpdate body limits with chunked writes</li>
+            <li><strong>Order persistence</strong>: Order (groupIds/snippetIds) is persisted in Drive metadata as first-class field, survives concurrent edits and background loads</li>
           </ul>
 
           <h3>Nice to Have</h3>
@@ -3154,6 +3440,7 @@ export function App(): JSX.Element {
                 <li>One snippet with NBSPs and trailing spaces</li>
                 <li>One snippet with CJK text (Japanese, Chinese, Korean)</li>
                 <li>One snippet with emoji and Unicode characters</li>
+                <li>One snippet with long-press accents (é, è, ê, ë, ñ, ü, etc.)</li>
               </ul>
             </li>
             <li><strong>Purpose</strong>: Fast smoke tests, basic operations, format normalization, IME composition</li>
@@ -3271,10 +3558,11 @@ export function App(): JSX.Element {
           <ul>
             <li>[ ] Edit snippet in Yarny → Save → Edit in Google Docs → Switch snippets → Verify no format loss</li>
             <li>[ ] Edit snippet in Google Docs → Load in Yarny → Verify content matches (plain text only)</li>
-            <li>[ ] Paste rich text in Yarny → Verify stripped to plain text</li>
-            <li>[ ] Test paragraph breaks (<code>\n\n</code>) → Verify preserved in round-trip</li>
-            <li>[ ] Test soft line breaks (<code>\n</code>) → Verify preserved in round-trip</li>
-            <li>[ ] Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip</li>
+            <li>[ ] <strong>Rich-text paste stripping</strong>: Paste rich text in Yarny → Verify stripped to plain text</li>
+            <li>[ ] <strong>Paragraph breaks</strong>: Test paragraph breaks (<code>\n\n</code>) → Verify preserved in round-trip without collapse/duplication</li>
+            <li>[ ] <strong>Soft line breaks</strong>: Test soft line breaks (<code>\n</code>) → Verify preserved in round-trip without collapse/duplication</li>
+            <li>[ ] <strong>Special characters</strong>: Test special characters (quotes, em dashes, etc.) → Verify preserved in round-trip</li>
+            <li>[ ] <strong>No collapse/duplication</strong>: Test content with multiple paragraph breaks → Verify no unintended collapse or duplication of breaks</li>
             <li>[ ] <strong>Format/Line Break Tests</strong>: Paste content with mixed <code>\n</code>/<code>\r\n</code> line endings → Round-trip through Docs → Verify normalized correctly</li>
             <li>[ ] <strong>NBSP and Trailing Spaces</strong>: Paste content with non-breaking spaces (NBSP) and trailing spaces → Round-trip through Docs → Verify normalized correctly (NBSP → space, trailing spaces may be collapsed)</li>
             <li>[ ] <strong>Mixed Line Endings</strong>: Test content with <code>\n</code>, <code>\r\n</code>, and <code>\r</code> → Round-trip → Verify all normalized to <code>\n</code></li>
@@ -3321,18 +3609,23 @@ export function App(): JSX.Element {
             <li>[ ] Type in Japanese (IME composition) → Verify word count updates only after <code>compositionend</code> event</li>
             <li>[ ] Type in Chinese (IME composition) → Verify save debouncing respects <code>compositionstart</code>/<code>compositionend</code></li>
             <li>[ ] Type in Korean (IME composition) → Verify no premature updates during composition</li>
-            <li>[ ] Type emoji (Unicode composition) → Verify word count and save behavior correct</li>
+            <li>[ ] <strong>Long-press accents</strong>: Type long-press accents (é, è, ê, ë, ñ, ü, etc.) → Verify word count and save behavior correct</li>
+            <li>[ ] <strong>Emoji composition</strong>: Type emoji (Unicode composition) → Verify word count and save behavior correct</li>
+            <li>[ ] <strong>Emoji picker</strong>: Use emoji picker to insert emoji → Verify word count and save behavior correct</li>
             <li>[ ] Test CJK text in test corpus → Verify round-trip preserves content correctly</li>
             <li>[ ] Test emoji in test corpus → Verify round-trip preserves content correctly</li>
+            <li>[ ] <strong>Round-trip long-press accents</strong>: Test long-press accents in test corpus → Verify round-trip preserves content correctly</li>
           </ul>
 
-          <p><strong>K. Cross-Tab Conflicts</strong></p>
+          <p><strong>K. Cross-Tab Conflicts (Yarny vs. Yarny)</strong></p>
           <ul>
-            <li>[ ] Open Yarny in two tabs → Edit same snippet in Tab 1 → Verify Tab 2 shows "Editing in another tab" message</li>
-            <li>[ ] Edit snippet in Tab 1 → Try to edit in Tab 2 → Verify Tab 2 is read-only with visual indicator</li>
-            <li>[ ] Save in Tab 1 → Switch to Tab 2 → Verify Tab 2 updates with latest content</li>
-            <li>[ ] Close Tab 1 → Verify Tab 2 regains edit capability</li>
-            <li>[ ] Test BroadcastChannel fallback → Verify localStorage heartbeat works if BroadcastChannel unavailable</li>
+            <li>[ ] <strong>Immediate warning/lock</strong>: Open snippet in Tab 1 → Open same snippet in Tab 2 → Verify Tab 2 immediately shows warning/lock when opening snippet already edited in Tab 1</li>
+            <li>[ ] <strong>Read-only mode</strong>: Edit snippet in Tab 1 → Try to edit in Tab 2 → Verify Tab 2 is read-only with visual indicator</li>
+            <li>[ ] <strong>Tab timeout</strong>: Open snippet in Tab 1 → Make Tab 1 inactive (switch to other tab) → Wait for timeout → Verify lock released if Tab 1 becomes inactive</li>
+            <li>[ ] <strong>Multiple tabs</strong>: Open snippet in Tab 1 → Open same snippet in Tab 2 and Tab 3 → Verify all tabs show appropriate warnings/locks</li>
+            <li>[ ] <strong>Save propagation</strong>: Save in Tab 1 → Switch to Tab 2 → Verify Tab 2 updates with latest content</li>
+            <li>[ ] <strong>Lock release</strong>: Close Tab 1 → Verify Tab 2 regains edit capability</li>
+            <li>[ ] <strong>BroadcastChannel fallback</strong>: Test BroadcastChannel fallback → Verify localStorage heartbeat works if BroadcastChannel unavailable</li>
           </ul>
 
           <h4>3. Linking to Success Criteria</h4>
@@ -3981,6 +4274,30 @@ export function useGroupsList() {
                 <li>Total LOE: 64-97 hours (8-12 days)</li>
                 <li>Enables continuous regression testing and reduces manual testing burden by 60-70%</li>
                 <li>Updated Risk Register Cadence to include Phase 8 checkpoint</li>
+              </ul>
+            </li>
+            <li><strong>2025-01-XX</strong>: Added explicit success criteria for visual parity, concurrency safety, round-trip integrity, performance, accessibility, and bundle discipline
+              <ul>
+                <li><strong>Visual parity</strong>: Added side-by-side <code>/react</code> vs. root checks for goal meter, Today chip, footer counts, story cards, and modal spacing with "diff" screenshots as artifacts</li>
+                <li><strong>Concurrency safety</strong>: Added requirement that conflicts are surfaced for Docs edits and second Yarny tabs (no silent last-writer-wins), verified in test checklist</li>
+                <li><strong>Round-trip integrity</strong>: Added requirement that paragraphs and soft line breaks round-trip without collapse/duplication, rich-text paste is stripped, special characters preserved</li>
+                <li><strong>Performance</strong>: Added requirement that budgets are met on medium corpus and virtualization kicks in automatically for large corpus</li>
+                <li><strong>Accessibility</strong>: Added keyboard-only completion of core tasks (create/rename/reorder/export) and contrast checks on every chip color</li>
+                <li><strong>Bundle discipline</strong>: Added requirement that starter-kit is removed and only TipTap extensions actually used are shipped</li>
+                <li>Updated Phase 7 to include visual parity validation with diff screenshots, bundle size validation, and expanded accessibility checks</li>
+                <li>Updated smoke tests to include concurrency safety verification (no silent last-writer-wins)</li>
+                <li>Updated round-trip tests to explicitly verify no collapse/duplication of paragraph and soft line breaks</li>
+                <li>Updated LOE estimate for Phase 7 (25-38 hours, up from 22-35 hours)</li>
+              </ul>
+            </li>
+            <li><strong>2025-01-XX</strong>: Addressed feedback on TipTap dependencies, cross-tab conflicts, IME composition, and offline semantics
+              <ul>
+                <li><strong>TipTap Dependency Consistency</strong>: Added explicit note excluding <code>@tiptap/starter-kit</code> from dependencies to avoid accidental imports and extra bundle weight (individual extensions only)</li>
+                <li><strong>Cross-Tab Yarny Conflicts</strong>: Enhanced cross-tab coordination hook with immediate warning/lock UI when snippet is opened in another tab; added comprehensive smoke tests for cross-tab scenarios (warning/lock, tab timeout, multiple tabs)</li>
+                <li><strong>IME/Composition Edge Cases</strong>: Added explicit test coverage for long-press accents (é, è, ê, ë, ñ, etc.), emoji composition, and emoji picker to test corpus and smoke tests; expanded IME composition tests beyond CJK</li>
+                <li><strong>Offline/Spotty-Network Semantics</strong>: Added new section defining UX for network states (queued saves, read-only mode, offline banners, "Saved at..." indicator behavior) tied to React Query's retry/backoff and cache staleness; added <code>useNetworkStatus</code> hook, <code>OfflineBanner</code> component, and comprehensive smoke tests for offline scenarios</li>
+                <li>Updated Phase 6 to include offline/spotty-network semantics implementation</li>
+                <li>Updated LOE estimates to reflect offline semantics work (Phase 6: 16-23 hours)</li>
               </ul>
             </li>
             <li><strong>2025-01-XX</strong>: Addressed feedback on performance budgets, decision point triggers, and selector examples
