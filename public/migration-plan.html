@@ -71,6 +71,7 @@
                 <li><a href="#custom-implementation" class="nav-link">What Needs Custom Implementation</a></li>
                 <li><a href="#fetch-caching" class="nav-link">Fetch/Caching Layer (React Query)</a></li>
                 <li><a href="#api-contract" class="nav-link">API Contract Formalization</a></li>
+                <li><a href="#netlify-functions-typescript" class="nav-link">Netlify Functions TypeScript Conversion (P1)</a></li>
                 <li><a href="#offline-semantics" class="nav-link">Offline/Spotty-Network Semantics (P2)</a></li>
                 <li><a href="#timezone-dst" class="nav-link">Timezone/DST for Goals (P2)</a></li>
                 <li><a href="#rtl-mixed-script" class="nav-link">Right-to-Left & Mixed-Script (P2)</a></li>
@@ -140,9 +141,9 @@
             <i class="material-icons" style="font-size: 24px;">lightbulb</i>
             Executive Summary
           </h2>
-          <p style="margin-bottom: 0; color: #047857;">This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong style="color: #047857 !important;">React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
+          <p style="margin-bottom: 0; color: #047857;">This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong style="color: #047857 !important;">React with TypeScript</strong>, including converting all Netlify Functions to TypeScript.</p>
           <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Key Finding</strong>: Using third-party React libraries can reduce the Level of Effort (LOE) by <strong style="color: #047857 !important;">40-50%</strong>, making the migration significantly more feasible.</p>
-          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Technology Stack</strong>: React 18 + TypeScript 5 + Vite</p>
+          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Technology Stack</strong>: React 18 + TypeScript 5 + Vite (frontend), TypeScript + Netlify Functions (backend)</p>
         </section>
 
         <section class="docs-section" id="typescript-react">
@@ -191,11 +192,13 @@
             <li><strong><code>store/types.ts</code></strong> - TypeScript type definitions for all state structures</li>
           </ul>
 
-          <h3>What Stays the Same (No Changes)</h3>
+          <h3>What Gets Built as TypeScript Netlify Functions</h3>
+          <p>All backend Netlify Functions will be converted to TypeScript:</p>
           <ul>
-            <li><strong>Netlify Functions</strong> (backend) - Remain in JavaScript (no changes needed)</li>
-            <li><strong>Backend API endpoints</strong> - No changes required</li>
-            <li><strong>Google Drive API integration</strong> - Backend already works, just needs React wrapper</li>
+            <li><strong>Authentication Functions</strong>: <code>auth/config.ts</code>, <code>auth/login.ts</code>, <code>auth/register.ts</code>, <code>auth/verify-login.ts</code>, <code>auth/verify-register.ts</code>, <code>auth/storage.ts</code>, <code>verify-google.ts</code>, <code>logout.ts</code></li>
+            <li><strong>Drive Functions</strong>: <code>drive-auth.ts</code>, <code>drive-auth-callback.ts</code>, <code>drive-list.ts</code>, <code>drive-read.ts</code>, <code>drive-write.ts</code>, <code>drive-delete-file.ts</code>, <code>drive-delete-story.ts</code>, <code>drive-rename-file.ts</code>, <code>drive-create-folder.ts</code>, <code>drive-get-or-create-yarny-stories.ts</code>, <code>drive-check-comments.ts</code>, <code>drive-client.ts</code></li>
+            <li><strong>Utility Functions</strong>: <code>config.ts</code>, <code>uptime-status.ts</code></li>
+            <li><strong>Shared Types</strong>: <code>netlify/functions/types.ts</code> - Shared TypeScript types for request/response shapes across all functions</li>
           </ul>
 
           <h3>Example: React Component in TypeScript</h3>
@@ -253,9 +256,9 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ <strong>Business Logic</strong> = React hooks (<code>.ts</code> files)</li>
             <li>✅ <strong>Utilities</strong> = TypeScript functions (<code>.ts</code> files)</li>
             <li>✅ <strong>State</strong> = Zustand with TypeScript types</li>
-            <li>❌ <strong>Backend</strong> = Stays in JavaScript (no changes)</li>
+            <li>✅ <strong>Backend</strong> = Netlify Functions written in TypeScript (<code>.ts</code> files)</li>
           </ul>
-          <p><strong>The plan states</strong>: "This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, and state management will be written in TypeScript."</p>
+          <p><strong>The plan states</strong>: "This migration will use <strong>TypeScript</strong> throughout. All components, hooks, utilities, state management, and backend functions will be written in TypeScript."</p>
         </section>
 
         <section class="docs-section" id="current-analysis">
@@ -273,7 +276,7 @@ export function useDrive(folderId: string): UseDriveResult {
               </ul>
             </li>
             <li><strong>Architecture:</strong> Vanilla JavaScript with direct DOM manipulation</li>
-            <li><strong>Backend:</strong> Already using Netlify Functions (no changes needed)</li>
+            <li><strong>Backend:</strong> Netlify Functions in JavaScript (will be converted to TypeScript)</li>
           </ul>
 
           <h3>Current Features</h3>
@@ -2251,6 +2254,336 @@ export async function writeDriveFile(
 }</code></pre>
         </section>
 
+        <section class="docs-section" id="netlify-functions-typescript">
+          <h2 id="netlify-functions-typescript-heading">Netlify Functions TypeScript Conversion (P1 Priority)</h2>
+          
+          <h3>Overview</h3>
+          <p><strong>Why</strong>: Converting Netlify Functions to TypeScript provides end-to-end type safety between frontend and backend, ensures API contracts are enforced at compile time, and reduces runtime errors from mismatched request/response shapes.</p>
+          <p><strong>What</strong>: Convert all Netlify Functions from JavaScript to TypeScript, add type annotations to all handlers, create shared types module, and ensure type safety across the entire stack.</p>
+
+          <h3>Implementation Strategy</h3>
+          
+          <h4>1. TypeScript Configuration for Netlify Functions</h4>
+          <p>Create <code>netlify/functions/tsconfig.json</code> for Netlify Functions:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}</code></pre>
+
+          <h4>2. Shared Types Module</h4>
+          <p>Create <code>netlify/functions/types.ts</code> with shared types for all functions:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// netlify/functions/types.ts
+import { Handler } from '@netlify/functions';
+
+// Netlify Function handler types
+export interface NetlifyHandler extends Handler {
+  (event: NetlifyEvent, context: NetlifyContext): Promise&lt;NetlifyResponse&gt;;
+}
+
+export interface NetlifyEvent {
+  httpMethod: string;
+  path: string;
+  headers: Record&lt;string, string&gt;;
+  queryStringParameters: Record&lt;string, string&gt; | null;
+  body: string | null;
+  isBase64Encoded: boolean;
+  multiValueHeaders?: Record&lt;string, string[]&gt;;
+  multiValueQueryStringParameters?: Record&lt;string, string[]&gt; | null;
+}
+
+export interface NetlifyContext {
+  requestId: string;
+  functionName: string;
+  functionVersion: string;
+  invokedFunctionArn: string;
+  memoryLimitInMB: string;
+  awsRequestId: string;
+  logGroupName: string;
+  logStreamName: string;
+  getRemainingTimeInMillis: () =&gt; number;
+  done: (error?: Error, result?: any) =&gt; void;
+  fail: (error: Error | string) =&gt; void;
+  succeed: (messageOrObject: any) =&gt; void;
+}
+
+export interface NetlifyResponse {
+  statusCode: number;
+  headers?: Record&lt;string, string&gt;;
+  body: string;
+  isBase64Encoded?: boolean;
+  multiValueHeaders?: Record&lt;string, string[]&gt;;
+}
+
+// Shared request/response types (aligned with frontend API contract)
+export interface VerifyGoogleRequest {
+  token: string;
+}
+
+export interface VerifyGoogleResponse {
+  verified: boolean;
+  user: string;
+  name?: string;
+  picture?: string;
+  token: string;
+}
+
+export interface DriveListRequest {
+  folderId?: string;
+  pageToken?: string;
+}
+
+export interface DriveListResponse {
+  files: DriveFile[];
+  nextPageToken?: string;
+}
+
+export interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime?: string;
+  size?: string;
+  trashed?: boolean;
+}
+
+export interface DriveReadRequest {
+  fileId: string;
+}
+
+export interface DriveReadResponse {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime?: string;
+  content: string;
+}
+
+export interface DriveWriteRequest {
+  fileId?: string;
+  fileName: string;
+  content: string;
+  parentFolderId?: string;
+  mimeType?: string;
+}
+
+export interface DriveWriteResponse {
+  id: string;
+  name: string;
+  modifiedTime?: string;
+}
+
+// Error response type
+export interface ApiErrorResponse {
+  error: string;
+  message?: string;
+  requiresReauth?: boolean;
+}
+
+// Helper function to create typed responses
+export function createResponse&lt;T&gt;(
+  statusCode: number,
+  data: T,
+  headers?: Record&lt;string, string&gt;
+): NetlifyResponse {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify(data),
+  };
+}
+
+// Helper function to create error responses
+export function createErrorResponse(
+  statusCode: number,
+  error: string,
+  message?: string,
+  requiresReauth?: boolean
+): NetlifyResponse {
+  return createResponse&lt;ApiErrorResponse&gt;(statusCode, {
+    error,
+    message,
+    requiresReauth,
+  });
+}</code></pre>
+
+          <h4>3. Example: Converting a Function to TypeScript</h4>
+          <p><strong>Before (JavaScript)</strong>:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// netlify/functions/drive-read.js
+exports.handler = async (event, context) =&gt; {
+  const { fileId } = JSON.parse(event.body);
+  
+  try {
+    const content = await readDriveFile(fileId);
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(content),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
+};</code></pre>
+
+          <p><strong>After (TypeScript)</strong>:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>// netlify/functions/drive-read.ts
+import type { NetlifyHandler, DriveReadRequest, DriveReadResponse } from './types';
+import { createResponse, createErrorResponse } from './types';
+import { readDriveFile } from './drive-client';
+
+export const handler: NetlifyHandler = async (event, context) =&gt; {
+  // Validate request body
+  if (!event.body) {
+    return createErrorResponse(400, 'Missing request body');
+  }
+
+  let request: DriveReadRequest;
+  try {
+    request = JSON.parse(event.body);
+  } catch (error) {
+    return createErrorResponse(400, 'Invalid JSON in request body');
+  }
+
+  // Validate required fields
+  if (!request.fileId) {
+    return createErrorResponse(400, 'Missing required field: fileId');
+  }
+
+  try {
+    const content = await readDriveFile(request.fileId);
+    const response: DriveReadResponse = {
+      id: content.id,
+      name: content.name,
+      mimeType: content.mimeType,
+      modifiedTime: content.modifiedTime,
+      content: content.content,
+    };
+    return createResponse&lt;DriveReadResponse&gt;(200, response);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return createErrorResponse(500, 'Failed to read file', errorMessage);
+  }
+};</code></pre>
+
+          <h4>4. Build Configuration</h4>
+          <p>Update <code>netlify.toml</code> to compile TypeScript functions:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>[build]
+  command = "npm run build"
+  functions = "netlify/functions/dist"
+
+[build.environment]
+  NODE_VERSION = "20"</code></pre>
+
+          <p>Add build script to <code>package.json</code>:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "scripts": {
+    "build:functions": "tsc -p netlify/functions/tsconfig.json",
+    "build": "npm run build:functions && vite build"
+  }
+}</code></pre>
+
+          <h4>5. Type Alignment with Frontend</h4>
+          <p>Ensure backend types in <code>netlify/functions/types.ts</code> align with frontend API contract in <code>src/api/contract.ts</code>. Consider:</p>
+          <ul>
+            <li><strong>Option 1</strong>: Share types via a shared package (if monorepo)</li>
+            <li><strong>Option 2</strong>: Keep types in sync manually (documented in API contract section)</li>
+            <li><strong>Option 3</strong>: Generate backend types from frontend Zod schemas (advanced)</li>
+          </ul>
+          <p>For v1, <strong>Option 2</strong> is recommended - keep types manually aligned and document the relationship.</p>
+
+          <h3>Functions to Convert</h3>
+          
+          <h4>Authentication Functions (8 files)</h4>
+          <ul>
+            <li><code>auth/config.ts</code></li>
+            <li><code>auth/login.ts</code></li>
+            <li><code>auth/register.ts</code></li>
+            <li><code>auth/storage.ts</code></li>
+            <li><code>auth/verify-login.ts</code></li>
+            <li><code>auth/verify-register.ts</code></li>
+            <li><code>verify-google.ts</code></li>
+            <li><code>logout.ts</code></li>
+          </ul>
+
+          <h4>Drive Functions (13 files)</h4>
+          <ul>
+            <li><code>drive-auth.ts</code></li>
+            <li><code>drive-auth-callback.ts</code></li>
+            <li><code>drive-check-comments.ts</code></li>
+            <li><code>drive-client.ts</code> (shared utility)</li>
+            <li><code>drive-create-folder.ts</code></li>
+            <li><code>drive-delete-file.ts</code></li>
+            <li><code>drive-delete-story.ts</code></li>
+            <li><code>drive-get-or-create-yarny-stories.ts</code></li>
+            <li><code>drive-list.ts</code></li>
+            <li><code>drive-read.ts</code></li>
+            <li><code>drive-rename-file.ts</code></li>
+            <li><code>drive-write.ts</code></li>
+          </ul>
+
+          <h4>Utility Functions (2 files)</h4>
+          <ul>
+            <li><code>config.ts</code></li>
+            <li><code>uptime-status.ts</code></li>
+          </ul>
+
+          <p><strong>Total</strong>: 23 function files + 1 shared types file = 24 TypeScript files</p>
+
+          <h3>Benefits</h3>
+          <ol>
+            <li><strong>End-to-End Type Safety</strong>: TypeScript ensures frontend and backend types match at compile time</li>
+            <li><strong>Better IDE Support</strong>: Autocomplete and type checking in function handlers</li>
+            <li><strong>Catch Errors Early</strong>: Type mismatches caught during development, not runtime</li>
+            <li><strong>Self-Documenting</strong>: Types serve as inline documentation for function contracts</li>
+            <li><strong>Refactoring Safety</strong>: TypeScript ensures changes don't break function signatures</li>
+            <li><strong>Consistent Error Handling</strong>: Typed error responses ensure consistent API error shapes</li>
+          </ol>
+
+          <h3>Implementation Timeline</h3>
+          <p>This should be implemented in <strong>Phase 2</strong> (Authentication, Router & API Contract) alongside API contract formalization:</p>
+          <ul>
+            <li>Set up TypeScript configuration for Netlify Functions</li>
+            <li>Create shared types module</li>
+            <li>Convert all functions to TypeScript</li>
+            <li>Test all functions with TypeScript compilation</li>
+            <li>Ensure types align with frontend API contract</li>
+          </ul>
+          <p><strong>LOE:</strong> 8-12 hours (includes TypeScript setup, converting 23 function files, type annotations, and testing)</p>
+
+          <h3>Dependencies</h3>
+          <p>Add to <code>package.json</code>:</p>
+          <pre style="background: #111827; padding: var(--space-lg); border-radius: var(--radius-md); overflow-x: auto;"><code>{
+  "devDependencies": {
+    "@netlify/functions": "^2.x",
+    "@types/node": "^20.x",
+    "typescript": "^5.x"
+  }
+}</code></pre>
+          <p><strong>Note</strong>: <code>@netlify/functions</code> provides TypeScript types for Netlify Function handlers.</p>
+        </section>
+
         <section class="docs-section" id="offline-semantics">
           <h2 id="offline-semantics-heading">Offline/Spotty-Network Semantics (P2 Priority)</h2>
           
@@ -3184,15 +3517,26 @@ export function ObservabilityPanel() {
             <li>Set up routing structure</li>
             <li><strong>Create API contract module (<code>src/api/contract.ts</code>) with Zod schemas</strong></li>
             <li><strong>Create typed API client (<code>src/api/client.ts</code>)</strong></li>
+            <li><strong>Convert Netlify Functions to TypeScript</strong>:
+              <ul>
+                <li>Set up TypeScript configuration for Netlify Functions</li>
+                <li>Create shared types module (<code>netlify/functions/types.ts</code>)</li>
+                <li>Convert authentication functions to TypeScript (<code>auth/*.ts</code>, <code>verify-google.ts</code>, <code>logout.ts</code>)</li>
+                <li>Convert Drive functions to TypeScript (<code>drive-*.ts</code>, <code>drive-client.ts</code>)</li>
+                <li>Convert utility functions to TypeScript (<code>config.ts</code>, <code>uptime-status.ts</code>)</li>
+                <li>Add type annotations to all function handlers</li>
+                <li>Update function exports to use TypeScript types</li>
+                <li>Test all functions with TypeScript compilation</li>
+              </ul>
+            </li>
             <li>Convert login page to React</li>
             <li>Integrate Google Sign-In SDK</li>
             <li>Create Auth context/provider</li>
             <li>Handle auth state and redirects</li>
             <li><strong>Implement reconciliation on window focus (<code>src/hooks/useWindowFocusReconciliation.ts</code>)</strong></li>
-            <li><strong>Add cross-tab coordination hook (<code>src/hooks/useCrossTabCoordination.ts</code>)</strong></li>
             <li>Test authentication flow</li>
           </ul>
-          <p><strong>LOE:</strong> 12-18 hours (includes router setup, API contract formalization, and reconciliation hook implementation)</p>
+          <p><strong>LOE:</strong> 20-28 hours (includes router setup, API contract formalization, Netlify Functions TypeScript conversion, and reconciliation hook implementation)</p>
           <p><strong>Phase 2 Risk Checkpoint</strong>: Re-rate risks for Editor/Docs round-trip, Drive quotas, performance at large scale. Verify API contract formalization is complete.</p>
 
           <h3>Phase 3: Stories Page with Virtualization Stub (Week 2)</h3>
@@ -3598,7 +3942,7 @@ export function ObservabilityPanel() {
                 <li><strong>Status</strong>: Medium risk - requires careful coordination but prevents data loss</li>
               </ul>
             </li>
-            <li><strong>Google Drive API Integration</strong> - React hooks may need different error handling. Status: Low risk, mostly wrapping existing code.</li>
+            <li><strong>Google Drive API Integration</strong> - React hooks may need different error handling. Mitigation: Backend already works, converting to TypeScript provides type safety. Status: Low risk, TypeScript conversion adds safety without changing functionality.</li>
             <li><strong>Feature Parity</strong> - Missing features during migration. Mitigation: Create feature checklist, test each feature.</li>
             <li><strong>Design Drift with MUI</strong>
               <ul>
@@ -3892,7 +4236,31 @@ export function App(): JSX.Element {
 ├── public/
 │   └── (static assets)
 ├── netlify/
-│   └── functions/ (unchanged)
+│   └── functions/
+│       ├── types.ts              # Shared TypeScript types for all functions
+│       ├── auth/
+│       │   ├── config.ts
+│       │   ├── login.ts
+│       │   ├── register.ts
+│       │   ├── storage.ts
+│       │   ├── verify-login.ts
+│       │   └── verify-register.ts
+│       ├── config.ts
+│       ├── drive-auth.ts
+│       ├── drive-auth-callback.ts
+│       ├── drive-check-comments.ts
+│       ├── drive-client.ts
+│       ├── drive-create-folder.ts
+│       ├── drive-delete-file.ts
+│       ├── drive-delete-story.ts
+│       ├── drive-get-or-create-yarny-stories.ts
+│       ├── drive-list.ts
+│       ├── drive-read.ts
+│       ├── drive-rename-file.ts
+│       ├── drive-write.ts
+│       ├── logout.ts
+│       ├── uptime-status.ts
+│       └── verify-google.ts
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
@@ -4708,7 +5076,7 @@ export function usePrefetchSnippets(snippetIds: string[], batchSize = 5, delay =
             <li>Team size and availability?</li>
             <li>Testing requirements?</li>
             <li>When to migrate users from root to /react? (or keep both?)</li>
-            <li>How to handle shared Netlify Functions? (should work for both)</li>
+            <li>✅ How to handle shared Netlify Functions? ✅ <strong>Convert to TypeScript in Phase 2, works for both frontend versions</strong></li>
             <li>TypeScript strict mode level? (recommend: strict)</li>
             <li>ESLint + TypeScript ESLint configuration preferences?</li>
           </ul>
@@ -4888,6 +5256,28 @@ export function useGroupsList() {
 
         <section class="docs-section" id="changelog">
           <h2 id="changelog-heading">Changelog</h2>
+          
+          <ul>
+            <li><strong>2025-01-XX</strong>: Added Netlify Functions TypeScript conversion
+              <ul>
+                <li><strong>Netlify Functions TypeScript Conversion</strong>: Added comprehensive section for converting all Netlify Functions to TypeScript</li>
+                <li>Updated Executive Summary to include TypeScript for backend</li>
+                <li>Updated "What Stays the Same" section to "What Gets Built as TypeScript Netlify Functions"</li>
+                <li>Added TypeScript configuration for Netlify Functions (<code>netlify/functions/tsconfig.json</code>)</li>
+                <li>Created shared types module (<code>netlify/functions/types.ts</code>) with all request/response types</li>
+                <li>Added example conversion from JavaScript to TypeScript</li>
+                <li>Updated Phase 2 to include Netlify Functions TypeScript conversion (8-12 hours LOE)</li>
+                <li>Updated file structure to show all TypeScript function files</li>
+                <li>Updated Phase 2 LOE from 12-18 hours to 20-28 hours (includes functions conversion)</li>
+                <li>Updated risk mitigation for Google Drive API Integration to mention TypeScript conversion</li>
+                <li>Resolved question about shared Netlify Functions (convert to TypeScript in Phase 2)</li>
+                <li><strong>Total Additional LOE</strong>: 8-12 hours for Netlify Functions TypeScript conversion</li>
+              </ul>
+            </li>
+          </ul>
+          
+          <hr style="margin: var(--space-xl) 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+          
           
           <ul>
             <li><strong>2025-01-XX</strong>: Added Phase 8: Test Automation (Week 5-6)
