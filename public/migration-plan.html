@@ -80,7 +80,8 @@
             Executive Summary
           </h2>
           <p style="margin-bottom: 0; color: #047857;">This document outlines the plan and effort estimation for converting the Yarny writing application from vanilla JavaScript to <strong style="color: #047857 !important;">React with TypeScript</strong>, while maintaining the existing Netlify Functions backend.</p>
-          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Note:</strong> This migration will use <strong style="color: #047857 !important;">TypeScript throughout</strong>. All components, hooks, utilities, and state management will be written in TypeScript.</p>
+          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Key Finding</strong>: Using third-party React libraries can reduce the Level of Effort (LOE) by <strong style="color: #047857 !important;">40-50%</strong>, making the migration significantly more feasible.</p>
+          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #047857;"><strong style="color: #047857 !important;">Technology Stack</strong>: React 18 + TypeScript 5 + Vite</p>
         </section>
 
         <section class="docs-section" id="typescript-react">
@@ -251,105 +252,216 @@ export function useDrive(folderId: string): UseDriveResult {
           <h3>Elements to Preserve</h3>
 
           <h4>1. Left-Rail Goal Meter</h4>
+          <p><strong>Location</strong>: Left sidebar, below story title and settings button</p>
+          <p><strong>Current Implementation</strong>:</p>
           <ul>
-            <li><strong>Location</strong>: Left sidebar, below story title and settings button</li>
-            <li><strong>Features</strong>:
-              <ul>
-                <li>Displays total word count vs. goal (e.g., "0 / 3,000")</li>
-                <li>Progress bar showing completion percentage</li>
-                <li>Clickable to open goal panel</li>
-                <li>Updates in real-time as user writes</li>
-              </ul>
-            </li>
-            <li><strong>Preservation Requirements</strong>:
-              <ul>
-                <li>✅ Exact same visual design (font size, colors, spacing, border radius)</li>
-                <li>✅ Same placement in left rail header</li>
-                <li>✅ Same click behavior (opens goal panel)</li>
-                <li>✅ Same real-time update behavior</li>
-                <li>✅ Same progress bar styling and animation</li>
-              </ul>
-            </li>
-            <li><strong>React Implementation</strong>: Create <code>GoalMeter.tsx</code> component in <code>src/components/editor/</code></li>
+            <li>Displays total word count vs. goal (e.g., "0 / 3,000")</li>
+            <li>Progress bar showing completion percentage</li>
+            <li>Clickable to open goal panel</li>
+            <li>Updates in real-time as user writes</li>
+          </ul>
+          <p><strong>Preservation Requirements</strong>:</p>
+          <ul>
+            <li>✅ Exact same visual design (font size, colors, spacing, border radius)</li>
+            <li>✅ Same placement in left rail header</li>
+            <li>✅ Same click behavior (opens goal panel)</li>
+            <li>✅ Same real-time update behavior</li>
+            <li>✅ Same progress bar styling and animation</li>
+          </ul>
+          <p><strong>Code Locations</strong>:</p>
+          <ul>
+            <li><code>editor.html</code> lines 71-76 (HTML structure)</li>
+            <li><code>editor.css</code> lines 106-135 (styling)</li>
+            <li><code>editor.js</code> lines 974-986 (<code>updateGoalMeter</code> function)</li>
+          </ul>
+          <p><strong>React Implementation</strong>:</p>
+          <ul>
+            <li>Create <code>GoalMeter.tsx</code> component in <code>src/components/editor/</code></li>
+            <li>Preserve exact CSS classes and styling</li>
+            <li>Use same calculation logic (<code>calculateStoryWordCount</code>)</li>
+            <li>Maintain click handler to open goal panel</li>
           </ul>
 
           <h4>2. "Today • N" Chip</h4>
+          <p><strong>Location</strong>: Left sidebar, below goal meter</p>
+          <p><strong>Current Implementation</strong>:</p>
           <ul>
-            <li><strong>Location</strong>: Left sidebar, below goal meter</li>
-            <li><strong>Features</strong>:
-              <ul>
-                <li>Displays "Today" label with daily word count (e.g., "Today • 250")</li>
-                <li>Progress bar showing daily progress toward daily target</li>
-                <li>Color-coded progress bar (green when ahead, red when behind in strict mode)</li>
-                <li>Clickable to open goal panel</li>
-                <li>Shows "—" when no goal is set</li>
-              </ul>
-            </li>
-            <li><strong>Preservation Requirements</strong>:
-              <ul>
-                <li>✅ Exact same visual design (chip style, padding, border, colors)</li>
-                <li>✅ Same placement below goal meter</li>
-                <li>✅ Same "Today • N" format with number formatting (e.g., "1,234" with commas)</li>
-                <li>✅ Same progress bar styling (2px height, subtle background)</li>
-                <li>✅ Same color logic (green/red in strict mode, primary color otherwise)</li>
-                <li>✅ Same click behavior (opens goal panel)</li>
-                <li>✅ Always visible (even when no goal set, shows "—")</li>
-              </ul>
-            </li>
-            <li><strong>React Implementation</strong>: Create <code>TodayChip.tsx</code> component in <code>src/components/editor/</code></li>
+            <li>Displays "Today" label with daily word count (e.g., "Today • 250")</li>
+            <li>Progress bar showing daily progress toward daily target</li>
+            <li>Color-coded progress bar (green when ahead, red when behind in strict mode)</li>
+            <li>Clickable to open goal panel</li>
+            <li>Shows "—" when no goal is set</li>
+          </ul>
+          <p><strong>Preservation Requirements</strong>:</p>
+          <ul>
+            <li>✅ Exact same visual design (chip style, padding, border, colors)</li>
+            <li>✅ Same placement below goal meter</li>
+            <li>✅ Same "Today • N" format with number formatting (e.g., "1,234" with commas)</li>
+            <li>✅ Same progress bar styling (2px height, subtle background)</li>
+            <li>✅ Same color logic (green/red in strict mode, primary color otherwise)</li>
+            <li>✅ Same click behavior (opens goal panel)</li>
+            <li>✅ Always visible (even when no goal set, shows "—")</li>
+          </ul>
+          <p><strong>Code Locations</strong>:</p>
+          <ul>
+            <li><code>editor.html</code> lines 77-83 (HTML structure)</li>
+            <li><code>editor.css</code> lines 137-187 (styling)</li>
+            <li><code>editor.js</code> lines 988-1055 (<code>updateTodayChip</code> function)</li>
+          </ul>
+          <p><strong>React Implementation</strong>:</p>
+          <ul>
+            <li>Create <code>TodayChip.tsx</code> component in <code>src/components/editor/</code></li>
+            <li>Preserve exact CSS classes and styling</li>
+            <li>Use same calculation logic (<code>calculateDailyTarget</code>)</li>
+            <li>Maintain color logic for strict mode (ahead/behind indicators)</li>
+            <li>Format numbers with <code>toLocaleString()</code> for comma separators</li>
           </ul>
 
           <h4>3. Footer Word/Character Counts</h4>
+          <p><strong>Location</strong>: Footer bar, center section</p>
+          <p><strong>Current Implementation</strong>:</p>
           <ul>
-            <li><strong>Location</strong>: Footer bar, center section</li>
-            <li><strong>Features</strong>:
-              <ul>
-                <li>Displays "Words: N" and "Characters: N" with separator ("—")</li>
-                <li>Updates in real-time as user types</li>
-                <li>Shows counts for active snippet only</li>
-                <li>Centered in footer bar</li>
-                <li>Small font size, secondary text color</li>
-              </ul>
-            </li>
-            <li><strong>Preservation Requirements</strong>:
-              <ul>
-                <li>✅ Exact same visual design (font size, color, spacing, separator)</li>
-                <li>✅ Same placement in footer center</li>
-                <li>✅ Same format ("Words: N — Characters: N")</li>
-                <li>✅ Same real-time update behavior</li>
-                <li>✅ Same calculation logic (active snippet only)</li>
-              </ul>
-            </li>
-            <li><strong>React Implementation</strong>: Create <code>Footer.tsx</code> component in <code>src/components/shared/</code></li>
+            <li>Displays "Words: N" and "Characters: N" with separator ("—")</li>
+            <li>Updates in real-time as user types</li>
+            <li>Shows counts for active snippet only</li>
+            <li>Centered in footer bar</li>
+            <li>Small font size, secondary text color</li>
+          </ul>
+          <p><strong>Preservation Requirements</strong>:</p>
+          <ul>
+            <li>✅ Exact same visual design (font size, color, spacing, separator)</li>
+            <li>✅ Same placement in footer center</li>
+            <li>✅ Same format ("Words: N — Characters: N")</li>
+            <li>✅ Same real-time update behavior</li>
+            <li>✅ Same calculation logic (active snippet only)</li>
+          </ul>
+          <p><strong>Code Locations</strong>:</p>
+          <ul>
+            <li><code>editor.html</code> lines 185-189 (HTML structure)</li>
+            <li><code>editor.css</code> lines 889-898 (styling)</li>
+            <li><code>editor.js</code> lines 949-972 (<code>updateFooter</code> function)</li>
+          </ul>
+          <p><strong>React Implementation</strong>:</p>
+          <ul>
+            <li>Create <code>Footer.tsx</code> component in <code>src/components/shared/</code></li>
+            <li>Preserve exact CSS classes and styling</li>
+            <li>Use same calculation logic (active snippet word/char count)</li>
+            <li>Update on active snippet change and content changes</li>
           </ul>
 
           <h4>4. Version Slider Affordance</h4>
+          <p><strong>Location</strong>: Footer bar (or editor area, depending on implementation)</p>
+          <p><strong>Current Implementation</strong>:</p>
           <ul>
-            <li><strong>Location</strong>: Footer bar (or editor area, depending on implementation)</li>
             <li><strong>Note</strong>: This may refer to a feature from the original 2011-2015 Yarny app that isn't in the current codebase</li>
-            <li><strong>Investigation Needed</strong>:
-              <ul>
-                <li>Check reference documentation for original version slider implementation</li>
-                <li>Verify if this feature exists in current codebase under different name</li>
-                <li>Document findings and implementation plan</li>
-              </ul>
-            </li>
-            <li><strong>Preservation Requirements</strong>:
-              <ul>
-                <li>✅ If present in current app: Preserve exact design and behavior</li>
-                <li>✅ If not present but referenced in original app: Document for future implementation</li>
-                <li>✅ Maintain same visual affordance and interaction pattern</li>
-              </ul>
-            </li>
+            <li>If present, it would allow users to view/edit different versions of a snippet</li>
+            <li>May be a timeline/history slider or version selector</li>
+          </ul>
+          <p><strong>Preservation Requirements</strong>:</p>
+          <ul>
+            <li>✅ If present in current app: Preserve exact design and behavior</li>
+            <li>✅ If not present but referenced in original app: Document for future implementation</li>
+            <li>✅ Maintain same visual affordance and interaction pattern</li>
+          </ul>
+          <p><strong>Investigation Needed</strong>:</p>
+          <ul>
+            <li>Check reference documentation for original version slider implementation</li>
+            <li>Verify if this feature exists in current codebase under different name</li>
+            <li>Document findings and implementation plan</li>
+          </ul>
+          <p><strong>React Implementation</strong>:</p>
+          <ul>
+            <li>If feature exists: Create <code>VersionSlider.tsx</code> component</li>
+            <li>Preserve exact design and interaction patterns</li>
+            <li>If not present: Document in migration plan for future consideration</li>
           </ul>
 
           <h3>Implementation Strategy</h3>
-          <ul>
-            <li><strong>Phase 1</strong>: Document and audit current implementation</li>
-            <li><strong>Phase 4</strong>: Implement Footer component (word/character counts) with exact styling</li>
-            <li><strong>Phase 5</strong>: Implement Goals UI components (Goal Meter, Today Chip) with exact styling</li>
-            <li><strong>Phase 7</strong>: Visual parity testing - side-by-side comparison with current app</li>
-          </ul>
+
+          <h4>Phase 1: Document and Audit</h4>
+          <ol>
+            <li><strong>Audit Current Implementation</strong>:
+              <ul>
+                <li>Document exact HTML structure for each element</li>
+                <li>Document exact CSS styling (colors, spacing, fonts, animations)</li>
+                <li>Document exact JavaScript behavior (click handlers, update logic)</li>
+                <li>Take screenshots for visual reference</li>
+              </ul>
+            </li>
+            <li><strong>Create Component Specifications</strong>:
+              <ul>
+                <li>Create detailed specs for each component</li>
+                <li>Include pixel-perfect measurements</li>
+                <li>Document all state dependencies</li>
+                <li>Document all event handlers</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h4>Phase 4: Implement Footer Components</h4>
+          <ol>
+            <li><strong>Footer Component</strong>:
+              <ul>
+                <li>Create <code>Footer.tsx</code> with exact styling</li>
+                <li>Implement <code>updateFooter</code> logic as hook</li>
+                <li>Preserve word/character count display</li>
+                <li>Test visual parity with current app</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h4>Phase 5: Implement Goals UI Components</h4>
+          <ol>
+            <li><strong>Goal Meter Component</strong>:
+              <ul>
+                <li>Create <code>GoalMeter.tsx</code> with exact styling</li>
+                <li>Implement <code>updateGoalMeter</code> logic as hook</li>
+                <li>Test visual parity with current app</li>
+              </ul>
+            </li>
+            <li><strong>Today Chip Component</strong>:
+              <ul>
+                <li>Create <code>TodayChip.tsx</code> with exact styling</li>
+                <li>Implement <code>updateTodayChip</code> logic as hook</li>
+                <li>Preserve color logic for strict mode</li>
+                <li>Test visual parity with current app</li>
+              </ul>
+            </li>
+            <li><strong>Version Slider</strong> (if applicable):
+              <ul>
+                <li>Investigate and document current implementation</li>
+                <li>Create component if feature exists</li>
+                <li>Preserve exact design and behavior</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h4>Phase 7: Visual Parity Testing</h4>
+          <ol>
+            <li><strong>Side-by-Side Comparison</strong>:
+              <ul>
+                <li>Deploy React app to <code>/react</code> path</li>
+                <li>Compare each element side-by-side with current app</li>
+                <li>Verify pixel-perfect visual match</li>
+                <li>Verify identical behavior</li>
+              </ul>
+            </li>
+            <li><strong>User Testing</strong>:
+              <ul>
+                <li>Test with users familiar with current app</li>
+                <li>Verify no "uncanny valley" effect</li>
+                <li>Confirm elements feel identical</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h3>Benefits</h3>
+          <ol>
+            <li><strong>User Familiarity</strong>: Users won't experience jarring visual changes</li>
+            <li><strong>Brand Consistency</strong>: Maintains Yarny's recognizable identity</li>
+            <li><strong>Reduced Learning Curve</strong>: No need to relearn UI elements</li>
+            <li><strong>Trust</strong>: Preserves elements users rely on daily</li>
+          </ol>
 
           <h3>Success Criteria</h3>
           <ul>
@@ -361,7 +473,14 @@ export function useDrive(folderId: string): UseDriveResult {
             <li>✅ User testing confirms no "uncanny valley" effect</li>
           </ul>
 
-          <p style="margin-top: var(--space-md); margin-bottom: 0; color: #92400E;"><strong style="color: #92400E !important;">LOE</strong>: 9-14 hours (documentation, implementation, and visual parity testing)</p>
+          <h3>LOE</h3>
+          <ul>
+            <li><strong>Documentation & Audit</strong>: 2-3 hours</li>
+            <li><strong>Component Implementation</strong>: 4-6 hours (Goal Meter, Today Chip, Footer)</li>
+            <li><strong>Version Slider Investigation</strong>: 1-2 hours (if needed)</li>
+            <li><strong>Visual Parity Testing</strong>: 2-3 hours</li>
+            <li><strong>Total</strong>: 9-14 hours</li>
+          </ul>
         </section>
 
         <section class="docs-section" id="migration-strategy">
@@ -522,7 +641,7 @@ export function useDrive(folderId: string): UseDriveResult {
             <li><strong>Format Constraint</strong>: Plain paragraphs and soft line breaks only (matches current model)</li>
             <li><strong>Editor as Truth</strong>: Editor is authoritative while Yarny is open</li>
             <li><strong>Reconciliation</strong>: Check for external changes on window focus, reconcile if needed</li>
-            <li><strong>Conflict Detection</strong>: Infrastructure in Phase 1, hooks and UI in Phase 6</li>
+            <li><strong>Early Conflict Detection</strong>: Bring conflict detection forward to Phase 1/2</li>
             <li>Type-safe editor API</li>
             <li>Handles cursor management and content synchronization</li>
           </ul>
