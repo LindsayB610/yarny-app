@@ -923,6 +923,92 @@
           </div>
         </div>
 
+          <div class="test-item">
+            <h4>Test 1.3: Right-to-Left (RTL) Snippet Display</h4>
+            <p>Verify that snippets containing right-to-left languages (Arabic, Hebrew, etc.) render correctly in the editor.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Create or open a snippet containing RTL text (e.g., Arabic or Hebrew)</li>
+                <li><strong>Verify layout:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Text aligns to the right edge</li>
+                    <li>Paragraph direction is RTL (punctuation appears on correct side)</li>
+                    <li>Mixed RTL/LTR content displays correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Verify persistence:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Save the snippet in Yarny</li>
+                    <li>Open the corresponding Google Doc</li>
+                    <li>Confirm RTL text is preserved</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-3" name="test-1-3">
+              <label for="test-1-3">RTL snippets display correctly in the editor</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 1.4: RTL Caret Movement & Navigation</h4>
+            <p>Verify that keyboard navigation behaves correctly while editing RTL snippets.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open the RTL snippet from Test 1.3</li>
+                <li>Place the caret within the RTL text</li>
+                <li><strong>Verify arrow keys:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Left arrow moves caret visually to the left (toward sentence end)</li>
+                    <li>Right arrow moves caret visually to the right (toward sentence start)</li>
+                    <li>Home/End keys move to start/end of RTL line correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Verify selection:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Shift+Arrow extends selection in expected direction</li>
+                    <li>Selected text highlights correctly without reversing characters</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-4" name="test-1-4">
+              <label for="test-1-4">Caret movement and selection work correctly in RTL snippets</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 1.5: RTL Word Count & Normalization</h4>
+            <p>Verify that word counting and normalization logic handle RTL content correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>In the RTL snippet, type additional RTL words and punctuation</li>
+                <li>Observe word count in footer and daily tally</li>
+                <li><strong>Verify:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Word count increases correctly for RTL words</li>
+                    <li>No unexpected extra spaces or reversed characters appear</li>
+                  </ul>
+                </li>
+                <li>Paste RTL text from an external source (Google Docs or Word)</li>
+                <li><strong>Verify normalization:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Formatting is normalized to plain text</li>
+                    <li>Directionality remains RTL</li>
+                    <li>No stray LTR characters appear at line edges</li>
+                  </ul>
+                </li>
+                <li>Save the snippet and confirm Google Docs copy matches exactly</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-5" name="test-1-5">
+              <label for="test-1-5">RTL words count correctly and pasted content normalizes as expected</label>
+            </div>
+          </div>
+
       </div>
 
         <!-- Section 4: Drag & Drop Visual Testing -->
@@ -3321,6 +3407,66 @@
             <label for="test-8-10">App handles offline/spotty-network conditions gracefully with clear feedback</label>
           </div>
         </div>
+
+        <div class="test-item">
+          <h4>Test 9.11: Cache Size Verification (Memory Bound)</h4>
+          <p>Verify that snippet caching is limited to the 50 most-recent entries and uses LRU eviction.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a large story with many snippets (50+ recommended)</li>
+              <li>Sequentially open at least 55 unique snippets</li>
+              <li>Open browser DevTools → Application → Storage (or use internal diagnostics if available)</li>
+              <li><strong>Verify cache size:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Cache stores no more than 50 snippet bodies</li>
+                  <li>Oldest snippet (first opened) is evicted once limit is exceeded</li>
+                  <li>Currently active snippet remains cached (not evicted)</li>
+                </ul>
+              </li>
+              <li>Switch back to an early snippet that should have been evicted</li>
+              <li><strong>Verify re-fetch:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Snippet reloads from Drive/network</li>
+                  <li>Cache updates to include snippet again</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-11" name="test-8-11">
+            <label for="test-8-11">Snippet cache enforces 50-item limit with correct LRU eviction</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.12: Long Session Memory Stability</h4>
+          <p>Verify that extended editing sessions do not cause unbounded memory growth.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Use the editor continuously for at least 60 minutes</li>
+              <li>During the session:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open and close many snippets</li>
+                  <li>Switch between stories if available</li>
+                  <li>Make periodic edits to trigger auto-save</li>
+                </ul>
+              </li>
+              <li>Monitor memory usage (Activity Monitor, Task Manager, or Chrome Performance monitor)</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Memory usage stabilizes (no continuous upward trend)</li>
+                  <li>Cache stays within 50 snippet limit</li>
+                  <li>No editor slowdowns or GC pauses are observed</li>
+                </ul>
+              </li>
+              <li>Record memory measurements at start, midpoint, and end of session</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-12" name="test-8-12">
+            <label for="test-8-12">Extended sessions maintain stable memory usage</label>
+          </div>
+        </div>
       </div>
 
         <!-- Section 1: Smoke Tests & Infrastructure Verification -->
@@ -4243,6 +4389,44 @@ Notes: He's been to many places… but never talks about them.</pre>
             </div>
           </div>
 
+          <div class="test-item">
+            <h4>Test 10.11: Very Long Content Round-Trip (10KB+)</h4>
+            <p>Verify that large snippets (10KB or more) round-trip between Yarny and Google Docs without loss or performance issues.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Create or import a snippet with at least 10KB of plain text content (≈ 1,500–2,000 words)</li>
+                <li><strong>Record baseline:</strong> Copy entire content and note word count/character count</li>
+                <li><strong>Save in Yarny</strong> - wait for auto-save to complete</li>
+                <li><strong>Open in Google Docs</strong> - verify:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All content is present with no truncation</li>
+                    <li>Paragraph and line breaks match baseline</li>
+                    <li>No noticeable performance lag in Google Docs</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Add several new paragraphs at beginning, middle, and end</li>
+                    <li>Save the document</li>
+                  </ul>
+                </li>
+                <li><strong>Return to Yarny</strong> - switch away and back to the snippet</li>
+                <li><strong>Verify in Yarny:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Google Docs edits appear correctly</li>
+                    <li>All original content remains intact</li>
+                    <li>Editor remains responsive while scrolling and editing</li>
+                  </ul>
+                </li>
+                <li><strong>Final comparison:</strong> Confirm final content matches Google Docs exactly (no character loss)</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-11" name="roundtrip-10-11">
+              <label for="roundtrip-10-11">10KB+ round-trip preserves all content and remains performant</label>
+            </div>
+          </div>
+
           <div class="note-box" style="margin-top: var(--space-2xl);">
             <p><strong>Round-Trip Validation Execution:</strong> These tests should be executed:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
@@ -4861,6 +5045,66 @@ Notes: He's been to many places… but never talks about them.</pre>
               <label for="ops-11-18">Multi-tab reordering is synchronized correctly</label>
             </div>
           </div>
+
+        <div class="test-item">
+          <h4>Test 11.19: Order Persists During Concurrent Edits</h4>
+          <p>Verify that chapter order remains stable when other edits occur concurrently.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with multiple chapters and snippets</li>
+              <li><strong>Reorder chapters:</strong> Drag Chapter B above Chapter A</li>
+              <li>Without refreshing, switch to a different snippet and make edits (add text)</li>
+              <li>Trigger an auto-save (wait for "Saved" status)</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Chapter order stays in the new position during edits</li>
+                  <li>No reversion to previous order occurs after auto-save</li>
+                </ul>
+              </li>
+              <li>Refresh the page</li>
+              <li><strong>Verify persistence:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Chapter order remains as reordered</li>
+                  <li>Snippet edits are also preserved</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="ops-11-19" name="ops-11-19">
+            <label for="ops-11-19">Chapter order persists while concurrent edits occur</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 11.20: Order Persists Through Background Loads</h4>
+          <p>Verify that background synchronization (e.g., story reloads, Drive refresh) does not revert chapter order.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story and reorder chapters to a new arrangement</li>
+              <li>Trigger a background load:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Use the "Reload from Drive" control if available, or</li>
+                  <li>Open DevTools and simulate network reconnect triggering background sync, or</li>
+                  <li>Switch to another story and back (if that forces background fetch)</li>
+                </ul>
+              </li>
+              <li><strong>Monitor:</strong> Watch network panel for Drive fetches completing</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Chapter order remains unchanged after background requests finish</li>
+                  <li>No duplicate or missing chapters appear</li>
+                </ul>
+              </li>
+              <li>Refresh the page as a final confirmation</li>
+              <li>Verify order persists and matches the reordered state</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="ops-11-20" name="ops-11-20">
+            <label for="ops-11-20">Chapter order survives background reloads and sync operations</label>
+          </div>
+        </div>
 
           <div class="note-box" style="margin-top: var(--space-2xl);">
             <p><strong>Operations Validation Execution:</strong> These tests should be executed:</p>
@@ -5657,6 +5901,60 @@ Notes: He's been to many places… but never talks about them.</pre>
               <label for="goals-14-10">Midnight rollover resets daily word count correctly</label>
             </div>
           </div>
+
+        <div class="test-item">
+          <h4>Test 14.11: Today Chip Timezone Rollover</h4>
+          <p>Verify that the "Today" chip updates correctly when system timezone changes and across IANA regions.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Set a daily goal and accumulate progress (e.g., write 300 words)</li>
+              <li>Record current timezone and "Today" chip value</li>
+              <li>Change system timezone to a different IANA timezone (e.g., from America/Los_Angeles to Europe/London)</li>
+              <li>Reload Yarny and verify:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>"Today" chip reflects correct local day and word count</li>
+                  <li>No double counting or reset occurs prematurely</li>
+                </ul>
+              </li>
+              <li>Adjust system clock to just before local midnight in new timezone</li>
+              <li>Wait for midnight (or advance clock) and verify:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>"Today" chip rolls over to 0 at midnight</li>
+                  <li>Previous day's counts move to ledger/history</li>
+                </ul>
+              </li>
+              <li>Repeat with an additional timezone that observes DST to ensure rollover remains correct</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="goals-14-11" name="goals-14-11">
+            <label for="goals-14-11">Today chip handles timezone changes and midnight rollover correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 14.12: Goal Calculations Across DST Boundaries</h4>
+          <p>Verify that goal deadlines and remaining days calculations stay accurate when daylight saving transitions occur.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Create a goal with a deadline that spans an upcoming or simulated DST transition</li>
+              <li>Note current remaining days/hours displayed in goal meter and goal details</li>
+              <li>Adjust system timezone/clock to cross the DST boundary (e.g., move clock forward by 1 hour for "spring forward")</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Remaining days/hours adjust correctly (no +/-24h error)</li>
+                  <li>Goal progress meter still reflects correct percentage toward deadline</li>
+                </ul>
+              </li>
+              <li>Repeat with the opposite transition (fall back) and confirm calculations remain consistent</li>
+              <li>Document any discrepancies between displayed deadlines and expected values</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="goals-14-12" name="goals-14-12">
+            <label for="goals-14-12">Goal deadlines remain accurate across DST changes</label>
+          </div>
+        </div>
         </div>
 
         <!-- Section 15: Notes CRUD Operations -->

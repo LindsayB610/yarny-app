@@ -335,7 +335,7 @@ This analysis is based on:
   - Documentation added to `tests/README.md` with usage examples
 
 #### Success Criteria
-- [ ] **Update manual testing checklist post-automation** - Not done
+- [x] **Update manual testing checklist post-automation** - **✅ COMPLETED** - Added missing manual scenarios to `testing-workbook.html` covering RTL snippets, memory-bound cache limits, long-content round trips, order persistence during concurrent/background loads, and timezone/DST rollover tests.
 
 ---
 
@@ -594,7 +594,7 @@ This analysis is based on:
 1. **Complete accessibility verification** - Should Have requirement
 2. **Complete remaining component tests** - Test coverage
 3. **Document all improvements** - Knowledge preservation
-4. **Update manual testing checklist** - Process improvement
+4. **Update manual testing checklist** - **DONE** (see completion note above; workbook now includes RTL, memory-bound, long-content, order persistence, and timezone/DST scenarios)
 
 ---
 
