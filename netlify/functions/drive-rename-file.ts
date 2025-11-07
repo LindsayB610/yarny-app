@@ -1,10 +1,14 @@
+import {
+  DriveRenameFileRequestSchema,
+  validateRequest
+} from "./contract";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 export const handler: NetlifyFunctionHandler = async (
   event: NetlifyFunctionEvent
@@ -19,17 +23,23 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return createErrorResponse(400, "fileId and fileName required");
-    }
-
-    const { fileId, fileName } = JSON.parse(event.body) as {
-      fileId?: string;
-      fileName?: string;
-    };
-
-    if (!fileId || !fileName) {
-      return createErrorResponse(400, "fileId and fileName required");
+    // Validate request body with Zod schema
+    // Schema handles both 'newName' and 'fileName' for backward compatibility
+    let fileId: string;
+    let newName: string;
+    try {
+      const validated = validateRequest(
+        DriveRenameFileRequestSchema,
+        event.body,
+        "fileId and fileName (or newName) required"
+      );
+      fileId = validated.fileId;
+      newName = validated.newName;
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "fileId and fileName (or newName) required"
+      );
     }
 
     const drive = await getAuthenticatedDriveClient(session.email);
@@ -38,13 +48,13 @@ export const handler: NetlifyFunctionHandler = async (
     await drive.files.update({
       fileId: fileId,
       requestBody: {
-        name: fileName
+        name: newName
       }
     });
 
     return createSuccessResponse({
       id: fileId,
-      name: fileName
+      name: newName
     });
   } catch (error) {
     console.error("Drive rename file error:", error);

@@ -9,6 +9,7 @@ import { createDriveClient } from "../api/driveClient";
 import { useYarnyStore } from "../store/provider";
 import {
   selectActiveStory,
+  selectActiveStorySnippets,
   selectStoriesForSelectedProject
 } from "../store/selectors";
 
@@ -49,6 +50,7 @@ export const useDriveSaveStoryMutation = () => {
   const queryClient = useQueryClient();
   const driveClient = useMemo(() => createDriveClient(), []);
   const activeStory = useYarnyStore(selectActiveStory);
+  const activeSnippets = useYarnyStore(selectActiveStorySnippets);
   const setSyncing = useYarnyStore((state) => state.setSyncing);
   const setLastSyncedAt = useYarnyStore((state) => state.setLastSyncedAt);
 
@@ -59,10 +61,14 @@ export const useDriveSaveStoryMutation = () => {
         throw new Error("No active story selected");
       }
 
+      // Get the last snippet's revision ID if available
+      const lastSnippet = activeSnippets[activeSnippets.length - 1];
+      const revisionId = lastSnippet?.driveRevisionId;
+
       return driveClient.saveStory({
         storyId: activeStory.id,
         content,
-        revisionId: activeStory.snippetIds.at(-1)
+        revisionId
       });
     },
     onMutate: () => {

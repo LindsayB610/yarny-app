@@ -1,7 +1,7 @@
 import { Box, Button, IconButton, Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import { CloudUpload, MoreVert } from "@mui/icons-material";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
 import {
@@ -12,7 +12,7 @@ import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection } from "../../hooks/useConflictDetection";
 import { useExport } from "../../hooks/useExport";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
-import { useVisibilityGatedSnippetQueries } from "../../hooks/useVisibilityGatedQueries";
+import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveStory,
@@ -72,13 +72,17 @@ export function StoryEditor(): JSX.Element {
   // Export hook
   const { exportSnippets, isExporting, progress: exportProgressState } = useExport();
 
-  // Lazy loading: Prefetch first few snippets (even without full visibility gating)
-  // This helps performance by loading likely-to-be-viewed snippets early
-  // Note: Full visibility gating requires snippet list DOM elements, which will be integrated
-  // when NotesSidebar snippet lists are built out
-  const snippetIds = snippets.map((s) => s.id);
-  const fileIdsMap: Record<string, string> = {}; // Will be populated when snippet file IDs are available
-  useVisibilityGatedSnippetQueries(snippetIds, fileIdsMap, Boolean(story && snippetIds.length > 0));
+  // Note: Visibility gating for snippet loading is now handled in StorySidebarContent
+  // where the snippet list DOM elements exist
+
+  // Performance metrics tracking
+  const {
+    recordFirstKeystroke,
+    startSnippetSwitch,
+    endSnippetSwitch,
+    getMetrics,
+    checkBudgets
+  } = usePerformanceMetrics();
 
   // Conflict detection
   const { checkSnippetConflict, resolveConflictWithDrive } = useConflictDetection();
@@ -89,6 +93,23 @@ export function StoryEditor(): JSX.Element {
 
   // Track if editor is open (authoritative)
   const [isEditorOpen, setIsEditorOpen] = useState(true);
+  const previousStoryIdRef = useRef<string | undefined>(story?.id);
+  const previousSnippetsKeyRef = useRef<string>("");
+
+  // Track story/snippet switches for performance metrics
+  useEffect(() => {
+    const currentSnippetsKey = snippets.map((s) => s.id).join(",");
+    const storyChanged = story?.id !== previousStoryIdRef.current;
+    const snippetsChanged = currentSnippetsKey !== previousSnippetsKeyRef.current;
+
+    if (storyChanged || (snippetsChanged && previousSnippetsKeyRef.current !== "")) {
+      // Story or snippets changed - start tracking switch
+      startSnippetSwitch();
+    }
+
+    previousStoryIdRef.current = story?.id;
+    previousSnippetsKeyRef.current = currentSnippetsKey;
+  }, [story?.id, snippets, startSnippetSwitch]);
 
   useEffect(() => {
     if (!editor) {
@@ -101,8 +122,13 @@ export function StoryEditor(): JSX.Element {
       editor.commands.setContent(initialDocument, false, {
         preserveWhitespace: true
       });
+      // Editor content is set - snippet switch is complete
+      // Use a small delay to ensure editor is ready for interaction
+      setTimeout(() => {
+        endSnippetSwitch();
+      }, 0);
     }
-  }, [editor, initialDocument, isEditorOpen]);
+  }, [editor, initialDocument, isEditorOpen, endSnippetSwitch]);
 
   // Check for conflicts when story changes
   useEffect(() => {
@@ -146,11 +172,19 @@ export function StoryEditor(): JSX.Element {
   useEffect(() => {
     if (!editor) return;
 
+    let hasRecordedFirstKeystroke = false;
+
     const handleUpdate = () => {
       const plainText = extractPlainTextFromDocument(editor.getJSON());
       setEditorContent(plainText);
       // Mark editor as open/authoritative when user types
       setIsEditorOpen(true);
+      
+      // Record first keystroke for performance metrics
+      if (!hasRecordedFirstKeystroke) {
+        recordFirstKeystroke();
+        hasRecordedFirstKeystroke = true;
+      }
     };
 
     // Set initial content
@@ -169,7 +203,7 @@ export function StoryEditor(): JSX.Element {
       editor.off("focus", () => setIsEditorOpen(true));
       editor.off("blur", () => {});
     };
-  }, [editor]);
+  }, [editor, recordFirstKeystroke]);
 
   if (!story) {
     return (

@@ -14,7 +14,7 @@ describe("State Management", () => {
     });
 
     it("upserts entities correctly", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       const newStory = createMockStory({
         id: "story-2",
@@ -31,7 +31,7 @@ describe("State Management", () => {
     });
 
     it("updates existing entities", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       const updatedStory = createMockStory({
         id: "story-1",
@@ -47,7 +47,7 @@ describe("State Management", () => {
     });
 
     it("selects project", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       store.getState().selectProject("project-2");
 
@@ -55,7 +55,7 @@ describe("State Management", () => {
     });
 
     it("selects story", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       store.getState().selectStory("story-2");
 
@@ -63,7 +63,7 @@ describe("State Management", () => {
     });
 
     it("clears all state", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       store.getState().clear();
 
@@ -73,7 +73,7 @@ describe("State Management", () => {
     });
 
     it("sets syncing state", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       store.getState().setSyncing(true);
       expect(store.getState().ui.isSyncing).toBe(true);
@@ -83,7 +83,7 @@ describe("State Management", () => {
     });
 
     it("sets last synced timestamp", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
       const timestamp = "2025-01-02T00:00:00.000Z";
 
       store.getState().setLastSyncedAt(timestamp);
@@ -94,7 +94,7 @@ describe("State Management", () => {
 
   describe("Normalized State Structure", () => {
     it("maintains normalized entities by id", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       const snippet1 = createMockSnippet({ id: "snippet-1", order: 1 });
       const snippet2 = createMockSnippet({ id: "snippet-2", order: 2 });
@@ -110,7 +110,7 @@ describe("State Management", () => {
     });
 
     it("maintains order arrays", () => {
-      const store = createStore(createMockState());
+      const store = createYarnyStore(createMockState());
 
       const story1 = createMockStory({ id: "story-1" });
       const story2 = createMockStory({ id: "story-2" });

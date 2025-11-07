@@ -35,6 +35,12 @@
   to = "/migration-plan.html"
   status = 200
 
+# React app at /react path - must come before catch-all
+[[redirects]]
+  from = "/react/*"
+  to = "/react/index.html"
+  status = 200
+
 # Catch-all for other routes (SPA fallback)
 [[redirects]]
   from = "/*"

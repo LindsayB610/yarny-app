@@ -39,6 +39,22 @@ export function useAutoSave(
   const lastSavedContentRef = useRef<string>("");
   const queuedSaveRef = useRef<{ fileId: string; content: string } | null>(null);
 
+  // Mutation for processing queued saves - uses React Query for proper error handling and retry logic
+  const processQueuedSavesMutation = useMutation({
+    mutationFn: async (save: { fileId: string; content: string }) => {
+      return apiClient.writeDriveFile({
+        fileId: save.fileId,
+        fileName: "", // Not needed for existing files
+        content: save.content
+      });
+    },
+    onSuccess: (_, save) => {
+      // Invalidate relevant queries after successful save
+      queryClient.invalidateQueries({ queryKey: ["snippet", save.fileId] });
+      queryClient.invalidateQueries({ queryKey: ["drive", "file", save.fileId] });
+    }
+  });
+
   // Queue save for later when offline
   const queueSave = useCallback(
     (fileId: string, content: string) => {
@@ -75,14 +91,10 @@ export function useAutoSave(
           return;
         }
 
-        // Process saves one at a time
+        // Process saves one at a time using React Query mutation
         for (const save of queued) {
           try {
-            await apiClient.writeDriveFile({
-              fileId: save.fileId,
-              fileName: "", // Not needed for existing files
-              content: save.content
-            });
+            await processQueuedSavesMutation.mutateAsync(save);
           } catch (error) {
             console.error("Failed to process queued save:", error);
             // Keep the save in queue if it fails
@@ -112,7 +124,7 @@ export function useAutoSave(
         handleRetry as EventListener
       );
     };
-  }, [isOnline]);
+  }, [isOnline, processQueuedSavesMutation]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: { fileId: string; content: string }) => {

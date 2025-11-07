@@ -1,52 +1,153 @@
-import { Box, useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, type JSX } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useRef, useMemo, useState, useEffect, type JSX } from "react";
+import { Box, useTheme, useMediaQuery } from "@mui/material";
 
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { StoryCard } from "./StoryCard";
 
 interface VirtualizedStoryListProps {
-  stories: StoryFolder[];
+  stories: (StoryFolder & { searchQuery?: string })[];
+  /**
+   * Threshold for enabling virtualization. If stories.length >= threshold, virtualization is enabled.
+   * Default: 20 stories
+   */
+  virtualizationThreshold?: number;
 }
 
 /**
  * Virtualized story list component
- * This is a scaffold/stub for future virtualization implementation.
- * Currently renders a regular grid, but structure is ready for virtualization.
- *
- * When performance requires it, we can:
- * 1. Replace the Grid with a virtual list using @tanstack/react-virtual
- * 2. Measure story card heights for proper virtualization
- * 3. Implement dynamic row heights if needed
+ * Uses @tanstack/react-virtual for efficient rendering of large story lists.
+ * Automatically enables virtualization when story count exceeds threshold.
  */
 export function VirtualizedStoryList({
-  stories
+  stories,
+  virtualizationThreshold = 20
 }: VirtualizedStoryListProps): JSX.Element {
-  // Stub: Virtualization infrastructure ready but not yet active
-  // This component structure allows us to easily switch to virtualization later
   const parentRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up("md"));
+  const isSm = useMediaQuery(theme.breakpoints.up("sm"));
 
-  // TODO: When implementing virtualization, uncomment and configure:
-  // const virtualizer = useVirtualizer({
-  //   count: stories.length,
-  //   getScrollElement: () => parentRef.current,
-  //   estimateSize: () => 220, // Estimated height of a story card
-  //   overscan: 5
-  // });
+  // Calculate columns based on breakpoints
+  const columnsPerRow = useMemo(() => {
+    if (isMd) return 3;
+    if (isSm) return 2;
+    return 1;
+  }, [isMd, isSm]);
 
-  // For now, render as a regular grid
-  // When virtualization is needed, replace with virtualized rendering
+  // Determine if we should use virtualization based on story count
+  const shouldVirtualize = stories.length >= virtualizationThreshold;
+
+  const rowsCount = Math.ceil(stories.length / columnsPerRow);
+
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualize ? rowsCount : stories.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 240, // Estimated height of a story card row (card height + gap)
+    overscan: 2
+  });
+
+  // Trigger re-render when window resizes to recalculate columns
+  // The useMediaQuery hooks will automatically update, but we need to trigger virtualizer recalculation
+  useEffect(() => {
+    if (typeof window === "undefined" || !shouldVirtualize) return;
+
+    const handleResize = () => {
+      // Force virtualizer to recalculate by updating the count
+      virtualizer.measure();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [shouldVirtualize, virtualizer, columnsPerRow]);
+
+  // If virtualization is not needed, render as a regular grid
+  if (!shouldVirtualize) {
+    return (
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)"
+          },
+          gap: 2
+        }}
+      >
+        {stories.map((story) => (
+          <StoryCard key={story.id} story={story} searchQuery={story.searchQuery} />
+        ))}
+      </Box>
+    );
+  }
+
+  // Virtualized rendering
+  const virtualItems = virtualizer.getVirtualItems();
+
   return (
     <Box
       ref={parentRef}
       sx={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: 2
+        height: "600px", // Fixed height container for virtualization
+        overflow: "auto",
+        // Custom scrollbar styling
+        "&::-webkit-scrollbar": {
+          width: "8px"
+        },
+        "&::-webkit-scrollbar-track": {
+          background: "rgba(0, 0, 0, 0.1)",
+          borderRadius: "4px"
+        },
+        "&::-webkit-scrollbar-thumb": {
+          background: "rgba(255, 255, 255, 0.3)",
+          borderRadius: "4px",
+          "&:hover": {
+            background: "rgba(255, 255, 255, 0.5)"
+          }
+        }
       }}
     >
-      {stories.map((story) => (
-        <StoryCard key={story.id} story={story} />
-      ))}
+      <Box
+        sx={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative"
+        }}
+      >
+        {virtualItems.map((virtualRow) => {
+          const rowIndex = virtualRow.index;
+          const startIdx = rowIndex * columnsPerRow;
+          const endIdx = Math.min(startIdx + columnsPerRow, stories.length);
+          const rowStories = stories.slice(startIdx, endIdx);
+
+          return (
+            <Box
+              key={virtualRow.key}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)"
+                },
+                gap: 2,
+                padding: 1
+              }}
+            >
+              {rowStories.map((story) => (
+                <StoryCard key={story.id} story={story} searchQuery={story.searchQuery} />
+              ))}
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 }

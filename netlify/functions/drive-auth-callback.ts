@@ -1,12 +1,13 @@
-import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
+
+import { saveTokens, getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent } from "./types";
-import { saveTokens, getAuthenticatedDriveClient } from "./drive-client";
 
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();

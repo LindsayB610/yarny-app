@@ -1,0 +1,30 @@
+{
+  "project": {
+    "id": "test-large",
+    "name": "Test Large Project",
+    "description": "Large test project for stress testing, virtualization validation, lazy loading, and export chunking",
+    "genre": "Epic Fantasy",
+    "wordGoal": 100000,
+    "driveFolderId": "REPLACE_WITH_DRIVE_FOLDER_ID"
+  },
+  "story": {
+    "id": "test-large-story",
+    "title": "The Epic Saga of Test Large",
+    "driveFolderId": "REPLACE_WITH_STORY_FOLDER_ID",
+    "updatedAt": "2025-01-08T00:00:00.000Z"
+  },
+  "chapters": [],
+  "snippets": [],
+  "people": [],
+  "places": [],
+  "things": [],
+  "goal": {
+    "target": 100000,
+    "deadline": "2026-12-31T23:59:59.000Z",
+    "writingDays": [true, true, true, true, true, true, false],
+    "daysOff": [],
+    "mode": "strict"
+  },
+  "note": "This project has 25 chapters with 15 snippets each (375 total), plus Chapter 13 has 55 snippets (50+ for export chunking tests). Total: 430 chapter snippets + 75 notes = 505 total snippets."
+}
+

@@ -10,6 +10,7 @@ const createDefaultState = (): YarnyState => ({
     projectOrder: [],
     stories: {},
     storyOrder: [],
+    chapters: {},
     snippets: {}
   },
   ui: {
@@ -89,12 +90,27 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
             }
           });
 
+          payload.chapters?.forEach((chapter) => {
+            draft.entities.chapters[chapter.id] = chapter;
+            const story = draft.entities.stories[chapter.storyId];
+            if (story && !story.chapterIds.includes(chapter.id)) {
+              story.chapterIds.push(chapter.id);
+              // Sort chapters by order
+              story.chapterIds.sort(
+                (a, b) =>
+                  (draft.entities.chapters[a]?.order ?? 0) -
+                  (draft.entities.chapters[b]?.order ?? 0)
+              );
+            }
+          });
+
           payload.snippets?.forEach((snippet) => {
             draft.entities.snippets[snippet.id] = snippet;
-            const story = draft.entities.stories[snippet.storyId];
-            if (story && !story.snippetIds.includes(snippet.id)) {
-              story.snippetIds.push(snippet.id);
-              story.snippetIds.sort(
+            const chapter = draft.entities.chapters[snippet.chapterId];
+            if (chapter && !chapter.snippetIds.includes(snippet.id)) {
+              chapter.snippetIds.push(snippet.id);
+              // Sort snippets by order within chapter
+              chapter.snippetIds.sort(
                 (a, b) =>
                   (draft.entities.snippets[a]?.order ?? 0) -
                   (draft.entities.snippets[b]?.order ?? 0)

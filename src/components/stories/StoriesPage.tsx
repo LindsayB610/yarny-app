@@ -10,7 +10,7 @@ import { EmptyState } from "./EmptyState";
 import { LoadingState } from "./LoadingState";
 import { NewStoryModal } from "./NewStoryModal";
 import { StoriesHeader } from "./StoriesHeader";
-import { StoriesList } from "./StoriesList";
+import { VirtualizedStoryList } from "./VirtualizedStoryList";
 
 export function StoriesPage(): JSX.Element {
   const navigate = useNavigate();
@@ -85,7 +85,12 @@ export function StoriesPage(): JSX.Element {
           ) : filteredStories.length === 0 ? (
             <EmptyState onNewStory={() => setIsNewStoryModalOpen(true)} />
           ) : (
-            <StoriesList stories={filteredStories} />
+            <VirtualizedStoryList
+              stories={filteredStories.map((story) => ({
+                ...story,
+                searchQuery
+              }))}
+            />
           )}
         </Box>
       </Container>

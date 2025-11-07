@@ -1,14 +1,15 @@
 import { OAuth2Client } from "google-auth-library";
+
+import {
+  VerifyGoogleRequestSchema,
+  validateRequest
+} from "./contract";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
-import { addCorsHeaders, createErrorResponse, createSuccessResponse } from "./types";
-
-interface VerifyGoogleRequest {
-  token: string;
-}
+import { addCorsHeaders, createErrorResponse } from "./types";
 
 const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || "lindsayb82@gmail.com";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -38,17 +39,21 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return addCorsHeaders(
-        createErrorResponse(400, "Token required")
+    // Validate request body with Zod schema
+    let token: string;
+    try {
+      const validated = validateRequest(
+        VerifyGoogleRequestSchema,
+        event.body,
+        "Token required"
       );
-    }
-
-    const { token } = JSON.parse(event.body) as VerifyGoogleRequest;
-
-    if (!token) {
+      token = validated.token;
+    } catch (validationError) {
       return addCorsHeaders(
-        createErrorResponse(400, "Token required")
+        createErrorResponse(
+          400,
+          validationError instanceof Error ? validationError.message : "Token required"
+        )
       );
     }
 

@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const types_1 = require("./types");
+const contract_1 = require("./contract");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 const handler = async (event) => {
     if (event.httpMethod !== "GET") {
         return (0, types_1.createErrorResponse)(405, "Method not allowed");
@@ -14,7 +15,17 @@ const handler = async (event) => {
     console.log("Drive list - looking for tokens for email:", session.email);
     try {
         const drive = await (0, drive_client_1.getAuthenticatedDriveClient)(session.email);
-        const { folderId, pageToken } = event.queryStringParameters || {};
+        // Validate query parameters with Zod schema
+        let folderId;
+        let pageToken;
+        try {
+            const validated = (0, contract_1.validateQueryParams)(contract_1.DriveListQueryParamsSchema, event.queryStringParameters, "Invalid query parameters");
+            folderId = validated.folderId;
+            pageToken = validated.pageToken;
+        }
+        catch (validationError) {
+            return (0, types_1.createErrorResponse)(400, validationError instanceof Error ? validationError.message : "Invalid query parameters");
+        }
         const query = folderId
             ? `'${folderId}' in parents and trashed=false`
             : "trashed=false";

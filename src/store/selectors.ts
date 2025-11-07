@@ -1,4 +1,4 @@
-import type { Snippet, Story, YarnyStore } from "./types";
+import type { Chapter, EntityId, Snippet, Story, YarnyStore } from "./types";
 
 const notNil = <T>(value: T | null | undefined): value is T => value != null;
 
@@ -40,16 +40,43 @@ export const selectActiveStory = (state: YarnyStore): Story | undefined => {
   return state.entities.stories[activeStoryId];
 };
 
-export const selectActiveStorySnippets = (state: YarnyStore): Snippet[] => {
+export const selectActiveStoryChapters = (state: YarnyStore): Chapter[] => {
   const story = selectActiveStory(state);
   if (!story) {
     return [];
   }
 
-  return story.snippetIds
+  return story.chapterIds
+    .map((id) => state.entities.chapters[id])
+    .filter(notNil)
+    .sort((a, b) => a.order - b.order);
+};
+
+export const selectSnippetsForChapter = (
+  state: YarnyStore,
+  chapterId: EntityId
+): Snippet[] => {
+  const chapter = state.entities.chapters[chapterId];
+  if (!chapter) {
+    return [];
+  }
+
+  return chapter.snippetIds
     .map((id) => state.entities.snippets[id])
     .filter(notNil)
     .sort((a, b) => a.order - b.order);
+};
+
+export const selectActiveStorySnippets = (state: YarnyStore): Snippet[] => {
+  const chapters = selectActiveStoryChapters(state);
+  const allSnippets: Snippet[] = [];
+
+  chapters.forEach((chapter) => {
+    const chapterSnippets = selectSnippetsForChapter(state, chapter.id);
+    allSnippets.push(...chapterSnippets);
+  });
+
+  return allSnippets;
 };
 
 export const selectIsSyncing = (state: YarnyStore): boolean =>

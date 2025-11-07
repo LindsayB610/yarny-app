@@ -1,10 +1,14 @@
+import {
+  DriveListQueryParamsSchema,
+  validateQueryParams
+} from "./contract";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 export const handler: NetlifyFunctionHandler = async (
   event: NetlifyFunctionEvent
@@ -23,7 +27,23 @@ export const handler: NetlifyFunctionHandler = async (
   try {
     const drive = await getAuthenticatedDriveClient(session.email);
 
-    const { folderId, pageToken } = event.queryStringParameters || {};
+    // Validate query parameters with Zod schema
+    let folderId: string | undefined;
+    let pageToken: string | undefined;
+    try {
+      const validated = validateQueryParams(
+        DriveListQueryParamsSchema,
+        event.queryStringParameters,
+        "Invalid query parameters"
+      );
+      folderId = validated.folderId;
+      pageToken = validated.pageToken;
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "Invalid query parameters"
+      );
+    }
 
     const query = folderId
       ? `'${folderId}' in parents and trashed=false`

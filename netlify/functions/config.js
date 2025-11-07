@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const types_1 = require("./types");
-const handler = async (event) => {
+const handler = async (_event) => {
     const clientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
     if (!clientId) {
         console.error("GOOGLE_CLIENT_ID environment variable is missing or empty");

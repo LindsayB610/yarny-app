@@ -9,6 +9,7 @@ import { StoryList } from "../navigation/StoryList";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
 import { StorySidebarHeader } from "../story/StorySidebarHeader";
+import { StorySidebarContent } from "../story/StorySidebarContent";
 import { OfflineBanner } from "./OfflineBanner";
 
 export function AppLayout(): JSX.Element {
@@ -64,6 +65,9 @@ export function AppLayout(): JSX.Element {
           <Divider />
           <Box sx={{ flex: 1, overflow: "auto" }}>
             <StorySidebarHeader />
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <StorySidebarContent />
+            </Box>
           </Box>
         </Stack>
       </Box>

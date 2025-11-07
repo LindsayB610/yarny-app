@@ -1,3 +1,8 @@
+import {
+  DriveCreateFolderRequestSchema,
+  validateRequest
+} from "./contract";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionContext,
@@ -5,7 +10,6 @@ import type {
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 // Helper to add timeout to promises
 function withTimeout<T>(
@@ -41,19 +45,26 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return createErrorResponse(400, "folderName required");
+    // Validate request body with Zod schema
+    // Schema handles both 'name' and 'folderName' for backward compatibility
+    let name: string;
+    let parentFolderId: string | undefined;
+    try {
+      const validated = validateRequest(
+        DriveCreateFolderRequestSchema,
+        event.body,
+        "folderName (or name) required"
+      );
+      name = validated.name;
+      parentFolderId = validated.parentFolderId;
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "folderName (or name) required"
+      );
     }
 
-    const { folderName, parentFolderId } = JSON.parse(event.body) as {
-      folderName?: string;
-      parentFolderId?: string;
-    };
-
-    if (!folderName) {
-      return createErrorResponse(400, "folderName required");
-    }
-
+    const folderName = name; // Use normalized 'name' field from schema
     console.log("Creating folder:", folderName, "parentFolderId:", parentFolderId);
 
     // Get authenticated drive client with timeout (max 8 seconds to leave buffer for response)

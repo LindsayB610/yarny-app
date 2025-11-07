@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const google_auth_library_1 = require("google-auth-library");
+const contract_1 = require("./contract");
 const types_1 = require("./types");
 const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || "lindsayb82@gmail.com";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -24,12 +25,14 @@ const handler = async (event) => {
         return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(405, "Method not allowed"));
     }
     try {
-        if (!event.body) {
-            return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(400, "Token required"));
+        // Validate request body with Zod schema
+        let token;
+        try {
+            const validated = (0, contract_1.validateRequest)(contract_1.VerifyGoogleRequestSchema, event.body, "Token required");
+            token = validated.token;
         }
-        const { token } = JSON.parse(event.body);
-        if (!token) {
-            return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(400, "Token required"));
+        catch (validationError) {
+            return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(400, validationError instanceof Error ? validationError.message : "Token required"));
         }
         if (!GOOGLE_CLIENT_ID) {
             console.error("GOOGLE_CLIENT_ID not configured");

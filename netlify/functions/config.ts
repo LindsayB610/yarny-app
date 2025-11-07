@@ -6,7 +6,7 @@ import type {
 import { addCorsHeaders, createErrorResponse, createSuccessResponse } from "./types";
 
 export const handler: NetlifyFunctionHandler = async (
-  event: NetlifyFunctionEvent
+  _event: NetlifyFunctionEvent
 ): Promise<NetlifyFunctionResponse> => {
   const clientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
 

@@ -1,7 +1,17 @@
-import { Readable } from "stream";
-import { google } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
 import { getStore } from "@netlify/blobs";
+import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+import { Readable } from "stream";
+
+import {
+  DriveWriteRequestSchema,
+  validateRequest
+} from "./contract";
+import {
+  getAuthenticatedDriveClient,
+  getTokens,
+  type DriveClientWithAuth
+} from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionContext,
@@ -9,11 +19,6 @@ import type {
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import {
-  getAuthenticatedDriveClient,
-  getTokens,
-  type DriveClientWithAuth
-} from "./drive-client";
 
 // Helper to add timeout to promises
 function withTimeout<T>(
@@ -53,22 +58,28 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return createErrorResponse(400, "fileName and content required");
-    }
-
-    const { fileId, fileName, content, parentFolderId, mimeType = "text/plain" } = JSON.parse(
-      event.body
-    ) as {
-      fileId?: string;
-      fileName?: string;
-      content?: string;
-      parentFolderId?: string;
-      mimeType?: string;
-    };
-
-    if (!fileName || content === undefined) {
-      return createErrorResponse(400, "fileName and content required");
+    // Validate request body with Zod schema
+    let fileId: string | undefined;
+    let fileName: string;
+    let content: string;
+    let parentFolderId: string | undefined;
+    let mimeType: string;
+    try {
+      const validated = validateRequest(
+        DriveWriteRequestSchema,
+        event.body,
+        "fileName and content required"
+      );
+      fileId = validated.fileId;
+      fileName = validated.fileName;
+      content = validated.content;
+      parentFolderId = validated.parentFolderId;
+      mimeType = validated.mimeType || "text/plain";
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "fileName and content required"
+      );
     }
 
     console.log("Drive write request:", {

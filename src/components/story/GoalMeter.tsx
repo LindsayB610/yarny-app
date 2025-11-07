@@ -1,5 +1,5 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
-import { type JSX } from "react";
+import { memo, useCallback, useMemo, type JSX } from "react";
 
 interface GoalMeterProps {
   totalWords: number;
@@ -7,14 +7,24 @@ interface GoalMeterProps {
   onClick?: () => void;
 }
 
-export function GoalMeter({
+export const GoalMeter = memo(function GoalMeter({
   totalWords,
   goal,
   onClick
 }: GoalMeterProps): JSX.Element {
-  const percentage = goal > 0 ? Math.min(100, Math.round((totalWords / goal) * 100)) : 0;
-  const formattedWords = totalWords.toLocaleString();
-  const formattedGoal = goal.toLocaleString();
+  const percentage = useMemo(
+    () => goal > 0 ? Math.min(100, Math.round((totalWords / goal) * 100)) : 0,
+    [totalWords, goal]
+  );
+  const formattedWords = useMemo(() => totalWords.toLocaleString(), [totalWords]);
+  const formattedGoal = useMemo(() => goal.toLocaleString(), [goal]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  }, [onClick]);
 
   return (
     <Box
@@ -22,12 +32,7 @@ export function GoalMeter({
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? "button" : undefined}
       aria-label={onClick ? "Word count goal: Click to edit" : undefined}
-      onKeyDown={(e) => {
-        if (onClick && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      onKeyDown={handleKeyDown}
       sx={{
         cursor: onClick ? "pointer" : "default",
         mb: 2,
@@ -76,5 +81,10 @@ export function GoalMeter({
       />
     </Box>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if totalWords or goal changes
+  return prevProps.totalWords === nextProps.totalWords &&
+    prevProps.goal === nextProps.goal &&
+    prevProps.onClick === nextProps.onClick;
+});
 

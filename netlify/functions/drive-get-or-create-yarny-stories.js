@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const types_1 = require("./types");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 const handler = async (event) => {
     if (event.httpMethod !== "GET" && event.httpMethod !== "POST") {
         return (0, types_1.createErrorResponse)(405, "Method not allowed");

@@ -7,18 +7,20 @@ import {
   Typography
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useStoryProgress } from "../../hooks/useStoryProgress";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { DeleteStoryModal } from "./DeleteStoryModal";
+import { highlightSearchText } from "../../utils/highlightSearch";
 
 interface StoryCardProps {
   story: StoryFolder;
+  searchQuery?: string;
 }
 
-export function StoryCard({ story }: StoryCardProps): JSX.Element {
+export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: StoryCardProps): JSX.Element {
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { data: progress } = useStoryProgress(story.id);
@@ -28,7 +30,13 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
   const exceedsGoal =
     progress && progress.wordGoal > 0 && progress.totalWords > progress.wordGoal;
 
-  const handleClick = () => {
+  // Highlight search matches in story name
+  const nameParts = useMemo(
+    () => highlightSearchText(story.name, searchQuery),
+    [story.name, searchQuery]
+  );
+
+  const handleClick = useCallback(() => {
     // Navigate to editor with story
     localStorage.setItem(
       "yarny_current_story",
@@ -38,14 +46,14 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
       })
     );
     navigate("/editor");
-  };
+  }, [story.id, story.name, navigate]);
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = useCallback((dateString?: string) => {
     if (!dateString) return "Unknown";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -53,16 +61,22 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
       month: "short",
       day: "numeric"
     });
-  };
+  }, []);
 
-  const formatDeadline = (deadlineString: string) => {
+  const formatDeadline = useCallback((deadlineString: string) => {
     const date = new Date(deadlineString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric"
     });
-  };
+  }, []);
+
+  const formattedModifiedDate = useMemo(() => formatDate(story.modifiedTime), [story.modifiedTime, formatDate]);
+  const formattedDeadlineDate = useMemo(
+    () => progress?.goal?.deadline ? formatDeadline(progress.goal.deadline) : null,
+    [progress?.goal?.deadline, formatDeadline]
+  );
 
   return (
     <>
@@ -93,8 +107,19 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
                 fontWeight: 600,
                 flex: 1
               }}
+              component="div"
             >
-              {story.name}
+              {nameParts.map((part, index) => (
+                <span
+                  key={index}
+                  style={{
+                    backgroundColor: part.highlight ? "rgba(255, 235, 59, 0.3)" : "transparent",
+                    fontWeight: part.highlight ? 700 : 600
+                  }}
+                >
+                  {part.text}
+                </span>
+              ))}
             </Typography>
             <IconButton
               size="small"
@@ -117,10 +142,10 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
             variant="caption"
             sx={{ color: "rgba(255, 255, 255, 0.7)", display: "block", mb: 1 }}
           >
-            Last modified: {formatDate(story.modifiedTime)}
+            Last modified: {formattedModifiedDate}
           </Typography>
 
-          {progress?.goal?.deadline && (
+          {formattedDeadlineDate && (
             <Typography
               variant="caption"
               sx={{
@@ -130,7 +155,7 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
                 mb: 1
               }}
             >
-              Deadline: {formatDeadline(progress.goal.deadline)}
+              Deadline: {formattedDeadlineDate}
             </Typography>
           )}
 
@@ -243,5 +268,11 @@ export function StoryCard({ story }: StoryCardProps): JSX.Element {
       />
     </>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if story ID, name, modifiedTime, or searchQuery changes
+  return prevProps.story.id === nextProps.story.id &&
+    prevProps.story.name === nextProps.story.name &&
+    prevProps.story.modifiedTime === nextProps.story.modifiedTime &&
+    prevProps.searchQuery === nextProps.searchQuery;
+});
 

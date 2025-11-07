@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "dev:functions": "netlify dev",
-    "build": "npm run build:functions && vite build",
+    "build": "npm run build:functions && vite build && node scripts/move-react-build.js",
     "build:functions": "tsc -p tsconfig.functions.json",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -74,6 +74,8 @@
     "jsdom": "^25.0.1",
     "msw": "^2.5.1",
     "netlify-cli": "^17.0.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
     "postcss": "^8.4.48",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",

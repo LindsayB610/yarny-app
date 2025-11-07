@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const stream_1 = require("stream");
-const googleapis_1 = require("googleapis");
-const google_auth_library_1 = require("google-auth-library");
 const blobs_1 = require("@netlify/blobs");
-const types_1 = require("./types");
+const google_auth_library_1 = require("google-auth-library");
+const googleapis_1 = require("googleapis");
+const stream_1 = require("stream");
+const contract_1 = require("./contract");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 // Helper to add timeout to promises
 function withTimeout(promise, timeoutMs, errorMessage) {
     return Promise.race([
@@ -28,12 +29,22 @@ const handler = async (event, context) => {
         return (0, types_1.createErrorResponse)(401, "Not authenticated");
     }
     try {
-        if (!event.body) {
-            return (0, types_1.createErrorResponse)(400, "fileName and content required");
+        // Validate request body with Zod schema
+        let fileId;
+        let fileName;
+        let content;
+        let parentFolderId;
+        let mimeType;
+        try {
+            const validated = (0, contract_1.validateRequest)(contract_1.DriveWriteRequestSchema, event.body, "fileName and content required");
+            fileId = validated.fileId;
+            fileName = validated.fileName;
+            content = validated.content;
+            parentFolderId = validated.parentFolderId;
+            mimeType = validated.mimeType || "text/plain";
         }
-        const { fileId, fileName, content, parentFolderId, mimeType = "text/plain" } = JSON.parse(event.body);
-        if (!fileName || content === undefined) {
-            return (0, types_1.createErrorResponse)(400, "fileName and content required");
+        catch (validationError) {
+            return (0, types_1.createErrorResponse)(400, validationError instanceof Error ? validationError.message : "fileName and content required");
         }
         console.log("Drive write request:", {
             fileName,

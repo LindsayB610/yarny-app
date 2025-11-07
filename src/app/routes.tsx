@@ -12,43 +12,48 @@ import { getQueryClient } from "./queryClient";
 // Get shared query client instance
 const queryClient = getQueryClient();
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+  [
+    {
+      path: "/login",
+      element: <LoginPage />,
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/",
+      element: (
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      ),
+      loader: () => storiesLoader(queryClient),
+      errorElement: <RouteErrorBoundary />,
+      // Note: React Router v6.4+ handles loading states via Suspense
+      // We'll wrap routes in Suspense in App.tsx
+    },
+    {
+      path: "/stories",
+      element: (
+        <ProtectedRoute>
+          <StoriesPage />
+        </ProtectedRoute>
+      ),
+      loader: () => storiesLoader(queryClient),
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/editor",
+      element: (
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      ),
+      loader: () => editorLoader(queryClient),
+      errorElement: <RouteErrorBoundary />
+    }
+  ],
   {
-    path: "/login",
-    element: <LoginPage />,
-    errorElement: <RouteErrorBoundary />
-  },
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
-    loader: () => storiesLoader(queryClient),
-    errorElement: <RouteErrorBoundary />,
-    // Note: React Router v6.4+ handles loading states via Suspense
-    // We'll wrap routes in Suspense in App.tsx
-  },
-  {
-    path: "/stories",
-    element: (
-      <ProtectedRoute>
-        <StoriesPage />
-      </ProtectedRoute>
-    ),
-    loader: () => storiesLoader(queryClient),
-    errorElement: <RouteErrorBoundary />
-  },
-  {
-    path: "/editor",
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
-    loader: () => editorLoader(queryClient),
-    errorElement: <RouteErrorBoundary />
+    basename: "/react"
   }
-]);
+);
 

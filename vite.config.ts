@@ -4,6 +4,11 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
+  base: "/react/",
+  build: {
+    outDir: "dist",
+    // Vite will build to dist/, then post-build script moves React files to dist/react/
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src")

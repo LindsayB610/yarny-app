@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const types_1 = require("./types");
+const contract_1 = require("./contract");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 const handler = async (event) => {
     if (event.httpMethod !== "POST" && event.httpMethod !== "DELETE") {
         return (0, types_1.createErrorResponse)(405, "Method not allowed");
@@ -12,12 +13,16 @@ const handler = async (event) => {
         return (0, types_1.createErrorResponse)(401, "Not authenticated");
     }
     try {
-        if (!event.body) {
-            return (0, types_1.createErrorResponse)(400, "storyFolderId required");
+        // Validate request body with Zod schema
+        let storyFolderId;
+        let deleteFromDrive;
+        try {
+            const validated = (0, contract_1.validateRequest)(contract_1.DriveDeleteStoryRequestSchema, event.body, "storyFolderId required");
+            storyFolderId = validated.storyFolderId;
+            deleteFromDrive = validated.deleteFromDrive;
         }
-        const { storyFolderId, deleteFromDrive } = JSON.parse(event.body);
-        if (!storyFolderId) {
-            return (0, types_1.createErrorResponse)(400, "storyFolderId required");
+        catch (validationError) {
+            return (0, types_1.createErrorResponse)(400, validationError instanceof Error ? validationError.message : "storyFolderId required");
         }
         const drive = await (0, drive_client_1.getAuthenticatedDriveClient)(session.email);
         if (deleteFromDrive) {

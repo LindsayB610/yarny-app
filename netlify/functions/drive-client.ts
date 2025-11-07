@@ -1,6 +1,6 @@
-import { google, type drive_v3 } from "googleapis";
-import { OAuth2Client, type Credentials } from "google-auth-library";
 import { getStore } from "@netlify/blobs";
+import { OAuth2Client, type Credentials } from "google-auth-library";
+import { google, type drive_v3 } from "googleapis";
 
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
@@ -258,7 +258,7 @@ export async function getAuthenticatedDriveClient(
   // Wrap the drive client in a Proxy to allow accessing _auth without modifying the object
   // The driveClient object is not extensible, so we can't attach properties directly
   const driveClientProxy = new Proxy(driveClient, {
-    get: function (target, prop, receiver) {
+    get: function (target, prop, _receiver) {
       // If accessing _auth, return the oauth2Client
       if (prop === "_auth") {
         return oauth2Client;
@@ -267,7 +267,7 @@ export async function getAuthenticatedDriveClient(
       const value = (target as unknown as Record<string, unknown>)[prop as string];
       // If it's a function, bind it to the original target to preserve 'this' context
       if (typeof value === "function") {
-        return (value as Function).bind(target);
+        return (value as (...args: unknown[]) => unknown).bind(target);
       }
       // If it's an object, wrap it in a Proxy too to ensure _auth access works on nested objects
       if (value && typeof value === "object") {

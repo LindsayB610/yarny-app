@@ -1,10 +1,10 @@
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 export const handler: NetlifyFunctionHandler = async (
   event: NetlifyFunctionEvent

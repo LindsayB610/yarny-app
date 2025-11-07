@@ -128,6 +128,93 @@ Test fixtures are located in `tests/utils/test-fixtures.ts` and provide:
 
 The test corpus in `test-corpus/` provides real-world data structures for more comprehensive testing.
 
+### Reset Utilities
+
+Reset utilities are available in `tests/utils/reset-utilities.ts` to help ensure test isolation. These utilities reset:
+- Zustand store state
+- React Query cache
+- MSW request handlers
+- Browser storage (localStorage, sessionStorage)
+
+**Basic Usage:**
+
+```tsx
+import { resetStore, resetQueryClient, resetAll } from "../utils/test-utils";
+
+describe("MyTest", () => {
+  let store: YarnyStoreApi;
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    // Reset store to empty state
+    resetStore(store);
+    
+    // Reset query client cache
+    resetQueryClient(queryClient);
+  });
+
+  it("test with clean state", () => {
+    // Test code here
+  });
+});
+```
+
+**Using createTestCleanup for automatic cleanup:**
+
+```tsx
+import { createTestCleanup } from "../utils/test-utils";
+
+describe("MyTest", () => {
+  const cleanup = createTestCleanup({
+    store,
+    queryClient,
+    clearStorage: true
+  });
+
+  afterEach(cleanup);
+
+  it("test with automatic cleanup", () => {
+    // Test code - cleanup runs automatically after each test
+  });
+});
+```
+
+**Selective Reset:**
+
+```tsx
+import { resetStoreEntities, resetStoreUI, clearBrowserStorageKeys } from "../utils/test-utils";
+
+// Reset only entities, preserve UI state
+resetStoreEntities(store);
+
+// Reset only UI state, preserve entities
+resetStoreUI(store);
+
+// Clear specific storage keys
+clearBrowserStorageKeys(
+  ["auth-token", "user-prefs"],  // localStorage keys
+  ["session-id"]                  // sessionStorage keys
+);
+```
+
+**Complete Reset:**
+
+```tsx
+import { resetAll } from "../utils/test-utils";
+
+// Reset everything at once
+resetAll({
+  store,
+  queryClient,
+  resetMSW: true,
+  clearStorage: true,
+  storageKeys: {
+    localStorage: ["auth-token"],
+    sessionStorage: ["session-id"]
+  }
+});
+```
+
 ## Mocking
 
 ### MSW (Mock Service Worker)

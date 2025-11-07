@@ -60,3 +60,6 @@ export * from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 export { userEvent };
 
+// Re-export reset utilities for convenience
+export * from "./reset-utilities";
+

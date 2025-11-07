@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTokens = getTokens;
 exports.saveTokens = saveTokens;
 exports.getAuthenticatedDriveClient = getAuthenticatedDriveClient;
-const googleapis_1 = require("googleapis");
-const google_auth_library_1 = require("google-auth-library");
 const blobs_1 = require("@netlify/blobs");
+const google_auth_library_1 = require("google-auth-library");
+const googleapis_1 = require("googleapis");
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
 const STORAGE_KEY = "drive_tokens.json";
@@ -188,7 +188,7 @@ async function getAuthenticatedDriveClient(email) {
     // Wrap the drive client in a Proxy to allow accessing _auth without modifying the object
     // The driveClient object is not extensible, so we can't attach properties directly
     const driveClientProxy = new Proxy(driveClient, {
-        get: function (target, prop, receiver) {
+        get: function (target, prop, _receiver) {
             // If accessing _auth, return the oauth2Client
             if (prop === "_auth") {
                 return oauth2Client;

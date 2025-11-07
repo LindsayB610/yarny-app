@@ -24,7 +24,7 @@ describe("DeleteStoryModal", () => {
       />
     );
 
-    expect(screen.getByText("Delete Story")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Delete Story" })).toBeInTheDocument();
     expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
     expect(screen.getByText(storyName)).toBeInTheDocument();
   });
@@ -39,7 +39,7 @@ describe("DeleteStoryModal", () => {
       />
     );
 
-    expect(screen.queryByText("Delete Story")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Delete Story" })).not.toBeInTheDocument();
   });
 
   it("requires DELETE confirmation text", async () => {

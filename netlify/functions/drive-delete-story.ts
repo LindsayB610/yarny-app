@@ -1,10 +1,14 @@
+import {
+  DriveDeleteStoryRequestSchema,
+  validateRequest
+} from "./contract";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 export const handler: NetlifyFunctionHandler = async (
   event: NetlifyFunctionEvent
@@ -19,17 +23,22 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return createErrorResponse(400, "storyFolderId required");
-    }
-
-    const { storyFolderId, deleteFromDrive } = JSON.parse(event.body) as {
-      storyFolderId?: string;
-      deleteFromDrive?: boolean;
-    };
-
-    if (!storyFolderId) {
-      return createErrorResponse(400, "storyFolderId required");
+    // Validate request body with Zod schema
+    let storyFolderId: string;
+    let deleteFromDrive: boolean | undefined;
+    try {
+      const validated = validateRequest(
+        DriveDeleteStoryRequestSchema,
+        event.body,
+        "storyFolderId required"
+      );
+      storyFolderId = validated.storyFolderId;
+      deleteFromDrive = validated.deleteFromDrive;
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "storyFolderId required"
+      );
     }
 
     const drive = await getAuthenticatedDriveClient(session.email);

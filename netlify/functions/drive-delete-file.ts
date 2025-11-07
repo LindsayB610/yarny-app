@@ -1,10 +1,14 @@
+import {
+  DriveDeleteFileRequestSchema,
+  validateRequest
+} from "./contract";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
   NetlifyFunctionResponse
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse, createSuccessResponse } from "./types";
-import { getAuthenticatedDriveClient } from "./drive-client";
 
 export const handler: NetlifyFunctionHandler = async (
   event: NetlifyFunctionEvent
@@ -19,14 +23,20 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   try {
-    if (!event.body) {
-      return createErrorResponse(400, "fileId required");
-    }
-
-    const { fileId } = JSON.parse(event.body) as { fileId?: string };
-
-    if (!fileId) {
-      return createErrorResponse(400, "fileId required");
+    // Validate request body with Zod schema
+    let fileId: string;
+    try {
+      const validated = validateRequest(
+        DriveDeleteFileRequestSchema,
+        event.body,
+        "fileId required"
+      );
+      fileId = validated.fileId;
+    } catch (validationError) {
+      return createErrorResponse(
+        400,
+        validationError instanceof Error ? validationError.message : "fileId required"
+      );
     }
 
     const drive = await getAuthenticatedDriveClient(session.email);

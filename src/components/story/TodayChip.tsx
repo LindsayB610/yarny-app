@@ -1,5 +1,5 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
-import { type JSX } from "react";
+import { memo, useCallback, useMemo, type JSX } from "react";
 
 interface TodayChipProps {
   todayWords: number;
@@ -9,25 +9,36 @@ interface TodayChipProps {
   onClick?: () => void;
 }
 
-export function TodayChip({
+export const TodayChip = memo(function TodayChip({
   todayWords,
   target,
   isAhead,
   isBehind,
   onClick
 }: TodayChipProps): JSX.Element {
-  const progress = target > 0 ? Math.min(100, Math.round((todayWords / target) * 100)) : 0;
-  const formattedWords = todayWords.toLocaleString();
+  const progress = useMemo(
+    () => target > 0 ? Math.min(100, Math.round((todayWords / target) * 100)) : 0,
+    [todayWords, target]
+  );
+  const formattedWords = useMemo(() => todayWords.toLocaleString(), [todayWords]);
 
   // Determine progress bar color
-  let progressColor = "#10B981"; // Default green
-  if (isAhead) {
-    progressColor = "#10B981"; // Green for ahead
-  } else if (isBehind) {
-    progressColor = "#EF4444"; // Red for behind
-  } else {
-    progressColor = "#3B82F6"; // Blue for on track
-  }
+  const progressColor = useMemo(() => {
+    if (isAhead) {
+      return "#10B981"; // Green for ahead
+    } else if (isBehind) {
+      return "#EF4444"; // Red for behind
+    } else {
+      return "#3B82F6"; // Blue for on track
+    }
+  }, [isAhead, isBehind]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  }, [onClick]);
 
   return (
     <Box
@@ -35,12 +46,7 @@ export function TodayChip({
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? "button" : undefined}
       aria-label={onClick ? "Today's writing goal: Click to edit" : undefined}
-      onKeyDown={(e) => {
-        if (onClick && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      onKeyDown={handleKeyDown}
       sx={{
         cursor: onClick ? "pointer" : "default",
         mb: 2,
@@ -103,5 +109,12 @@ export function TodayChip({
       />
     </Box>
   );
-}
+}, (prevProps, nextProps) => {
+  // Only re-render if props that affect rendering change
+  return prevProps.todayWords === nextProps.todayWords &&
+    prevProps.target === nextProps.target &&
+    prevProps.isAhead === nextProps.isAhead &&
+    prevProps.isBehind === nextProps.isBehind &&
+    prevProps.onClick === nextProps.onClick;
+});
 

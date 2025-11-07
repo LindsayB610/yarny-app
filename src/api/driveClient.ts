@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
-import type { NormalizedPayload, Project, Snippet, Story } from "../store/types";
+import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
 
 const ProjectSchema = z.object({
   id: z.string(),
@@ -69,13 +69,24 @@ const fallbackStory: Story = {
   projectId: fallbackProject.id,
   title: "Welcome to Yarny React",
   driveFileId: "drive-file-placeholder",
+  chapterIds: ["placeholder-chapter"],
+  updatedAt: new Date().toISOString()
+};
+
+const fallbackChapter: Chapter = {
+  id: "placeholder-chapter",
+  storyId: fallbackStory.id,
+  title: "Chapter 1",
+  order: 0,
   snippetIds: ["placeholder-snippet"],
+  driveFolderId: "drive-folder-placeholder",
   updatedAt: new Date().toISOString()
 };
 
 const fallbackSnippet: Snippet = {
   id: "placeholder-snippet",
   storyId: fallbackStory.id,
+  chapterId: fallbackChapter.id,
   order: 1,
   content: normalizePlainText(
     [
@@ -89,6 +100,7 @@ const fallbackSnippet: Snippet = {
 const fallbackData: NormalizedPayload = {
   projects: [fallbackProject],
   stories: [fallbackStory],
+  chapters: [fallbackChapter],
   snippets: [fallbackSnippet]
 };
 

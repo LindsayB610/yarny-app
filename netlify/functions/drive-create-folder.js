@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const types_1 = require("./types");
+const contract_1 = require("./contract");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 // Helper to add timeout to promises
 function withTimeout(promise, timeoutMs, errorMessage) {
     return Promise.race([
@@ -21,13 +22,19 @@ const handler = async (event, context) => {
         return (0, types_1.createErrorResponse)(401, "Not authenticated");
     }
     try {
-        if (!event.body) {
-            return (0, types_1.createErrorResponse)(400, "folderName required");
+        // Validate request body with Zod schema
+        // Schema handles both 'name' and 'folderName' for backward compatibility
+        let name;
+        let parentFolderId;
+        try {
+            const validated = (0, contract_1.validateRequest)(contract_1.DriveCreateFolderRequestSchema, event.body, "folderName (or name) required");
+            name = validated.name;
+            parentFolderId = validated.parentFolderId;
         }
-        const { folderName, parentFolderId } = JSON.parse(event.body);
-        if (!folderName) {
-            return (0, types_1.createErrorResponse)(400, "folderName required");
+        catch (validationError) {
+            return (0, types_1.createErrorResponse)(400, validationError instanceof Error ? validationError.message : "folderName (or name) required");
         }
+        const folderName = name; // Use normalized 'name' field from schema
         console.log("Creating folder:", folderName, "parentFolderId:", parentFolderId);
         // Get authenticated drive client with timeout (max 8 seconds to leave buffer for response)
         const drive = await withTimeout((0, drive_client_1.getAuthenticatedDriveClient)(session.email), 8000, "Drive client authentication timed out");

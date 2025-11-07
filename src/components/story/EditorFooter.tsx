@@ -1,21 +1,27 @@
 import { Box, Typography } from "@mui/material";
-import { type JSX } from "react";
+import { memo, useMemo, type JSX } from "react";
 
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStorySnippets } from "../../store/selectors";
 import { countCharacters, countWords } from "../../utils/wordCount";
 
-export function EditorFooter(): JSX.Element {
+export const EditorFooter = memo(function EditorFooter(): JSX.Element {
   const snippets = useYarnyStore(selectActiveStorySnippets);
 
   // Calculate total word and character counts from all snippets
-  const totalWords = snippets.reduce(
-    (sum, snippet) => sum + countWords(snippet.content),
-    0
+  const totalWords = useMemo(
+    () => snippets.reduce(
+      (sum, snippet) => sum + countWords(snippet.content),
+      0
+    ),
+    [snippets]
   );
-  const totalCharacters = snippets.reduce(
-    (sum, snippet) => sum + countCharacters(snippet.content),
-    0
+  const totalCharacters = useMemo(
+    () => snippets.reduce(
+      (sum, snippet) => sum + countCharacters(snippet.content),
+      0
+    ),
+    [snippets]
   );
 
   return (
@@ -40,5 +46,5 @@ export function EditorFooter(): JSX.Element {
       </Typography>
     </Box>
   );
-}
+});
 

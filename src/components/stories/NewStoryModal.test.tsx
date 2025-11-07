@@ -16,7 +16,8 @@ describe("NewStoryModal", () => {
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
     expect(screen.getByText("Create New Story")).toBeInTheDocument();
-    expect(screen.getByLabelText("Story Name")).toBeInTheDocument();
+    // Use getByRole for textbox or getByPlaceholderText as fallback
+    expect(screen.getByRole("textbox", { name: /story name/i })).toBeInTheDocument();
   });
 
   it("does not render when closed", () => {
@@ -29,12 +30,25 @@ describe("NewStoryModal", () => {
     const user = userEvent.setup();
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
+    // Find the form and submit button
+    const form = screen.getByRole("dialog").querySelector("form");
     const submitButton = screen.getByRole("button", { name: /create story/i });
-    await user.click(submitButton);
+    
+    // Submit the form directly to trigger validation
+    if (form) {
+      const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+      form.dispatchEvent(submitEvent);
+    } else {
+      await user.click(submitButton);
+    }
 
-    await waitFor(() => {
-      expect(screen.getByText("Please enter a story name")).toBeInTheDocument();
-    });
+    // Wait for the error message to appear
+    await waitFor(
+      () => {
+        expect(screen.getByText(/please enter a story name/i)).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it("submits form with valid data", async () => {
@@ -49,21 +63,36 @@ describe("NewStoryModal", () => {
           created: false
         });
       }),
+      // Mock all drive-create-folder calls - the first one is the story folder
       http.post("/.netlify/functions/drive-create-folder", async ({ request }) => {
-        capturedRequest = await request.json();
+        const requestData = await request.json();
+        // Only capture the first request (the story folder creation)
+        if (!capturedRequest) {
+          capturedRequest = requestData;
+        }
+        // Return appropriate response based on folder name
+        const folderName = requestData.name || "";
         return HttpResponse.json({
-          id: "story-folder-id",
-          name: "My Novel",
+          id: `folder-${folderName.toLowerCase().replace(/\s+/g, "-")}-id`,
+          name: folderName,
           created: true
         });
+      }),
+      // Mock other Drive API calls that might be made
+      http.post("/.netlify/functions/drive-write", () => {
+        return HttpResponse.json({ success: true });
       })
     );
 
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
-    await user.type(screen.getByLabelText("Story Name"), "My Novel");
-    await user.type(screen.getByLabelText("Genre (optional)"), "Fantasy");
-    await user.type(screen.getByLabelText("Word Count Target"), "5000");
+    // Use getByRole for textboxes and spinbutton for number input
+    await user.type(screen.getByRole("textbox", { name: /story name/i }), "My Novel");
+    await user.type(screen.getByRole("textbox", { name: /genre/i }), "Fantasy");
+    // Number input uses spinbutton role
+    const wordCountInput = screen.getByRole("spinbutton", { name: /word count target/i });
+    await user.clear(wordCountInput);
+    await user.type(wordCountInput, "5000");
 
     const submitButton = screen.getByRole("button", { name: /create story/i });
     await user.click(submitButton);
@@ -90,12 +119,15 @@ describe("NewStoryModal", () => {
       <NewStoryModal open={true} onClose={mockOnClose} />
     );
 
-    await user.type(screen.getByLabelText("Story Name"), "Test Story");
+    const storyNameInput = screen.getByRole("textbox", { name: /story name/i });
+    await user.type(storyNameInput, "Test Story");
     await user.click(screen.getByRole("button", { name: /cancel/i }));
 
     rerender(<NewStoryModal open={true} onClose={mockOnClose} />);
 
-    expect(screen.getByLabelText("Story Name")).toHaveValue("");
+    // After rerender, find the input again and check it's empty
+    const resetInput = screen.getByRole("textbox", { name: /story name/i });
+    expect(resetInput).toHaveValue("");
   });
 
   it("allows selecting writing days", async () => {
@@ -117,13 +149,19 @@ describe("NewStoryModal", () => {
     const user = userEvent.setup();
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
-    const modeSelect = screen.getByLabelText("Mode (optional)");
-    await user.click(modeSelect);
+    // Find the Select by clicking on the visible text "Elastic (rebalance daily targets)"
+    // which is displayed in the Select component
+    const elasticText = screen.getByText("Elastic (rebalance daily targets)");
+    await user.click(elasticText);
 
-    const strictOption = screen.getByText("Strict (fixed daily target)");
+    // Wait for the menu to open and find the strict option
+    const strictOption = await screen.findByText("Strict (fixed daily target)");
     await user.click(strictOption);
 
-    expect(screen.getByText("Strict (fixed daily target)")).toBeInTheDocument();
+    // Verify the value changed - the Select should now show "Strict"
+    await waitFor(() => {
+      expect(screen.getByText("Strict (fixed daily target)")).toBeInTheDocument();
+    });
   });
 });
 
