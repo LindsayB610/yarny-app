@@ -257,6 +257,24 @@
           <p><strong>Note:</strong> This workbook focuses on tests that require human judgment, visual verification, or subjective evaluation. Automated tests cover functional correctness, data persistence, calculations, and performance metrics.</p>
           <div class="note-box" style="margin-top: var(--space-lg);">
             <p><strong>Automated Testing:</strong> Functional tests (authentication, CRUD operations, data persistence, calculations, search, export, conflict resolution, etc.) are automated using Playwright and React Testing Library. These tests run on every PR and deployment.</p>
+            <p><strong>React App Test Updates:</strong> E2E tests in <code>tests/e2e/</code> are being updated for React app compatibility. A test helper utility (<code>tests/utils/react-app-helpers.ts</code>) has been created to support React app testing. Some tests may still target the classic app structure - see individual test files for current status.</p>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-lg); background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E;">
+            <p><strong>Phase 5 Automated Test Infrastructure (Completed):</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>✅ <strong>Test Helper Utility:</strong> Created <code>tests/utils/react-app-helpers.ts</code> with utilities for:
+                <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                  <li>Setting up React app API mocks (normalized payload structure)</li>
+                  <li>Navigating to React app routes (<code>/react/editor</code>, <code>/react/stories</code>)</li>
+                  <li>Handling story selection (via localStorage or UI clicks)</li>
+                  <li>Waiting for story load and getting React editor elements</li>
+                </ul>
+              </li>
+              <li>✅ <strong>Example Test File:</strong> Created <code>tests/e2e/conflict-resolution-react.spec.ts</code> as a template for React app tests</li>
+              <li>✅ <strong>API Mock Structure:</strong> Helper mocks React app's normalized payload structure (projects, stories, chapters, snippets)</li>
+              <li>⏳ <strong>Remaining Test Updates:</strong> Update chapter-snippet-management, color-coding, and goals test files to use React app structure</li>
+            </ul>
+            <p style="margin-top: var(--space-md);"><strong>Manual Verification Required:</strong> Until all E2E tests are updated, use the manual testing steps in Sections 11, 12, and 14 to verify Phase 5 features work correctly in the React app at <code>/react/editor</code>.</p>
           </div>
           <div class="note-box" style="margin-top: var(--space-lg);">
             <p><strong>Test Corpus:</strong> For comprehensive testing, use the "Yarny Test Corpus" folder in Google Drive, which contains three project sizes (small, medium, large) with sample data. Start with the small project for basic tests, then use medium and large projects for performance and edge case testing.</p>
@@ -4197,6 +4215,20 @@ Notes: He's been to many places… but never talks about them.</pre>
         <div class="test-section" id="section-11">
           <h2><i class="material-icons">settings</i> Section 11: Operations & Conflict Resolution Validation</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This section validates that all CRUD operations work correctly and that conflict resolution handles concurrent edits properly. These tests ensure data integrity and proper synchronization between Yarny and Google Drive.</p>
+
+          <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
+            <p><strong>React App Testing (Phase 5):</strong> These tests apply to both the classic app and the React app. For React app testing:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> (or <code>http://localhost:5173/react/editor</code> for local testing)</li>
+              <li><strong>UI Differences:</strong> React app uses Material UI components - look for Material UI button styles, dialogs, and menu components</li>
+              <li><strong>Story Selection:</strong> React app uses Zustand store - select stories via the stories list at <code>/react/stories</code>, not URL parameters</li>
+              <li><strong>Component Structure:</strong> React app components: ConflictResolutionModal, SortableChapterList, SortableSnippetList, ContextMenu, RenameModal</li>
+              <li><strong>Drag & Drop:</strong> Implemented using <code>@dnd-kit</code> - test drag and drop operations with Material UI components</li>
+              <li><strong>Conflict Resolution:</strong> Uses <code>ConflictResolutionModal</code> component - conflict detection happens when switching snippets</li>
+              <li><strong>Automated Tests:</strong> E2E tests in <code>tests/e2e/</code> need updates for React app compatibility (see OPEN_TODOS_CHECKLIST.md Phase 5 notes)</li>
+              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/react/editor</code></li>
+            </ul>
+          </div>
         
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong> Before starting validation, ensure:</p>
@@ -4797,12 +4829,49 @@ Notes: He's been to many places… but never talks about them.</pre>
               <li><strong>Verify Persistence:</strong> Always refresh and check Google Drive to ensure changes persist</li>
             </ul>
           </div>
+
+          <div class="note-box" style="margin-top: var(--space-xl); background: rgba(251, 191, 36, 0.1); border-left: 4px solid #FBBF24;">
+            <p><strong>Automated Test Status (Phase 5):</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>Test Helper Created:</strong> <code>tests/utils/react-app-helpers.ts</code> provides utilities for React app testing</li>
+              <li><strong>React Test File:</strong> <code>tests/e2e/conflict-resolution-react.spec.ts</code> - Example React app test</li>
+              <li><strong>Manual Verification Required:</strong> Until all E2E tests are updated, manually verify all Phase 5 features work in React app</li>
+              <li><strong>Test Update Progress:</strong>
+                <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                  <li>Conflict Resolution: Helper created, React test file created, needs full test suite update</li>
+                  <li>Chapter/Snippet Management: Needs route updates to <code>/react/editor</code>, API mock updates</li>
+                  <li>Color Coding: Needs Material UI selector updates, component interaction updates</li>
+                  <li>Goals: Needs Material UI selector updates, modal interaction updates</li>
+                </ul>
+              </li>
+              <li><strong>Next Steps for Automated Tests:</strong>
+                <ol style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                  <li>Update test routes from <code>/editor</code> to <code>/react/editor</code></li>
+                  <li>Update UI selectors to match Material UI component structure</li>
+                  <li>Update API mocks to match React app's normalized payload structure</li>
+                  <li>Update story selection to use Zustand store (via localStorage or UI clicks)</li>
+                  <li>Use <code>react-app-helpers.ts</code> utilities for common test setup</li>
+                </ol>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- Section 12: Color Coding & Visual Organization -->
         <div class="test-section" id="section-12">
           <h2><i class="material-icons">palette</i> Section 12: Color Coding & Visual Organization</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This section tests chapter color coding functionality, including the color picker, color application, persistence, and visual feedback.</p>
+
+          <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
+            <p><strong>React App Testing (Phase 5):</strong> Color coding is implemented in the React app using the <code>ColorPicker</code> component. For React app testing:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> and select a story</li>
+              <li><strong>Color Picker Component:</strong> Located in <code>src/components/story/ColorPicker.tsx</code> - uses Material UI Dialog/Popover</li>
+              <li><strong>Color Application:</strong> Colors are applied to chapters via the color chip next to chapter titles in the sidebar</li>
+              <li><strong>12 Accent Colors:</strong> Red, Orange, Amber, Yellow, Lime, Emerald, Teal, Cyan, Blue, Indigo, Violet, Fuchsia</li>
+              <li><strong>Persistence:</strong> Colors are stored in chapter metadata and persist across page reloads</li>
+            </ul>
+          </div>
 
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong> Before starting, ensure:</p>
@@ -5227,6 +5296,19 @@ Notes: He's been to many places… but never talks about them.</pre>
         <div class="test-section" id="section-14">
           <h2><i class="material-icons">flag</i> Section 14: Goals & Daily Writing Targets</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This section tests goal configuration, Elastic and Strict modes, daily target calculations, and goal tracking features.</p>
+
+          <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
+            <p><strong>React App Testing (Phase 5):</strong> Goals functionality is implemented in the React app using the GoalsPanelModal, GoalMeter, and TodayChip components. For React app testing:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> and select a story</li>
+              <li><strong>Goals Panel:</strong> Click the "Today" chip to open the GoalsPanelModal - located in <code>src/components/story/GoalsPanelModal.tsx</code></li>
+              <li><strong>Goal Meter:</strong> Displays in the left sidebar - shows progress toward word count target - located in <code>src/components/story/GoalMeter.tsx</code></li>
+              <li><strong>Today Chip:</strong> Shows daily word count and progress - located in <code>src/components/story/TodayChip.tsx</code></li>
+              <li><strong>Goal Storage:</strong> Goals are stored in <code>goal.json</code> file in the story folder in Google Drive</li>
+              <li><strong>Modes:</strong> Elastic mode (rebalances daily targets) and Strict mode (fixed daily targets) - both modes are supported</li>
+              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/react/editor</code></li>
+            </ul>
+          </div>
 
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong> Before starting, ensure:</p>
