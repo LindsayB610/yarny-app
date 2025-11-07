@@ -1,10 +1,11 @@
 import { Box, Divider, Stack } from "@mui/material";
-import { useEffect, type JSX } from "react";
+import { useEffect, useMemo, type JSX } from "react";
 
 import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
+import { selectActiveStory } from "../../store/selectors";
 import { ProjectList } from "../navigation/ProjectList";
 import { StoryList } from "../navigation/StoryList";
 import { NotesSidebar } from "../story/NotesSidebar";
@@ -18,16 +19,51 @@ export function AppLayout(): JSX.Element {
   const selectStory = useYarnyStore((state) => state.selectStory);
   const selectedProjectId = useYarnyStore((state) => state.ui.selectedProjectId);
   const activeStoryId = useYarnyStore((state) => state.ui.activeStoryId);
+  const activeStory = useYarnyStore(selectActiveStory);
   const storiesForProject = useSelectedProjectStories();
 
   // Reconcile auth and query state on window focus
   useWindowFocusReconciliation();
 
+  const storedStory = useMemo(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    try {
+      const raw = window.localStorage.getItem("yarny_current_story");
+      if (!raw) {
+        return null;
+      }
+      return JSON.parse(raw) as { id: string };
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    if (!selectedProjectId && data?.projects?.[0]) {
+    if (storedStory) {
+      if (activeStoryId !== storedStory.id) {
+        selectStory(storedStory.id);
+      }
+    }
+  }, [storedStory, activeStoryId, selectStory]);
+
+  useEffect(() => {
+    if (activeStory && selectedProjectId !== activeStory.projectId) {
+      selectProject(activeStory.projectId);
+    }
+  }, [activeStory, selectProject, selectedProjectId]);
+
+  useEffect(() => {
+    if (!data?.projects?.length) {
+      return;
+    }
+
+    if (!storedStory && !activeStory && !selectedProjectId) {
       selectProject(data.projects[0].id);
     }
-  }, [data?.projects, selectedProjectId, selectProject]);
+  }, [activeStory, data?.projects, selectProject, selectedProjectId, storedStory]);
 
   useEffect(() => {
     if (!activeStoryId && storiesForProject[0]) {
