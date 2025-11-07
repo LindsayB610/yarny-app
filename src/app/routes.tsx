@@ -5,6 +5,7 @@ import { LoginPage } from "../components/auth/LoginPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
 import { RouteLoader } from "../components/loading/RouteLoader";
+import { StoriesPage } from "../components/stories/StoriesPage";
 import { editorLoader, storiesLoader } from "./loaders";
 import { getQueryClient } from "./queryClient";
 
@@ -33,7 +34,7 @@ export const router = createBrowserRouter([
     path: "/stories",
     element: (
       <ProtectedRoute>
-        <AppLayout />
+        <StoriesPage />
       </ProtectedRoute>
     ),
     loader: () => storiesLoader(queryClient),

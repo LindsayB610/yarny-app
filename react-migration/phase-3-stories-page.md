@@ -1,11 +1,11 @@
 # Phase 3: Stories Page with Virtualization Stub (Week 2)
 
 ## Checklist
-- [ ] Convert stories list to React components
-- [ ] Implement search/filtering
-- [ ] Add modals (new story, delete confirmation)
-- [ ] Integrate with Drive API hooks
-- [ ] Stub virtualized list capability (set up `@tanstack/react-virtual` infrastructure, even if not used yet)
+- [x] Convert stories list to React components
+- [x] Implement search/filtering
+- [x] Add modals (new story, delete confirmation)
+- [x] Integrate with Drive API hooks
+- [x] Stub virtualized list capability (set up `@tanstack/react-virtual` infrastructure, even if not used yet)
 - [ ] Test story management
 
 ## Deliverables

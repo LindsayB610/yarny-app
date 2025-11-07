@@ -26,6 +26,9 @@ import {
   DriveCheckCommentsResponseSchema,
   DriveCreateFolderResponseSchema,
   DriveDeleteFileResponseSchema,
+  DriveDeleteStoryRequest,
+  DriveDeleteStoryResponse,
+  DriveDeleteStoryResponseSchema,
   DriveGetOrCreateYarnyStoriesResponseSchema,
   DriveListResponseSchema,
   DriveReadResponseSchema,
@@ -129,6 +132,11 @@ export class ApiClient {
   ): Promise<DriveCheckCommentsResponse> {
     const response = await this.http.post("/drive-check-comments", request);
     return parseApiResponse(DriveCheckCommentsResponseSchema, response.data);
+  }
+
+  async deleteStory(request: DriveDeleteStoryRequest): Promise<DriveDeleteStoryResponse> {
+    const response = await this.http.post("/drive-delete-story", request);
+    return parseApiResponse(DriveDeleteStoryResponseSchema, response.data);
   }
 }
 

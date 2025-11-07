@@ -163,6 +163,21 @@ export const DriveCheckCommentsResponseSchema = z.object({
 
 export type DriveCheckCommentsResponse = z.infer<typeof DriveCheckCommentsResponseSchema>;
 
+export const DriveDeleteStoryRequestSchema = z.object({
+  storyFolderId: z.string(),
+  deleteFromDrive: z.boolean().optional()
+});
+
+export type DriveDeleteStoryRequest = z.infer<typeof DriveDeleteStoryRequestSchema>;
+
+export const DriveDeleteStoryResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  deletedFromDrive: z.boolean().optional()
+});
+
+export type DriveDeleteStoryResponse = z.infer<typeof DriveDeleteStoryResponseSchema>;
+
 // ============================================================================
 // Error Response Schema
 // ============================================================================
