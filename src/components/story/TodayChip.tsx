@@ -47,6 +47,7 @@ export const TodayChip = memo(function TodayChip({
       role={onClick ? "button" : undefined}
       aria-label={onClick ? "Today's writing goal: Click to edit" : undefined}
       onKeyDown={handleKeyDown}
+      data-testid="today-chip"
       sx={{
         cursor: onClick ? "pointer" : "default",
         mb: 2,

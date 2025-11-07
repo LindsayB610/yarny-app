@@ -143,6 +143,7 @@ export function StorySidebarContent({
               bgcolor: chapter.color || "#3B82F6",
               flexShrink: 0
             }}
+            data-testid={`chapter-color-${chapter.id}`}
           />
           <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
             {chapter.title}

@@ -33,6 +33,7 @@ export const GoalMeter = memo(function GoalMeter({
       role={onClick ? "button" : undefined}
       aria-label={onClick ? "Word count goal: Click to edit" : undefined}
       onKeyDown={handleKeyDown}
+      data-testid="goal-meter"
       sx={{
         cursor: onClick ? "pointer" : "default",
         mb: 2,
