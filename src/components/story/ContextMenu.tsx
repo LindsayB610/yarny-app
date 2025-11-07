@@ -1,4 +1,4 @@
-import { Menu, MenuItem, type MenuProps } from "@mui/material";
+import { Menu, MenuItem } from "@mui/material";
 import { type JSX } from "react";
 
 export interface ContextMenuAction {

@@ -1,7 +1,7 @@
 import { CloudUpload, MoreVert } from "@mui/icons-material";
 import { Box, Button, IconButton, Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import { useEffect, useMemo, useRef, useState, type JSX } from "react";
+import { useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { EditorFooter } from "./EditorFooter";
@@ -12,7 +12,7 @@ import {
   extractPlainTextFromDocument
 } from "../../editor/textExtraction";
 import { useAutoSave } from "../../hooks/useAutoSave";
-import { useConflictDetection } from "../../hooks/useConflictDetection";
+import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
 import { useExport } from "../../hooks/useExport";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
@@ -70,26 +70,28 @@ export function StoryEditor(): JSX.Element {
   );
 
   // Export hook
-  const { exportSnippets, isExporting, progress: exportProgressState } = useExport();
+  const {
+    exportSnippets: exportSnippetsFromHook,
+    isExporting,
+    progress: exportProgressState
+  } = useExport();
 
   // Note: Visibility gating for snippet loading is now handled in StorySidebarContent
   // where the snippet list DOM elements exist
 
   // Performance metrics tracking
-  const {
-    recordFirstKeystroke,
-    startSnippetSwitch,
-    endSnippetSwitch,
-    getMetrics,
-    checkBudgets
-  } = usePerformanceMetrics();
+  const { recordFirstKeystroke, startSnippetSwitch, endSnippetSwitch } = usePerformanceMetrics();
 
   // Conflict detection
-  const { checkSnippetConflict, resolveConflictWithDrive } = useConflictDetection();
-  const [conflictModal, setConflictModal] = useState<{
+  const { checkSnippetConflict } = useConflictDetection();
+  type ConflictModalState = {
     open: boolean;
-    conflict: any | null;
-  }>({ open: false, conflict: null });
+    conflict: (ConflictInfo & { localContent: string }) | null;
+  };
+  const [conflictModal, setConflictModal] = useState<ConflictModalState>({
+    open: false,
+    conflict: null
+  });
 
   // Track if editor is open (authoritative)
   const [isEditorOpen, setIsEditorOpen] = useState(true);
@@ -165,7 +167,7 @@ export function StoryEditor(): JSX.Element {
     // Check conflicts after a short delay to avoid race conditions
     const timeoutId = setTimeout(checkConflicts, 1000);
     return () => clearTimeout(timeoutId);
-  }, [story?.id, story?.updatedAt, checkSnippetConflict, editor, isEditorOpen]);
+  }, [story, checkSnippetConflict, editor, isEditorOpen]);
 
   // Watch for editor changes to trigger auto-save
   // Editor is authoritative while open - changes here take precedence
@@ -233,7 +235,7 @@ export function StoryEditor(): JSX.Element {
     await saveStory(plainText);
   };
 
-  const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleExportClick = (event: MouseEvent<HTMLElement>) => {
     setExportMenuAnchor(event.currentTarget);
   };
 
@@ -245,7 +247,7 @@ export function StoryEditor(): JSX.Element {
     handleExportClose();
     
     // Get chapter snippets (all snippets for now, since we're combining them)
-    const exportSnippets = snippets.map((snippet, index) => ({
+    const snippetsForExport = snippets.map((snippet, index) => ({
       id: snippet.id,
       title: `Snippet ${index + 1}`,
       content: snippet.content
@@ -261,11 +263,11 @@ export function StoryEditor(): JSX.Element {
       // For now, using the story's driveFileId as parent (may need adjustment)
       const parentFolderId = story.driveFileId; // This might need to be the story folder, not the file
 
-      await exportSnippets({
+      await exportSnippetsFromHook({
         fileName,
         parentFolderId,
-        snippets: exportSnippets,
-        onProgress: (progress) => {
+        snippets: snippetsForExport,
+        onProgress: (_progress) => {
           setExportProgress((prev) => ({ ...prev }));
         }
       });

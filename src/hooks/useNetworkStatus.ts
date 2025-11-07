@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
 
+interface NetworkInformation {
+  effectiveType?: string;
+  saveData?: boolean;
+  addEventListener?: (type: string, listener: () => void) => void;
+  removeEventListener?: (type: string, listener: () => void) => void;
+}
+
+type NavigatorWithConnection = Navigator & {
+  connection?: NetworkInformation;
+  mozConnection?: NetworkInformation;
+  webkitConnection?: NetworkInformation;
+};
+
 export interface NetworkStatus {
   isOnline: boolean;
   isSlowConnection: boolean;
@@ -36,9 +49,9 @@ export function useNetworkStatus(): NetworkStatus {
     // Check connection quality using Network Information API if available
     const checkConnectionQuality = () => {
       const connection =
-        (navigator as any).connection ||
-        (navigator as any).mozConnection ||
-        (navigator as any).webkitConnection;
+        (navigator as NavigatorWithConnection).connection ||
+        (navigator as NavigatorWithConnection).mozConnection ||
+        (navigator as NavigatorWithConnection).webkitConnection;
 
       if (connection) {
         // Consider slow if effectiveType is 2g or slow-2g
@@ -59,20 +72,21 @@ export function useNetworkStatus(): NetworkStatus {
     window.addEventListener("offline", handleOffline);
 
     // Listen for connection changes
+    const navigatorWithConnection = navigator as NavigatorWithConnection;
     const connection =
-      (navigator as any).connection ||
-      (navigator as any).mozConnection ||
-      (navigator as any).webkitConnection;
+      navigatorWithConnection.connection ||
+      navigatorWithConnection.mozConnection ||
+      navigatorWithConnection.webkitConnection;
 
     if (connection) {
-      connection.addEventListener("change", checkConnectionQuality);
+      connection.addEventListener?.("change", checkConnectionQuality);
     }
 
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
       if (connection) {
-        connection.removeEventListener("change", checkConnectionQuality);
+        connection.removeEventListener?.("change", checkConnectionQuality);
       }
     };
   }, []);

@@ -16,7 +16,6 @@ export function useWindowFocusReconciliation(): void {
     const handleFocus = () => {
       // Check if auth state has changed
       const storedAuth = localStorage.getItem("yarny_auth");
-      const storedUser = localStorage.getItem("yarny_user");
 
       const currentToken = user?.token;
       const storedToken = storedAuth;

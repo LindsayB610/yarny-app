@@ -1,6 +1,6 @@
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, useMemo, useState, useEffect, type JSX } from "react";
+import { useRef, useMemo, useEffect, type JSX } from "react";
 
 import { StoryCard } from "./StoryCard";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";

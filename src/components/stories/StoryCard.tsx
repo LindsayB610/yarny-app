@@ -7,7 +7,7 @@ import {
   LinearProgress,
   Typography
 } from "@mui/material";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState, type MouseEvent, type JSX } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DeleteStoryModal } from "./DeleteStoryModal";
@@ -48,7 +48,7 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
     navigate("/editor");
   }, [story.id, story.name, navigate]);
 
-  const handleDelete = useCallback((e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: MouseEvent) => {
     e.stopPropagation();
     setIsDeleteModalOpen(true);
   }, []);

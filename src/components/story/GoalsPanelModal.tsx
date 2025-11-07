@@ -15,11 +15,11 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import { useState, type JSX } from "react";
+import { useState, type JSX, type FormEvent } from "react";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-interface Goal {
+export interface Goal {
   target: number;
   deadline: string;
   mode?: "elastic" | "strict";
@@ -65,7 +65,7 @@ export function GoalsPanelModal({
     setWritingDays(newDays);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsSaving(true);

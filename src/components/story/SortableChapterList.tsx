@@ -1,6 +1,4 @@
-import type {
-  DragEndEvent,
-  DragStartEvent} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
   closestCenter,
   DndContext,
@@ -17,7 +15,7 @@ import {
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { type CSSProperties } from "react";
 import { useState, type JSX } from "react";
 

@@ -1,5 +1,10 @@
 import { apiClient } from "../api/client";
 
+interface DriveScopeError extends Error {
+  code?: string;
+  requiresReauth?: boolean;
+}
+
 /**
  * Get a random opening sentence for new stories
  * These match the opening sentences from the legacy implementation
@@ -198,18 +203,20 @@ export async function initializeStoryStructure(
     console.error("Error creating opening scene Google Doc:", error);
     // Log error but continue - the data.json has the content
     // Check if this is a scope issue
-    if (
-      error instanceof Error &&
-      (error.message.includes("MISSING_DOCS_SCOPE") ||
-        (error as any).code === "MISSING_DOCS_SCOPE" ||
-        (error as any).requiresReauth)
-    ) {
-      const scopeError = new Error(
+    if (error instanceof Error) {
+      const scopeError = error as DriveScopeError;
+      const requiresReauth =
+        scopeError.message.includes("MISSING_DOCS_SCOPE") ||
+        scopeError.code === "MISSING_DOCS_SCOPE" ||
+        scopeError.requiresReauth;
+      if (requiresReauth) {
+        const reauthError: DriveScopeError = new Error(
         "MISSING_DOCS_SCOPE: OAuth tokens are missing Google Docs API scope. Please re-authorize Drive access."
       );
-      (scopeError as any).code = "MISSING_DOCS_SCOPE";
-      (scopeError as any).requiresReauth = true;
-      throw scopeError;
+        reauthError.code = "MISSING_DOCS_SCOPE";
+        reauthError.requiresReauth = true;
+        throw reauthError;
+      }
     }
     // For other errors, log them but continue - the data.json has the content
     console.warn(

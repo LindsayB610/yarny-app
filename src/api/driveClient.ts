@@ -7,51 +7,6 @@ import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
 
-const ProjectSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  driveFolderId: z.string(),
-  storyIds: z.array(z.string()),
-  updatedAt: z.string()
-});
-
-const StorySchema = z.object({
-  id: z.string(),
-  projectId: z.string(),
-  title: z.string(),
-  driveFileId: z.string(),
-  chapterIds: z.array(z.string()).default([]),
-  updatedAt: z.string()
-});
-
-const ChapterSchema = z.object({
-  id: z.string(),
-  storyId: z.string(),
-  title: z.string(),
-  color: z.string().optional(),
-  order: z.number(),
-  snippetIds: z.array(z.string()).default([]),
-  driveFolderId: z.string(),
-  updatedAt: z.string()
-});
-
-const SnippetSchema = z.object({
-  id: z.string(),
-  storyId: z.string(),
-  order: z.number(),
-  content: z.string(),
-  driveRevisionId: z.string().optional(),
-  driveFileId: z.string().optional(),
-  updatedAt: z.string()
-});
-
-const NormalizedSchema = z.object({
-  projects: z.array(ProjectSchema).optional(),
-  stories: z.array(StorySchema).optional(),
-  chapters: z.array(ChapterSchema).optional(),
-  snippets: z.array(SnippetSchema).optional()
-});
-
 const SaveStoryInputSchema = z.object({
   storyId: z.string(),
   content: z.string(),
@@ -190,15 +145,37 @@ export const createDriveClient = (): DriveClient => ({
 
       // Load data.json for groups/snippets
       const dataFile = fileMap.get("data.json");
-      let rawGroups: Record<string, any> = {};
-      let rawSnippets: Record<string, any> = {};
+      interface RawGroup {
+        id?: string;
+        title?: string;
+        color?: string;
+        snippetIds?: string[];
+        position?: number;
+        order?: number;
+        driveFolderId?: string;
+        updatedAt?: string;
+      }
+
+      interface RawSnippet {
+        groupId?: string;
+        chapterId?: string;
+        order?: number;
+        body?: string;
+        content?: string;
+        driveRevisionId?: string;
+        driveFileId?: string;
+        updatedAt?: string;
+      }
+
+      let rawGroups: Record<string, RawGroup> = {};
+      let rawSnippets: Record<string, RawSnippet> = {};
       if (dataFile?.id) {
         try {
           const dataContent = await apiClient.readDriveFile({ fileId: dataFile.id });
           if (dataContent.content) {
             const parsedData = JSON.parse(dataContent.content) as {
-              groups?: Record<string, any>;
-              snippets?: Record<string, any>;
+              groups?: Record<string, RawGroup>;
+              snippets?: Record<string, RawSnippet>;
             };
             rawGroups = parsedData.groups ?? {};
             rawSnippets = parsedData.snippets ?? {};

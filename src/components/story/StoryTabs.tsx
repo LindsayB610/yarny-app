@@ -1,5 +1,5 @@
 import { Tab, Tabs, Box } from "@mui/material";
-import { type JSX, useState } from "react";
+import { type JSX, useState, type SyntheticEvent } from "react";
 
 export interface TabItem {
   id: string;
@@ -20,7 +20,7 @@ export function StoryTabs({
 }: StoryTabsProps): JSX.Element {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id || "");
 
-  const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
+  const handleChange = (_event: SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
     onChange?.(newValue);
   };

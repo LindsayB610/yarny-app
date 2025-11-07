@@ -4,6 +4,53 @@ import { useCallback, useEffect, useRef } from "react";
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
 
+interface QueuedSave {
+  fileId: string;
+  content: string;
+  timestamp: string;
+}
+
+const readQueuedSaves = (): QueuedSave[] => {
+  try {
+    const raw = localStorage.getItem("yarny_queued_saves");
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed
+      .map((entry) => {
+        if (
+          entry &&
+          typeof entry === "object" &&
+          "fileId" in entry &&
+          "content" in entry &&
+          "timestamp" in entry
+        ) {
+          const { fileId, content, timestamp } = entry as {
+            fileId: unknown;
+            content: unknown;
+            timestamp: unknown;
+          };
+          if (
+            typeof fileId === "string" &&
+            typeof content === "string" &&
+            typeof timestamp === "string"
+          ) {
+            return { fileId, content, timestamp };
+          }
+        }
+        return null;
+      })
+      .filter((entry): entry is QueuedSave => entry !== null);
+  } catch (error) {
+    console.error("Failed to parse queued saves:", error);
+    return [];
+  }
+};
+
 export interface AutoSaveOptions {
   enabled?: boolean;
   debounceMs?: number;
@@ -35,13 +82,13 @@ export function useAutoSave(
 
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContentRef = useRef<string>("");
-  const queuedSaveRef = useRef<{ fileId: string; content: string } | null>(null);
+  const queuedSaveRef = useRef<QueuedSave | null>(null);
 
   // Mutation for processing queued saves - uses React Query for proper error handling and retry logic
   const processQueuedSavesMutation = useMutation({
-    mutationFn: async (save: { fileId: string; content: string }) => {
+    mutationFn: async (save: QueuedSave) => {
       return apiClient.writeDriveFile({
         fileId: save.fileId,
         fileName: "", // Not needed for existing files
@@ -59,16 +106,14 @@ export function useAutoSave(
   const queueSave = useCallback(
     (fileId: string, content: string) => {
       try {
-        const queued = JSON.parse(
-          localStorage.getItem("yarny_queued_saves") || "[]"
-        );
+        const queued = readQueuedSaves();
         queued.push({
           fileId,
           content,
           timestamp: new Date().toISOString()
         });
         localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
-        queuedSaveRef.current = { fileId, content };
+        queuedSaveRef.current = { fileId, content, timestamp: new Date().toISOString() };
       } catch (error) {
         console.error("Failed to queue save:", error);
       }
@@ -84,9 +129,7 @@ export function useAutoSave(
 
     const processQueuedSaves = async () => {
       try {
-        const queued = JSON.parse(
-          localStorage.getItem("yarny_queued_saves") || "[]"
-        );
+        const queued = readQueuedSaves();
         if (queued.length === 0) {
           return;
         }
@@ -116,13 +159,10 @@ export function useAutoSave(
     const handleRetry = () => {
       processQueuedSaves();
     };
-    window.addEventListener("yarny:retry-queued-saves", handleRetry as EventListener);
+    window.addEventListener("yarny:retry-queued-saves", handleRetry);
 
     return () => {
-      window.removeEventListener(
-        "yarny:retry-queued-saves",
-        handleRetry as EventListener
-      );
+      window.removeEventListener("yarny:retry-queued-saves", handleRetry);
     };
   }, [isOnline, processQueuedSavesMutation]);
 

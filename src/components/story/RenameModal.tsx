@@ -5,10 +5,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
-  Typography
+  TextField
 } from "@mui/material";
-import { useState, type JSX } from "react";
+import { useState, type JSX, type FormEvent } from "react";
 
 interface RenameModalProps {
   open: boolean;
@@ -31,7 +30,7 @@ export function RenameModal({
 
   const itemLabel = itemType === "chapter" ? "Chapter" : itemType === "snippet" ? "Snippet" : "Story";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -104,7 +103,6 @@ export function RenameModal({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             required
-            autoFocus
             sx={{ mt: 1 }}
             InputLabelProps={{ style: { color: "rgba(255, 255, 255, 0.7)" } }}
             InputProps={{

@@ -8,7 +8,7 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import { useState, type JSX } from "react";
+import { useState, type JSX, type FormEvent } from "react";
 
 interface StoryInfoModalProps {
   open: boolean;
@@ -32,7 +32,7 @@ export function StoryInfoModal({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsSaving(true);

@@ -8,6 +8,7 @@ import {
   LinearProgress,
   Typography
 } from "@mui/material";
+import type { JSX } from "react";
 
 import type { ExportProgress } from "../../hooks/useExport";
 

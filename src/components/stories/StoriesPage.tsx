@@ -79,7 +79,7 @@ export function StoriesPage(): JSX.Element {
           ) : filteredStories.length === 0 && searchQuery ? (
             <Box sx={{ textAlign: "center", py: 6 }}>
               <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                No stories found matching "{searchQuery}"
+                No stories found matching &quot;{searchQuery}&quot;
               </Typography>
             </Box>
           ) : filteredStories.length === 0 ? (

@@ -60,6 +60,23 @@ export default [
       ],
       "react/react-in-jsx-scope": "off"
     }
+  },
+  {
+    files: [
+      "**/*.test.{ts,tsx}",
+      "**/*.spec.{ts,tsx}",
+      "tests/**/*.{ts,tsx}",
+      "tests/**/*.{ts}",
+      "test-corpus/**/*.{js,ts,tsx}"
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-var-requires": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "react/display-name": "off",
+      "import/order": "off",
+      "@typescript-eslint/ban-ts-comment": "off"
+    }
   }
 ];
 

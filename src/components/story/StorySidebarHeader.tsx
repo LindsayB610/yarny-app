@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useState, type JSX } from "react";
 
 import { GoalMeter } from "./GoalMeter";
-import { GoalsPanelModal } from "./GoalsPanelModal";
+import { GoalsPanelModal, type Goal } from "./GoalsPanelModal";
 import { TodayChip } from "./TodayChip";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
 import { useYarnyStore } from "../../store/provider";
@@ -25,7 +25,7 @@ export function StorySidebarHeader(): JSX.Element {
   const totalWords = progress?.totalWords || 0;
   const dailyInfo = progress?.dailyInfo;
 
-  const handleSave = async (newWordGoal: number, goal?: any) => {
+  const handleSave = async (newWordGoal: number, goal?: Goal) => {
     // TODO: Implement save to Drive
     console.log("Save goal:", newWordGoal, goal);
     setGoalsModalOpen(false);

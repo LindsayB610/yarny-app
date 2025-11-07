@@ -1,4 +1,4 @@
-import { Box, Popover, type PopoverProps } from "@mui/material";
+import { Box, Popover } from "@mui/material";
 import { type JSX } from "react";
 
 const COLORS = [

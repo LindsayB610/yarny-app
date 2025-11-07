@@ -3,10 +3,6 @@ import { useCallback, useState } from "react";
 
 import { apiClient } from "../api/client";
 
-// Google Docs API batchUpdate has a limit of ~50MB per request
-// For plain text, we'll use a conservative limit of 1MB per chunk
-// This accounts for the JSON structure overhead
-const CHUNK_SIZE_LIMIT = 1 * 1024 * 1024; // 1MB in bytes
 const CHUNK_TEXT_LIMIT = 500_000; // ~500k characters per chunk (conservative)
 
 export interface ExportProgress {

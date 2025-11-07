@@ -8,11 +8,38 @@ import { selectActiveStory } from "../store/selectors";
 import type { StoryMetadata } from "../utils/storyCreation";
 import { initializeStoryStructure } from "../utils/storyCreation";
 
+interface StoryDataJson {
+  groups?: Record<string, StoryGroupData>;
+  snippets?: Record<string, StorySnippetData>;
+}
+
+interface StoryGroupData {
+  id?: string;
+  title?: string;
+  color?: string;
+  snippetIds?: string[];
+  position?: number;
+  driveFolderId?: string;
+  updatedAt?: string;
+}
+
+interface StorySnippetData {
+  id?: string;
+  chapterId?: string;
+  groupId?: string;
+  order?: number;
+  body?: string;
+  content?: string;
+  driveFileId?: string;
+  driveRevisionId?: string;
+  updatedAt?: string;
+}
+
 /**
  * Helper function to read data.json from a story folder
  */
 async function readDataJson(storyFolderId: string): Promise<{
-  data: any;
+  data: StoryDataJson;
   fileId: string;
 }> {
   // List files in the story folder
@@ -31,7 +58,7 @@ async function readDataJson(storyFolderId: string): Promise<{
     throw new Error("data.json is empty");
   }
 
-  const data = JSON.parse(dataContent.content);
+  const data = JSON.parse(dataContent.content) as StoryDataJson;
   return { data, fileId: dataJsonFile.id };
 }
 
@@ -40,7 +67,7 @@ async function readDataJson(storyFolderId: string): Promise<{
  */
 async function writeDataJson(
   storyFolderId: string,
-  data: any,
+  data: StoryDataJson,
   fileId?: string
 ): Promise<void> {
   const content = JSON.stringify(data, null, 2);
@@ -90,16 +117,18 @@ export function useCreateStory() {
         await initializeStoryStructure(storyFolder.id, params.metadata);
       } catch (error) {
         // Check if this is a scope issue that requires re-authorization
-        if (
-          error instanceof Error &&
-          ((error as any).code === "MISSING_DOCS_SCOPE" ||
-            (error as any).requiresReauth ||
-            error.message.includes("MISSING_DOCS_SCOPE"))
-        ) {
-          // Redirect to Drive auth
-          window.location.href = "/.netlify/functions/drive-auth";
-          // Return null to indicate the operation was cancelled
-          return null;
+        if (error instanceof Error) {
+          const scopedError = error as Error & { code?: string; requiresReauth?: boolean };
+          const requiresReauth =
+            scopedError.code === "MISSING_DOCS_SCOPE" ||
+            scopedError.requiresReauth ||
+            scopedError.message.includes("MISSING_DOCS_SCOPE");
+          if (requiresReauth) {
+            // Redirect to Drive auth
+            window.location.href = "/.netlify/functions/drive-auth";
+            // Return null to indicate the operation was cancelled
+            return null;
+          }
         }
         // For other errors, throw them
         throw error;
@@ -194,8 +223,9 @@ export function useReorderChaptersMutation() {
       }
 
       newOrder.forEach((groupId, index) => {
-        if (data.groups[groupId]) {
-          data.groups[groupId].position = index;
+        const group = data.groups?.[groupId];
+        if (group) {
+          group.position = index;
         }
       });
 
@@ -208,7 +238,10 @@ export function useReorderChaptersMutation() {
       if (projectJsonFile) {
         const projectContent = await apiClient.readDriveFile({ fileId: projectJsonFile.id });
         if (projectContent.content) {
-          const project = JSON.parse(projectContent.content);
+          const project = JSON.parse(projectContent.content) as {
+            groupIds?: string[];
+            updatedAt?: string;
+          };
           project.groupIds = newOrder;
           project.updatedAt = new Date().toISOString();
 
@@ -227,20 +260,20 @@ export function useReorderChaptersMutation() {
       // Update store with new chapter order
       const chapters = newOrder
         .map((id) => {
-          const group = data.groups[id];
+          const group = data.groups?.[id];
           if (!group) return null;
           return {
-            id: group.id,
+            id: group.id ?? id,
             storyId: activeStory.id,
-            title: group.title,
+            title: group.title ?? "Untitled",
             color: group.color,
-            order: group.position,
-            snippetIds: group.snippetIds || [],
-            driveFolderId: group.driveFolderId,
+            order: group.position ?? 0,
+            snippetIds: group.snippetIds ?? [],
+            driveFolderId: group.driveFolderId ?? "",
             updatedAt: new Date().toISOString()
           };
         })
-        .filter((c) => c !== null);
+        .filter((c): c is NonNullable<typeof c> => c !== null);
 
       upsertEntities({ chapters });
     },
@@ -277,20 +310,22 @@ export function useReorderSnippetsMutation() {
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
 
       // Update snippet order in the group
-      if (!data.groups || !data.groups[chapterId]) {
+      const chapter = data.groups?.[chapterId];
+      if (!chapter) {
         throw new Error("Chapter not found in data.json");
       }
 
-      data.groups[chapterId].snippetIds = newOrder;
+      chapter.snippetIds = newOrder;
 
       // Update snippet order numbers
       if (data.snippets) {
         newOrder.forEach((snippetId, index) => {
-          if (data.snippets[snippetId]) {
+          const snippet = data.snippets?.[snippetId];
+          if (snippet) {
             // Note: The order field might not exist in data.json format
             // We'll update it if it exists, otherwise rely on snippetIds array order
-            if (data.snippets[snippetId].order !== undefined) {
-              data.snippets[snippetId].order = index;
+            if (snippet.order !== undefined) {
+              snippet.order = index;
             }
           }
         });
@@ -300,18 +335,18 @@ export function useReorderSnippetsMutation() {
       await writeDataJson(activeStory.driveFileId, data, fileId);
 
       // Update store
-      const chapter = data.groups[chapterId];
-      if (chapter) {
+      const updatedChapter = data.groups?.[chapterId];
+      if (updatedChapter) {
         upsertEntities({
           chapters: [
             {
-              id: chapter.id,
+              id: updatedChapter.id ?? chapterId,
               storyId: activeStory.id,
-              title: chapter.title,
-              color: chapter.color,
-              order: chapter.position || 0,
+              title: updatedChapter.title ?? "Untitled",
+              color: updatedChapter.color,
+              order: updatedChapter.position || 0,
               snippetIds: newOrder,
-              driveFolderId: chapter.driveFolderId,
+              driveFolderId: updatedChapter.driveFolderId ?? "",
               updatedAt: new Date().toISOString()
             }
           ]
@@ -367,79 +402,71 @@ export function useMoveSnippetToChapterMutation() {
         throw new Error("Snippet not found in any chapter");
       }
 
-      if (!data.groups[targetChapterId]) {
+      const targetChapter = data.groups[targetChapterId];
+      if (!targetChapter) {
         throw new Error("Target chapter not found");
       }
 
       // Remove snippet from source chapter
-      if (data.groups[sourceChapterId].snippetIds) {
-        data.groups[sourceChapterId].snippetIds = data.groups[sourceChapterId].snippetIds.filter(
+      const sourceChapter = data.groups[sourceChapterId];
+      if (sourceChapter?.snippetIds) {
+        sourceChapter.snippetIds = sourceChapter.snippetIds.filter(
           (id: string) => id !== snippetId
         );
       }
 
       // Add snippet to target chapter (at the end)
-      if (!data.groups[targetChapterId].snippetIds) {
-        data.groups[targetChapterId].snippetIds = [];
+      if (!targetChapter.snippetIds) {
+        targetChapter.snippetIds = [];
       }
-      data.groups[targetChapterId].snippetIds.push(snippetId);
+      targetChapter.snippetIds.push(snippetId);
 
       // Update snippet's groupId
-      if (data.snippets[snippetId]) {
-        data.snippets[snippetId].groupId = targetChapterId;
+      const snippet = data.snippets[snippetId];
+      if (snippet) {
+        snippet.groupId = targetChapterId;
       }
 
       // Move the snippet file in Drive if it has a driveFileId
-      if (data.snippets[snippetId]?.driveFileId) {
-        const snippetFileId = data.snippets[snippetId].driveFileId;
-        const targetChapterFolderId = data.groups[targetChapterId].driveFolderId;
-
-        // Use Drive API to move the file
-        // Note: This requires a Drive API call to update the file's parent
-        // For now, we'll update data.json and the file will be moved on next sync
-        // TODO: Implement actual file move in Drive
-      }
+      // TODO: Implement actual file move in Drive
 
       // Write updated data.json
       await writeDataJson(activeStory.driveFileId, data, fileId);
 
       // Update store
-      const sourceChapter = data.groups[sourceChapterId];
-      const targetChapter = data.groups[targetChapterId];
-
       upsertEntities({
         chapters: [
-          {
-            id: sourceChapter.id,
+          sourceChapter && {
+            id: sourceChapter.id ?? sourceChapterId,
             storyId: activeStory.id,
-            title: sourceChapter.title,
+            title: sourceChapter.title ?? "Untitled",
             color: sourceChapter.color,
             order: sourceChapter.position || 0,
             snippetIds: sourceChapter.snippetIds || [],
-            driveFolderId: sourceChapter.driveFolderId,
+            driveFolderId: sourceChapter.driveFolderId ?? "",
             updatedAt: new Date().toISOString()
           },
-          {
-            id: targetChapter.id,
+          targetChapter && {
+            id: targetChapter.id ?? targetChapterId,
             storyId: activeStory.id,
-            title: targetChapter.title,
+            title: targetChapter.title ?? "Untitled",
             color: targetChapter.color,
             order: targetChapter.position || 0,
             snippetIds: targetChapter.snippetIds || [],
-            driveFolderId: targetChapter.driveFolderId,
+            driveFolderId: targetChapter.driveFolderId ?? "",
             updatedAt: new Date().toISOString()
           }
-        ],
-        snippets: data.snippets[snippetId]
+        ].filter((chapter): chapter is NonNullable<typeof chapter> => Boolean(chapter)),
+        snippets: snippet
           ? [
               {
                 id: snippetId,
                 storyId: activeStory.id,
                 chapterId: targetChapterId,
                 order: (targetChapter.snippetIds?.length || 1) - 1,
-                content: data.snippets[snippetId].body || "",
-                driveFileId: data.snippets[snippetId].driveFileId,
-                driveRevisionId: data.snippets[snippetId].driveRevisionId,
+                content: snippet.body ?? snippet.content ?? "",
+                driveFileId: snippet.driveFileId,
+                driveRevisionId: snippet.driveRevisionId,
                 updatedAt: new Date().toISOString()
               }
             ]

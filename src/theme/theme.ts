@@ -74,7 +74,11 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 999,
-          textTransform: "none"
+          textTransform: "none",
+          "&:focus-visible": {
+            outline: `2px solid ${palette.primary.main}`,
+            outlineOffset: "2px"
+          }
         }
       }
     },
@@ -107,16 +111,6 @@ export const theme = createTheme({
         body: {
           backgroundColor: palette.background.default,
           color: palette.text.primary
-        }
-      }
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          "&:focus-visible": {
-            outline: `2px solid ${palette.primary.main}`,
-            outlineOffset: "2px"
-          }
         }
       }
     },

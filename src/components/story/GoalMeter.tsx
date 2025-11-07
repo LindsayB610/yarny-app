@@ -1,5 +1,5 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
-import { memo, useCallback, useMemo, type JSX } from "react";
+import { memo, useCallback, useMemo, type JSX, type KeyboardEvent } from "react";
 
 interface GoalMeterProps {
   totalWords: number;
@@ -19,7 +19,7 @@ export const GoalMeter = memo(function GoalMeter({
   const formattedWords = useMemo(() => totalWords.toLocaleString(), [totalWords]);
   const formattedGoal = useMemo(() => goal.toLocaleString(), [goal]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (onClick && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       onClick();

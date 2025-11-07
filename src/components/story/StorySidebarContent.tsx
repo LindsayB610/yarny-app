@@ -56,10 +56,6 @@ export function StorySidebarContent({
     Boolean(story && snippetIds.length > 0)
   );
 
-  if (!story) {
-    return <></>;
-  }
-
   const toggleChapterCollapse = useCallback((chapterId: string) => {
     setCollapsedChapters((prev) => {
       const next = new Set(prev);
@@ -96,7 +92,7 @@ export function StorySidebarContent({
   );
 
   // Render a single chapter
-  const renderChapter = (chapter: SortableChapter, index: number): JSX.Element => {
+  const renderChapter = (chapter: SortableChapter): JSX.Element => {
     const isCollapsed = collapsedChapters.has(chapter.id);
 
     return (
@@ -178,6 +174,10 @@ export function StorySidebarContent({
       </Box>
     );
   };
+
+  if (!story) {
+    return <></>;
+  }
 
   if (chapters.length === 0) {
     return (
