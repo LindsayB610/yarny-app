@@ -18,6 +18,8 @@ reference-docs/
 # Testing
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
 
 # Test corpus (generated files - can be regenerated with generate-test-corpus.js)
 test-corpus/test-medium/
