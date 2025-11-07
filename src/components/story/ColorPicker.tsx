@@ -70,6 +70,15 @@ export function ColorPicker({
           <Box
             key={color.name}
             onClick={() => handleColorSelect(color.value)}
+            tabIndex={0}
+            role="button"
+            aria-label={`Select ${color.name} color`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleColorSelect(color.value);
+              }
+            }}
             sx={{
               width: 40,
               height: 40,
@@ -84,6 +93,10 @@ export function ColorPicker({
               "&:hover": {
                 transform: "scale(1.1)",
                 borderColor: "white"
+              },
+              "&:focus-visible": {
+                outline: "2px solid #6D4AFF",
+                outlineOffset: "2px"
               }
             }}
             title={color.name}

@@ -4,6 +4,7 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors
@@ -16,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box, IconButton, Typography } from "@mui/material";
+import { type CSSProperties } from "react";
 import { useState, type JSX } from "react";
 
 export interface Chapter {
@@ -47,16 +49,37 @@ function SortableChapterItem({
     isDragging
   } = useSortable({ id: chapter.id });
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <Box
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      tabIndex={0}
+      role="button"
+      aria-label={`Chapter: ${chapter.title}. Press Space to activate drag mode, then use arrow keys to reorder.`}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          // Keyboard activation is handled by KeyboardSensor
+        }
+      }}
+      sx={{
+        "&:focus-visible": {
+          outline: "2px solid #6D4AFF",
+          outlineOffset: "2px",
+          borderRadius: "4px"
+        }
+      }}
+    >
       {children}
-    </div>
+    </Box>
   );
 }
 
@@ -70,6 +93,22 @@ export function SortableChapterList({
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: (event, { context }) => {
+        const activeId = context.active.id;
+        const activeElement = document.querySelector(`[data-id="${activeId}"]`) as HTMLElement;
+        
+        if (!activeElement) {
+          return { x: 0, y: 0 };
+        }
+        
+        const rect = activeElement.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        };
       }
     })
   );

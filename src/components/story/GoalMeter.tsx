@@ -19,6 +19,15 @@ export function GoalMeter({
   return (
     <Box
       onClick={onClick}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? "button" : undefined}
+      aria-label={onClick ? "Word count goal: Click to edit" : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       sx={{
         cursor: onClick ? "pointer" : "default",
         mb: 2,
@@ -30,6 +39,10 @@ export function GoalMeter({
         ...(onClick && {
           "&:hover": {
             bgcolor: "rgba(255, 255, 255, 0.08)"
+          },
+          "&:focus-visible": {
+            outline: "2px solid #6D4AFF",
+            outlineOffset: "2px"
           }
         })
       }}

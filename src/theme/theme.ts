@@ -109,6 +109,49 @@ export const theme = createTheme({
           color: palette.text.primary
         }
       }
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          "&:focus-visible": {
+            outline: `2px solid ${palette.primary.main}`,
+            outlineOffset: "2px"
+          }
+        }
+      }
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          "&:focus-visible": {
+            outline: `2px solid ${palette.primary.main}`,
+            outlineOffset: "2px"
+          }
+        }
+      }
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          "&:focus-visible": {
+            outline: `2px solid ${palette.primary.main}`,
+            outlineOffset: "2px",
+            borderRadius: "4px"
+          }
+        }
+      }
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            "&:focus-within": {
+              outline: `2px solid ${palette.primary.main}`,
+              outlineOffset: "2px"
+            }
+          }
+        }
+      }
     }
   }
 });
