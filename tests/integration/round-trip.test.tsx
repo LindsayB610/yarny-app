@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
-import { StoryEditor } from "../../src/components/story/StoryEditor";
 import { apiClient } from "../../src/api/client";
-import * as useConflictDetectionModule from "../../src/hooks/useConflictDetection";
+import { StoryEditor } from "../../src/components/story/StoryEditor";
 import * as useAutoSaveModule from "../../src/hooks/useAutoSave";
+import * as useConflictDetectionModule from "../../src/hooks/useConflictDetection";
 
 // Mock dependencies
 vi.mock("../../src/api/client");
@@ -23,38 +23,40 @@ vi.mock("../../src/hooks/useExport", () => ({
 vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
   useVisibilityGatedSnippetQueries: vi.fn()
 }));
-vi.mock("../../src/store/provider", () => ({
-  useYarnyStore: (selector: any) => {
-    const mockStore = {
-      entities: {
-        stories: {
-          "story-1": {
-            id: "story-1",
-            projectId: "project-1",
-            title: "Test Story",
-            driveFileId: "drive-file-1",
-            snippetIds: ["snippet-1"],
-            updatedAt: new Date().toISOString()
-          }
-        },
-        snippets: {
-          "snippet-1": {
-            id: "snippet-1",
-            storyId: "story-1",
-            order: 1,
-            content: "Initial content",
-            updatedAt: new Date().toISOString()
-          }
+vi.mock("../../src/store/provider", () => {
+  const mockStore = {
+    entities: {
+      stories: {
+        "story-1": {
+          id: "story-1",
+          projectId: "project-1",
+          title: "Test Story",
+          driveFileId: "drive-file-1",
+          snippetIds: ["snippet-1"],
+          updatedAt: new Date().toISOString()
         }
       },
-      ui: {
-        activeStoryId: "story-1",
-        isSyncing: false
+      snippets: {
+        "snippet-1": {
+          id: "snippet-1",
+          storyId: "story-1",
+          order: 1,
+          content: "Initial content",
+          updatedAt: new Date().toISOString()
+        }
       }
-    };
-    return selector(mockStore);
-  }
-}));
+    },
+    ui: {
+      activeStoryId: "story-1",
+      isSyncing: false
+    }
+  };
+  return {
+    useYarnyStore: (selector: (store: typeof mockStore) => unknown) => {
+      return selector(mockStore);
+    }
+  };
+});
 
 const createTestQueryClient = () =>
   new QueryClient({

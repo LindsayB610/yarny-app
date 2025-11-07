@@ -1,8 +1,8 @@
-import { Box, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import type { JSX } from "react";
 
-import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { StoryCard } from "./StoryCard";
+import type { StoryFolder } from "../../hooks/useStoriesQuery";
 
 interface StoriesListProps {
   stories: StoryFolder[];

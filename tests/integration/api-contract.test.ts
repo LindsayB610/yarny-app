@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parseApiResponse } from "../../src/api/contract";
 import {
   ConfigResponseSchema,

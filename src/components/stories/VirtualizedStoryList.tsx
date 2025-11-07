@@ -1,9 +1,9 @@
+import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, useMemo, useState, useEffect, type JSX } from "react";
-import { Box, useTheme, useMediaQuery } from "@mui/material";
 
-import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { StoryCard } from "./StoryCard";
+import type { StoryFolder } from "../../hooks/useStoriesQuery";
 
 interface VirtualizedStoryListProps {
   stories: (StoryFolder & { searchQuery?: string })[];

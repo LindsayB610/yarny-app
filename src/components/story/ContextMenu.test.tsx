@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders, screen, userEvent } from "../../../tests/utils/test-utils";
+
 import { ContextMenu, type ContextMenuAction } from "./ContextMenu";
+import { renderWithProviders, screen, userEvent } from "../../../tests/utils/test-utils";
 
 describe("ContextMenu", () => {
   const mockAnchorEl = document.createElement("div");

@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Container } from "@mui/material";
+import { CircularProgress, Container } from "@mui/material";
 import { type JSX } from "react";
 import { Navigate } from "react-router-dom";
 

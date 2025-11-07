@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { waitFor } from "@testing-library/react";
+import axios from "axios";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { apiClient } from "../../src/api/client";
-import axios from "axios";
 
 // Mock axios to simulate rate limiting
 vi.mock("axios");

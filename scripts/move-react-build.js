@@ -9,7 +9,9 @@
  * 3. Keeps classic app files (editor.html, stories.html, etc.) in dist/
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 
 const distDir = path.join(__dirname, '..', 'dist');
@@ -22,23 +24,24 @@ const reactFiles = [
 ];
 
 // Files/directories to keep in dist/ (classic app)
-const classicFiles = [
-  'editor.html',
-  'stories.html',
-  'editor.css',
-  'stories.css',
-  'editor.js',
-  'stories.js',
-  'app.js',
-  'drive.js',
-  'global.css',
-  'footer.css',
-  'docs.html',
-  'docs.css',
-  'migration-plan.html',
-  'migration-plan',
-  'opening-sentences.js'
-];
+// (Not currently used, but kept for reference)
+// const classicFiles = [
+//   'editor.html',
+//   'stories.html',
+//   'editor.css',
+//   'stories.css',
+//   'editor.js',
+//   'stories.js',
+//   'app.js',
+//   'drive.js',
+//   'global.css',
+//   'footer.css',
+//   'docs.html',
+//   'docs.css',
+//   'migration-plan.html',
+//   'migration-plan',
+//   'opening-sentences.js'
+// ];
 
 function moveReactBuild() {
   console.log('Moving React build output to dist/react/...');

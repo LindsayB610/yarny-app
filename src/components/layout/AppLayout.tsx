@@ -1,6 +1,7 @@
 import { Box, Divider, Stack } from "@mui/material";
 import { useEffect, type JSX } from "react";
 
+import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
@@ -8,9 +9,8 @@ import { ProjectList } from "../navigation/ProjectList";
 import { StoryList } from "../navigation/StoryList";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
-import { StorySidebarHeader } from "../story/StorySidebarHeader";
 import { StorySidebarContent } from "../story/StorySidebarContent";
-import { OfflineBanner } from "./OfflineBanner";
+import { StorySidebarHeader } from "../story/StorySidebarHeader";
 
 export function AppLayout(): JSX.Element {
   const { data } = useDriveProjectsQuery();

@@ -1,12 +1,12 @@
 import { Box } from "@mui/material";
 import { useState, type JSX } from "react";
 
-import { useStoryProgress } from "../../hooks/useStoryProgress";
-import { useYarnyStore } from "../../store/provider";
-import { selectActiveStory } from "../../store/selectors";
 import { GoalMeter } from "./GoalMeter";
 import { GoalsPanelModal } from "./GoalsPanelModal";
 import { TodayChip } from "./TodayChip";
+import { useStoryProgress } from "../../hooks/useStoryProgress";
+import { useYarnyStore } from "../../store/provider";
+import { selectActiveStory } from "../../store/selectors";
 
 export function StorySidebarHeader(): JSX.Element {
   const story = useYarnyStore(selectActiveStory);

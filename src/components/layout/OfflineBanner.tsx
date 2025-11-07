@@ -1,6 +1,6 @@
-import { Alert, AlertTitle, Box, Button, Stack } from "@mui/material";
 import { CloudOff, CloudSync, WifiOff } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { Alert, AlertTitle, Box, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 import { useNetworkStatus } from "../../hooks/useNetworkStatus";
 
@@ -8,8 +8,8 @@ import { useNetworkStatus } from "../../hooks/useNetworkStatus";
  * Banner component that displays when the user is offline or has a slow connection
  * Shows queued saves count and allows manual retry
  */
-export function OfflineBanner(): JSX.Element | null {
-  const { isOnline, isSlowConnection, wasOffline } = useNetworkStatus();
+export function OfflineBanner(): React.JSX.Element | null {
+  const { isOnline, isSlowConnection } = useNetworkStatus();
   const [queuedSaves, setQueuedSaves] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
 

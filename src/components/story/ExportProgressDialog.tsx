@@ -1,3 +1,4 @@
+import { CloudUpload } from "@mui/icons-material";
 import {
   Box,
   CircularProgress,
@@ -7,7 +8,6 @@ import {
   LinearProgress,
   Typography
 } from "@mui/material";
-import { CloudUpload } from "@mui/icons-material";
 
 import type { ExportProgress } from "../../hooks/useExport";
 

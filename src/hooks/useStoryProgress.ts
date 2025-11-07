@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { apiClient } from "../api/client";
 import type { StoryProgress } from "./useStoriesQuery";
+import { apiClient } from "../api/client";
 
 /**
  * Get current date in US Pacific time (same as legacy code)

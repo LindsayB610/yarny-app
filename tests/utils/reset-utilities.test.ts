@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { createYarnyStore } from "../../src/store/createStore";
+import { describe, it, expect, beforeEach } from "vitest";
+
 import {
   resetStore,
   resetStoreToState,
@@ -19,6 +19,7 @@ import {
   createMockSnippet,
   createMockProject
 } from "./test-fixtures";
+import { createYarnyStore } from "../../src/store/createStore";
 
 describe("Reset Utilities", () => {
   describe("resetStore", () => {

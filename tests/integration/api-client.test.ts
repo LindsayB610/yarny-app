@@ -1,7 +1,8 @@
+import { http, HttpResponse } from "msw";
 import { describe, expect, it, beforeEach } from "vitest";
+
 import { apiClient } from "../../src/api/client";
 import { server } from "../setup/msw-server";
-import { http, HttpResponse } from "msw";
 
 describe("API Client Integration", () => {
   beforeEach(() => {

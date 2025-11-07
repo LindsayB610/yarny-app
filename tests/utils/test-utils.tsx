@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { type ReactElement, type ReactNode } from "react";
 import { BrowserRouter } from "react-router-dom";
-import { AppStoreProvider } from "../../src/store/provider";
+
 import { createYarnyStore } from "../../src/store/createStore";
+import { AppStoreProvider } from "../../src/store/provider";
 import type { YarnyState, YarnyStoreApi } from "../../src/store/types";
 
 // Create a test query client with default options
@@ -57,7 +59,6 @@ export function renderWithProviders(
 
 // Re-export everything from React Testing Library
 export * from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 export { userEvent };
 
 // Re-export reset utilities for convenience

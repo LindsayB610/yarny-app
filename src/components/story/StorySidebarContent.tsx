@@ -1,7 +1,9 @@
-import { Box, Collapse, IconButton, Typography } from "@mui/material";
 import { Add, ExpandMore, ChevronRight, Description } from "@mui/icons-material";
+import { Box, Collapse, IconButton, Typography } from "@mui/material";
 import { useState, useRef, useEffect, useCallback, useMemo, type JSX } from "react";
 
+import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
+import { SortableSnippetList, type Snippet as SortableSnippet } from "./SortableSnippetList";
 import {
   useMoveSnippetToChapterMutation,
   useReorderChaptersMutation,
@@ -15,8 +17,6 @@ import {
   selectActiveStorySnippets,
   selectSnippetsForChapter
 } from "../../store/selectors";
-import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
-import { SortableSnippetList, type Snippet as SortableSnippet } from "./SortableSnippetList";
 
 interface StorySidebarContentProps {
   onSnippetClick?: (snippetId: string) => void;

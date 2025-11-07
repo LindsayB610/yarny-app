@@ -1,5 +1,5 @@
-import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { Add, Refresh, Search } from "@mui/icons-material";
+import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import type { JSX } from "react";
 
 interface StoriesHeaderProps {

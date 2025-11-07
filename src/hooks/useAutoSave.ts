@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
-import { apiClient } from "../api/client";
 import { useNetworkStatus } from "./useNetworkStatus";
+import { apiClient } from "../api/client";
 
 export interface AutoSaveOptions {
   enabled?: boolean;

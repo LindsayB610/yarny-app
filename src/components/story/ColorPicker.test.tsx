@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders, screen, waitFor, userEvent } from "../../../tests/utils/test-utils";
+
 import { ColorPicker } from "./ColorPicker";
+import { renderWithProviders, screen, waitFor, userEvent } from "../../../tests/utils/test-utils";
 
 describe("ColorPicker", () => {
   const mockAnchorEl = document.createElement("div");

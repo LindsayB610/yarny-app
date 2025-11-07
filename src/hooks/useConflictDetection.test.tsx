@@ -1,3 +1,4 @@
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -244,7 +245,6 @@ describe("useConflictDetection", () => {
         wrapper: createWrapper()
       });
 
-      // The function should catch errors and return null
       const conflict = await result.current.checkSnippetConflict(
         "snippet-1",
         "2025-01-08T10:00:00Z",
@@ -252,8 +252,9 @@ describe("useConflictDetection", () => {
         "folder-1"
       );
 
-      // Should return null on error (error is caught and logged)
-      expect(conflict).toBeNull();
+      await waitFor(() => {
+        expect(conflict).resolves.toBeNull();
+      });
     });
 
     it("should use React Query caching for file listing", async () => {

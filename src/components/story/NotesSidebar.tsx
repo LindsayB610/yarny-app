@@ -8,10 +8,10 @@ import {
 } from "@mui/material";
 import { type JSX } from "react";
 
+import { StoryTabs, type TabItem } from "./StoryTabs";
 import { useNotesQuery, type NoteType } from "../../hooks/useNotesQuery";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
-import { StoryTabs, type TabItem } from "./StoryTabs";
 
 interface NotesListProps {
   notes: Array<{ id: string; name: string; content: string; modifiedTime: string }>;

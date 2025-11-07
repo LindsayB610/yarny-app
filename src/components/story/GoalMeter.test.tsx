@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders, screen, userEvent } from "../../../tests/utils/test-utils";
+
 import { GoalMeter } from "./GoalMeter";
+import { renderWithProviders, screen, userEvent } from "../../../tests/utils/test-utils";
 
 describe("GoalMeter", () => {
   it("displays word count and goal", () => {

@@ -1,13 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { AppLayout } from "../components/layout/AppLayout";
+import { editorLoader, storiesLoader } from "./loaders";
+import { getQueryClient } from "./queryClient";
 import { LoginPage } from "../components/auth/LoginPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
-import { RouteLoader } from "../components/loading/RouteLoader";
+import { AppLayout } from "../components/layout/AppLayout";
 import { StoriesPage } from "../components/stories/StoriesPage";
-import { editorLoader, storiesLoader } from "./loaders";
-import { getQueryClient } from "./queryClient";
 
 // Get shared query client instance
 const queryClient = getQueryClient();

@@ -1,8 +1,11 @@
+import { CloudUpload, MoreVert } from "@mui/icons-material";
 import { Box, Button, IconButton, Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import { CloudUpload, MoreVert } from "@mui/icons-material";
 import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 
+import { ConflictResolutionModal } from "./ConflictResolutionModal";
+import { EditorFooter } from "./EditorFooter";
+import { ExportProgressDialog } from "./ExportProgressDialog";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
 import {
   buildPlainTextDocument,
@@ -10,8 +13,8 @@ import {
 } from "../../editor/textExtraction";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection } from "../../hooks/useConflictDetection";
-import { useExport } from "../../hooks/useExport";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
+import { useExport } from "../../hooks/useExport";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useYarnyStore } from "../../store/provider";
 import {
@@ -20,9 +23,6 @@ import {
   selectIsSyncing,
   selectLastSyncedAt
 } from "../../store/selectors";
-import { ConflictResolutionModal } from "./ConflictResolutionModal";
-import { EditorFooter } from "./EditorFooter";
-import { ExportProgressDialog } from "./ExportProgressDialog";
 
 export function StoryEditor(): JSX.Element {
   const theme = useTheme();

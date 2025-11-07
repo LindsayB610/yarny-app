@@ -15,7 +15,7 @@ import {
   FormControl,
   InputLabel
 } from "@mui/material";
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { useCreateStory } from "../../hooks/useStoryMutations";
 

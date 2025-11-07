@@ -1,5 +1,5 @@
-import { Box, Button, Typography } from "@mui/material";
 import { Add } from "@mui/icons-material";
+import { Box, Button, Typography } from "@mui/material";
 import type { JSX } from "react";
 
 interface EmptyStateProps {

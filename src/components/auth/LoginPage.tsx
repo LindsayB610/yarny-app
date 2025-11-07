@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
-import { useEffect, useState, type JSX } from "react";
+import { useCallback, useEffect, useState, type JSX } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
@@ -23,7 +23,7 @@ declare global {
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useAuthConfig();
-  const { user, isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if already authenticated
@@ -32,6 +32,19 @@ export function LoginPage(): JSX.Element {
       navigate("/stories", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  const handleGoogleSignIn = useCallback(
+    async (response: { credential: string }) => {
+      try {
+        setError(null);
+        await login(response.credential);
+        navigate("/stories", { replace: true });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
+      }
+    },
+    [login, navigate]
+  );
 
   // Initialize Google Sign-In
   useEffect(() => {
@@ -43,17 +56,7 @@ export function LoginPage(): JSX.Element {
       client_id: config.clientId,
       callback: handleGoogleSignIn
     });
-  }, [config?.clientId]);
-
-  const handleGoogleSignIn = async (response: { credential: string }) => {
-    try {
-      setError(null);
-      await login(response.credential);
-      navigate("/stories", { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
-    }
-  };
+  }, [config?.clientId, handleGoogleSignIn]);
 
   const handleSignInClick = () => {
     if (window.google?.accounts?.id) {

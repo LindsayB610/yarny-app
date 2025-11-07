@@ -1,3 +1,4 @@
+import { Close } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -6,13 +7,12 @@ import {
   LinearProgress,
   Typography
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
 import { memo, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useStoryProgress } from "../../hooks/useStoryProgress";
-import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { DeleteStoryModal } from "./DeleteStoryModal";
+import type { StoryFolder } from "../../hooks/useStoriesQuery";
+import { useStoryProgress } from "../../hooks/useStoryProgress";
 import { highlightSearchText } from "../../utils/highlightSearch";
 
 interface StoryCardProps {

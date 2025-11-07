@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Container, Typography } from "@mui/material";
+import { CircularProgress, Container, Typography } from "@mui/material";
 import type { JSX } from "react";
 
 export function RouteLoader(): JSX.Element {

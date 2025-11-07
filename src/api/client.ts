@@ -1,6 +1,8 @@
 import axios, { type AxiosInstance } from "axios";
 
-import { env } from "../config/env";
+import type {
+  DriveDeleteStoryRequest,
+  DriveDeleteStoryResponse} from "./contract";
 import {
   type ConfigResponse,
   type DriveCheckCommentsRequest,
@@ -26,8 +28,6 @@ import {
   DriveCheckCommentsResponseSchema,
   DriveCreateFolderResponseSchema,
   DriveDeleteFileResponseSchema,
-  DriveDeleteStoryRequest,
-  DriveDeleteStoryResponse,
   DriveDeleteStoryResponseSchema,
   DriveGetOrCreateYarnyStoriesResponseSchema,
   DriveListResponseSchema,
@@ -39,6 +39,7 @@ import {
   parseApiResponse,
   VerifyGoogleResponseSchema
 } from "./contract";
+import { env } from "../config/env";
 
 export class ApiClient {
   private http: AxiosInstance;

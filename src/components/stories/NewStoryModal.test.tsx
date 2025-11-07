@@ -1,9 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { renderWithProviders, screen, waitFor } from "../../../tests/utils/test-utils";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
 import { NewStoryModal } from "./NewStoryModal";
 import { server } from "../../../tests/setup/msw-server";
-import { http, HttpResponse } from "msw";
+import { renderWithProviders, screen, waitFor } from "../../../tests/utils/test-utils";
+
 
 describe("NewStoryModal", () => {
   const mockOnClose = vi.fn();

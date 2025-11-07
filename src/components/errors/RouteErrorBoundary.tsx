@@ -1,10 +1,9 @@
-import { useRouteError, isRouteErrorResponse, Link, useNavigate } from "react-router-dom";
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
 import type { JSX } from "react";
+import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
 
 export function RouteErrorBoundary(): JSX.Element {
   const error = useRouteError();
-  const navigate = useNavigate();
 
   let errorMessage = "An unexpected error occurred";
   let errorStatus = 500;

@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { PNG } from "pngjs";
-import pixelmatch from "pixelmatch";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+import pixelmatch from "pixelmatch";
+import { PNG } from "pngjs";
 
 // Helper function to compare two images and generate a diff
 async function compareImages(
