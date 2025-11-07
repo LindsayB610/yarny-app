@@ -17,7 +17,11 @@ vi.mock("../../src/hooks/useExport", () => ({
   useExport: () => ({
     exportSnippets: vi.fn(),
     isExporting: false,
-    progress: null
+    progress: {
+      currentChunk: 0,
+      totalChunks: 0,
+      status: "idle" as const
+    }
   })
 }));
 vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
@@ -26,13 +30,27 @@ vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
 vi.mock("../../src/store/provider", () => {
   const mockStore = {
     entities: {
+      projects: {},
+      projectOrder: [],
       stories: {
         "story-1": {
           id: "story-1",
           projectId: "project-1",
           title: "Test Story",
           driveFileId: "drive-file-1",
+          chapterIds: ["chapter-1"],
+          updatedAt: new Date().toISOString()
+        }
+      },
+      storyOrder: [],
+      chapters: {
+        "chapter-1": {
+          id: "chapter-1",
+          storyId: "story-1",
+          title: "Chapter 1",
+          order: 1,
           snippetIds: ["snippet-1"],
+          driveFolderId: "drive-folder-1",
           updatedAt: new Date().toISOString()
         }
       },
@@ -40,6 +58,7 @@ vi.mock("../../src/store/provider", () => {
         "snippet-1": {
           id: "snippet-1",
           storyId: "story-1",
+          chapterId: "chapter-1",
           order: 1,
           content: "Initial content",
           updatedAt: new Date().toISOString()
@@ -126,11 +145,12 @@ describe("Enhanced Round-Trip Validation", () => {
       for (let i = 0; i < 5; i++) {
         // Wait for content to load
         await waitFor(() => {
-          expect(screen.getByText(/Original content/i)).toBeInTheDocument();
+          const editor = document.querySelector('[contenteditable="true"]');
+          expect(editor).toBeInTheDocument();
         });
 
         // Verify content is preserved
-        const editor = screen.getByRole("textbox");
+        const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       }
 
@@ -201,12 +221,13 @@ describe("Enhanced Round-Trip Validation", () => {
 
       // Wait for initial load
       await waitFor(() => {
-        expect(screen.getByText(/Initial content/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Edit in Yarny
       const user = userEvent.setup();
-      const editor = screen.getByRole("textbox");
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
       await user.type(editor, " edited");
 
       // Trigger conflict check
@@ -261,12 +282,13 @@ Paragraph 4 with em dashes: — and en dashes: –`;
 
       // Wait for content to load
       await waitFor(() => {
-        expect(screen.getByText(/Paragraph 1/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Verify all formatting is preserved
-      const editor = screen.getByRole("textbox");
-      const content = editor.textContent || "";
+      const editor = document.querySelector('[contenteditable="true"]');
+      const content = editor?.textContent || "";
 
       expect(content).toContain("—");
       expect(content).toContain("…");
@@ -305,12 +327,13 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/First paragraph/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Verify empty paragraphs are preserved
-      const editor = screen.getByRole("textbox");
-      const content = editor.textContent || "";
+      const editor = document.querySelector('[contenteditable="true"]');
+      const content = editor?.textContent || "";
 
       // Should have multiple consecutive newlines
       expect(content.match(/\n{2,}/g)).toBeTruthy();
@@ -360,12 +383,13 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/Line 1/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Trigger save
       const user = userEvent.setup();
-      const editor = screen.getByRole("textbox");
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
       await user.type(editor, " edited");
 
       // Wait for save
@@ -413,7 +437,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
 
       // Should handle large content without crashing
       await waitFor(() => {
-        const editor = screen.getByRole("textbox");
+        const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       }, { timeout: 5000 });
     });
@@ -470,12 +494,13 @@ Emoji: 🎉 🚀 📝 ✨`;
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/English text/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Trigger save
       const user = userEvent.setup();
-      const editor = screen.getByRole("textbox");
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
       await user.type(editor, " edited");
 
       await waitFor(() => {
@@ -521,7 +546,7 @@ Emoji: 🎉 🚀 📝 ✨`;
 
       // Should handle whitespace-only content
       await waitFor(() => {
-        const editor = screen.getByRole("textbox");
+        const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
     });

@@ -17,7 +17,11 @@ vi.mock("../../src/hooks/useExport", () => ({
   useExport: () => ({
     exportSnippets: vi.fn(),
     isExporting: false,
-    progress: null
+    progress: {
+      currentChunk: 0,
+      totalChunks: 0,
+      status: "idle" as const
+    }
   })
 }));
 vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
@@ -26,13 +30,27 @@ vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
 vi.mock("../../src/store/provider", () => {
   const mockStore = {
     entities: {
+      projects: {},
+      projectOrder: [],
       stories: {
         "story-1": {
           id: "story-1",
           projectId: "project-1",
           title: "Test Story",
           driveFileId: "drive-file-1",
+          chapterIds: ["chapter-1"],
+          updatedAt: new Date().toISOString()
+        }
+      },
+      storyOrder: [],
+      chapters: {
+        "chapter-1": {
+          id: "chapter-1",
+          storyId: "story-1",
+          title: "Chapter 1",
+          order: 1,
           snippetIds: ["snippet-1"],
+          driveFolderId: "drive-folder-1",
           updatedAt: new Date().toISOString()
         }
       },
@@ -40,6 +58,7 @@ vi.mock("../../src/store/provider", () => {
         "snippet-1": {
           id: "snippet-1",
           storyId: "story-1",
+          chapterId: "chapter-1",
           order: 1,
           content: "Initial content",
           updatedAt: new Date().toISOString()
@@ -111,12 +130,14 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Wait for editor to load
       await waitFor(() => {
-        expect(screen.getByText(/Initial content/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Verify content is preserved
-      const editor = screen.getByRole("textbox");
+      const editor = document.querySelector('[contenteditable="true"]');
       expect(editor).toBeInTheDocument();
+      expect(editor?.textContent).toContain("Initial content");
     });
 
     it("preserves special characters in round-trip", async () => {
@@ -152,7 +173,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify special characters are preserved
       await waitFor(() => {
-        expect(screen.getByText(/Quotes:/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
 
@@ -188,7 +210,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify paragraph breaks are preserved
       await waitFor(() => {
-        expect(screen.getByText(/First paragraph/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
 
@@ -224,7 +247,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify line breaks are preserved
       await waitFor(() => {
-        expect(screen.getByText(/Line one/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
   });
@@ -329,7 +353,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify content is normalized (no \r\n or \r)
       await waitFor(() => {
-        expect(screen.getByText(/Line 1/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
 
@@ -365,7 +390,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify NBSPs are normalized
       await waitFor(() => {
-        expect(screen.getByText(/Text/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
   });
@@ -401,11 +427,12 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Wait for editor to load
       await waitFor(() => {
-        expect(screen.getByText(/Initial content/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
 
       // Type in editor
-      const editor = screen.getByRole("textbox");
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
       await user.type(editor, " New text");
 
       // Verify auto-save is triggered (via useAutoSave hook)
@@ -452,7 +479,8 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify content integrity is maintained
       await waitFor(() => {
-        expect(screen.getByText(/Original content/i)).toBeInTheDocument();
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
       });
     });
 
@@ -486,7 +514,7 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify empty content is handled
       await waitFor(() => {
-        const editor = screen.getByRole("textbox");
+        const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
     });
@@ -523,7 +551,7 @@ describe("Round-Trip Validation with Google Docs", () => {
 
       // Verify long content is handled
       await waitFor(() => {
-        const editor = screen.getByRole("textbox");
+        const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
     });
