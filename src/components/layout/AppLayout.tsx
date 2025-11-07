@@ -6,7 +6,9 @@ import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconcil
 import { useYarnyStore } from "../../store/provider";
 import { ProjectList } from "../navigation/ProjectList";
 import { StoryList } from "../navigation/StoryList";
+import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
+import { StorySidebarHeader } from "../story/StorySidebarHeader";
 import { OfflineBanner } from "./OfflineBanner";
 
 export function AppLayout(): JSX.Element {
@@ -36,10 +38,11 @@ export function AppLayout(): JSX.Element {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "320px 1fr" },
+        gridTemplateColumns: { xs: "1fr", md: "320px 1fr 280px" },
         minHeight: "100vh"
       }}
     >
+      {/* Left Sidebar: Projects & Stories */}
       <Box
         component="aside"
         sx={{
@@ -50,7 +53,7 @@ export function AppLayout(): JSX.Element {
           flexDirection: "column"
         }}
       >
-        <Stack spacing={1} sx={{ flex: 1, py: 3 }}>
+        <Stack spacing={1} sx={{ flex: 1, py: 3, overflow: "hidden" }}>
           <Box sx={{ px: 2 }}>
             <ProjectList />
           </Box>
@@ -58,8 +61,13 @@ export function AppLayout(): JSX.Element {
           <Box sx={{ px: 2 }}>
             <StoryList />
           </Box>
+          <Divider />
+          <Box sx={{ flex: 1, overflow: "auto" }}>
+            <StorySidebarHeader />
+          </Box>
         </Stack>
       </Box>
+      {/* Center: Editor */}
       <Box
         component="main"
         sx={{
@@ -67,11 +75,26 @@ export function AppLayout(): JSX.Element {
           py: 4,
           display: "flex",
           flexDirection: "column",
-          gap: 4
+          gap: 4,
+          overflow: "hidden"
         }}
       >
         <OfflineBanner />
         <StoryEditor />
+      </Box>
+      {/* Right Sidebar: Notes */}
+      <Box
+        component="aside"
+        sx={{
+          bgcolor: "background.paper",
+          borderLeft: { md: "1px solid", xs: "none" },
+          borderColor: "divider",
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
+          overflow: "hidden"
+        }}
+      >
+        <NotesSidebar />
       </Box>
     </Box>
   );

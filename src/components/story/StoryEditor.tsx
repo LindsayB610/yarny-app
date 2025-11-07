@@ -9,6 +9,7 @@ import {
   extractPlainTextFromDocument
 } from "../../editor/textExtraction";
 import { useAutoSave } from "../../hooks/useAutoSave";
+import { useConflictDetection } from "../../hooks/useConflictDetection";
 import { useExport } from "../../hooks/useExport";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
 import { useYarnyStore } from "../../store/provider";
@@ -18,6 +19,8 @@ import {
   selectIsSyncing,
   selectLastSyncedAt
 } from "../../store/selectors";
+import { ConflictResolutionModal } from "./ConflictResolutionModal";
+import { EditorFooter } from "./EditorFooter";
 import { ExportProgressDialog } from "./ExportProgressDialog";
 
 export function StoryEditor(): JSX.Element {
@@ -68,23 +71,77 @@ export function StoryEditor(): JSX.Element {
   // Export hook
   const { exportSnippets, isExporting, progress: exportProgressState } = useExport();
 
+  // Conflict detection
+  const { checkSnippetConflict, resolveConflictWithDrive } = useConflictDetection();
+  const [conflictModal, setConflictModal] = useState<{
+    open: boolean;
+    conflict: any | null;
+  }>({ open: false, conflict: null });
+
+  // Track if editor is open (authoritative)
+  const [isEditorOpen, setIsEditorOpen] = useState(true);
+
   useEffect(() => {
     if (!editor) {
       return;
     }
 
-    editor.commands.setContent(initialDocument, false, {
-      preserveWhitespace: true
-    });
-  }, [editor, initialDocument]);
+    // Only update editor content if it's not open (not authoritative)
+    // When editor is open, it is the source of truth
+    if (!isEditorOpen) {
+      editor.commands.setContent(initialDocument, false, {
+        preserveWhitespace: true
+      });
+    }
+  }, [editor, initialDocument, isEditorOpen]);
+
+  // Check for conflicts when story changes
+  useEffect(() => {
+    if (!story || !editor || !isEditorOpen) {
+      return;
+    }
+
+    const checkConflicts = async () => {
+      try {
+        // Get current editor content as local content
+        const localContent = extractPlainTextFromDocument(editor.getJSON());
+
+        // Check if there's a conflict with Drive
+        const conflict = await checkSnippetConflict(
+          story.id,
+          story.updatedAt,
+          story.driveFileId,
+          story.driveFileId // Using driveFileId as parent folder ID for now
+        );
+
+        if (conflict) {
+          // Add local content to conflict info
+          const conflictWithLocalContent = {
+            ...conflict,
+            localContent
+          };
+          setConflictModal({ open: true, conflict: conflictWithLocalContent });
+        }
+      } catch (error) {
+        console.error("Error checking conflicts:", error);
+      }
+    };
+
+    // Check conflicts after a short delay to avoid race conditions
+    const timeoutId = setTimeout(checkConflicts, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [story?.id, story?.updatedAt, checkSnippetConflict, editor, isEditorOpen]);
 
   // Watch for editor changes to trigger auto-save
+  // Editor is authoritative while open - changes here take precedence
   useEffect(() => {
     if (!editor) return;
 
     const handleUpdate = () => {
       const plainText = extractPlainTextFromDocument(editor.getJSON());
       setEditorContent(plainText);
+      // Mark editor as open/authoritative when user types
+      setIsEditorOpen(true);
     };
 
     // Set initial content
@@ -92,8 +149,16 @@ export function StoryEditor(): JSX.Element {
     setEditorContent(initialText);
 
     editor.on("update", handleUpdate);
+    editor.on("focus", () => setIsEditorOpen(true));
+    editor.on("blur", () => {
+      // Keep editor authoritative for a short time after blur
+      setTimeout(() => setIsEditorOpen(false), 5000);
+    });
+
     return () => {
       editor.off("update", handleUpdate);
+      editor.off("focus", () => setIsEditorOpen(true));
+      editor.off("blur", () => {});
     };
   }, [editor]);
 
@@ -227,11 +292,47 @@ export function StoryEditor(): JSX.Element {
           border: `1px solid ${theme.palette.divider}`,
           backgroundColor: "background.paper",
           boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.04)",
-          overflow: "hidden"
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column"
         }}
       >
-        <EditorContent editor={editor} />
+        <Box sx={{ flex: 1, overflow: "auto" }}>
+          <EditorContent editor={editor} />
+        </Box>
+        <EditorFooter />
       </Box>
+
+      <ConflictResolutionModal
+        open={conflictModal.open}
+        conflict={conflictModal.conflict}
+        onResolve={async (action) => {
+          if (action === "useDrive" && conflictModal.conflict) {
+            // Use Drive content - it's already in the conflict object
+            const driveContent = conflictModal.conflict.driveContent;
+            if (editor && driveContent) {
+              const driveDocument = buildPlainTextDocument(driveContent);
+              editor.commands.setContent(driveDocument);
+              // Update editor content state
+              setEditorContent(driveContent);
+            }
+          } else if (action === "useLocal") {
+            // Keep local version (editor content is already authoritative)
+            // Save local content to Drive
+            if (editor && story) {
+              try {
+                const localContent = extractPlainTextFromDocument(editor.getJSON());
+                await saveStory(localContent);
+              } catch (error) {
+                console.error("Failed to save local content:", error);
+              }
+            }
+          } else if (action === "cancel") {
+            // User canceled - do nothing
+          }
+          setConflictModal({ open: false, conflict: null });
+        }}
+      />
 
       <ExportProgressDialog
         open={exportProgress.open}
