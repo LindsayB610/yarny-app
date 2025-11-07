@@ -18,7 +18,18 @@ const StorySchema = z.object({
   projectId: z.string(),
   title: z.string(),
   driveFileId: z.string(),
-  snippetIds: z.array(z.string()),
+  chapterIds: z.array(z.string()).default([]),
+  updatedAt: z.string()
+});
+
+const ChapterSchema = z.object({
+  id: z.string(),
+  storyId: z.string(),
+  title: z.string(),
+  color: z.string().optional(),
+  order: z.number(),
+  snippetIds: z.array(z.string()).default([]),
+  driveFolderId: z.string(),
   updatedAt: z.string()
 });
 
@@ -34,6 +45,7 @@ const SnippetSchema = z.object({
 const NormalizedSchema = z.object({
   projects: z.array(ProjectSchema).optional(),
   stories: z.array(StorySchema).optional(),
+  chapters: z.array(ChapterSchema).optional(),
   snippets: z.array(SnippetSchema).optional()
 });
 

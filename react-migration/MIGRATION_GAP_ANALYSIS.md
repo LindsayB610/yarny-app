@@ -150,6 +150,7 @@ This analysis is based on:
   - Special characters preservation
   - Multiple round-trips integrity
   - Empty and very long content handling
+- [ ] **React-specific E2E regression coverage** - **BLOCKED** - `tests/e2e/chapter-snippet-management-react.spec.ts` and `tests/e2e/conflict-resolution-react.spec.ts` are currently skipped. Waiting on normalized Drive fixtures for React app routing (`/react/editor`) before re-enabling the suites.
 
 ---
 
@@ -303,6 +304,7 @@ This analysis is based on:
 - [x] **Round-tripping validation** - **✅ TESTED** - Tests exist in `tests/integration/round-trip.test.ts` and `tests/integration/round-trip-enhanced.test.ts`
 - [x] **Visibility-based request gating** - **✅ TESTED** - Tests exist in `tests/e2e/visibility-gating.spec.ts`
 - [ ] **Rate limiting handling** (429 backoff) - No tests found
+- [ ] **React app parity E2E coverage** - **BLOCKED** - Playwright specs targeting `/react/editor` are skipped pending real Drive payloads that match the new normalized schema. React regression relies on classic app tests until fixtures are created.
 
 #### Performance Tests
 - [ ] **Large story performance** (25+ chapters, 200+ snippets) - Tests exist but may not cover large scale

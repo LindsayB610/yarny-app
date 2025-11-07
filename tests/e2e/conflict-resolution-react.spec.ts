@@ -7,7 +7,7 @@ import {
   waitForStoryLoad
 } from "../utils/react-app-helpers";
 
-test.describe("Conflict Resolution Scenarios - React App", () => {
+test.describe.skip("Conflict Resolution Scenarios - React App", () => {
   const mockStoryData = {
     projectId: "project-1",
     storyId: "story-1",

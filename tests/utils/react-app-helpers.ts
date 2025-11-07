@@ -35,6 +35,19 @@ export async function setupReactAppMocks(
       writable: true,
       value: "yarny_session=test-session"
     });
+    try {
+      localStorage.setItem("yarny_auth", "test-token");
+      localStorage.setItem(
+        "yarny_user",
+        JSON.stringify({
+          email: "test@yarny.app",
+          name: "Test User",
+          token: "test-token"
+        })
+      );
+    } catch (error) {
+      console.warn("Failed to seed auth storage", error);
+    }
   });
 
   // Mock getOrCreateYarnyStories
@@ -51,54 +64,45 @@ export async function setupReactAppMocks(
   });
 
   // Helper function to create normalized payload for a story
-  const createStoryPayload = (includeFullData = false) => {
-    const basePayload = {
-      projects: [{
-        id: mockData.projectId,
-        name: "Test Project",
-        driveFolderId: "project-folder-id",
-        storyIds: [mockData.storyId],
-        updatedAt: "2025-01-01T00:00:00.000Z"
-      }],
-      stories: [{
-        id: mockData.storyId,
-        projectId: mockData.projectId,
-        title: mockData.storyTitle,
-        driveFileId: `${mockData.storyId}-file`,
-        chapterIds: mockData.chapters.map(c => c.id),
-        updatedAt: "2025-01-01T00:00:00.000Z"
-      }]
-    };
-
-    if (includeFullData) {
-      return {
-        ...basePayload,
-        chapters: mockData.chapters.map((chapter, idx) => ({
-          id: chapter.id,
-          storyId: mockData.storyId,
-          title: chapter.title,
-          color: chapter.color,
-          order: idx,
-          snippetIds: chapter.snippets.map(s => s.id),
-          driveFolderId: `${chapter.id}-folder`,
-          updatedAt: "2025-01-01T00:00:00.000Z"
-        })),
-        snippets: mockData.chapters.flatMap((chapter) =>
-          chapter.snippets.map((snippet, snippetIdx) => ({
-            id: snippet.id,
-            storyId: mockData.storyId,
-            chapterId: chapter.id,
-            order: snippetIdx,
-            content: snippet.content,
-            driveRevisionId: snippet.modifiedTime,
-            updatedAt: snippet.modifiedTime || "2025-01-01T00:00:00.000Z"
-          }))
-        )
-      };
-    }
-
-    return basePayload;
-  };
+  const createStoryPayload = () => ({
+    projects: [{
+      id: mockData.projectId,
+      name: "Test Project",
+      driveFolderId: "project-folder-id",
+      storyIds: [mockData.storyId],
+      updatedAt: "2025-01-01T00:00:00.000Z"
+    }],
+    stories: [{
+      id: mockData.storyId,
+      projectId: mockData.projectId,
+      title: mockData.storyTitle,
+      driveFileId: `${mockData.storyId}-file`,
+      chapterIds: mockData.chapters.map((c) => c.id),
+      updatedAt: "2025-01-01T00:00:00.000Z"
+    }],
+    chapters: mockData.chapters.map((chapter, idx) => ({
+      id: chapter.id,
+      storyId: mockData.storyId,
+      title: chapter.title,
+      color: chapter.color,
+      order: idx,
+      snippetIds: chapter.snippets.map((s) => s.id),
+      driveFolderId: `${chapter.id}-folder`,
+      updatedAt: "2025-01-01T00:00:00.000Z"
+    })),
+    snippets: mockData.chapters.flatMap((chapter) =>
+      chapter.snippets.map((snippet, snippetIdx) => ({
+        id: snippet.id,
+        storyId: mockData.storyId,
+        chapterId: chapter.id,
+        order: snippetIdx,
+        content: snippet.content,
+        driveRevisionId: snippet.modifiedTime,
+        driveFileId: `${snippet.id}-file`,
+        updatedAt: snippet.modifiedTime || "2025-01-01T00:00:00.000Z"
+      }))
+    )
+  });
 
   // Mock listProjects (GET /drive-list) - returns normalized payload
   await page.route("**/.netlify/functions/drive-list*", (route) => {
@@ -111,7 +115,7 @@ export async function setupReactAppMocks(
       route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(createStoryPayload(true))
+        body: JSON.stringify(createStoryPayload())
       });
       return;
     }
@@ -120,23 +124,37 @@ export async function setupReactAppMocks(
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(createStoryPayload(false))
+      body: JSON.stringify(createStoryPayload())
     });
   });
 
   // Mock drive-read for individual file reads (used by classic app structure)
   // The React app primarily uses drive-list with storyId, but we keep this for compatibility
-  await page.route("**/.netlify/functions/drive-read", (route) => {
-    const method = route.request().method();
-    
+  await page.route("**/.netlify/functions/drive-read*", (route) => {
+    const request = route.request();
+    const method = request.method();
+
+    if (method === "GET") {
+      const url = new URL(request.url());
+      const storyId = url.searchParams.get("storyId");
+      if (storyId && storyId === mockData.storyId) {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(createStoryPayload())
+        });
+        return;
+      }
+    }
+
     if (method === "POST") {
       // POST body contains fileId
-      const body = route.request().postDataJSON();
+      const body = request.postDataJSON();
       const fileId = body.fileId;
       
       // Find snippet by fileId
       for (const chapter of mockData.chapters) {
-        const snippet = chapter.snippets.find(s => s.id === fileId);
+        const snippet = chapter.snippets.find((s) => s.id === fileId);
         if (snippet) {
           route.fulfill({
             status: 200,
@@ -154,7 +172,11 @@ export async function setupReactAppMocks(
       }
     }
     
-    route.continue();
+    route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Not Found" })
+    });
   });
 
   // Mock drive-write

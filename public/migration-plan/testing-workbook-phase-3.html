@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 3 · Yarny Testing Workbook</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/docs.css">
+  <link rel="stylesheet" href="/footer.css">
+  <link rel="stylesheet" href="/migration-plan/testing-workbook.css">
+  <script src="/migration-plan/testing-workbook.js" defer></script>
+</head>
+<body data-storage-key="testingWorkbookPhase3">
+  <div class="docs-container">
+    <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-branding">
+            <h1>Yarny</h1>
+            <p class="docs-subtitle">Your personal writing tool</p>
+          </div>
+          <a href="/migration-plan" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
+            Migration Plan
+          </a>
+          <a href="/migration-plan/testing-workbook" style="color: rgba(255, 255, 255, 0.7); text-decoration: none; font-size: 0.95rem; display: block;">Back to Workbook Overview</a>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#phase-intro" class="nav-link">Phase Overview</a></li>
+            <li><a href="#section-7" class="nav-link">Section 7 · UI/UX &amp; Accessibility</a></li>
+            <li><a href="#section-8" class="nav-link">Section 8 · Export Functionality</a></li>
+            <li><a href="#section-9" class="nav-link">Section 9 · Performance &amp; Edge Cases</a></li>
+            <li><a href="#phase-summary" class="nav-link">Phase Progress</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <nav class="docs-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/docs.html" class="btn-secondary">Docs</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+        </nav>
+
+        <div class="phase-breadcrumbs">
+          <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+          <span>/</span>
+          <span>Phase 3 · UI Polish &amp; Performance</span>
+        </div>
+
+        <div class="workbook-intro" id="phase-intro" data-section-anchor>
+          <h1>Phase 3 · UI Polish &amp; Performance</h1>
+          <p>Ensure the React experience feels refined: visual polish, accessibility coverage, export flows, and performance behaviors.</p>
+          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.78);">
+            <li>Audit UI components for accessibility parity and visual alignment.</li>
+            <li>Exercise export flows across test corpus sizes and confirm integrity.</li>
+            <li>Stress-test performance and edge cases using medium and large corpora.</li>
+          </ul>
+          <div class="phase-nav-links">
+            <a href="/migration-plan/testing-workbook-phase-1.html">Phase 1</a>
+            <a href="/migration-plan/testing-workbook-phase-2.html">Phase 2</a>
+            <a href="/migration-plan/testing-workbook-phase-4.html">Next: Phase 4</a>
+            <a href="/migration-plan/testing-workbook-phase-5.html">Phase 5</a>
+          </div>
+        </div>
+
+        <!-- Section 7: UI/UX Elements & Accessibility -->
+        <div class="test-section" data-section-anchor id="section-7">
+          <h2><i class="material-icons">design_services</i> Section 7: UI/UX Elements & Accessibility</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests verify UI/UX elements and accessibility features. Keyboard-only flows, screen reader testing, and contrast verification are <strong>REQUIRED</strong> before production release.</p>
+        
+        <div class="test-item">
+          <h4>Test 7.1: Classic UX Anchors - Goal Meter</h4>
+          <p>Verify that the goal meter looks and behaves identically to the original app.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Compare the goal meter in the left sidebar with the original app (if available)</li>
+              <li>Verify it shows "X / Y" format (e.g., "0 / 3,000")</li>
+              <li>Verify the progress bar styling matches (colors, height, border radius)</li>
+              <li>Verify clicking it opens the goal panel</li>
+              <li>Verify it updates in real-time as you write</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-1" name="test-7-1">
+            <label for="test-7-1">Goal meter looks and behaves identically to original</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.2: Classic UX Anchors - "Today • N" Chip</h4>
+          <p>Verify that the "Today • N" chip looks and behaves identically to the original app.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Compare the "Today • N" chip with the original app (if available)</li>
+              <li>Verify it shows "Today • N" format with number formatting (commas for large numbers)</li>
+              <li>Verify the progress bar styling matches (2px height, subtle background)</li>
+              <li>Verify color logic (green/red in strict mode, primary color otherwise)</li>
+              <li>Verify clicking it opens the goal panel</li>
+              <li>Verify it always shows (even when no goal set, shows "—")</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-2" name="test-7-2">
+            <label for="test-7-2">"Today • N" chip looks and behaves identically to original</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.3: Classic UX Anchors - Footer Word/Character Counts</h4>
+          <p>Verify that the footer word/character counts look and behave identically to the original app.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Compare the footer counts with the original app (if available)</li>
+              <li>Verify it shows "Words: N — Characters: N" format</li>
+              <li>Verify the font size, color, and spacing match</li>
+              <li>Verify it updates in real-time as you type</li>
+              <li>Verify it shows counts for active snippet only</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-3" name="test-7-3">
+            <label for="test-7-3">Footer word/character counts look and behave identically to original</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.4: Modals - Open and Close</h4>
+          <p>Verify that all modals open and close correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Test opening each modal: Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning</li>
+              <li>Verify each modal opens when triggered</li>
+              <li>Verify you can close modals by: clicking X button, clicking outside modal, pressing Escape key</li>
+              <li>Verify modals don't overlap or break layout</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-4" name="test-7-4">
+            <label for="test-7-4">All modals open and close correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.5: Context Menus</h4>
+          <p>Verify that right-click context menus work correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Right-click on a chapter in the left sidebar</li>
+              <li>Verify a context menu appears with options (Rename, Delete, Change Color, etc.)</li>
+              <li>Right-click on a snippet</li>
+              <li>Verify a context menu appears with options</li>
+              <li>Click on a menu option</li>
+              <li>Verify the action is performed</li>
+              <li>Click outside the menu</li>
+              <li>Verify the menu closes</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-5" name="test-7-5">
+            <label for="test-7-5">Context menus work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.6: Mobile Device Warning</h4>
+          <p>Verify that mobile devices show a warning message.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Access Yarny from a mobile device (or use browser dev tools to simulate mobile)</li>
+              <li>Verify a warning message appears</li>
+              <li>Verify the message says to use a computer</li>
+              <li>Verify you can navigate back to stories from the warning</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-6" name="test-7-6">
+            <label for="test-7-6">Mobile devices show warning message</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.7: Loading States</h4>
+          <p>Verify that loading indicators appear during data fetching.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Verify loading indicators appear while snippets load</li>
+              <li>Switch between snippets</li>
+              <li>Verify loading states appear if content isn't cached</li>
+              <li>Verify the UI doesn't freeze during loading</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-7" name="test-7-7">
+            <label for="test-7-7">Loading indicators appear during data fetching</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.8: Error Messages</h4>
+          <p>Verify that error messages are clear and helpful.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Try to perform an action that might fail (e.g., save with network disconnected)</li>
+              <li>Verify an error message appears</li>
+              <li>Verify the error message is clear and explains what went wrong</li>
+              <li>Verify you can retry the action if applicable</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-8" name="test-7-8">
+            <label for="test-7-8">Error messages are clear and helpful</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.9: Accessible Focus Rings</h4>
+          <p>Verify that focus rings are visible and accessible when navigating with keyboard (especially on dark cards and pale chips).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Use Tab key to navigate through the interface (don't use mouse)</li>
+              <li>Navigate to elements in the left sidebar (dark card background)</li>
+              <li>Verify focus rings are visible on dark backgrounds (should be lighter color, e.g., primary-light)</li>
+              <li>Navigate to elements on pale chip backgrounds</li>
+              <li>Verify focus rings are visible on light backgrounds (should be darker color, e.g., primary-dark)</li>
+              <li>Navigate through modals and buttons</li>
+              <li>Verify all interactive elements show clear focus indicators</li>
+              <li>Verify focus rings are 2px solid with 2px offset (accessible standard)</li>
+              <li>Test with high contrast mode enabled (if available)</li>
+              <li>Verify focus rings remain visible in all contexts</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-9" name="test-7-9">
+            <label for="test-7-9">Focus rings are visible and accessible on all backgrounds</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.10: Keyboard-Only Flow - Create Operations</h4>
+          <p>Verify that all create operations can be completed using only the keyboard (no mouse). This is a <strong>REQUIRED</strong> accessibility test.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Disable mouse/trackpad:</strong> Unplug mouse or disable trackpad (or use discipline to not use it)</li>
+              <li><strong>Create a new story:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to stories page using Tab key</li>
+                  <li>Find "New Story" button using Tab</li>
+                  <li>Press Enter or Space to activate button</li>
+                  <li>Modal opens - verify focus is in story name input field</li>
+                  <li>Type story name using keyboard</li>
+                  <li>Tab to other fields (genre, description, goal) if needed</li>
+                  <li>Tab to "Create" button</li>
+                  <li>Press Enter to create story</li>
+                  <li>Verify story is created successfully</li>
+                </ul>
+              </li>
+              <li><strong>Create a new chapter:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a story in editor</li>
+                  <li>Navigate to chapter list using Tab</li>
+                  <li>Find "Add Chapter" button or context menu trigger</li>
+                  <li>Activate using Enter or Space</li>
+                  <li>If context menu appears, navigate options with Arrow keys</li>
+                  <li>Select "New Chapter" with Enter</li>
+                  <li>Type chapter name in input field</li>
+                  <li>Press Enter to confirm</li>
+                  <li>Verify chapter is created</li>
+                </ul>
+              </li>
+              <li><strong>Create a new snippet:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to a chapter using Tab</li>
+                  <li>Find "Add Snippet" button (may be "+" icon)</li>
+                  <li>Activate using Enter or Space</li>
+                  <li>Verify snippet is created and editor receives focus</li>
+                  <li>Type content using keyboard</li>
+                  <li>Verify snippet appears in sidebar</li>
+                </ul>
+              </li>
+              <li><strong>Create a new note (People/Places/Things):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to Notes sidebar using Tab</li>
+                  <li>Find "New People" (or Places/Things) button</li>
+                  <li>Activate using Enter or Space</li>
+                  <li>Type note name in input field</li>
+                  <li>Press Enter to confirm</li>
+                  <li>Verify note is created</li>
+                </ul>
+              </li>
+              <li><strong>Document any issues:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Note any operations that cannot be completed with keyboard only</li>
+                  <li>Note any focus traps or navigation issues</li>
+                  <li>Note any missing keyboard shortcuts</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-10" name="test-7-10">
+            <label for="test-7-10">All create operations can be completed using keyboard only</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any operations that cannot be completed with keyboard only, focus issues, or missing shortcuts</p>
+            <textarea style="width: 100%; min-height: 60px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any keyboard-only issues found..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.11: Keyboard-Only Flow - Rename Operations</h4>
+          <p>Verify that all rename operations can be completed using only the keyboard.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Rename a story:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to stories page using Tab</li>
+                  <li>Find a story card using Tab</li>
+                  <li>Navigate to context menu trigger (right-click equivalent - may be Shift+F10 or Menu key)</li>
+                  <li>Open context menu with Menu key or Shift+F10</li>
+                  <li>Navigate menu options with Arrow keys</li>
+                  <li>Select "Rename" with Enter</li>
+                  <li>Type new name in input field</li>
+                  <li>Press Enter to confirm or Escape to cancel</li>
+                  <li>Verify story is renamed</li>
+                </ul>
+              </li>
+              <li><strong>Rename a chapter:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to chapter in sidebar using Tab</li>
+                  <li>Open context menu for chapter (Menu key or Shift+F10)</li>
+                  <li>Navigate to "Rename" option with Arrow keys</li>
+                  <li>Select with Enter</li>
+                  <li>Type new name</li>
+                  <li>Press Enter to confirm</li>
+                  <li>Verify chapter is renamed</li>
+                </ul>
+              </li>
+              <li><strong>Rename a snippet:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to snippet in sidebar using Tab</li>
+                  <li>Open context menu for snippet</li>
+                  <li>Navigate to "Rename" option</li>
+                  <li>Select with Enter</li>
+                  <li>Type new name</li>
+                  <li>Press Enter to confirm</li>
+                  <li>Verify snippet is renamed</li>
+                </ul>
+              </li>
+              <li><strong>Rename a note:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to note in Notes sidebar using Tab</li>
+                  <li>Open context menu for note</li>
+                  <li>Navigate to "Rename" option</li>
+                  <li>Select with Enter</li>
+                  <li>Type new name</li>
+                  <li>Press Enter to confirm</li>
+                  <li>Verify note is renamed</li>
+                </ul>
+              </li>
+              <li><strong>Document any issues:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Note any rename operations that cannot be completed with keyboard only</li>
+                  <li>Note any context menu navigation issues</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-11" name="test-7-11">
+            <label for="test-7-11">All rename operations can be completed using keyboard only</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any keyboard-only issues found</p>
+            <textarea style="width: 100%; min-height: 60px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any keyboard-only issues found..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.12: Keyboard-Only Flow - Reorder Operations</h4>
+          <p>Verify that reorder operations can be completed using only the keyboard (drag & drop alternatives).</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Reorder chapters:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to chapter list using Tab</li>
+                  <li>Select a chapter using Tab or Arrow keys</li>
+                  <li>Open context menu (Menu key or Shift+F10)</li>
+                  <li>Look for "Move Up" or "Move Down" options</li>
+                  <li>If available, use Arrow keys to navigate and Enter to select</li>
+                  <li>Alternatively, check for keyboard shortcuts (e.g., Ctrl+Arrow Up/Down)</li>
+                  <li>Verify chapter order changes</li>
+                  <li>If no keyboard alternative exists, document this as an accessibility issue</li>
+                </ul>
+              </li>
+              <li><strong>Reorder snippets within a chapter:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to snippet list within a chapter using Tab</li>
+                  <li>Select a snippet using Tab or Arrow keys</li>
+                  <li>Open context menu</li>
+                  <li>Look for "Move Up" or "Move Down" options</li>
+                  <li>Use keyboard to move snippet</li>
+                  <li>Verify snippet order changes</li>
+                  <li>If no keyboard alternative exists, document this as an accessibility issue</li>
+                </ul>
+              </li>
+              <li><strong>Move snippet between chapters:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Select a snippet using Tab</li>
+                  <li>Open context menu</li>
+                  <li>Look for "Move to Chapter" or similar option</li>
+                  <li>Navigate to target chapter using Arrow keys or type-ahead</li>
+                  <li>Select target chapter with Enter</li>
+                  <li>Verify snippet moves to new chapter</li>
+                  <li>If no keyboard alternative exists, document this as an accessibility issue</li>
+                </ul>
+              </li>
+              <li><strong>Reorder notes:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to Notes sidebar using Tab</li>
+                  <li>Select a note using Tab or Arrow keys</li>
+                  <li>Open context menu</li>
+                  <li>Look for "Move Up" or "Move Down" options</li>
+                  <li>Use keyboard to reorder</li>
+                  <li>Verify note order changes</li>
+                  <li>If no keyboard alternative exists, document this as an accessibility issue</li>
+                </ul>
+              </li>
+              <li><strong>Document any issues:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Note any reorder operations that cannot be completed with keyboard only</li>
+                  <li>Note if keyboard alternatives are missing (critical accessibility issue)</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-12" name="test-7-12">
+            <label for="test-7-12">All reorder operations can be completed using keyboard only (or keyboard alternatives exist)</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Critical:</strong> If keyboard alternatives for drag & drop do not exist, this is a blocking accessibility issue that must be fixed before production.</p>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any keyboard-only issues found, missing keyboard alternatives, or workarounds</p>
+            <textarea style="width: 100%; min-height: 60px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any keyboard-only issues found..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.13: Keyboard-Only Flow - Export Operations</h4>
+          <p>Verify that all export operations can be completed using only the keyboard.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Export all chapters:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to Export button/menu using Tab</li>
+                  <li>Activate Export button with Enter or Space</li>
+                  <li>If dropdown menu appears, navigate options with Arrow keys</li>
+                  <li>Select "Export All Chapters" with Enter</li>
+                  <li>Export modal opens - verify focus is in filename input field</li>
+                  <li>Type filename using keyboard</li>
+                  <li>Tab to other options (include snippet names checkbox, etc.)</li>
+                  <li>Tab to "Export" button</li>
+                  <li>Press Enter to start export</li>
+                  <li>Verify export completes (may show progress indicator)</li>
+                </ul>
+              </li>
+              <li><strong>Export outline:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to Export menu</li>
+                  <li>Select "Export Outline" with keyboard</li>
+                  <li>Type filename in input field</li>
+                  <li>Tab to Export button and press Enter</li>
+                  <li>Verify export completes</li>
+                </ul>
+              </li>
+              <li><strong>Export notes (People, Places, Things):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to Export menu</li>
+                  <li>Select "Export All People" (or Places/Things) with keyboard</li>
+                  <li>Type filename and confirm with Enter</li>
+                  <li>Verify export completes</li>
+                </ul>
+              </li>
+              <li><strong>Document any issues:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Note any export operations that cannot be completed with keyboard only</li>
+                  <li>Note any focus issues in export modals</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-13" name="test-7-13">
+            <label for="test-7-13">All export operations can be completed using keyboard only</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any keyboard-only issues found</p>
+            <textarea style="width: 100%; min-height: 60px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any keyboard-only issues found..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.14: Screen Reader Testing</h4>
+          <p>Verify that the application is accessible to screen reader users. This is a <strong>REQUIRED</strong> accessibility test.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Enable screen reader:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li><strong>Windows:</strong> Enable NVDA (free) or JAWS, or use built-in Narrator (Windows+Ctrl+Enter)</li>
+                  <li><strong>macOS:</strong> Enable VoiceOver (Cmd+F5 or System Preferences → Accessibility → VoiceOver)</li>
+                  <li><strong>Chrome:</strong> Install ChromeVox extension (for testing, not recommended for real users)</li>
+                  <li>Verify screen reader is active and reading content</li>
+                </ul>
+              </li>
+              <li><strong>Test navigation:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate through the stories page using screen reader navigation (Arrow keys, Tab, etc.)</li>
+                  <li>Verify all interactive elements are announced (buttons, links, inputs)</li>
+                  <li>Verify headings are announced correctly (H1, H2, etc.)</li>
+                  <li>Verify landmarks/regions are announced (navigation, main, sidebar)</li>
+                </ul>
+              </li>
+              <li><strong>Test story list:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate through story cards</li>
+                  <li>Verify story names are announced</li>
+                  <li>Verify story metadata is announced (last modified, progress, deadline)</li>
+                  <li>Verify buttons (delete, open) are announced with accessible names</li>
+                  <li>Verify progress bars have accessible labels</li>
+                </ul>
+              </li>
+              <li><strong>Test editor interface:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a story in editor</li>
+                  <li>Navigate through left sidebar (chapters, snippets)</li>
+                  <li>Verify chapter names are announced</li>
+                  <li>Verify snippet names are announced</li>
+                  <li>Verify collapse/expand buttons are announced</li>
+                  <li>Verify color chips are announced (e.g., "Chapter 1, red color")</li>
+                </ul>
+              </li>
+              <li><strong>Test editor content:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to editor content area</li>
+                  <li>Verify editor is announced as a text area or content editable region</li>
+                  <li>Type some text - verify screen reader announces characters or words</li>
+                  <li>Verify word count updates are announced (if implemented)</li>
+                </ul>
+              </li>
+              <li><strong>Test modals:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a modal (e.g., New Story, Rename, Delete)</li>
+                  <li>Verify modal title is announced</li>
+                  <li>Verify focus moves to modal (not trapped behind it)</li>
+                  <li>Navigate through modal fields</li>
+                  <li>Verify form labels are announced</li>
+                  <li>Verify error messages are announced</li>
+                  <li>Close modal with Escape - verify focus returns to trigger element</li>
+                </ul>
+              </li>
+              <li><strong>Test forms:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate through form fields</li>
+                  <li>Verify all inputs have accessible labels</li>
+                  <li>Verify required fields are announced</li>
+                  <li>Verify validation errors are announced</li>
+                  <li>Verify help text is announced</li>
+                </ul>
+              </li>
+              <li><strong>Test buttons and controls:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to all buttons</li>
+                  <li>Verify buttons have accessible names (not just icons)</li>
+                  <li>Verify icon-only buttons have aria-label or aria-labelledby</li>
+                  <li>Verify button states are announced (disabled, pressed, etc.)</li>
+                </ul>
+              </li>
+              <li><strong>Test goal meter and today chip:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to goal meter</li>
+                  <li>Verify progress is announced (e.g., "1,500 of 3,000 words, 50 percent")</li>
+                  <li>Verify it's announced as a button if clickable</li>
+                  <li>Navigate to "Today" chip</li>
+                  <li>Verify today's progress is announced</li>
+                  <li>Verify progress bar has accessible label</li>
+                </ul>
+              </li>
+              <li><strong>Test footer counts:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Navigate to footer</li>
+                  <li>Verify word count is announced (e.g., "1,500 words")</li>
+                  <li>Verify character count is announced (e.g., "8,500 characters")</li>
+                </ul>
+              </li>
+              <li><strong>Document issues:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>List any elements that are not announced</li>
+                  <li>List any elements with unclear or missing labels</li>
+                  <li>List any navigation issues</li>
+                  <li>List any focus traps or focus management issues</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Screen Reader Testing Checklist:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>✅ All interactive elements are announced</li>
+              <li>✅ All headings are announced correctly</li>
+              <li>✅ All form inputs have accessible labels</li>
+              <li>✅ All buttons have accessible names</li>
+              <li>✅ Modals trap focus correctly</li>
+              <li>✅ Focus returns to trigger after closing modal</li>
+              <li>✅ Progress indicators are announced</li>
+              <li>✅ Error messages are announced</li>
+              <li>✅ Landmarks/regions are announced</li>
+              <li>✅ No focus traps or navigation issues</li>
+            </ul>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-14" name="test-7-14">
+            <label for="test-7-14">Screen reader testing completed - all elements are accessible</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any screen reader issues found, missing labels, or navigation problems</p>
+            <textarea style="width: 100%; min-height: 100px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any screen reader issues found..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.15: Contrast Verification - All 12 Accent Colors</h4>
+          <p>Verify that all 12 accent colors meet WCAG contrast requirements (4.5:1 for normal text, 3:1 for large text) on actual UI backgrounds. The 12 colors are: red, orange, amber, yellow, lime, emerald, teal, cyan, blue, indigo, violet, fuchsia.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Prepare test environment:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open Yarny editor with a story that has multiple chapters</li>
+                  <li>Ensure you can see chapter color chips in the sidebar</li>
+                  <li>Open browser DevTools (F12)</li>
+                  <li>Install a contrast checker tool (e.g., WebAIM Contrast Checker browser extension, or use DevTools color picker)</li>
+                </ul>
+              </li>
+              <li><strong>Test each accent color on dark background (sidebar):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>For each of the 12 colors (red, orange, amber, yellow, lime, emerald, teal, cyan, blue, indigo, violet, fuchsia):
+                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                      <li>Assign the color to a chapter (use color picker)</li>
+                      <li>Verify color chip appears in sidebar</li>
+                      <li>Use DevTools to inspect the color chip element</li>
+                      <li>Get the actual background color of the sidebar (may be dark gray/black)</li>
+                      <li>Get the actual accent color value (hex or RGB)</li>
+                      <li>Use contrast checker to verify contrast ratio:
+                        <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                          <li>Normal text (if text appears on color chip): ≥ 4.5:1</li>
+                          <li>Large text (18pt+ or 14pt+ bold): ≥ 3:1</li>
+                          <li>UI components (icons, borders): ≥ 3:1</li>
+                        </ul>
+                      </li>
+                      <li>Record the contrast ratio for each color</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              <li><strong>Test each accent color on light background (if applicable):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>If color chips appear on light backgrounds anywhere in the UI:
+                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                      <li>Test each color on light background</li>
+                      <li>Verify contrast ratio meets requirements</li>
+                      <li>Record contrast ratios</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              <li><strong>Test color with text labels (if applicable):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>If chapter names or labels appear on or next to color chips:
+                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                      <li>Verify text contrast meets 4.5:1 for normal text</li>
+                      <li>Verify text contrast meets 3:1 for large text</li>
+                      <li>Record any failures</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              <li><strong>Test color picker interface:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open color picker modal/dialog</li>
+                  <li>Verify all 12 color swatches are visible</li>
+                  <li>For each color swatch:
+                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                      <li>Get the background color of the picker</li>
+                      <li>Get the color swatch value</li>
+                      <li>Verify contrast ratio meets 3:1 (for UI components)</li>
+                      <li>If swatches have borders, verify border contrast</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              <li><strong>Document results:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create a table with columns: Color Name, Background, Contrast Ratio, Pass/Fail</li>
+                  <li>Record all 12 colors and their contrast ratios</li>
+                  <li>Mark any colors that fail contrast requirements</li>
+                  <li>Note which backgrounds were tested (dark sidebar, light areas, etc.)</li>
+                </ul>
+              </li>
+              <li><strong>Test with high contrast mode (if available):</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Enable Windows High Contrast mode or browser high contrast extension</li>
+                  <li>Verify all 12 colors remain visible and distinguishable</li>
+                  <li>Verify text remains readable</li>
+                  <li>Record any issues</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>WCAG Contrast Requirements:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>Normal text:</strong> ≥ 4.5:1 contrast ratio (AA level)</li>
+              <li><strong>Large text:</strong> ≥ 3:1 contrast ratio (18pt+ or 14pt+ bold)</li>
+              <li><strong>UI components:</strong> ≥ 3:1 contrast ratio (icons, borders, form controls)</li>
+              <li><strong>Enhanced (AAA):</strong> ≥ 7:1 for normal text, ≥ 4.5:1 for large text (optional but recommended)</li>
+            </ul>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-15" name="test-7-15">
+            <label for="test-7-15">All 12 accent colors meet contrast requirements on actual UI backgrounds</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Contrast Testing Results Table:</strong> Create a table documenting each color's contrast ratio</p>
+            <textarea style="width: 100%; min-height: 120px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record contrast ratios for all 12 colors. Format: Color | Background | Contrast Ratio | Pass/Fail&#10;Example:&#10;Red | Dark Sidebar | 4.8:1 | PASS&#10;Yellow | Dark Sidebar | 2.1:1 | FAIL"></textarea>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Automated Contrast Checker Utility:</strong> You can also run the contrast checker utility programmatically:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>Open browser DevTools console on the Yarny editor page</li>
+              <li>Get actual background colors from the UI using DevTools inspector</li>
+              <li>Run: <code>import { checkAccentColorContrast } from './src/utils/contrastChecker'; checkAccentColorContrast(['#1F2933', '#FFFFFF'])</code></li>
+              <li>Or create a test script that extracts background colors from the DOM and runs the checker</li>
+              <li>Compare results with manual measurements</li>
+            </ul>
+            <p style="margin-top: var(--space-sm);"><strong>Note:</strong> The utility exists in <code>src/utils/contrastChecker.ts</code> and can be imported and run programmatically. However, manual verification against actual UI backgrounds is still required to ensure accuracy.</p>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 7.16: Success Criteria - Keyboard-Only Completion of Core Tasks</h4>
+          <p>Verify that all core tasks can be completed using only the keyboard. This is a <strong>CRITICAL</strong> success criteria that must pass before production.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Complete a full workflow using only keyboard:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li><strong>Create a story:</strong> Navigate to stories page → New Story button → Fill form → Create</li>
+                  <li><strong>Open the story:</strong> Navigate to story card → Activate with Enter</li>
+                  <li><strong>Create a chapter:</strong> Navigate to chapter list → Add Chapter → Type name → Confirm</li>
+                  <li><strong>Create a snippet:</strong> Navigate to chapter → Add Snippet → Type content</li>
+                  <li><strong>Edit snippet:</strong> Navigate to snippet → Open in editor → Type content</li>
+                  <li><strong>Rename chapter:</strong> Navigate to chapter → Context menu → Rename → Type new name → Confirm</li>
+                  <li><strong>Rename snippet:</strong> Navigate to snippet → Context menu → Rename → Type new name → Confirm</li>
+                  <li><strong>Reorder chapters:</strong> Use keyboard alternative (Move Up/Down) or document if missing</li>
+                  <li><strong>Reorder snippets:</strong> Use keyboard alternative (Move Up/Down) or document if missing</li>
+                  <li><strong>Move snippet between chapters:</strong> Use keyboard alternative or document if missing</li>
+                  <li><strong>Export story:</strong> Navigate to Export → Select export type → Fill form → Export</li>
+                  <li><strong>Set goal:</strong> Navigate to goal meter → Open goal panel → Fill form → Save</li>
+                  <li><strong>Delete story:</strong> Navigate to story → Delete button → Confirm in modal</li>
+                </ul>
+              </li>
+              <li><strong>Verify no mouse is needed:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Complete entire workflow without using mouse/trackpad</li>
+                  <li>Verify all operations complete successfully</li>
+                  <li>Note any operations that require mouse (these are blocking issues)</li>
+                </ul>
+              </li>
+              <li><strong>Test keyboard shortcuts:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Test common shortcuts (if implemented):
+                    <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                      <li>Ctrl/Cmd+N for new story</li>
+                      <li>Ctrl/Cmd+S for save (if manual save exists)</li>
+                      <li>Escape to close modals</li>
+                      <li>Enter to submit forms</li>
+                      <li>Tab to navigate</li>
+                      <li>Arrow keys for navigation (if implemented)</li>
+                    </ul>
+                  </li>
+                  <li>Document which shortcuts work and which are missing</li>
+                </ul>
+              </li>
+              <li><strong>Test focus management:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Verify focus moves logically through interface</li>
+                  <li>Verify focus is visible at all times</li>
+                  <li>Verify focus is not lost when modals open</li>
+                  <li>Verify focus returns to trigger element when modals close</li>
+                  <li>Verify no focus traps exist</li>
+                </ul>
+              </li>
+              <li><strong>Document results:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>List all core tasks that can be completed with keyboard only</li>
+                  <li>List any tasks that require mouse (blocking issues)</li>
+                  <li>List missing keyboard shortcuts</li>
+                  <li>List any focus management issues</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Core Tasks Checklist:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>✅ Create story (keyboard only)</li>
+              <li>✅ Open story (keyboard only)</li>
+              <li>✅ Create chapter (keyboard only)</li>
+              <li>✅ Create snippet (keyboard only)</li>
+              <li>✅ Edit snippet content (keyboard only)</li>
+              <li>✅ Rename chapter (keyboard only)</li>
+              <li>✅ Rename snippet (keyboard only)</li>
+              <li>✅ Reorder chapters (keyboard alternative exists)</li>
+              <li>✅ Reorder snippets (keyboard alternative exists)</li>
+              <li>✅ Move snippet between chapters (keyboard alternative exists)</li>
+              <li>✅ Export story (keyboard only)</li>
+              <li>✅ Set/edit goal (keyboard only)</li>
+              <li>✅ Delete story (keyboard only)</li>
+            </ul>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-7-16" name="test-7-16">
+            <label for="test-7-16">All core tasks can be completed using keyboard only - SUCCESS CRITERIA MET</label>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Critical:</strong> If any core task cannot be completed with keyboard only, this is a blocking accessibility issue that must be fixed before production release.</p>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any tasks that require mouse, missing keyboard alternatives, or focus issues</p>
+            <textarea style="width: 100%; min-height: 100px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record any keyboard-only issues, missing shortcuts, or blocking accessibility problems..."></textarea>
+          </div>
+        </div>
+
+        <div class="test-item" style="margin-top: var(--space-2xl);">
+          <h4>Accessibility Testing Checklist - Comprehensive Reference</h4>
+          <p>This is a comprehensive accessibility testing checklist that consolidates all WCAG 2.1 Level AA requirements and accessibility best practices. Use this as a quick reference and validation checklist before production release.</p>
+          
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>WCAG 2.1 Level AA Compliance Requirements:</strong></p>
+            <p style="margin-top: var(--space-sm); color: rgba(255, 255, 255, 0.9);">All items in this checklist must pass before production release. This checklist is based on WCAG 2.1 Level AA standards and accessibility best practices.</p>
+          </div>
+
+          <div class="test-steps" style="margin-top: var(--space-lg);">
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-bottom: var(--space-md);">1. Keyboard Navigation & Focus Management</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>All interactive elements are keyboard accessible</strong> - Buttons, links, form controls, modals can be activated with keyboard</li>
+              <li>[ ] <strong>Focus is visible at all times</strong> - Focus rings are clearly visible (especially on dark backgrounds)</li>
+              <li>[ ] <strong>Focus order is logical</strong> - Tab order follows visual flow and makes sense</li>
+              <li>[ ] <strong>No keyboard traps</strong> - Users can navigate away from any element using keyboard</li>
+              <li>[ ] <strong>Skip links available</strong> - Skip to main content links exist (if applicable)</li>
+              <li>[ ] <strong>Modal focus management</strong> - Focus moves to modal when opened, returns to trigger when closed</li>
+              <li>[ ] <strong>Focus visible on all states</strong> - Focus rings visible on hover, active, and focus states</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">2. Keyboard-Only Task Completion</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Create operations</strong> - All create operations (story, chapter, snippet, note) can be completed with keyboard only</li>
+              <li>[ ] <strong>Rename operations</strong> - All rename operations can be completed with keyboard only</li>
+              <li>[ ] <strong>Reorder operations</strong> - Reorder operations have keyboard alternatives (or drag & drop is not required)</li>
+              <li>[ ] <strong>Export operations</strong> - All export operations can be completed with keyboard only</li>
+              <li>[ ] <strong>Delete operations</strong> - All delete operations can be completed with keyboard only</li>
+              <li>[ ] <strong>Edit operations</strong> - All edit operations can be completed with keyboard only</li>
+              <li>[ ] <strong>Navigation operations</strong> - All navigation (stories, chapters, snippets) can be done with keyboard only</li>
+              <li>[ ] <strong>Form submissions</strong> - All forms can be submitted with keyboard (Enter key, Tab navigation)</li>
+              <li>[ ] <strong>Modal interactions</strong> - All modal interactions (open, close, submit, cancel) work with keyboard only</li>
+              <li>[ ] <strong>Context menu access</strong> - Context menus can be accessed and used with keyboard (if applicable)</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">3. Screen Reader Compatibility</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>All images have alt text</strong> - Decorative images have empty alt, informative images have descriptive alt</li>
+              <li>[ ] <strong>All buttons have accessible labels</strong> - Icon-only buttons have aria-label or aria-labelledby</li>
+              <li>[ ] <strong>All form inputs have labels</strong> - Inputs are associated with labels (for/id or aria-label)</li>
+              <li>[ ] <strong>Headings are properly structured</strong> - Heading hierarchy is logical (h1 → h2 → h3, no skipping levels)</li>
+              <li>[ ] <strong>Landmarks are properly marked</strong> - Main content, navigation, complementary regions use semantic HTML or ARIA</li>
+              <li>[ ] <strong>Dynamic content is announced</strong> - Screen reader announces changes (live regions, aria-live, status updates)</li>
+              <li>[ ] <strong>Error messages are accessible</strong> - Form errors are associated with inputs (aria-describedby, aria-invalid)</li>
+              <li>[ ] <strong>Modal dialogs are properly marked</strong> - Modals use role="dialog", aria-modal, aria-labelledby</li>
+              <li>[ ] <strong>Navigation is announced</strong> - Screen reader announces page changes, route changes, content updates</li>
+              <li>[ ] <strong>Interactive elements are announced</strong> - Screen reader announces buttons, links, form controls with their purpose</li>
+              <li>[ ] <strong>Status messages are announced</strong> - Save status, error messages, success messages are announced</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">4. Color Contrast & Visual Accessibility</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Normal text contrast</strong> - All normal text meets 4.5:1 contrast ratio (WCAG AA)</li>
+              <li>[ ] <strong>Large text contrast</strong> - All large text (18pt+ or 14pt+ bold) meets 3:1 contrast ratio (WCAG AA)</li>
+              <li>[ ] <strong>UI component contrast</strong> - Icons, borders, form controls meet 3:1 contrast ratio</li>
+              <li>[ ] <strong>All 12 accent colors tested</strong> - Red, orange, amber, yellow, lime, emerald, teal, cyan, blue, indigo, violet, fuchsia tested on actual backgrounds</li>
+              <li>[ ] <strong>Focus indicators meet contrast</strong> - Focus rings meet 3:1 contrast ratio</li>
+              <li>[ ] <strong>Error states meet contrast</strong> - Error messages, error borders meet contrast requirements</li>
+              <li>[ ] <strong>Disabled states meet contrast</strong> - Disabled buttons/inputs still meet minimum contrast (or are clearly disabled)</li>
+              <li>[ ] <strong>Color is not the only indicator</strong> - Information is not conveyed by color alone (icons, text, patterns also used)</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">5. ARIA Labels & Semantic HTML</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Icon-only buttons have labels</strong> - All icon buttons have aria-label or aria-labelledby</li>
+              <li>[ ] <strong>Form inputs have labels</strong> - All inputs have associated labels (for/id or aria-label)</li>
+              <li>[ ] <strong>Error messages are associated</strong> - Form errors use aria-describedby to associate with inputs</li>
+              <li>[ ] <strong>Required fields are marked</strong> - Required inputs have aria-required="true" or visual indicator</li>
+              <li>[ ] <strong>Live regions for dynamic content</strong> - Status updates use aria-live regions (polite or assertive)</li>
+              <li>[ ] <strong>Modal dialogs properly marked</strong> - Modals use role="dialog", aria-modal="true", aria-labelledby</li>
+              <li>[ ] <strong>Navigation landmarks</strong> - Navigation regions use nav element or role="navigation"</li>
+              <li>[ ] <strong>Main content landmark</strong> - Main content uses main element or role="main"</li>
+              <li>[ ] <strong>Complementary content marked</strong> - Sidebars use aside element or role="complementary"</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">6. Error Handling & Feedback</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Error messages are clear</strong> - Error messages explain what went wrong and how to fix it</li>
+              <li>[ ] <strong>Errors are associated with inputs</strong> - Form errors use aria-describedby to link to inputs</li>
+              <li>[ ] <strong>Errors are announced</strong> - Screen reader announces error messages when they appear</li>
+              <li>[ ] <strong>Validation feedback is accessible</strong> - Form validation feedback is accessible to screen readers</li>
+              <li>[ ] <strong>Success messages are announced</strong> - Success confirmations are announced to screen readers</li>
+              <li>[ ] <strong>Loading states are announced</strong> - Loading indicators are announced (or use aria-busy)</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">7. Responsive Design & Zoom</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Content is readable at 200% zoom</strong> - All content remains readable and functional at 200% browser zoom</li>
+              <li>[ ] <strong>No horizontal scrolling at 200% zoom</strong> - No horizontal scrolling required at 200% zoom</li>
+              <li>[ ] <strong>Touch targets are adequate</strong> - Interactive elements are at least 44x44px (mobile/touch devices)</li>
+              <li>[ ] <strong>Text can be resized</strong> - Text can be resized up to 200% without loss of functionality</li>
+            </ul>
+
+            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">8. Testing Tools & Validation</h5>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>[ ] <strong>Automated testing tools run</strong> - axe DevTools, WAVE, or similar tools run with no critical issues</li>
+              <li>[ ] <strong>Manual keyboard testing completed</strong> - Full workflow tested with keyboard only (no mouse)</li>
+              <li>[ ] <strong>Screen reader testing completed</strong> - Tested with VoiceOver (macOS) or NVDA/JAWS (Windows)</li>
+              <li>[ ] <strong>Contrast checker run</strong> - All colors checked with contrast checker tool against actual backgrounds</li>
+              <li>[ ] <strong>Browser DevTools audit run</strong> - Chrome/Firefox accessibility audit run with no critical issues</li>
+            </ul>
+          </div>
+
+          <div class="note-box" style="margin-top: var(--space-xl);">
+            <p><strong>Accessibility Testing Summary - Quick Reference:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>Keyboard-Only Create Operations:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Keyboard-Only Rename Operations:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Keyboard-Only Reorder Operations:</strong> [ ] ✅ PASS / [ ] ❌ FAIL (keyboard alternatives exist)</li>
+              <li><strong>Keyboard-Only Export Operations:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Screen Reader Testing:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Contrast Verification (12 accent colors):</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Contrast Checker Utility Run:</strong> [ ] ✅ PASS / [ ] ❌ FAIL (utility run against actual UI backgrounds)</li>
+              <li><strong>Keyboard-Only Core Tasks Completion:</strong> [ ] ✅ PASS / [ ] ❌ FAIL (CRITICAL - blocks production)</li>
+              <li><strong>ARIA Labels & Semantic HTML:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Error Handling & Feedback:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Responsive Design & Zoom:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Automated Testing Tools:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+            </ul>
+            <p style="margin-top: var(--space-md);"><strong>Overall Accessibility Status:</strong> [ ] ✅ PASS (All items pass) / [ ] ❌ FAIL (Blocking issues found)</p>
+            <p style="margin-top: var(--space-sm);"><strong>Note:</strong> All accessibility tests must pass before production release. Keyboard-only completion of core tasks is a critical success criteria. This checklist is based on WCAG 2.1 Level AA standards.</p>
+          </div>
+
+          <div class="checkbox-container" style="margin-top: var(--space-lg);">
+            <input type="checkbox" id="accessibility-checklist-complete" name="accessibility-checklist-complete">
+            <label for="accessibility-checklist-complete">Accessibility Testing Checklist completed - All items verified and documented</label>
+          </div>
+
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Documentation Requirements:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>✅ All checklist items checked and verified</li>
+              <li>✅ Test results documented (PASS/FAIL for each category)</li>
+              <li>✅ Issues found documented with severity (critical, major, minor)</li>
+              <li>✅ GitHub issues created for critical and major issues</li>
+              <li>✅ Re-test completed after fixes</li>
+              <li>✅ Final status documented (Overall PASS/FAIL)</li>
+            </ul>
+          </div>
+
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Notes:</strong> Record any accessibility issues found, testing tool results, or observations</p>
+            <textarea style="width: 100%; min-height: 120px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record accessibility testing results, tool outputs, issues found, and remediation status..."></textarea>
+          </div>
+        </div>
+      </div>
+
+        <!-- Section 8: Export Functionality -->
+        <div class="test-section" data-section-anchor id="section-8">
+          <h2><i class="material-icons">file_download</i> Section 8: Export Functionality</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Export functionality depends on having content created and edited. Complete this section after basic editing and content creation tests.</p>
+        
+        <div class="test-item">
+          <h4>Test 8.1: Export All Chapters</h4>
+          <p>Verify that you can export all chapters as a single Google Doc.</p>
+          <div class="test-steps">
+            <ol>
+              <li>In the editor, look for an "Export" button or menu</li>
+              <li>Click it and select "Export All Chapters"</li>
+              <li>Enter a filename for the export</li>
+              <li>Optionally choose to include snippet names</li>
+              <li>Click "Export"</li>
+              <li>Verify a new Google Doc is created in the story folder in Google Drive</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify all chapters and snippets are included in order</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-1" name="test-5-1">
+            <label for="test-5-1">I can export all chapters as a Google Doc</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.2: Export Outline</h4>
+          <p>Verify that you can export an outline (chapter and snippet titles with descriptions).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click "Export" and select "Export Outline"</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a new Google Doc is created in the story folder</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify it contains chapter titles, snippet titles, and descriptions</li>
+              <li>Verify it does NOT contain snippet body content</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-2" name="test-5-2">
+            <label for="test-5-2">I can export an outline with titles and descriptions</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.3: Export All People</h4>
+          <p>Verify that you can export all People notes as a single Google Doc.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click "Export" and select "Export All People"</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a new Google Doc is created in the story folder</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify it contains all People notes with their content</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-3" name="test-5-3">
+            <label for="test-5-3">I can export all People notes</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.4: Export All Places</h4>
+          <p>Verify that you can export all Places notes as a single Google Doc.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click "Export" and select "Export All Places"</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a new Google Doc is created in the story folder</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify it contains all Places notes with their content</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-4" name="test-5-4">
+            <label for="test-5-4">I can export all Places notes</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.5: Export All Things</h4>
+          <p>Verify that you can export all Things notes as a single Google Doc.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click "Export" and select "Export All Things"</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a new Google Doc is created in the story folder</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify it contains all Things notes with their content</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-5" name="test-5-5">
+            <label for="test-5-5">I can export all Things notes</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.6: Export Large Chapter (Chunked Writes)</h4>
+          <p>Verify that exporting a very large chapter (50+ snippets) uses chunked writes to handle Google Docs API body size limits.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with a very large chapter (50+ snippets) - use test-large project if available</li>
+              <li>Click "Export" and select "Export All Chapters" (or export just the large chapter)</li>
+              <li>Enter a filename for the export</li>
+              <li>Click "Export"</li>
+              <li>Verify a progress indicator appears during export (if chunked writes are used)</li>
+              <li>Verify the export completes successfully without errors</li>
+              <li>Verify all snippets are included in the export (no truncation)</li>
+              <li>Open the exported Google Doc</li>
+              <li>Verify all snippets are in the correct order</li>
+              <li>Verify the export order is preserved across chunks (if chunked)</li>
+              <li>Verify the exported document is complete and readable</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-5-6" name="test-5-6">
+            <label for="test-5-6">Large chapter export uses chunked writes correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.7: Export Content Structure Validation</h4>
+          <p>Verify that exported content maintains correct structure: snippet titles as headers, paragraph breaks preserved, order maintained.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Create a story with multiple chapters and snippets</li>
+              <li>Ensure snippets contain paragraph breaks (double Enter) and line breaks (Shift+Enter)</li>
+              <li>Export all chapters</li>
+              <li>Open the exported Google Doc</li>
+              <li><strong>Verify structure:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Each snippet title appears as a header (e.g., "# Snippet Title")</li>
+                  <li>Paragraph breaks (double newlines) are preserved</li>
+                  <li>Line breaks (single newlines) are preserved</li>
+                  <li>Snippets are in correct order (Chapter 1 snippets before Chapter 2 snippets)</li>
+                  <li>Chapters are in correct order</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="export-8-7" name="export-8-7">
+            <label for="export-8-7">Exported content maintains correct structure</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.8: Export Progress Dialog</h4>
+          <p>Verify that export progress is displayed during long exports.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Export a large story (or many snippets)</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Progress dialog appears showing export status</li>
+                  <li>Progress indicator shows current chunk / total chunks (for chunked exports)</li>
+                  <li>Status messages are clear (e.g., "Creating document...", "Writing chunks...")</li>
+                  <li>Dialog closes when export completes</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="export-8-8" name="export-8-8">
+            <label for="export-8-8">Export progress dialog displays correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.9: Export Error Handling</h4>
+          <p>Verify that export errors are handled gracefully.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Simulate an export error (network issue, API error, etc.)</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Error message is displayed to user</li>
+                  <li>Error message is user-friendly</li>
+                  <li>Export can be retried</li>
+                  <li>No partial/corrupted files are created</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="export-8-9" name="export-8-9">
+            <label for="export-8-9">Export errors are handled gracefully</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.10: Export File Location</h4>
+          <p>Verify that exported files are created in the correct location (story folder).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Export all chapters</li>
+              <li>Open Google Drive</li>
+              <li>Navigate to the story folder</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Exported Google Doc is created in the story folder (not in root or elsewhere)</li>
+                  <li>File name matches what you entered</li>
+                  <li>File is accessible and can be opened</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="export-8-10" name="export-8-10">
+            <label for="export-8-10">Exported files are created in correct location</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 8.11: Filename Suggestion</h4>
+          <p>Verify that export dialog suggests a filename based on story title.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with a title (e.g., "My Adventure Story")</li>
+              <li>Click "Export" and select an export option</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Filename input is pre-filled with a suggested name</li>
+                  <li>Suggestion is based on story title (e.g., "My Adventure Story - Export" or similar)</li>
+                  <li>You can edit the suggested filename</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="export-8-11" name="export-8-11">
+            <label for="export-8-11">Filename suggestion is provided based on story title</label>
+          </div>
+        </div>
+      </div>
+
+        <!-- Section 9: Performance & Edge Cases -->
+        <div class="test-section" data-section-anchor id="section-9">
+          <h2><i class="material-icons">speed</i> Section 9: Performance & Edge Cases</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Performance and edge case testing should come after basic functionality is validated.</p>
+        
+        <div class="test-item">
+          <h4>Test 9.1: Large Story Performance</h4>
+          <p>Verify that the app performs well with large stories (many chapters and snippets).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with 25+ chapters and 200+ snippets (if available)</li>
+              <li>Verify the app loads in a reasonable time (< 5 seconds)</li>
+              <li>Scroll through the chapter/snippet list</li>
+              <li>Verify scrolling is smooth (no lag)</li>
+              <li>Switch between snippets</li>
+              <li>Verify snippet switching is responsive</li>
+              <li>Verify the UI doesn't freeze or become unresponsive</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-1" name="test-8-1">
+            <label for="test-8-1">App performs well with large stories</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.2: Lazy Loading</h4>
+          <p>Verify that snippet content loads on demand (lazy loading).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Verify the active snippet loads immediately</li>
+              <li>Verify other snippets load in the background (check network tab or wait)</li>
+              <li>Switch to a different snippet</li>
+              <li>Verify it loads quickly (may be from cache if already loaded)</li>
+              <li>Verify the UI doesn't block while loading</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-2" name="test-8-2">
+            <label for="test-8-2">Snippet content loads on demand (lazy loading)</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.3: Performance Budget - Time to First Edit (Hot Path)</h4>
+          <p>Verify that opening a snippet already in cache and starting to type is fast (≤300 ms from click to first character appearing).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story and load a snippet (content is now cached)</li>
+              <li>Switch to a different snippet and back to the first one (ensures it's in cache)</li>
+              <li>Click on the snippet to open it in the editor</li>
+              <li>Start typing immediately</li>
+              <li>Measure time from click to first character appearing (use browser dev tools or stopwatch)</li>
+              <li>Verify latency is ≤300 ms (hot path - snippet already in cache)</li>
+              <li>Repeat with several different snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-3" name="test-8-3">
+            <label for="test-8-3">Time to first edit (hot path) is ≤300 ms</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.4: Performance Budget - Time to First Edit (Cold Path)</h4>
+          <p>Verify that opening a snippet not yet loaded and starting to type is acceptable (≤1.5 s from click to first character appearing, includes Drive fetch).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Find a snippet that hasn't been loaded yet (not in cache)</li>
+              <li>Click on the snippet to open it in the editor</li>
+              <li>Start typing immediately</li>
+              <li>Measure time from click to first character appearing (use browser dev tools or stopwatch)</li>
+              <li>Verify latency is ≤1.5 s (cold path - includes Drive fetch)</li>
+              <li>Repeat with several different unloaded snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-4" name="test-8-4">
+            <label for="test-8-4">Time to first edit (cold path) is ≤1.5 s</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.5: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
+          <p>Verify that switching to a snippet already in cache is fast (≤300 ms from click to editor ready).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story and load multiple snippets (ensure they're in cache)</li>
+              <li>Click on a snippet that's already been loaded</li>
+              <li>Measure time from click to editor ready (content visible and editable)</li>
+              <li>Verify latency is ≤300 ms (hot path - snippet already in cache)</li>
+              <li>Switch between several cached snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-5" name="test-8-5">
+            <label for="test-8-5">Time to switch snippet (hot path) is ≤300 ms</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.6: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
+          <p>Verify that switching to a snippet not yet loaded is acceptable (≤1.5 s from click to editor ready, includes Drive fetch).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a story with many snippets</li>
+              <li>Find a snippet that hasn't been loaded yet (not in cache)</li>
+              <li>Click on the snippet to switch to it</li>
+              <li>Measure time from click to editor ready (content visible and editable)</li>
+              <li>Verify latency is ≤1.5 s (cold path - includes Drive fetch)</li>
+              <li>Switch to several different unloaded snippets</li>
+              <li>Verify all meet the performance budget</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-6" name="test-8-6">
+            <label for="test-8-6">Time to switch snippet (cold path) is ≤1.5 s</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.7: Special Characters & Round-Trip Preservation</h4>
+          <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly in round-trips between Yarny and Google Docs.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Type special characters in a snippet: "quotes", 'apostrophes', —em dashes, –en dashes, …ellipses, ©copyright, ®registered, ™trademark</li>
+              <li>Save the snippet in Yarny</li>
+              <li>Open the Google Doc in Google Drive</li>
+              <li>Verify all special characters are preserved exactly</li>
+              <li>Edit in Google Docs and add more special characters: curly quotes "like this" and 'this'</li>
+              <li>Save in Google Docs</li>
+              <li>In Yarny, switch to a different snippet and switch back</li>
+              <li>Verify all special characters are preserved in the round-trip</li>
+              <li>Edit in Yarny again and add more special characters</li>
+              <li>Save and verify in Google Docs that all characters are preserved</li>
+              <li>Verify no characters are corrupted or changed during round-trips</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-7" name="test-8-7">
+            <label for="test-8-7">Special characters are preserved correctly in round-trips</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.8: Long Text</h4>
+          <p>Verify that the editor handles long text (10,000+ words) without issues.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open or create a snippet with very long text (10,000+ words)</li>
+              <li>Verify the editor displays all text</li>
+              <li>Scroll through the text</li>
+              <li>Verify scrolling is smooth</li>
+              <li>Edit text in the middle</li>
+              <li>Verify edits work correctly</li>
+              <li>Save the snippet</li>
+              <li>Verify it saves successfully</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-8" name="test-8-8">
+            <label for="test-8-8">Editor handles long text without issues</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.9: Empty States</h4>
+          <p>Verify that empty states (no stories, no chapters, no snippets) display correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>If you have no stories, verify the empty state message appears</li>
+              <li>Create a story but don't add chapters</li>
+              <li>Verify the editor shows appropriate empty state or message</li>
+              <li>Add a chapter but don't add snippets</li>
+              <li>Verify appropriate empty state or message appears</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-9" name="test-8-9">
+            <label for="test-8-9">Empty states display correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.10: Offline/Spotty-Network Semantics</h4>
+          <p>Verify that the app handles offline and spotty network conditions gracefully with clear user feedback.</p>
+          <div class="test-steps">
+            <ol>
+              <li><strong>Go offline</strong>: Disable network (or use browser dev tools to simulate offline)</li>
+              <li>Edit a snippet while offline</li>
+              <li>Verify editor remains editable (you can continue typing)</li>
+              <li><strong>Offline banner</strong>: Verify offline banner appears at top of editor (non-blocking, dismissible)</li>
+              <li>Verify banner message says "You're offline. Changes will be saved when connection is restored."</li>
+              <li><strong>Queued save</strong>: Verify save status shows "Queued - will save when online" (no timestamp)</li>
+              <li>Make multiple edits while offline</li>
+              <li><strong>Reconnect</strong>: Re-enable network</li>
+              <li>Verify queued saves automatically retry and complete</li>
+              <li><strong>Save status on reconnect</strong>: Verify "Saved at X:XX" appears after successful save</li>
+              <li><strong>Stale cache warning</strong>: Go offline again → Wait 5+ minutes → Verify "Using cached data" or "Last synced: X:XX" warning appears</li>
+              <li><strong>Network flapping</strong>: Rapidly toggle network on/off multiple times → Verify save queue handles multiple toggles correctly, no data loss</li>
+              <li><strong>Retry exhaustion</strong>: Simulate network error with no retries remaining → Verify mutation is queued (not lost), shows queued status</li>
+              <li><strong>Multiple queued saves</strong>: Go offline → Make multiple edits to different snippets → Reconnect → Verify all saves complete in order</li>
+              <li><strong>Cache staleness</strong>: Load a snippet → Go offline → Wait 10+ minutes → Verify "Last synced: X:XX" appears instead of "Saved at X:XX"</li>
+              <li>Verify editor remains editable even with stale cache (but shows warning)</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-10" name="test-8-10">
+            <label for="test-8-10">App handles offline/spotty-network conditions gracefully with clear feedback</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.11: Cache Size Verification (Memory Bound)</h4>
+          <p>Verify that snippet caching is limited to the 50 most-recent entries and uses LRU eviction.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a large story with many snippets (50+ recommended)</li>
+              <li>Sequentially open at least 55 unique snippets</li>
+              <li>Open browser DevTools → Application → Storage (or use internal diagnostics if available)</li>
+              <li><strong>Verify cache size:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Cache stores no more than 50 snippet bodies</li>
+                  <li>Oldest snippet (first opened) is evicted once limit is exceeded</li>
+                  <li>Currently active snippet remains cached (not evicted)</li>
+                </ul>
+              </li>
+              <li>Switch back to an early snippet that should have been evicted</li>
+              <li><strong>Verify re-fetch:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Snippet reloads from Drive/network</li>
+                  <li>Cache updates to include snippet again</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-11" name="test-8-11">
+            <label for="test-8-11">Snippet cache enforces 50-item limit with correct LRU eviction</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 9.12: Long Session Memory Stability</h4>
+          <p>Verify that extended editing sessions do not cause unbounded memory growth.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Use the editor continuously for at least 60 minutes</li>
+              <li>During the session:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open and close many snippets</li>
+                  <li>Switch between stories if available</li>
+                  <li>Make periodic edits to trigger auto-save</li>
+                </ul>
+              </li>
+              <li>Monitor memory usage (Activity Monitor, Task Manager, or Chrome Performance monitor)</li>
+              <li><strong>Verify:</strong>
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Memory usage stabilizes (no continuous upward trend)</li>
+                  <li>Cache stays within 50 snippet limit</li>
+                  <li>No editor slowdowns or GC pauses are observed</li>
+                </ul>
+              </li>
+              <li>Record memory measurements at start, midpoint, and end of session</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-8-12" name="test-8-12">
+            <label for="test-8-12">Extended sessions maintain stable memory usage</label>
+          </div>
+        </div>
+      </div>
+
+        <div class="summary-section" id="phase-summary" data-section-anchor>
+          <h2>Phase 3 Progress</h2>
+          <p style="color: rgba(255, 255, 255, 0.78); margin-bottom: var(--space-xl);">Log results before moving on to feature validation.</p>
+          <div class="summary-stats">
+            <div class="stat-box">
+              <div class="stat-number" id="totalTests">0</div>
+              <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="completedTests">0</div>
+              <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="remainingTests">0</div>
+              <div class="stat-label">Remaining</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="completionPercent">0%</div>
+              <div class="stat-label">Completion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="shared-footer">
+      <p>&copy; 2025 Yarny. Your personal writing tool.</p>
+      <nav class="shared-footer-nav">
+        <a href="/docs.html">User Guide</a>
+        <a href="/migration-plan">Migration Plan</a>
+        <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>

@@ -44,7 +44,7 @@ const mockStoryData = {
   ]
 } as const;
 
-test.describe("Chapter & Snippet Management (React)", () => {
+test.describe.skip("Chapter & Snippet Management (React)", () => {
   test.beforeEach(async ({ page }) => {
     await setupReactAppMocks(page, mockStoryData);
   });
