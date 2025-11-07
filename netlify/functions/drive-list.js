@@ -1,59 +1,35 @@
-const { getAuthenticatedDriveClient } = require('./drive-client');
-
-async function getUserEmailFromSession(event) {
-  const cookies = event.headers.cookie?.split(';') || [];
-  const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
-  if (!sessionCookie) return null;
-  
-  try {
-    const sessionToken = sessionCookie.split('=')[1].trim();
-    const decoded = Buffer.from(sessionToken, 'base64').toString();
-    const parts = decoded.split(':');
-    return parts[0];
-  } catch (error) {
-    return null;
-  }
-}
-
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  const email = await getUserEmailFromSession(event);
-  if (!email) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Not authenticated' }) };
-  }
-
-  console.log('Drive list - looking for tokens for email:', email);
-
-  try {
-    const drive = await getAuthenticatedDriveClient(email);
-    
-    const { folderId, pageToken } = event.queryStringParameters || {};
-    
-    const query = folderId 
-      ? `'${folderId}' in parents and trashed=false`
-      : "trashed=false";
-    
-    const response = await drive.files.list({
-      q: query,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, trashed)',
-      pageSize: 100,
-      pageToken: pageToken || undefined,
-      orderBy: 'modifiedTime desc'
-    });
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(response.data)
-    };
-  } catch (error) {
-    console.error('Drive list error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message || 'Failed to list files' })
-    };
-  }
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.handler = void 0;
+const types_1 = require("./types");
+const drive_client_1 = require("./drive-client");
+const handler = async (event) => {
+    if (event.httpMethod !== "GET") {
+        return (0, types_1.createErrorResponse)(405, "Method not allowed");
+    }
+    const session = (0, types_1.parseSessionFromEvent)(event);
+    if (!session) {
+        return (0, types_1.createErrorResponse)(401, "Not authenticated");
+    }
+    console.log("Drive list - looking for tokens for email:", session.email);
+    try {
+        const drive = await (0, drive_client_1.getAuthenticatedDriveClient)(session.email);
+        const { folderId, pageToken } = event.queryStringParameters || {};
+        const query = folderId
+            ? `'${folderId}' in parents and trashed=false`
+            : "trashed=false";
+        const response = await drive.files.list({
+            q: query,
+            fields: "nextPageToken, files(id, name, mimeType, modifiedTime, size, trashed)",
+            pageSize: 100,
+            pageToken: pageToken || undefined,
+            orderBy: "modifiedTime desc"
+        });
+        return (0, types_1.createSuccessResponse)(response.data);
+    }
+    catch (error) {
+        console.error("Drive list error:", error);
+        return (0, types_1.createErrorResponse)(500, error instanceof Error ? error.message : "Failed to list files");
+    }
 };
+exports.handler = handler;

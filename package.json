@@ -7,11 +7,12 @@
   "scripts": {
     "dev": "vite",
     "dev:functions": "netlify dev",
-    "build": "tsc -p tsconfig.node.json && vite build",
+    "build": "npm run build:functions && vite build",
+    "build:functions": "tsc -p tsconfig.functions.json",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.functions.json",
     "test": "vitest",
     "test:watch": "vitest --watch"
   },
@@ -37,8 +38,9 @@
     "immer": "^10.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.5",
-    "zod": "^3.23.8"
+    "react-router-dom": "^7.9.5",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",

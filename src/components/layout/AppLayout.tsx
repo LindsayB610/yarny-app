@@ -2,6 +2,7 @@ import { Box, Divider, Stack } from "@mui/material";
 import { useEffect, type JSX } from "react";
 
 import { useDriveProjectsQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
+import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
 import { ProjectList } from "../navigation/ProjectList";
 import { StoryList } from "../navigation/StoryList";
@@ -14,6 +15,9 @@ export function AppLayout(): JSX.Element {
   const selectedProjectId = useYarnyStore((state) => state.ui.selectedProjectId);
   const activeStoryId = useYarnyStore((state) => state.ui.activeStoryId);
   const storiesForProject = useSelectedProjectStories();
+
+  // Reconcile auth and query state on window focus
+  useWindowFocusReconciliation();
 
   useEffect(() => {
     if (!selectedProjectId && data?.projects?.[0]) {

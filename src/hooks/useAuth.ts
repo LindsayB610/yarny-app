@@ -1,0 +1,102 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+
+import { apiClient } from "../api/client";
+import type { VerifyGoogleResponse } from "../api/contract";
+
+export interface AuthUser {
+  email: string;
+  name?: string;
+  picture?: string;
+  token: string;
+}
+
+interface AuthState {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+// Check if user is authenticated by looking for session token
+function checkAuthFromStorage(): AuthUser | null {
+  try {
+    const authToken = localStorage.getItem("yarny_auth");
+    const userData = localStorage.getItem("yarny_user");
+
+    if (authToken && userData) {
+      const user = JSON.parse(userData) as AuthUser;
+      return user;
+    }
+  } catch (error) {
+    console.error("Error reading auth from storage:", error);
+  }
+  return null;
+}
+
+export function useAuthConfig() {
+  return useQuery({
+    queryKey: ["auth", "config"],
+    queryFn: () => apiClient.getConfig(),
+    staleTime: Infinity // Config doesn't change often
+  });
+}
+
+export function useAuth(): AuthState & {
+  login: (token: string) => Promise<VerifyGoogleResponse>;
+  logout: () => Promise<void>;
+} {
+  const queryClient = useQueryClient();
+  const [user, setUser] = useState<AuthUser | null>(() => checkAuthFromStorage());
+
+  const verifyMutation = useMutation({
+    mutationFn: (token: string) => apiClient.verifyGoogle({ token }),
+    onSuccess: (data) => {
+      const authUser: AuthUser = {
+        email: data.user,
+        name: data.name,
+        picture: data.picture,
+        token: data.token
+      };
+      setUser(authUser);
+      localStorage.setItem("yarny_auth", authUser.token);
+      localStorage.setItem("yarny_user", JSON.stringify(authUser));
+    }
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: () => apiClient.logout(),
+    onSuccess: () => {
+      setUser(null);
+      localStorage.removeItem("yarny_auth");
+      localStorage.removeItem("yarny_user");
+      queryClient.clear();
+    }
+  });
+
+  // Check auth status on mount and window focus
+  useEffect(() => {
+    const storedUser = checkAuthFromStorage();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+
+    const handleFocus = () => {
+      const currentUser = checkAuthFromStorage();
+      if (currentUser?.token !== user?.token) {
+        setUser(currentUser);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [user?.token]);
+
+  return {
+    user,
+    isAuthenticated: !!user,
+    isLoading: verifyMutation.isPending || logoutMutation.isPending,
+    login: (token: string) => verifyMutation.mutateAsync(token),
+    logout: () => logoutMutation.mutateAsync()
+  };
+}
+

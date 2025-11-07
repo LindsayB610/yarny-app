@@ -1,179 +1,152 @@
-const { getAuthenticatedDriveClient } = require('./drive-client');
-
-async function getUserEmailFromSession(event) {
-  const cookies = event.headers.cookie?.split(';') || [];
-  const sessionCookie = cookies.find(c => c.trim().startsWith('session='));
-  if (!sessionCookie) return null;
-  
-  try {
-    const sessionToken = sessionCookie.split('=')[1].trim();
-    const decoded = Buffer.from(sessionToken, 'base64').toString();
-    const parts = decoded.split(':');
-    return parts[0];
-  } catch (error) {
-    return null;
-  }
-}
-
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  const email = await getUserEmailFromSession(event);
-  if (!email) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Not authenticated' }) };
-  }
-
-  try {
-    const { fileId } = JSON.parse(event.body);
-    if (!fileId) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'fileId required' }) };
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.handler = void 0;
+const googleapis_1 = require("googleapis");
+const types_1 = require("./types");
+const drive_client_1 = require("./drive-client");
+const handler = async (event) => {
+    if (event.httpMethod !== "POST") {
+        return (0, types_1.createErrorResponse)(405, "Method not allowed");
     }
-
-    const drive = await getAuthenticatedDriveClient(email);
-    
-    // Get file metadata first
-    const fileMetadata = await drive.files.get({
-      fileId: fileId,
-      fields: 'id, name, mimeType'
-    });
-
-    // Only check Google Docs
-    if (fileMetadata.data.mimeType !== 'application/vnd.google-apps.document') {
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hasComments: false,
-          hasTrackedChanges: false,
-          commentCount: 0
-        })
-      };
+    const session = (0, types_1.parseSessionFromEvent)(event);
+    if (!session) {
+        return (0, types_1.createErrorResponse)(401, "Not authenticated");
     }
-
-    const { google } = require('googleapis');
-    const auth = drive._auth;
-    const docs = google.docs({ version: 'v1', auth: auth });
-    
-    // Get document with comments and suggestions
-    const doc = await docs.documents.get({
-      documentId: fileId,
-      suggestionsViewMode: 'PREVIEW_WITH_SUGGESTIONS' // This shows suggestions in the document
-    });
-
-    // Check for comments using the Drive API (already authenticated)
-    let commentCount = 0;
-    let hasComments = false;
-    
     try {
-      // Get comments for the file using Drive API v3
-      const commentsResponse = await drive.comments.list({
-        fileId: fileId,
-        fields: 'comments(id,content,author,createdTime)',
-        pageSize: 100
-      });
-      
-      if (commentsResponse.data.comments && commentsResponse.data.comments.length > 0) {
-        commentCount = commentsResponse.data.comments.length;
-        hasComments = true;
-      }
-    } catch (commentError) {
-      // If comments API fails, we'll still check for suggestions
-      console.warn('Could not fetch comments:', commentError.message);
-    }
-
-    // Check for tracked changes (suggestions)
-    // Suggestions appear in the document structure when suggestionsViewMode is set
-    let hasTrackedChanges = false;
-    
-    if (doc.data.body && doc.data.body.content) {
-      // Walk through document content to find suggestions
-      const hasSuggestions = doc.data.body.content.some(element => {
-        if (element.paragraph) {
-          return element.paragraph.elements.some(elem => {
-            // Check for text runs with suggestions
-            if (elem.textRun && elem.textRun.suggestedInsertionIds && elem.textRun.suggestedInsertionIds.length > 0) {
-              return true;
-            }
-            if (elem.textRun && elem.textRun.suggestedDeletionIds && elem.textRun.suggestedDeletionIds.length > 0) {
-              return true;
-            }
-            return false;
-          });
+        if (!event.body) {
+            return (0, types_1.createErrorResponse)(400, "fileId required");
         }
-        // Check table cells for suggestions
-        if (element.table) {
-          return element.table.tableRows.some(row => 
-            row.tableCells.some(cell => 
-              cell.content.some(contentElem => {
-                if (contentElem.paragraph) {
-                  return contentElem.paragraph.elements.some(elem => {
-                    if (elem.textRun && (
-                      (elem.textRun.suggestedInsertionIds && elem.textRun.suggestedInsertionIds.length > 0) ||
-                      (elem.textRun.suggestedDeletionIds && elem.textRun.suggestedDeletionIds.length > 0)
-                    )) {
-                      return true;
-                    }
-                    return false;
-                  });
+        const { fileId } = JSON.parse(event.body);
+        if (!fileId) {
+            return (0, types_1.createErrorResponse)(400, "fileId required");
+        }
+        const drive = await (0, drive_client_1.getAuthenticatedDriveClient)(session.email);
+        // Get file metadata first
+        const fileMetadata = await drive.files.get({
+            fileId: fileId,
+            fields: "id, name, mimeType"
+        });
+        // Only check Google Docs
+        if (fileMetadata.data.mimeType !== "application/vnd.google-apps.document") {
+            return (0, types_1.createSuccessResponse)({
+                hasComments: false,
+                hasTrackedChanges: false,
+                commentCount: 0
+            });
+        }
+        const auth = drive._auth;
+        if (!auth) {
+            throw new Error("Drive client auth not available");
+        }
+        const docs = googleapis_1.google.docs({ version: "v1", auth });
+        // Get document with comments and suggestions
+        const doc = await docs.documents.get({
+            documentId: fileId,
+            suggestionsViewMode: "PREVIEW_WITH_SUGGESTIONS" // This shows suggestions in the document
+        });
+        // Check for comments using the Drive API (already authenticated)
+        let commentCount = 0;
+        let hasComments = false;
+        const commentIds = [];
+        try {
+            // Get comments for the file using Drive API v3
+            const commentsResponse = await drive.comments.list({
+                fileId: fileId,
+                fields: "comments(id,content,author,createdTime)",
+                pageSize: 100
+            });
+            if (commentsResponse.data.comments && commentsResponse.data.comments.length > 0) {
+                commentCount = commentsResponse.data.comments.length;
+                hasComments = true;
+                commentIds.push(...commentsResponse.data.comments.map((c) => c.id || "").filter(Boolean));
+            }
+        }
+        catch (commentError) {
+            // If comments API fails, we'll still check for suggestions
+            console.warn("Could not fetch comments:", commentError instanceof Error ? commentError.message : String(commentError));
+        }
+        // Check for tracked changes (suggestions)
+        // Suggestions appear in the document structure when suggestionsViewMode is set
+        let hasTrackedChanges = false;
+        if (doc.data.body?.content) {
+            // Walk through document content to find suggestions
+            const hasSuggestions = doc.data.body.content.some((element) => {
+                if (element.paragraph?.elements) {
+                    return element.paragraph.elements.some((elem) => {
+                        // Check for text runs with suggestions
+                        if (elem.textRun?.suggestedInsertionIds &&
+                            elem.textRun.suggestedInsertionIds.length > 0) {
+                            return true;
+                        }
+                        if (elem.textRun?.suggestedDeletionIds &&
+                            elem.textRun.suggestedDeletionIds.length > 0) {
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+                // Check table cells for suggestions
+                if (element.table?.tableRows) {
+                    return element.table.tableRows.some((row) => row.tableCells?.some((cell) => cell.content?.some((contentElem) => {
+                        if (contentElem.paragraph?.elements) {
+                            return contentElem.paragraph.elements.some((elem) => {
+                                if (elem.textRun &&
+                                    ((elem.textRun.suggestedInsertionIds &&
+                                        elem.textRun.suggestedInsertionIds.length > 0) ||
+                                        (elem.textRun.suggestedDeletionIds &&
+                                            elem.textRun.suggestedDeletionIds.length > 0))) {
+                                    return true;
+                                }
+                                return false;
+                            });
+                        }
+                        return false;
+                    })));
                 }
                 return false;
-              })
-            )
-          );
+            });
+            hasTrackedChanges = hasSuggestions;
         }
-        return false;
-      });
-      
-      hasTrackedChanges = hasSuggestions;
+        // Also check for revisions (tracked changes history)
+        let hasRevisions = false;
+        try {
+            const revisionsResponse = await drive.revisions.list({
+                fileId: fileId,
+                fields: "revisions(id,modifiedTime,keepForever)",
+                pageSize: 10
+            });
+            // If there are multiple revisions (more than just the initial one), there might be tracked changes
+            if (revisionsResponse.data.revisions && revisionsResponse.data.revisions.length > 1) {
+                // Check if any revisions indicate suggestions
+                hasRevisions = true;
+            }
+        }
+        catch (revisionError) {
+            // Revisions check is optional
+            console.warn("Could not fetch revisions:", revisionError instanceof Error
+                ? revisionError.message
+                : String(revisionError));
+        }
+        // Consider tracked changes if we found suggestions or if there are multiple revisions
+        // (though multiple revisions alone don't guarantee tracked changes, it's a good indicator)
+        const hasTrackedChangesFinal = hasTrackedChanges || (hasRevisions && hasComments);
+        return (0, types_1.createSuccessResponse)({
+            hasComments: hasComments,
+            hasTrackedChanges: hasTrackedChangesFinal,
+            commentCount: commentCount,
+            commentIds: commentIds.length > 0 ? commentIds : undefined
+        });
     }
-
-    // Also check for revisions (tracked changes history)
-    let hasRevisions = false;
-    try {
-      const revisionsResponse = await drive.revisions.list({
-        fileId: fileId,
-        fields: 'revisions(id,modifiedTime,keepForever)',
-        pageSize: 10
-      });
-      
-      // If there are multiple revisions (more than just the initial one), there might be tracked changes
-      if (revisionsResponse.data.revisions && revisionsResponse.data.revisions.length > 1) {
-        // Check if any revisions indicate suggestions
-        hasRevisions = true;
-      }
-    } catch (revisionError) {
-      // Revisions check is optional
-      console.warn('Could not fetch revisions:', revisionError.message);
+    catch (error) {
+        console.error("Drive check comments error:", error);
+        // If checking fails, return safe defaults (assume no comments/changes to avoid blocking saves)
+        return (0, types_1.createSuccessResponse)({
+            hasComments: false,
+            hasTrackedChanges: false,
+            commentCount: 0,
+            error: "Could not check for comments/changes: " +
+                (error instanceof Error ? error.message : String(error))
+        });
     }
-
-    // Consider tracked changes if we found suggestions or if there are multiple revisions
-    // (though multiple revisions alone don't guarantee tracked changes, it's a good indicator)
-    const hasTrackedChangesFinal = hasTrackedChanges || (hasRevisions && hasComments);
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hasComments: hasComments,
-        hasTrackedChanges: hasTrackedChangesFinal,
-        commentCount: commentCount
-      })
-    };
-  } catch (error) {
-    console.error('Drive check comments error:', error);
-    // If checking fails, return safe defaults (assume no comments/changes to avoid blocking saves)
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hasComments: false,
-        hasTrackedChanges: false,
-        commentCount: 0,
-        error: 'Could not check for comments/changes: ' + error.message
-      })
-    };
-  }
 };
-
+exports.handler = handler;
