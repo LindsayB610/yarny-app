@@ -1,0 +1,38 @@
+{
+  "project": {
+    "id": "sample-project",
+    "name": "Sample Project",
+    "driveFolderId": "REPLACE_WITH_DRIVE_FOLDER_ID"
+  },
+  "stories": [
+    {
+      "id": "welcome-story",
+      "title": "Welcome to Yarny",
+      "driveFileId": "REPLACE_WITH_DRIVE_FILE_ID",
+      "snippetIds": ["welcome-intro"],
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "character-seeds",
+      "title": "Character Seeds",
+      "driveFileId": "REPLACE_WITH_DRIVE_FILE_ID",
+      "snippetIds": ["seeds-ideas"],
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "snippets": [
+    {
+      "id": "welcome-intro",
+      "storyId": "welcome-story",
+      "order": 1,
+      "driveRevisionId": null
+    },
+    {
+      "id": "seeds-ideas",
+      "storyId": "character-seeds",
+      "order": 1,
+      "driveRevisionId": null
+    }
+  ]
+}
+

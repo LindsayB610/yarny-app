@@ -1,0 +1,9 @@
+Welcome to Yarny
+
+This sample story demonstrates the plain-text only editor baseline.
+
+Key validation points:
+- Confirm Google Drive round-trips preserve line breaks.
+- Ensure TipTap plain-text mode does not inject styling marks.
+- Verify autosave only persists normalized text.
+
