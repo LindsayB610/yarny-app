@@ -7,6 +7,7 @@ import { useYarnyStore } from "../../store/provider";
 import { ProjectList } from "../navigation/ProjectList";
 import { StoryList } from "../navigation/StoryList";
 import { StoryEditor } from "../story/StoryEditor";
+import { OfflineBanner } from "./OfflineBanner";
 
 export function AppLayout(): JSX.Element {
   const { data } = useDriveProjectsQuery();
@@ -69,6 +70,7 @@ export function AppLayout(): JSX.Element {
           gap: 4
         }}
       >
+        <OfflineBanner />
         <StoryEditor />
       </Box>
     </Box>
