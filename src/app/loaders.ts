@@ -1,65 +1,98 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { redirect } from "react-router-dom";
 
-import { apiClient } from "../api/client";
+import { apiClient, ApiError } from "../api/client";
 import { createDriveClient } from "../api/driveClient";
+
+function ensureAuthenticated(): void {
+  try {
+    const token = window.localStorage.getItem("yarny_auth");
+    if (!token) {
+      throw redirect("/login");
+    }
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
+    // If localStorage is unavailable (e.g. in private mode), fallback to login
+    throw redirect("/login");
+  }
+}
+
+function handleAuthError(error: unknown): never {
+  if (error instanceof ApiError && error.data?.error === "Not authenticated") {
+    throw redirect("/login");
+  }
+  throw error;
+}
 
 /**
  * Route loader for stories page - prefetches Yarny Stories folder and stories list
  */
 export async function storiesLoader(queryClient: QueryClient) {
+  ensureAuthenticated();
   // Prefetch Yarny Stories folder
-  const yarnyStoriesPromise = queryClient.fetchQuery({
-    queryKey: ["drive", "yarny-stories-folder"],
-    queryFn: () => apiClient.getOrCreateYarnyStories()
-  });
+  try {
+    const yarnyStoriesPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "yarny-stories-folder"],
+      queryFn: () => apiClient.getOrCreateYarnyStories()
+    });
 
-  // Prefetch stories list (will need folder ID from above)
-  // For now, we'll use the drive client which handles the folder lookup internally
-  const driveClient = createDriveClient();
-  const projectsPromise = queryClient.fetchQuery({
-    queryKey: ["drive", "projects"],
-    queryFn: async () => {
-      const normalized = await driveClient.listProjects();
-      // The driveClient already handles upserting into the store via hooks
-      // But in loaders, we need to manually update if needed
-      return normalized;
-    }
-  });
+    // Prefetch stories list (will need folder ID from above)
+    // For now, we'll use the drive client which handles the folder lookup internally
+    const driveClient = createDriveClient();
+    const projectsPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "projects"],
+      queryFn: async () => {
+        const normalized = await driveClient.listProjects();
+        // The driveClient already handles upserting into the store via hooks
+        // But in loaders, we need to manually update if needed
+        return normalized;
+      }
+    });
 
-  // Wait for both to complete
-  await Promise.all([yarnyStoriesPromise, projectsPromise]);
+    // Wait for both to complete
+    await Promise.all([yarnyStoriesPromise, projectsPromise]);
 
-  return {
-    yarnyStoriesFolder: await yarnyStoriesPromise,
-    projects: await projectsPromise
-  };
+    return {
+      yarnyStoriesFolder: await yarnyStoriesPromise,
+      projects: await projectsPromise
+    };
+  } catch (error) {
+    return handleAuthError(error);
+  }
 }
 
 /**
  * Route loader for editor page - prefetches Yarny Stories folder and project data
  */
 export async function editorLoader(queryClient: QueryClient) {
-  // Prefetch Yarny Stories folder
-  const yarnyStoriesPromise = queryClient.fetchQuery({
-    queryKey: ["drive", "yarny-stories-folder"],
-    queryFn: () => apiClient.getOrCreateYarnyStories()
-  });
+  ensureAuthenticated();
+  try {
+    // Prefetch Yarny Stories folder
+    const yarnyStoriesPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "yarny-stories-folder"],
+      queryFn: () => apiClient.getOrCreateYarnyStories()
+    });
 
-  // Prefetch projects list
-  const driveClient = createDriveClient();
-  const projectsPromise = queryClient.fetchQuery({
-    queryKey: ["drive", "projects"],
-    queryFn: async () => {
-      const normalized = await driveClient.listProjects();
-      return normalized;
-    }
-  });
+    // Prefetch projects list
+    const driveClient = createDriveClient();
+    const projectsPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "projects"],
+      queryFn: async () => {
+        const normalized = await driveClient.listProjects();
+        return normalized;
+      }
+    });
 
-  await Promise.all([yarnyStoriesPromise, projectsPromise]);
+    await Promise.all([yarnyStoriesPromise, projectsPromise]);
 
-  return {
-    yarnyStoriesFolder: await yarnyStoriesPromise,
-    projects: await projectsPromise
-  };
+    return {
+      yarnyStoriesFolder: await yarnyStoriesPromise,
+      projects: await projectsPromise
+    };
+  } catch (error) {
+    return handleAuthError(error);
+  }
 }
 

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { editorLoader, storiesLoader } from "./loaders";
 import { getQueryClient } from "./queryClient";
@@ -22,10 +22,9 @@ export const router = createBrowserRouter(
       path: "/",
       element: (
         <ProtectedRoute>
-          <AppLayout />
+          <Navigate to="/stories" replace />
         </ProtectedRoute>
       ),
-      loader: () => storiesLoader(queryClient),
       errorElement: <RouteErrorBoundary />,
       // Note: React Router v6.4+ handles loading states via Suspense
       // We'll wrap routes in Suspense in App.tsx
