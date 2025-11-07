@@ -90,6 +90,21 @@ function moveReactBuild() {
   console.log('    react/');
   console.log('      index.html (React app)');
   console.log('      assets/ (React app assets)');
+
+  restoreClassicIndex();
+}
+
+function restoreClassicIndex() {
+  const classicIndexSource = path.join(__dirname, '..', 'public', 'index.html');
+  const classicIndexDest = path.join(distDir, 'index.html');
+
+  if (!fs.existsSync(classicIndexSource)) {
+    console.warn('Warning: public/index.html not found; cannot restore classic index.');
+    return;
+  }
+
+  fs.copyFileSync(classicIndexSource, classicIndexDest);
+  console.log('\nRestored classic index at dist/index.html');
 }
 
 // Run the script

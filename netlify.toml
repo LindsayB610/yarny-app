@@ -44,7 +44,7 @@
 # Catch-all for other routes (SPA fallback)
 [[redirects]]
   from = "/*"
-  to = "/react/index.html"
+  to = "/index.html"
   status = 200
 
 [build.environment]
