@@ -19,6 +19,10 @@ reference-docs/
 coverage/
 .nyc_output/
 
+# Test corpus (generated files - can be regenerated with generate-test-corpus.js)
+test-corpus/test-medium/
+test-corpus/test-large/
+
 # IDE
 .vscode/
 .idea/
