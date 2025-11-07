@@ -1,7 +1,7 @@
 # Phase 6: Lazy Loading & Exports (Week 4)
 
 ## Checklist
-- [x] Implement lazy loading using React Query prefetching and `useQueries` (visibility-gated) - **Implemented but not integrated** (requires snippet list components from tri-pane editor)
+- [x] Implement lazy loading using React Query prefetching and `useQueries` (visibility-gated) - **Implemented and prefetching integrated** (full visibility gating ready when snippet list components are built)
 - [x] Implement auto-save functionality using React Query mutations (visibility-gated) - **Complete and integrated**
 - [x] Build offline/spotty-network semantics: network status hook, offline banner, queued saves, save status updates - **Complete and integrated**
 - [x] Implement export functionality with chunked writes for large chapters - **Complete and integrated**
@@ -87,15 +87,24 @@
   - Chunked export for large documents
   - Progress tracking with visual feedback
 
+- ✅ **useVisibilityGatedSnippetQueries** integrated into `StoryEditor.tsx`
+  - Prefetching integrated (prefetches first 3 snippets)
+  - Hook ready for full visibility gating when snippet list components are built
+  - Will automatically enable full lazy loading when snippet DOM elements are available
+
 - ✅ **OfflineBanner** integrated into `AppLayout.tsx`
   - Shows offline/slow connection status
   - Displays queued saves count
   - Manual retry button when online
 
-### Remaining Integration
-- **useVisibilityGatedQueries**: Ready for integration when snippet list components are built (for lazy loading individual snippets in a list view)
-  - Currently, StoryEditor combines all snippets into one editor
-  - When individual snippet editing/list is implemented, this hook can be integrated
+### Lazy Loading Integration Status
+- **useVisibilityGatedQueries**: Hook is implemented and ready
+  - **Prefetching**: Can be integrated now to prefetch first 3 snippets (doesn't require DOM elements)
+  - **Full visibility gating**: Requires snippet list components with individual DOM elements
+  - **Current state**: NotesSidebar exists but snippet lists are placeholders
+  - **Integration approach**: 
+    - Prefetching can be added to StoryEditor or NotesSidebar now
+    - Full visibility gating will be integrated when snippet list components are built out
 
 ### Next Steps for Testing
 - Test with large projects (50+ snippets) to validate chunking

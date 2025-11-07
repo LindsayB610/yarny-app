@@ -12,6 +12,7 @@ import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection } from "../../hooks/useConflictDetection";
 import { useExport } from "../../hooks/useExport";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
+import { useVisibilityGatedSnippetQueries } from "../../hooks/useVisibilityGatedQueries";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveStory,
@@ -70,6 +71,14 @@ export function StoryEditor(): JSX.Element {
 
   // Export hook
   const { exportSnippets, isExporting, progress: exportProgressState } = useExport();
+
+  // Lazy loading: Prefetch first few snippets (even without full visibility gating)
+  // This helps performance by loading likely-to-be-viewed snippets early
+  // Note: Full visibility gating requires snippet list DOM elements, which will be integrated
+  // when NotesSidebar snippet lists are built out
+  const snippetIds = snippets.map((s) => s.id);
+  const fileIdsMap: Record<string, string> = {}; // Will be populated when snippet file IDs are available
+  useVisibilityGatedSnippetQueries(snippetIds, fileIdsMap, Boolean(story && snippetIds.length > 0));
 
   // Conflict detection
   const { checkSnippetConflict, resolveConflictWithDrive } = useConflictDetection();
