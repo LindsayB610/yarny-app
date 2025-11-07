@@ -221,14 +221,17 @@
         <nav class="sidebar-nav">
           <ul class="sidebar-nav-list">
             <li><a href="#intro" class="nav-link">Introduction</a></li>
-            <li><a href="#section-1" class="nav-link">Section 1: Editor - Visual & IME</a></li>
-            <li><a href="#section-2" class="nav-link">Section 2: Drag & Drop Visual</a></li>
-            <li><a href="#section-3" class="nav-link">Section 3: Classic UX Anchors</a></li>
-            <li><a href="#section-4" class="nav-link">Section 4: Notes Drag & Drop</a></li>
-            <li><a href="#section-5" class="nav-link">Section 5: Export Functionality</a></li>
-            <li><a href="#section-6" class="nav-link">Section 6: Google Drive Integration & Sync</a></li>
+            <li><a href="#section-0" class="nav-link">Section 0: Test Corpus Setup</a></li>
+            <li><a href="#section-1" class="nav-link">Section 1: Smoke Tests & Infrastructure</a></li>
+            <li><a href="#section-2" class="nav-link">Section 2: Google Drive Integration & Sync</a></li>
+            <li><a href="#section-3" class="nav-link">Section 3: Editor - Visual & IME</a></li>
+            <li><a href="#section-4" class="nav-link">Section 4: Drag & Drop Visual</a></li>
+            <li><a href="#section-5" class="nav-link">Section 5: Classic UX Anchors</a></li>
+            <li><a href="#section-6" class="nav-link">Section 6: Notes Drag & Drop</a></li>
             <li><a href="#section-7" class="nav-link">Section 7: UI/UX Elements</a></li>
-            <li><a href="#section-8" class="nav-link">Section 8: Performance & Edge Cases</a></li>
+            <li><a href="#section-8" class="nav-link">Section 8: Export Functionality</a></li>
+            <li><a href="#section-9" class="nav-link">Section 9: Performance & Edge Cases</a></li>
+            <li><a href="#section-10" class="nav-link">Section 10: Round-Trip Validation (test-small)</a></li>
             <li><a href="#summary" class="nav-link">Testing Summary</a></li>
           </ul>
         </nav>
@@ -252,11 +255,326 @@
           </div>
         </div>
 
-        <!-- Note: Sections 1 and 2 (Authentication, Story Management) are fully automated -->
+        <!-- Section 0: Test Corpus Setup -->
+        <div class="test-section" id="section-0">
+          <h2><i class="material-icons">folder</i> Section 0: Test Corpus Setup</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Before running comprehensive tests, set up the test corpus in Google Drive. This provides standardized test data for validating all functionality across different project sizes.</p>
+        
+        <div class="test-item">
+          <h4>Setup 0.1: Generate Test Corpus Files (If Not Already Done)</h4>
+          <p>Generate the test corpus files locally. This only needs to be done once, or if you need to regenerate the files.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a terminal in the project root directory</li>
+              <li>Navigate to the test-corpus directory: <code>cd test-corpus</code></li>
+              <li>Run the generation script: <code>node generate-test-corpus.js</code></li>
+              <li>Verify files are created:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li><code>test-medium/</code> directory with chapters, people, places, things folders</li>
+                  <li><code>test-large/</code> directory with chapters, people, places, things folders</li>
+                  <li>Metadata files: <code>test-medium/metadata.json</code> and <code>test-large/metadata.json</code></li>
+                </ul>
+              </li>
+              <li>Verify file counts:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>test-medium: ~110 files (80 chapter snippets + 30 notes)</li>
+                  <li>test-large: ~505 files (430 chapter snippets + 75 notes, including Chapter 13 with 55 snippets)</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-1" name="setup-0-1">
+            <label for="setup-0-1">Test corpus files generated successfully</label>
+          </div>
+        </div>
 
-        <!-- Section 1: Editor - Visual & IME Testing -->
-        <div class="test-section" id="section-1">
-          <h2><i class="material-icons">edit</i> Section 1: Editor - Visual & IME Testing</h2>
+        <div class="test-item">
+          <h4>Setup 0.2: Create Google Drive Test Corpus Folder</h4>
+          <p>Create the main test corpus folder in Google Drive and set up the folder structure.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Google Drive in your browser</li>
+              <li>Create a new folder named <strong>"Yarny Test Corpus"</strong> (exact name is important)</li>
+              <li>Note the folder ID from the URL (you'll need this later)</li>
+              <li>Share the folder with the engineering team (set appropriate permissions)</li>
+              <li>Verify the folder is accessible to all team members</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-2" name="setup-0-2">
+            <label for="setup-0-2">Google Drive test corpus folder created and shared</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.3: Upload test-small Project</h4>
+          <p>Upload the small test project (sample-project) to Google Drive. This is the simplest project for basic smoke tests.</p>
+          <div class="test-steps">
+            <ol>
+              <li>In Google Drive, navigate to the "Yarny Test Corpus" folder</li>
+              <li>Create a new folder named <strong>"test-small"</strong></li>
+              <li>Inside test-small, create the story folder structure:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create <strong>"Chapters"</strong> folder</li>
+                  <li>Create <strong>"People"</strong> folder</li>
+                  <li>Create <strong>"Places"</strong> folder</li>
+                  <li>Create <strong>"Things"</strong> folder</li>
+                </ul>
+              </li>
+              <li>Upload files from <code>test-corpus/sample-project/stories/</code>:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload as Google Docs (not plain text files)</li>
+                  <li>Create appropriate chapter folders if needed</li>
+                </ul>
+              </li>
+              <li>Create <code>project.json</code>, <code>data.json</code>, and <code>goal.json</code> files in the story folder (use structure from <code>src/utils/storyCreation.ts</code> as reference)</li>
+              <li>Note the story folder ID for later use</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-3" name="setup-0-3">
+            <label for="setup-0-3">test-small project uploaded to Google Drive</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.4: Upload test-medium Project</h4>
+          <p>Upload the medium test project to Google Drive. This project has 10 chapters, 80 snippets, and 30 notes for realistic performance testing.</p>
+          <div class="test-steps">
+            <ol>
+              <li>In Google Drive, navigate to the "Yarny Test Corpus" folder</li>
+              <li>Create a new folder named <strong>"test-medium"</strong></li>
+              <li>Inside test-medium, create the story folder structure:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create <strong>"Chapters"</strong> folder</li>
+                  <li>Create <strong>"People"</strong> folder</li>
+                  <li>Create <strong>"Places"</strong> folder</li>
+                  <li>Create <strong>"Things"</strong> folder</li>
+                </ul>
+              </li>
+              <li>For each of the 10 chapters:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create a chapter folder inside "Chapters" (e.g., "Chapter 1", "Chapter 2", etc.)</li>
+                  <li>Upload the 8 snippet files from <code>test-corpus/test-medium/chapters/chapter-X/</code> as Google Docs</li>
+                  <li>Name the Google Docs appropriately (e.g., "snippet-1-1", "snippet-1-2", etc.)</li>
+                </ul>
+              </li>
+              <li>Upload People notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 10 text files from <code>test-corpus/test-medium/people/</code> to the "People" folder</li>
+                  <li>Upload as plain text files (not Google Docs)</li>
+                </ul>
+              </li>
+              <li>Upload Places notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 10 text files from <code>test-corpus/test-medium/places/</code> to the "Places" folder</li>
+                  <li>Upload as plain text files</li>
+                </ul>
+              </li>
+              <li>Upload Things notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 10 text files from <code>test-corpus/test-medium/things/</code> to the "Things" folder</li>
+                  <li>Upload as plain text files</li>
+                </ul>
+              </li>
+              <li>Create <code>project.json</code>, <code>data.json</code>, and <code>goal.json</code> files in the story folder</li>
+              <li>Update <code>test-corpus/test-medium/metadata.json</code> with actual Drive folder IDs</li>
+              <li>Note the story folder ID for later use</li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Tip:</strong> You can use Google Drive API scripts or the Yarny app itself to help create the structure. The important part is that the final structure matches the expected format with proper folder organization.</p>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-4" name="setup-0-4">
+            <label for="setup-0-4">test-medium project uploaded to Google Drive (10 chapters, 80 snippets, 30 notes)</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.5: Upload test-large Project</h4>
+          <p>Upload the large test project to Google Drive. This project has 25 chapters, 430 chapter snippets (including Chapter 13 with 55 snippets), and 75 notes for stress testing and export chunking validation.</p>
+          <div class="test-steps">
+            <ol>
+              <li>In Google Drive, navigate to the "Yarny Test Corpus" folder</li>
+              <li>Create a new folder named <strong>"test-large"</strong></li>
+              <li>Inside test-large, create the story folder structure:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create <strong>"Chapters"</strong> folder</li>
+                  <li>Create <strong>"People"</strong> folder</li>
+                  <li>Create <strong>"Places"</strong> folder</li>
+                  <li>Create <strong>"Things"</strong> folder</li>
+                </ul>
+              </li>
+              <li>For each of the 25 chapters:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Create a chapter folder inside "Chapters" (e.g., "Chapter 1", "Chapter 2", etc.)</li>
+                  <li><strong>Important:</strong> Chapter 13 should have 55 snippets (for export chunking tests)</li>
+                  <li>All other chapters should have 15 snippets each</li>
+                  <li>Upload snippet files from <code>test-corpus/test-large/chapters/chapter-X/</code> as Google Docs</li>
+                  <li>Name the Google Docs appropriately</li>
+                </ul>
+              </li>
+              <li>Upload People notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 25 text files from <code>test-corpus/test-large/people/</code> to the "People" folder</li>
+                  <li>Upload as plain text files</li>
+                </ul>
+              </li>
+              <li>Upload Places notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 25 text files from <code>test-corpus/test-large/places/</code> to the "Places" folder</li>
+                  <li>Upload as plain text files</li>
+                </ul>
+              </li>
+              <li>Upload Things notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Upload 25 text files from <code>test-corpus/test-large/things/</code> to the "Things" folder</li>
+                  <li>Upload as plain text files</li>
+                </ul>
+              </li>
+              <li>Create <code>project.json</code>, <code>data.json</code>, and <code>goal.json</code> files in the story folder</li>
+              <li>Update <code>test-corpus/test-large/metadata.json</code> with actual Drive folder IDs</li>
+              <li>Note the story folder ID for later use</li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Important:</strong> Chapter 13 must have 55 snippets to properly test export chunking functionality. This is critical for validating that large chapter exports handle Google Docs API body size limits correctly.</p>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-5" name="setup-0-5">
+            <label for="setup-0-5">test-large project uploaded to Google Drive (25 chapters, 430 chapter snippets including Chapter 13 with 55 snippets, 75 notes)</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.6: Update Environment Variables</h4>
+          <p>Configure environment variables to point to the test corpus folder in Google Drive.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Get the Google Drive folder ID for "Yarny Test Corpus":
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open the folder in Google Drive</li>
+                  <li>Copy the folder ID from the URL (the long string after <code>/folders/</code>)</li>
+                </ul>
+              </li>
+              <li>Update your local <code>.env</code> file (or Netlify environment variables):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Add or update: <code>VITE_TEST_CORPUS_FOLDER_ID=your-folder-id-here</code></li>
+                </ul>
+              </li>
+              <li>If using Netlify, update environment variables in the Netlify dashboard:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Go to Site settings → Environment variables</li>
+                  <li>Add or update <code>VITE_TEST_CORPUS_FOLDER_ID</code> with the folder ID</li>
+                </ul>
+              </li>
+              <li>Verify the environment variable is set correctly</li>
+              <li>Restart the development server if running locally</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-6" name="setup-0-6">
+            <label for="setup-0-6">Environment variables configured with test corpus folder ID</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.7: Update Metadata Files with Drive IDs</h4>
+          <p>Update the metadata.json files with actual Google Drive folder and file IDs for use in tests and MSW handlers.</p>
+          <div class="test-steps">
+            <ol>
+              <li>For each test project (test-small, test-medium, test-large):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open the <code>metadata.json</code> file in the test-corpus directory</li>
+                  <li>Replace <code>REPLACE_WITH_DRIVE_FOLDER_ID</code> placeholders with actual Drive folder IDs</li>
+                  <li>Update story folder IDs</li>
+                  <li>Update chapter folder IDs (if needed for your test setup)</li>
+                  <li>Update snippet file IDs (if needed for your test setup)</li>
+                </ul>
+              </li>
+              <li>Save the updated metadata files</li>
+              <li>Verify the IDs are correct by checking in Google Drive</li>
+              <li>Document the IDs for the engineering team (or commit to a shared location)</li>
+            </ol>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-md);">
+            <p><strong>Note:</strong> The metadata files are used by MSW handlers and test fixtures. Keeping them up to date ensures tests can reference the correct Drive resources.</p>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-7" name="setup-0-7">
+            <label for="setup-0-7">Metadata files updated with actual Drive folder and file IDs</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Setup 0.8: Verify Test Corpus Structure</h4>
+          <p>Verify that all test corpus projects are properly set up and accessible.</p>
+          <div class="test-steps">
+            <ol>
+              <li>In Google Drive, navigate to "Yarny Test Corpus" folder</li>
+              <li>Verify all three project folders exist: test-small, test-medium, test-large</li>
+              <li>For each project, verify the structure:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Chapters folder exists with chapter subfolders</li>
+                  <li>People, Places, Things folders exist with note files</li>
+                  <li>project.json, data.json, and goal.json files exist in the story folder</li>
+                </ul>
+              </li>
+              <li>Verify file counts:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>test-small: Basic structure (2+ snippets)</li>
+                  <li>test-medium: 10 chapters × 8 snippets = 80 chapter snippets + 30 notes = 110 files</li>
+                  <li>test-large: 25 chapters (Chapter 13 has 55, others have 15) = 430 chapter snippets + 75 notes = 505 files</li>
+                </ul>
+              </li>
+              <li>Verify Chapter 13 in test-large has 55 snippets (critical for export chunking tests)</li>
+              <li>Test accessing the projects in Yarny:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open Yarny and navigate to the test corpus stories</li>
+                  <li>Verify stories load correctly</li>
+                  <li>Verify chapters and snippets are visible</li>
+                  <li>Verify notes are accessible</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="setup-0-8" name="setup-0-8">
+            <label for="setup-0-8">Test corpus structure verified and accessible in Yarny</label>
+          </div>
+        </div>
+
+        <div class="note-box" style="margin-top: var(--space-2xl);">
+          <p><strong>Test Corpus Usage:</strong> Once set up, use these test projects for comprehensive testing:</p>
+          <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+            <li><strong>test-small:</strong> Fast smoke tests, basic operations, format normalization, IME composition, RTL handling</li>
+            <li><strong>test-medium:</strong> Realistic project size, performance testing, export operations</li>
+            <li><strong>test-large:</strong> Stress testing, virtualization validation, lazy loading, export chunking (especially Chapter 13 with 50+ snippets)</li>
+          </ul>
+        </div>
+      </div>
+
+        <!-- Note: Authentication and Story Management tests are fully automated -->
+        <!-- 
+          Logical Testing Order (sections are now numbered in this order):
+          1. Section 0: Test Corpus Setup (prerequisite)
+          2. Section 1: Smoke Tests & Infrastructure (verify environment)
+          3. Section 2: Google Drive Integration (foundational dependency)
+          4. Section 3: Editor Testing (core editing functionality)
+          5. Section 4: Drag & Drop (editor interaction)
+          6. Section 5: Classic UX Anchors (UI consistency)
+          7. Section 6: Notes Drag & Drop (notes functionality)
+          8. Section 7: UI/UX Elements (general UI)
+          9. Section 8: Export (depends on having content)
+          10. Section 9: Performance & Edge Cases (stress testing)
+          11. Section 10: Round-Trip Validation (comprehensive end-to-end)
+        -->
+
+        <!-- Section 3: Editor - Visual & IME Testing -->
+        <div class="test-section" id="section-3">
+          <h2><i class="material-icons">edit</i> Section 3: Editor - Visual & IME Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification or human judgment. Functional editor tests (open snippet, edit content, auto-save, word count) are automated.</p>
         
         <div class="test-item">
@@ -309,13 +627,13 @@
 
       </div>
 
-        <!-- Section 2: Drag & Drop Visual Testing -->
-        <div class="test-section" id="section-2">
-          <h2><i class="material-icons">folder</i> Section 2: Drag & Drop Visual Testing</h2>
+        <!-- Section 4: Drag & Drop Visual Testing -->
+        <div class="test-section" id="section-4">
+          <h2><i class="material-icons">folder</i> Section 4: Drag & Drop Visual Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification of drag & drop feedback. Functional drag & drop operations (create, rename, delete chapters/snippets) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 2.1: Drag & Drop Reorder Chapters - Visual Feedback</h4>
+          <h4>Test 4.1: Drag & Drop Reorder Chapters - Visual Feedback</h4>
           <p>Verify that you can reorder chapters by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -335,7 +653,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 2.2: Drag & Drop Reorder Snippets - Visual Feedback</h4>
+          <h4>Test 4.2: Drag & Drop Reorder Snippets - Visual Feedback</h4>
           <p>Verify that you can reorder snippets within a chapter by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -355,7 +673,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 2.3: Drag & Drop Move Snippet Between Chapters - Visual Feedback</h4>
+          <h4>Test 4.3: Drag & Drop Move Snippet Between Chapters - Visual Feedback</h4>
           <p>Verify that you can move a snippet from one chapter to another by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -379,13 +697,13 @@
 
         <!-- Note: Sections 5 and 6 (Color Coding, Search) are fully automated -->
 
-        <!-- Section 3: Classic UX Anchors - Visual Parity -->
-        <div class="test-section" id="section-3">
-          <h2><i class="material-icons">track_changes</i> Section 3: Classic UX Anchors - Visual Parity</h2>
+        <!-- Section 5: Classic UX Anchors - Visual Parity -->
+        <div class="test-section" id="section-5">
+          <h2><i class="material-icons">track_changes</i> Section 5: Classic UX Anchors - Visual Parity</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual comparison with the original app to verify design parity. Functional goal tests (set goal, calculations, updates) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 3.1: Goal Meter - Visual Parity Check</h4>
+          <h4>Test 5.1: Goal Meter - Visual Parity Check</h4>
           <p>Verify that the goal meter in the left sidebar displays correctly.</p>
           <div class="test-steps">
             <ol>
@@ -404,7 +722,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 3.2: "Today • N" Chip - Visual Parity Check</h4>
+          <h4>Test 5.2: "Today • N" Chip - Visual Parity Check</h4>
           <p>Verify that the "Today • N" chip displays daily word count correctly.</p>
           <div class="test-steps">
             <ol>
@@ -426,13 +744,13 @@
 
       </div>
 
-        <!-- Section 4: Notes Drag & Drop Visual Testing -->
-        <div class="test-section" id="section-4">
-          <h2><i class="material-icons">note</i> Section 4: Notes Drag & Drop Visual Testing</h2>
+        <!-- Section 6: Notes Drag & Drop Visual Testing -->
+        <div class="test-section" id="section-6">
+          <h2><i class="material-icons">note</i> Section 6: Notes Drag & Drop Visual Testing</h2>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This test requires visual verification of drag & drop feedback. Functional notes tests (create, edit, rename, delete) are automated.</p>
         
         <div class="test-item">
-          <h4>Test 4.1: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
+          <h4>Test 6.1: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
           <p>Verify that you can reorder notes by dragging and dropping.</p>
           <div class="test-steps">
             <ol>
@@ -451,12 +769,13 @@
         </div>
       </div>
 
-        <!-- Section 5: Export Functionality -->
-        <div class="test-section" id="section-5">
-          <h2><i class="material-icons">file_download</i> Section 5: Export Functionality</h2>
+        <!-- Section 8: Export Functionality -->
+        <div class="test-section" id="section-8">
+          <h2><i class="material-icons">file_download</i> Section 8: Export Functionality</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Export functionality depends on having content created and edited. Complete this section after basic editing and content creation tests.</p>
         
         <div class="test-item">
-          <h4>Test 5.1: Export All Chapters</h4>
+          <h4>Test 8.1: Export All Chapters</h4>
           <p>Verify that you can export all chapters as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -477,7 +796,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 5.2: Export Outline</h4>
+          <h4>Test 8.2: Export Outline</h4>
           <p>Verify that you can export an outline (chapter and snippet titles with descriptions).</p>
           <div class="test-steps">
             <ol>
@@ -497,7 +816,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 5.3: Export All People</h4>
+          <h4>Test 8.3: Export All People</h4>
           <p>Verify that you can export all People notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -516,7 +835,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 5.4: Export All Places</h4>
+          <h4>Test 8.4: Export All Places</h4>
           <p>Verify that you can export all Places notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -535,7 +854,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 5.5: Export All Things</h4>
+          <h4>Test 8.5: Export All Things</h4>
           <p>Verify that you can export all Things notes as a single Google Doc.</p>
           <div class="test-steps">
             <ol>
@@ -554,7 +873,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 5.6: Export Large Chapter (Chunked Writes)</h4>
+          <h4>Test 8.6: Export Large Chapter (Chunked Writes)</h4>
           <p>Verify that exporting a very large chapter (50+ snippets) uses chunked writes to handle Google Docs API body size limits.</p>
           <div class="test-steps">
             <ol>
@@ -578,12 +897,13 @@
         </div>
       </div>
 
-        <!-- Section 6: Google Drive Integration & Sync -->
-        <div class="test-section" id="section-6">
-          <h2><i class="material-icons">cloud</i> Section 6: Google Drive Integration & Sync</h2>
+        <!-- Section 2: Google Drive Integration & Sync -->
+        <div class="test-section" id="section-2">
+          <h2><i class="material-icons">cloud</i> Section 2: Google Drive Integration & Sync</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Google Drive integration is foundational - most other features depend on it working correctly.</p>
         
         <div class="test-item">
-          <h4>Test 6.1: Files Created in Google Drive</h4>
+          <h4>Test 2.1: Files Created in Google Drive</h4>
           <p>Verify that all created items (stories, chapters, snippets, notes) appear in Google Drive.</p>
           <div class="test-steps">
             <ol>
@@ -603,7 +923,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.2: Changes Saved to Google Drive</h4>
+          <h4>Test 2.2: Changes Saved to Google Drive</h4>
           <p>Verify that edits made in Yarny are saved to Google Drive files.</p>
           <div class="test-steps">
             <ol>
@@ -623,7 +943,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
+          <h4>Test 2.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
           <p>Verify that you can edit in Google Docs and see changes in Yarny with no format loss (plain text only).</p>
           <div class="test-steps">
             <ol>
@@ -648,7 +968,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.3a: Cross-Edit Testing (Yarny Idle → Google Docs Edit → Yarny)</h4>
+          <h4>Test 2.3a: Cross-Edit Testing (Yarny Idle → Google Docs Edit → Yarny)</h4>
           <p>Verify that Yarny detects changes made in Google Docs while Yarny is idle (not actively editing the snippet).</p>
           <div class="test-steps">
             <ol>
@@ -671,7 +991,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.4: Conflict Detection</h4>
+          <h4>Test 2.4: Conflict Detection</h4>
           <p>Verify that Yarny detects conflicts when both Yarny and Google Docs are edited (but NOT while actively editing in Yarny).</p>
           <div class="test-steps">
             <ol>
@@ -694,11 +1014,11 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.5: Conflict Resolution - Keep Yarny Version</h4>
+          <h4>Test 2.5: Conflict Resolution - Keep Yarny Version</h4>
           <p>Verify that you can resolve conflicts by keeping the Yarny version.</p>
           <div class="test-steps">
             <ol>
-              <li>Trigger a conflict (see Test 6.4)</li>
+              <li>Trigger a conflict (see Test 2.4)</li>
               <li>In the conflict resolution modal, choose "Keep Yarny Version"</li>
               <li>Verify the Yarny version is kept</li>
               <li>Verify the Google Doc is updated with the Yarny version</li>
@@ -713,11 +1033,11 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.6: Conflict Resolution - Use Google Docs Version</h4>
+          <h4>Test 2.6: Conflict Resolution - Use Google Docs Version</h4>
           <p>Verify that you can resolve conflicts by using the Google Docs version.</p>
           <div class="test-steps">
             <ol>
-              <li>Trigger a conflict (see Test 6.4)</li>
+              <li>Trigger a conflict (see Test 2.4)</li>
               <li>In the conflict resolution modal, choose "Use Google Docs Version"</li>
               <li>Verify the Google Docs version replaces the Yarny content</li>
               <li>Verify the editor shows the Google Docs content</li>
@@ -730,7 +1050,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.7: Reconciliation on Window Focus</h4>
+          <h4>Test 2.7: Reconciliation on Window Focus</h4>
           <p>Verify that Yarny checks for external changes when the window regains focus.</p>
           <div class="test-steps">
             <ol>
@@ -750,7 +1070,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.8: Comments/Tracked Changes Warning</h4>
+          <h4>Test 2.8: Comments/Tracked Changes Warning</h4>
           <p>Verify that Yarny warns about comments or tracked changes in Google Docs.</p>
           <div class="test-steps">
             <ol>
@@ -769,7 +1089,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.9: Cross-Tab Yarny Conflicts</h4>
+          <h4>Test 2.9: Cross-Tab Yarny Conflicts</h4>
           <p>Verify that Yarny detects and prevents conflicts when the same snippet is edited in multiple Yarny tabs.</p>
           <div class="test-steps">
             <ol>
@@ -792,7 +1112,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.10: Format Normalization (Line Endings, NBSPs, Trailing Spaces)</h4>
+          <h4>Test 2.10: Format Normalization (Line Endings, NBSPs, Trailing Spaces)</h4>
           <p>Verify that Yarny normalizes text format to match Google Docs behavior (mixed line endings, non-breaking spaces, trailing spaces).</p>
           <div class="test-steps">
             <ol>
@@ -816,7 +1136,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.11: Visibility-Based Request Gating</h4>
+          <h4>Test 2.11: Visibility-Based Request Gating</h4>
           <p>Verify that Yarny only makes background requests when the browser tab is visible (prevents Drive quota exhaustion).</p>
           <div class="test-steps">
             <ol>
@@ -839,7 +1159,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 6.12: Drive API Rate Limiting (429 Errors)</h4>
+          <h4>Test 2.12: Drive API Rate Limiting (429 Errors)</h4>
           <p>Verify that Yarny handles Drive API rate limit errors (429) gracefully with exponential backoff.</p>
           <div class="test-steps">
             <ol>
@@ -1033,12 +1353,13 @@
         </div>
       </div>
 
-        <!-- Section 8: Performance & Edge Cases -->
-        <div class="test-section" id="section-8">
-          <h2><i class="material-icons">speed</i> Section 8: Performance & Edge Cases</h2>
+        <!-- Section 9: Performance & Edge Cases -->
+        <div class="test-section" id="section-9">
+          <h2><i class="material-icons">speed</i> Section 9: Performance & Edge Cases</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Performance and edge case testing should come after basic functionality is validated.</p>
         
         <div class="test-item">
-          <h4>Test 8.1: Large Story Performance</h4>
+          <h4>Test 9.1: Large Story Performance</h4>
           <p>Verify that the app performs well with large stories (many chapters and snippets).</p>
           <div class="test-steps">
             <ol>
@@ -1058,7 +1379,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.2: Lazy Loading</h4>
+          <h4>Test 9.2: Lazy Loading</h4>
           <p>Verify that snippet content loads on demand (lazy loading).</p>
           <div class="test-steps">
             <ol>
@@ -1077,7 +1398,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.3: Performance Budget - Time to First Edit (Hot Path)</h4>
+          <h4>Test 9.3: Performance Budget - Time to First Edit (Hot Path)</h4>
           <p>Verify that opening a snippet already in cache and starting to type is fast (≤300 ms from click to first character appearing).</p>
           <div class="test-steps">
             <ol>
@@ -1098,7 +1419,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.4: Performance Budget - Time to First Edit (Cold Path)</h4>
+          <h4>Test 9.4: Performance Budget - Time to First Edit (Cold Path)</h4>
           <p>Verify that opening a snippet not yet loaded and starting to type is acceptable (≤1.5 s from click to first character appearing, includes Drive fetch).</p>
           <div class="test-steps">
             <ol>
@@ -1119,7 +1440,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.5: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
+          <h4>Test 9.5: Performance Budget - Time to Switch Snippet (Hot Path)</h4>
           <p>Verify that switching to a snippet already in cache is fast (≤300 ms from click to editor ready).</p>
           <div class="test-steps">
             <ol>
@@ -1138,7 +1459,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.6: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
+          <h4>Test 9.6: Performance Budget - Time to Switch Snippet (Cold Path)</h4>
           <p>Verify that switching to a snippet not yet loaded is acceptable (≤1.5 s from click to editor ready, includes Drive fetch).</p>
           <div class="test-steps">
             <ol>
@@ -1158,7 +1479,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.7: Special Characters & Round-Trip Preservation</h4>
+          <h4>Test 9.7: Special Characters & Round-Trip Preservation</h4>
           <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly in round-trips between Yarny and Google Docs.</p>
           <div class="test-steps">
             <ol>
@@ -1182,7 +1503,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.8: Long Text</h4>
+          <h4>Test 9.8: Long Text</h4>
           <p>Verify that the editor handles long text (10,000+ words) without issues.</p>
           <div class="test-steps">
             <ol>
@@ -1203,7 +1524,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.9: Empty States</h4>
+          <h4>Test 9.9: Empty States</h4>
           <p>Verify that empty states (no stories, no chapters, no snippets) display correctly.</p>
           <div class="test-steps">
             <ol>
@@ -1221,7 +1542,7 @@
         </div>
 
         <div class="test-item">
-          <h4>Test 8.10: Offline/Spotty-Network Semantics</h4>
+          <h4>Test 9.10: Offline/Spotty-Network Semantics</h4>
           <p>Verify that the app handles offline and spotty network conditions gracefully with clear user feedback.</p>
           <div class="test-steps">
             <ol>
@@ -1249,6 +1570,937 @@
           </div>
         </div>
       </div>
+
+        <!-- Section 1: Smoke Tests & Infrastructure Verification -->
+        <div class="test-section" id="section-1">
+          <h2><i class="material-icons">build</i> Section 1: Smoke Tests & Infrastructure Verification</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests validate the setup, infrastructure, and critical functionality before and during development. These should be executed early and re-verified after major changes.</p>
+        
+        <div class="test-item">
+          <h4>Smoke Test 1.1: Local Development Setup</h4>
+          <p>Verify that the development environment is set up correctly and the app runs locally.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Run <code>npm run dev</code> in the project root</li>
+              <li>Verify the Vite dev server launches successfully</li>
+              <li>Open the app in your browser (usually <code>http://localhost:5173</code>)</li>
+              <li>Verify the Yarny React shell renders correctly</li>
+              <li>Verify project and story side rails render placeholder Drive data from <code>createDriveClient</code> fallback</li>
+              <li>Authenticate with Google (if required)</li>
+              <li>Select a story from the list</li>
+              <li>Verify the TipTap plain text editor loads with sample content</li>
+              <li>Verify the editor is editable and responsive</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-1" name="smoke-9-1">
+            <label for="smoke-9-1">Local development environment works correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.2: Build & Lint</h4>
+          <p>Verify that the project builds successfully and passes linting checks.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Run <code>npm run build</code> in the project root</li>
+              <li>Verify the build completes without errors</li>
+              <li>Verify a <code>dist/</code> folder is created containing the React bundle</li>
+              <li>Run <code>npm run lint</code></li>
+              <li>Verify linting executes without fatal errors</li>
+              <li>Fix any critical linting errors (warnings are acceptable)</li>
+              <li>Run <code>npm run test</code></li>
+              <li>Verify the default Vitest suite passes</li>
+              <li>Note any test failures that need to be addressed</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-2" name="smoke-9-2">
+            <label for="smoke-9-2">Build, lint, and test commands execute successfully</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.3: Netlify Functions & Deployment</h4>
+          <p>Verify that Netlify Functions work correctly and deployment succeeds.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Run <code>netlify dev</code> in the project root</li>
+              <li>Verify Netlify Functions start successfully</li>
+              <li>Test a few API endpoints (e.g., <code>/api/config</code>, <code>/api/verify-google</code>)</li>
+              <li>Verify functions return expected responses</li>
+              <li>Check Netlify dashboard for environment variables:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Verify <code>GDRIVE_CLIENT_ID</code> is set</li>
+                  <li>Verify <code>GDRIVE_CLIENT_SECRET</code> is set</li>
+                  <li>Verify <code>GOOGLE_CLIENT_ID</code> is set</li>
+                  <li>Verify <code>VITE_TEST_CORPUS_FOLDER_ID</code> is set (if using test corpus)</li>
+                </ul>
+              </li>
+              <li>Run <code>netlify deploy --build</code> (or verify CI/CD deployment)</li>
+              <li>Verify deployment completes successfully</li>
+              <li>Verify the deployed site loads correctly</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-3" name="smoke-9-3">
+            <label for="smoke-9-3">Netlify Functions and deployment work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.4: Editor Plain Text Discipline</h4>
+          <p>Verify that the editor only supports plain text and preserves formatting correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a snippet in the editor</li>
+              <li>Verify the TipTap toolbar is hidden (no formatting buttons visible)</li>
+              <li>Verify only plain text input is available</li>
+              <li>Try keyboard shortcuts for formatting (Ctrl+B, Ctrl+I, Ctrl+U) - they should NOT work</li>
+              <li>Open a Google Doc with formatted text (bold, italic, colors, etc.)</li>
+              <li>Copy text from the Google Doc</li>
+              <li>Paste into the Yarny editor</li>
+              <li>Verify formatting is stripped and only plain text remains</li>
+              <li>Verify paragraph breaks (double Enter) are preserved</li>
+              <li>Verify hard breaks (Shift+Enter) are preserved</li>
+              <li>Save the snippet</li>
+              <li>Open the snippet's Google Doc in Google Drive</li>
+              <li>Verify paragraph breaks and hard breaks are preserved correctly</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-4" name="smoke-9-4">
+            <label for="smoke-9-4">Editor enforces plain text discipline and preserves breaks</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.5: State Management</h4>
+          <p>Verify that Zustand store initializes correctly and React Query cache invalidation works.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open the app in development mode</li>
+              <li>Open browser DevTools console</li>
+              <li>Verify no runtime warnings appear about Zustand store initialization</li>
+              <li>Verify the store initializes without errors in React strict mode</li>
+              <li>Install React Query DevTools (if not already installed):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Add <code>import { ReactQueryDevtools } from '@tanstack/react-query-devtools'</code> to your app</li>
+                  <li>Add <code>&lt;ReactQueryDevtools initialIsOpen={false} /&gt;</code> to your app component</li>
+                </ul>
+              </li>
+              <li>Open React Query DevTools in the browser</li>
+              <li>Make an edit to a snippet</li>
+              <li>Manually save the snippet (or wait for auto-save)</li>
+              <li>Verify query cache invalidation occurs (check DevTools for cache updates)</li>
+              <li>Verify the UI updates reflect the saved changes</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-5" name="smoke-9-5">
+            <label for="smoke-9-5">State management and cache invalidation work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.6: Create Operations</h4>
+          <p>Verify that all create operations work correctly (stories, chapters, snippets, notes).</p>
+          <div class="test-steps">
+            <ol>
+              <li>Create a new story:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Click "New Story" button</li>
+                  <li>Enter a story name</li>
+                  <li>Optionally set a goal</li>
+                  <li>Click "Create"</li>
+                  <li>Verify the story appears in the list</li>
+                  <li>Verify the story folder is created in Google Drive</li>
+                </ul>
+              </li>
+              <li>Create a new chapter:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on the story or use context menu</li>
+                  <li>Select "New Chapter"</li>
+                  <li>Enter a chapter name</li>
+                  <li>Verify the chapter appears in the sidebar</li>
+                  <li>Verify the chapter folder is created in Google Drive</li>
+                </ul>
+              </li>
+              <li>Create a new snippet:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on a chapter or use context menu</li>
+                  <li>Select "New Snippet"</li>
+                  <li>Enter a snippet name</li>
+                  <li>Verify the snippet appears in the sidebar</li>
+                  <li>Verify the snippet Google Doc is created in Google Drive</li>
+                </ul>
+              </li>
+              <li>Create a new note (People, Places, or Things):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open the Notes sidebar</li>
+                  <li>Click "New People" (or Places/Things)</li>
+                  <li>Enter a note name</li>
+                  <li>Verify the note appears in the sidebar</li>
+                  <li>Verify the note text file is created in Google Drive</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-6" name="smoke-9-6">
+            <label for="smoke-9-6">All create operations work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.7: Rename Operations</h4>
+          <p>Verify that all rename operations work correctly and persist to Google Drive.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Rename a story:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on a story</li>
+                  <li>Select "Rename"</li>
+                  <li>Enter a new name</li>
+                  <li>Verify the story name updates in the UI</li>
+                  <li>Verify the story folder is renamed in Google Drive</li>
+                </ul>
+              </li>
+              <li>Rename a chapter:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on a chapter</li>
+                  <li>Select "Rename"</li>
+                  <li>Enter a new name</li>
+                  <li>Verify the chapter name updates in the UI</li>
+                  <li>Verify the chapter folder is renamed in Google Drive</li>
+                </ul>
+              </li>
+              <li>Rename a snippet:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on a snippet</li>
+                  <li>Select "Rename"</li>
+                  <li>Enter a new name</li>
+                  <li>Verify the snippet name updates in the UI</li>
+                  <li>Verify the snippet Google Doc is renamed in Google Drive</li>
+                </ul>
+              </li>
+              <li>Rename a note:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Right-click on a note</li>
+                  <li>Select "Rename"</li>
+                  <li>Enter a new name</li>
+                  <li>Verify the note name updates in the UI</li>
+                  <li>Verify the note text file is renamed in Google Drive</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-7" name="smoke-9-7">
+            <label for="smoke-9-7">All rename operations work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.8: Reorder Operations</h4>
+          <p>Verify that drag & drop reordering works correctly and persists to Google Drive.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Reorder chapters:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Drag a chapter up or down in the sidebar</li>
+                  <li>Release to drop it in a new position</li>
+                  <li>Verify the chapter moves to the new position</li>
+                  <li>Refresh the page</li>
+                  <li>Verify the chapter order is preserved</li>
+                </ul>
+              </li>
+              <li>Reorder snippets:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Drag a snippet up or down within a chapter</li>
+                  <li>Release to drop it in a new position</li>
+                  <li>Verify the snippet moves to the new position</li>
+                  <li>Refresh the page</li>
+                  <li>Verify the snippet order is preserved</li>
+                </ul>
+              </li>
+              <li>Move snippet between chapters:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Drag a snippet from one chapter to another</li>
+                  <li>Release to drop it in the new chapter</li>
+                  <li>Verify the snippet moves to the new chapter</li>
+                  <li>Verify the snippet disappears from the old chapter</li>
+                  <li>Verify the snippet Google Doc is moved in Google Drive</li>
+                </ul>
+              </li>
+              <li>Reorder notes:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Drag a note up or down in the Notes sidebar</li>
+                  <li>Release to drop it in a new position</li>
+                  <li>Verify the note moves to the new position</li>
+                  <li>Refresh the page</li>
+                  <li>Verify the note order is preserved</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-8" name="smoke-9-8">
+            <label for="smoke-9-8">All reorder operations work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.9: Edit Operations</h4>
+          <p>Verify that editing snippets and notes works correctly and auto-saves to Google Drive.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Edit a snippet:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a snippet in the editor</li>
+                  <li>Type some text</li>
+                  <li>Verify the word count updates in real-time</li>
+                  <li>Wait for auto-save (check save status indicator)</li>
+                  <li>Verify "Saved at X:XX" appears after save</li>
+                  <li>Open the snippet's Google Doc in Google Drive</li>
+                  <li>Verify your changes appear in the Google Doc</li>
+                </ul>
+              </li>
+              <li>Edit a note:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a note in the Notes sidebar</li>
+                  <li>Edit the note content</li>
+                  <li>Wait for auto-save</li>
+                  <li>Verify the note text file is updated in Google Drive</li>
+                </ul>
+              </li>
+              <li>Test undo/redo (if available):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Make an edit</li>
+                  <li>Press Ctrl+Z (or Cmd+Z) to undo</li>
+                  <li>Verify the change is undone</li>
+                  <li>Press Ctrl+Shift+Z (or Cmd+Shift+Z) to redo</li>
+                  <li>Verify the change is redone</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-9" name="smoke-9-9">
+            <label for="smoke-9-9">All edit operations work correctly with auto-save</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.10: Export Operations</h4>
+          <p>Verify that all export operations work correctly and create Google Docs in Drive.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Export all chapters:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Click "Export" and select "Export All Chapters"</li>
+                  <li>Enter a filename</li>
+                  <li>Optionally choose to include snippet names</li>
+                  <li>Click "Export"</li>
+                  <li>Verify a new Google Doc is created in the story folder</li>
+                  <li>Open the exported Google Doc</li>
+                  <li>Verify all chapters and snippets are included in order</li>
+                </ul>
+              </li>
+              <li>Export outline:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Click "Export" and select "Export Outline"</li>
+                  <li>Enter a filename</li>
+                  <li>Click "Export"</li>
+                  <li>Verify a new Google Doc is created</li>
+                  <li>Verify it contains chapter titles, snippet titles, and descriptions</li>
+                  <li>Verify it does NOT contain snippet body content</li>
+                </ul>
+              </li>
+              <li>Export notes (People, Places, Things):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Export each note type separately</li>
+                  <li>Verify exported Google Docs contain all notes of that type</li>
+                  <li>Verify note content is included correctly</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-10" name="smoke-9-10">
+            <label for="smoke-9-10">All export operations work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.11: Conflict Resolution (Concurrency Safety)</h4>
+          <p>Verify that conflict detection and resolution work correctly when multiple editors modify the same content.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Yarny in two browser tabs (Tab 1 and Tab 2)</li>
+              <li>In Tab 1, open a snippet and make an edit</li>
+              <li>Save the snippet in Tab 1</li>
+              <li>In Tab 2, open the same snippet (make it idle, not actively editing)</li>
+              <li>In another browser tab, open the snippet's Google Doc in Google Docs</li>
+              <li>Make different edits in Google Docs</li>
+              <li>Save in Google Docs</li>
+              <li>In Tab 2, switch back to the snippet</li>
+              <li>Verify a conflict resolution modal appears</li>
+              <li>Verify you can see both versions (Yarny vs Google Docs)</li>
+              <li>Choose "Keep Yarny Version" and verify it works</li>
+              <li>Trigger another conflict</li>
+              <li>Choose "Use Google Docs Version" and verify it works</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-11" name="smoke-9-11">
+            <label for="smoke-9-11">Conflict resolution works correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.12: Round-Trip Testing (Round-Trip Integrity)</h4>
+          <p>Verify that content can be edited in both Yarny and Google Docs with no data loss or format corruption.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Edit a snippet in Yarny with special characters (quotes, em dashes, etc.)</li>
+              <li>Add paragraph breaks (double Enter) and line breaks (Shift+Enter)</li>
+              <li>Save the snippet in Yarny</li>
+              <li>Open the snippet's Google Doc in Google Docs</li>
+              <li>Verify all content matches exactly (paragraph breaks, line breaks, special characters)</li>
+              <li>Edit in Google Docs (add text, modify existing text)</li>
+              <li>Save in Google Docs</li>
+              <li>In Yarny, switch to a different snippet and switch back</li>
+              <li>Verify Yarny detects the external changes</li>
+              <li>Verify all content is preserved correctly (no format loss, no corruption)</li>
+              <li>Edit in Yarny again</li>
+              <li>Save and verify in Google Docs that all changes are preserved</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-12" name="smoke-9-12">
+            <label for="smoke-9-12">Round-trip editing preserves all content correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.13: Performance & Loading</h4>
+          <p>Verify that the app performs well with large projects and loads content efficiently.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open a large story (use test-large project if available):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Verify the app loads in a reasonable time (&lt; 5 seconds)</li>
+                  <li>Verify scrolling through chapters/snippets is smooth</li>
+                  <li>Verify snippet switching is responsive</li>
+                </ul>
+              </li>
+              <li>Test lazy loading:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a story with many snippets</li>
+                  <li>Verify the active snippet loads immediately</li>
+                  <li>Check browser network tab</li>
+                  <li>Verify other snippets load in the background (lazy loading)</li>
+                  <li>Switch to a different snippet</li>
+                  <li>Verify it loads quickly (may be from cache if already loaded)</li>
+                </ul>
+              </li>
+              <li>Test performance budgets:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Open a snippet already in cache</li>
+                  <li>Click on it and start typing immediately</li>
+                  <li>Measure time from click to first character appearing</li>
+                  <li>Verify latency is ≤300 ms (hot path)</li>
+                  <li>Open a snippet not yet loaded</li>
+                  <li>Measure time from click to first character appearing</li>
+                  <li>Verify latency is ≤1.5 s (cold path)</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-13" name="smoke-9-13">
+            <label for="smoke-9-13">Performance and loading meet requirements</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.14: Error Handling & Rate Limiting</h4>
+          <p>Verify that the app handles errors gracefully and respects Drive API rate limits.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Test offline handling:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Disable network (or use browser dev tools)</li>
+                  <li>Make an edit to a snippet</li>
+                  <li>Verify offline banner appears</li>
+                  <li>Verify save status shows "Queued - will save when online"</li>
+                  <li>Re-enable network</li>
+                  <li>Verify queued saves automatically retry and complete</li>
+                </ul>
+              </li>
+              <li>Test error messages:
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Trigger an error (e.g., invalid file ID, network error)</li>
+                  <li>Verify a clear error message appears</li>
+                  <li>Verify you can retry the action if applicable</li>
+                </ul>
+              </li>
+              <li>Test rate limiting (if possible):
+                <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                  <li>Make rapid requests (or simulate 429 error)</li>
+                  <li>Verify exponential backoff is applied</li>
+                  <li>Verify retry only happens when tab is visible</li>
+                  <li>Verify a clear error message is displayed</li>
+                  <li>Verify automatic retry happens after backoff delay</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-14" name="smoke-9-14">
+            <label for="smoke-9-14">Error handling and rate limiting work correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.15: Cross-Tab Conflicts (Yarny vs. Yarny)</h4>
+          <p>Verify that Yarny detects and prevents conflicts when the same snippet is edited in multiple tabs.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Yarny in two browser tabs (Tab 1 and Tab 2)</li>
+              <li>In Tab 1, open a snippet and start editing</li>
+              <li>In Tab 2, try to open the same snippet</li>
+              <li>Verify Tab 2 shows "Editing in another tab" message or read-only indicator</li>
+              <li>Verify Tab 2 is read-only (cannot edit) while Tab 1 is editing</li>
+              <li>Save the snippet in Tab 1</li>
+              <li>Switch to Tab 2</li>
+              <li>Verify Tab 2 updates with the latest content from Tab 1</li>
+              <li>Close Tab 1</li>
+              <li>Verify Tab 2 regains edit capability (no longer read-only)</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-15" name="smoke-9-15">
+            <label for="smoke-9-15">Cross-tab conflict detection works correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Smoke Test 1.16: Visibility-Based Request Gating</h4>
+          <p>Verify that Yarny only makes background requests when the browser tab is visible.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Open Yarny in multiple browser tabs</li>
+              <li>Open a story with many snippets in Tab 1</li>
+              <li>Switch to Tab 2 (Tab 1 becomes hidden)</li>
+              <li>Check browser network tab or console</li>
+              <li>Verify Tab 1 stops making background prefetch requests when hidden</li>
+              <li>Switch back to Tab 1 (tab becomes visible)</li>
+              <li>Verify background prefetch requests resume in Tab 1</li>
+              <li>Verify only the visible tab makes background requests</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="smoke-9-16" name="smoke-9-16">
+            <label for="smoke-9-16">Visibility-based request gating works correctly</label>
+          </div>
+        </div>
+
+        <div class="note-box" style="margin-top: var(--space-2xl);">
+          <p><strong>Smoke Test Execution:</strong> These smoke tests should be executed:</p>
+          <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+            <li><strong>Before Phase 2:</strong> Tests 9.1-9.5 (Local Development, Build, Netlify, Editor, State Management)</li>
+            <li><strong>After Phase 4:</strong> Tests 9.6-9.10 (Create, Rename, Reorder, Edit, Export)</li>
+            <li><strong>After Phase 5:</strong> Tests 9.11-9.12 (Conflict Resolution, Round-Trip)</li>
+            <li><strong>After Phase 6:</strong> Tests 9.13-9.16 (Performance, Error Handling, Cross-Tab, Visibility Gating)</li>
+            <li><strong>Before Ship:</strong> Re-execute all smoke tests to verify no regressions</li>
+          </ul>
+        </div>
+      </div>
+
+        <!-- Section 10: Round-Trip Validation (Final comprehensive test) -->
+        <div class="test-section" id="section-10">
+          <h2><i class="material-icons">sync</i> Section 10: Round-Trip Validation (test-small Project)</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This is the comprehensive end-to-end validation that ensures round-trip integrity between Yarny and Google Docs using the test-small project. Complete this section last, after all other sections. This ensures content is preserved correctly in both directions with no data loss or format corruption.</p>
+        
+          <div class="note-box" style="margin-bottom: var(--space-xl);">
+            <p><strong>Prerequisites:</strong> Before starting validation, ensure:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>Yarny Test Corpus folder exists in Google Drive</li>
+              <li>test-small story folder created in the corpus folder</li>
+              <li>Story structure created (Chapters/, People/, Places/, Things/ folders)</li>
+              <li>"Welcome to Yarny" and "Character Seeds" snippets uploaded as Google Docs</li>
+              <li>Story folder ID recorded in <code>test-corpus/sample-project/metadata.json</code></li>
+              <li>Yarny app is running and user is authenticated with Google</li>
+              <li>test-small story is accessible in Yarny stories list</li>
+            </ul>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.1: Basic Content Round-Trip (Yarny → Google Docs → Yarny)</h4>
+            <p>Verify that basic text content is preserved correctly in a round-trip.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open the test-small story in Yarny</li>
+                <li>Open the "Welcome to Yarny" snippet in the editor</li>
+                <li><strong>Record initial content</strong> - Copy the entire content from Yarny editor</li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save to complete (check save status)</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc in Google Drive</li>
+                <li><strong>Verify content matches</strong> - Compare Google Docs content with recorded Yarny content:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All text matches exactly</li>
+                    <li>No characters are missing</li>
+                    <li>No characters are added</li>
+                    <li>No characters are corrupted</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add a new paragraph: "This is a test edit from Google Docs."</li>
+                <li><strong>Save in Google Docs</strong> - Save the document</li>
+                <li><strong>Return to Yarny</strong> - Switch to a different snippet, then switch back to "Welcome to Yarny"</li>
+                <li><strong>Verify changes appear</strong> - Check that the edit from Google Docs appears in Yarny</li>
+                <li><strong>Verify content integrity</strong> - Compare full content again:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All original content is preserved</li>
+                    <li>New edit from Google Docs is present</li>
+                    <li>No format loss or corruption</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-1" name="roundtrip-10-1">
+              <label for="roundtrip-10-1">Basic content round-trip preserves all content correctly</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.2: Paragraph Breaks Round-Trip</h4>
+            <p>Verify that paragraph breaks (double Enter) are preserved correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Add paragraph breaks</strong> - Add multiple paragraph breaks:
+                  <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0;">First paragraph.
+
+Second paragraph.
+
+Third paragraph.</pre>
+                </li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify paragraph breaks</strong> - Check that paragraph breaks are preserved:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Each paragraph is on a separate line with spacing</li>
+                    <li>No paragraph breaks are collapsed (merged)</li>
+                    <li>No paragraph breaks are duplicated</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add another paragraph: "Fourth paragraph added in Google Docs."</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify paragraph breaks preserved</strong> - Check that all paragraph breaks are still correct:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Original paragraph breaks are preserved</li>
+                    <li>New paragraph from Google Docs has proper spacing</li>
+                    <li>No paragraph breaks are collapsed or duplicated</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-2" name="roundtrip-10-2">
+              <label for="roundtrip-10-2">Paragraph breaks are preserved exactly in both directions</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.3: Line Breaks Round-Trip</h4>
+            <p>Verify that soft line breaks (Shift+Enter) are preserved correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Add line breaks</strong> - Add soft line breaks within a paragraph (Use Shift+Enter for line breaks, not Enter):
+                  <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0;">Line one
+Line two
+Line three</pre>
+                </li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify line breaks</strong> - Check that line breaks are preserved:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Each line is on a separate line</li>
+                    <li>No line breaks are collapsed</li>
+                    <li>No line breaks are converted to paragraph breaks</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add another line: "Line four added in Google Docs"</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify line breaks preserved</strong> - Check that all line breaks are still correct</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-3" name="roundtrip-10-3">
+              <label for="roundtrip-10-3">Line breaks are preserved exactly in both directions</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.4: Special Characters Round-Trip</h4>
+            <p>Verify that special characters are preserved correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Add special characters</strong> - Add various special characters:
+                  <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0;">Quotes: "double" and 'single'
+Em dash: —
+En dash: –
+Ellipsis: …
+Copyright: ©
+Registered: ®
+Trademark: ™</pre>
+                </li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify special characters</strong> - Check that all special characters are preserved:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Double quotes are preserved</li>
+                    <li>Single quotes are preserved</li>
+                    <li>Em dash (—) is preserved</li>
+                    <li>En dash (–) is preserved</li>
+                    <li>Ellipsis (…) is preserved</li>
+                    <li>Copyright (©) is preserved</li>
+                    <li>Registered (®) is preserved</li>
+                    <li>Trademark (™) is preserved</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add more special characters: "Curly quotes: "like this" and 'this'"</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify all special characters preserved</strong> - Check that all characters are still correct</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-4" name="roundtrip-10-4">
+              <label for="roundtrip-10-4">All special characters are preserved exactly in both directions</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.5: Mixed Formatting Round-Trip</h4>
+            <p>Verify that mixed paragraph breaks, line breaks, and special characters all work together.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Character Seeds" snippet in Yarny</li>
+                <li><strong>Create complex content</strong> - Add content with multiple paragraph breaks, line breaks within paragraphs, and special characters:
+                  <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0;">Character: John Doe
+
+Description: A "mysterious" character with—wait for it—a secret past.
+
+Traits:
+- Brave
+- Curious
+- Loyal
+
+Notes: He's been to many places… but never talks about them.</pre>
+                </li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify all formatting preserved</strong> - Check that:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Paragraph breaks are correct</li>
+                    <li>Line breaks are correct</li>
+                    <li>Special characters are correct</li>
+                    <li>Overall structure is preserved</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add more content with mixed formatting</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify complete round-trip</strong> - Check that all formatting is preserved correctly</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-5" name="roundtrip-10-5">
+              <label for="roundtrip-10-5">All formatting elements are preserved correctly in both directions</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.6: Multiple Round-Trips</h4>
+            <p>Verify that content integrity is maintained across multiple round-trips.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Record initial content</strong> - Copy the entire content</li>
+                <li><strong>Round-trip 1</strong>: Edit in Yarny → Save → Edit in Google Docs → Save → Check in Yarny
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Content is preserved correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Round-trip 2</strong>: Edit in Yarny again → Save → Edit in Google Docs again → Save → Check in Yarny
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Content is preserved correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Round-trip 3</strong>: Edit in Google Docs → Save → Edit in Yarny → Save → Check in Google Docs
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Content is preserved correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Final verification</strong> - Compare final content with initial content:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All original content is still present</li>
+                    <li>All edits from both directions are present</li>
+                    <li>No content is lost or corrupted</li>
+                    <li>Formatting is preserved</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-6" name="roundtrip-10-6">
+              <label for="roundtrip-10-6">Content integrity is maintained across multiple round-trips</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.7: Conflict Detection</h4>
+            <p>Verify that conflicts are detected when both Yarny and Google Docs are edited.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Make edit in Yarny</strong> - Add: "Edit from Yarny"</li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Switch to different snippet</strong> - Make the first snippet idle (not actively editing)</li>
+                <li><strong>Edit in Google Docs</strong> - Open the snippet's Google Doc and add: "Edit from Google Docs"</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch back to "Welcome to Yarny" snippet</li>
+                <li><strong>Verify conflict detection</strong> - Check that:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Conflict resolution modal appears</li>
+                    <li>Both versions are displayed (Yarny vs Google Docs)</li>
+                    <li>Timestamps are shown for both versions</li>
+                  </ul>
+                </li>
+                <li><strong>Resolve with Yarny version</strong> - Choose "Keep Yarny Version"
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Yarny version is kept</li>
+                    <li>Google Doc is updated with Yarny version</li>
+                  </ul>
+                </li>
+                <li><strong>Verify in Google Docs</strong> - Open the Google Doc and verify it matches Yarny version</li>
+                <li><strong>Test resolve with Google Docs version</strong> - Trigger another conflict and choose "Use Google Docs Version"
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Google Docs version replaces Yarny content</li>
+                    <li>Editor shows Google Docs content</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-7" name="roundtrip-10-7">
+              <label for="roundtrip-10-7">Conflicts are detected and resolved correctly</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.8: Empty Content Round-Trip</h4>
+            <p>Verify that empty content is handled correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Character Seeds" snippet in Yarny</li>
+                <li><strong>Clear all content</strong> - Delete all text (make snippet empty)</li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify empty</strong> - Check that Google Doc is empty (or has minimal content)</li>
+                <li><strong>Add content in Google Docs</strong> - Add: "Content added in Google Docs"</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify content appears</strong> - Check that content from Google Docs appears in Yarny</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-8" name="roundtrip-10-8">
+              <label for="roundtrip-10-8">Empty content is handled correctly, and new content from Google Docs appears</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.9: Format Normalization</h4>
+            <p>Verify that format normalization works correctly (line endings, NBSPs, trailing spaces).</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Add content with mixed line endings</strong> - Create content with:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Some lines ending with <code>\n</code> (Unix)</li>
+                    <li>Some lines ending with <code>\r\n</code> (Windows)</li>
+                    <li>Some lines ending with <code>\r</code> (Mac)</li>
+                    <li>Non-breaking spaces (NBSP)</li>
+                    <li>Trailing spaces</li>
+                  </ul>
+                </li>
+                <li><strong>Save in Yarny</strong> - Wait for auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify normalization</strong> - Check that:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All line endings are normalized to <code>\n</code> (Unix format)</li>
+                    <li>NBSPs are normalized to regular spaces</li>
+                    <li>Trailing spaces are handled correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Edit in Google Docs</strong> - Add more content with mixed formatting</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify normalization after round-trip</strong> - Check that formatting is still normalized correctly</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-9" name="roundtrip-10-9">
+              <label for="roundtrip-10-9">Format normalization works correctly in both directions</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 10.10: Auto-Save and Round-Trip</h4>
+            <p>Verify that auto-save works correctly and content is preserved.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open "Welcome to Yarny" snippet in Yarny</li>
+                <li><strong>Make multiple edits</strong> - Type several sentences, wait for auto-save between edits</li>
+                <li><strong>Check save status</strong> - Verify "Saved at X:XX" appears after each auto-save</li>
+                <li><strong>Open in Google Docs</strong> - Open the snippet's Google Doc</li>
+                <li><strong>Verify all edits saved</strong> - Check that all edits from Yarny appear in Google Docs</li>
+                <li><strong>Edit in Google Docs</strong> - Make an edit in Google Docs</li>
+                <li><strong>Save in Google Docs</strong></li>
+                <li><strong>Return to Yarny</strong> - Switch snippets and switch back</li>
+                <li><strong>Verify round-trip</strong> - Check that:
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>All Yarny edits are preserved</li>
+                    <li>Google Docs edit appears</li>
+                    <li>Content is complete and correct</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="roundtrip-10-10" name="roundtrip-10-10">
+              <label for="roundtrip-10-10">Auto-save works correctly and round-trip preserves all content</label>
+            </div>
+          </div>
+
+          <div class="note-box" style="margin-top: var(--space-2xl);">
+            <p><strong>Round-Trip Validation Execution:</strong> These tests should be executed:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>After Phase 3:</strong> Complete all 10 round-trip validation tests with test-small project</li>
+              <li><strong>Before Phase 4:</strong> Verify all tests pass before proceeding to editor phase</li>
+              <li><strong>Document Results:</strong> Record any failures or issues in the notes section of each test</li>
+              <li><strong>Report Issues:</strong> Create GitHub issues for any critical failures</li>
+            </ul>
+          </div>
+        </div>
 
         <!-- Summary Section -->
         <div class="summary-section" id="summary">
