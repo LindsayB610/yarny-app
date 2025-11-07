@@ -1,29 +1,29 @@
 # Phase 2: Authentication, Router & API Contract (Week 1–2)
 
 ## Checklist
-- [ ] Configure React Router with TypeScript
-- [ ] Set up routing structure with loaders
-- [ ] Implement route loaders that prefetch Drive API data using React Query
-  - [ ] Stories route loader: prefetch Yarny Stories folder and stories list
-  - [ ] Editor route loader: prefetch Yarny Stories folder and `project.json`
-  - [ ] Add route-level loading states and error boundaries
-- [ ] Create API contract module (`src/api/contract.ts`) with Zod schemas
-- [ ] Create typed API client (`src/api/client.ts`)
-- [ ] Convert Netlify Functions to TypeScript
-  - [ ] Set up TypeScript configuration for Netlify Functions
-  - [ ] Create shared types module (`netlify/functions/types.ts`)
-  - [ ] Convert authentication functions (`auth/*.ts`, `verify-google.ts`, `logout.ts`)
-  - [ ] Convert Drive functions (`drive-*.ts`, `drive-client.ts`)
-  - [ ] Convert utility functions (`config.ts`, `uptime-status.ts`)
-  - [ ] Add type annotations to all function handlers
-  - [ ] Update function exports to use TypeScript types
-  - [ ] Test all functions with TypeScript compilation
-- [ ] Convert login page to React
-- [ ] Integrate Google Sign-In SDK
-- [ ] Create Auth context/provider
-- [ ] Handle auth state and redirects
-- [ ] Implement reconciliation on window focus (`src/hooks/useWindowFocusReconciliation.ts`)
-- [ ] Test authentication flow
+- [x] Configure React Router with TypeScript
+- [x] Set up routing structure with loaders
+- [x] Implement route loaders that prefetch Drive API data using React Query
+  - [x] Stories route loader: prefetch Yarny Stories folder and stories list
+  - [x] Editor route loader: prefetch Yarny Stories folder and `project.json`
+  - [x] Add route-level loading states and error boundaries
+- [x] Create API contract module (`src/api/contract.ts`) with Zod schemas
+- [x] Create typed API client (`src/api/client.ts`)
+- [x] Convert Netlify Functions to TypeScript
+  - [x] Set up TypeScript configuration for Netlify Functions
+  - [x] Create shared types module (`netlify/functions/types.ts`)
+  - [x] Convert authentication functions (`auth/*.ts`, `verify-google.ts`, `logout.ts`)
+  - [x] Convert Drive functions (`drive-*.ts`, `drive-client.ts`)
+  - [x] Convert utility functions (`config.ts`, `uptime-status.ts`)
+  - [x] Add type annotations to all function handlers
+  - [x] Update function exports to use TypeScript types
+  - [x] Test all functions with TypeScript compilation
+- [x] Convert login page to React
+- [x] Integrate Google Sign-In SDK
+- [x] Create Auth context/provider
+- [x] Handle auth state and redirects
+- [x] Implement reconciliation on window focus (`src/hooks/useWindowFocusReconciliation.ts`)
+- [x] Test authentication flow
 
 ## Deliverables
 - Routed React application with loader-based data prefetching and typed API contract shared across frontend and Netlify Functions.
