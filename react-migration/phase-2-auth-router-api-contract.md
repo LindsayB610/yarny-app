@@ -40,4 +40,5 @@
 ## Notes & References
 - Leverage Drive hooks and type definitions established in Phase 1 to avoid duplication.
 - Coordinate with tiptap/plain text utilities to ensure reconciliation respects normalization rules.
+- **Note on `auth/*.js` files**: The `netlify/functions/auth/` folder contains WebAuthn-based authentication functions (login.js, register.js, etc.) that are legacy/unused code. Neither the legacy vanilla JS app nor the React migration uses these functions. Both implementations use Google Sign-In via `verify-google.ts` and `logout.ts`. The `auth/*.js` files are kept in the repo for historical reference but are not part of the active authentication flow and do not need TypeScript conversion.
 
