@@ -1,6 +1,7 @@
 import { Add, Refresh, Search } from "@mui/icons-material";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import type { JSX } from "react";
+import { Link as RouterLink } from "react-router-dom";
 
 interface StoriesHeaderProps {
   onLogout: () => void;
@@ -62,6 +63,21 @@ export function StoriesHeader({
             variant="outlined"
           >
             Docs
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/settings/storage"
+            sx={{
+              color: "white",
+              borderColor: "rgba(255, 255, 255, 0.3)",
+              "&:hover": {
+                borderColor: "rgba(255, 255, 255, 0.5)",
+                bgcolor: "rgba(255, 255, 255, 0.1)"
+              }
+            }}
+            variant="outlined"
+          >
+            Settings
           </Button>
           <Button
             onClick={onLogout}

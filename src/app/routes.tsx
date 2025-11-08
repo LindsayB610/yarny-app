@@ -16,6 +16,11 @@ const StoriesPage = lazy(async () => {
   return { default: module.StoriesPage };
 });
 
+const SettingsPage = lazy(async () => {
+  const module = await import("../components/settings/SettingsPage");
+  return { default: module.SettingsPage };
+});
+
 const AppLayout = lazy(async () => {
   const module = await import("../components/layout/AppLayout");
   return { default: module.AppLayout };
@@ -60,6 +65,24 @@ export const router = createBrowserRouter(
         </ProtectedRoute>
       ),
       loader: () => editorLoader(queryClient),
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/settings",
+      element: (
+        <ProtectedRoute>
+          <Navigate to="/settings/storage" replace />
+        </ProtectedRoute>
+      ),
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/settings/storage",
+      element: (
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      ),
       errorElement: <RouteErrorBoundary />
     }
   ],

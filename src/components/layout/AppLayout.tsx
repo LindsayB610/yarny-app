@@ -6,6 +6,7 @@ import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } 
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
+import { mirrorStoryFolderEnsure } from "../../services/localFs/localBackupMirror";
 import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
@@ -73,6 +74,13 @@ export function AppLayout(): JSX.Element {
       selectStory(storiesForProject[0].id);
     }
   }, [activeStoryId, selectStory, storiesForProject]);
+
+  useEffect(() => {
+    if (!activeStoryId) {
+      return;
+    }
+    void mirrorStoryFolderEnsure(activeStoryId);
+  }, [activeStoryId]);
 
   return (
     <Box

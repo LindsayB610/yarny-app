@@ -1,4 +1,4 @@
-import { CloudUpload } from "@mui/icons-material";
+import { CloudUpload, SaveAlt } from "@mui/icons-material";
 import {
   Box,
   CircularProgress,
@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import type { JSX } from "react";
 
-import type { ExportProgress } from "../../hooks/useExport";
+import type { ExportDestination, ExportProgress } from "../../hooks/useExport";
 
 interface ExportProgressDialogProps {
   open: boolean;
@@ -26,31 +26,51 @@ export function ExportProgressDialog({
   progress,
   fileName
 }: ExportProgressDialogProps): JSX.Element {
-  const { currentChunk, totalChunks, status, error } = progress;
+  const { currentChunk, totalChunks, status, error, destination } = progress;
   const progressPercentage =
     totalChunks > 0 ? (currentChunk / totalChunks) * 100 : 0;
+
+  const getDialogTitle = () => {
+    return destination === "local" ? "Exporting to Local Folder" : "Exporting to Google Docs";
+  };
 
   const getStatusMessage = () => {
     switch (status) {
       case "creating":
-        return "Creating document...";
+        return destination === "local" ? "Creating local export file..." : "Creating document...";
       case "writing":
-        return `Writing chunk ${currentChunk} of ${totalChunks}...`;
+        return destination === "local"
+          ? "Writing export content..."
+          : `Writing chunk ${currentChunk} of ${totalChunks}...`;
       case "completed":
-        return "Export completed!";
+        return destination === "local"
+          ? "Local export completed!"
+          : "Export completed!";
       case "error":
         return `Error: ${error || "Export failed"}`;
       default:
-        return "Preparing export...";
+        return destination === "local"
+          ? "Preparing local export..."
+          : "Preparing export...";
     }
+  };
+
+  const getSuccessMessage = () => {
+    return destination === "local"
+      ? "Local export completed successfully!"
+      : "Export completed successfully!";
+  };
+
+  const renderIcon = (target: ExportDestination) => {
+    return target === "local" ? <SaveAlt /> : <CloudUpload />;
   };
 
   return (
     <Dialog open={open} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
-          <CloudUpload />
-          <Typography variant="h6">Exporting to Google Docs</Typography>
+          {renderIcon(destination)}
+          <Typography variant="h6">{getDialogTitle()}</Typography>
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -71,7 +91,7 @@ export function ExportProgressDialog({
                 size={48}
               />
               <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
-                Export completed successfully!
+                {getSuccessMessage()}
               </Typography>
             </Box>
           ) : status === "error" ? (

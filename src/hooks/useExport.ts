@@ -2,22 +2,41 @@ import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { apiClient } from "../api/client";
+import { localBackupStore } from "../store/localBackupStore";
 
 const CHUNK_TEXT_LIMIT = 500_000; // ~500k characters per chunk (conservative)
+
+export type ExportDestination = "drive" | "local";
 
 export interface ExportProgress {
   currentChunk: number;
   totalChunks: number;
   status: "idle" | "creating" | "writing" | "completed" | "error";
+  destination: ExportDestination;
   error?: string;
 }
 
-export interface ExportOptions {
+interface ExportOptionsBase {
   fileName: string;
-  parentFolderId: string;
   snippets: Array<{ id: string; title: string; content: string }>;
   onProgress?: (progress: ExportProgress) => void;
+  destination?: ExportDestination;
+  fileExtension?: string;
 }
+
+export interface DriveExportOptions extends ExportOptionsBase {
+  destination?: "drive";
+  parentFolderId: string;
+}
+
+export interface LocalExportOptions extends ExportOptionsBase {
+  destination: "local";
+  parentFolderId?: string;
+}
+
+export type ExportOptions = DriveExportOptions | LocalExportOptions;
+
+const INVALID_FILE_CHARS = /[<>:"/\\|?*\u0000-\u001F]/g;
 
 /**
  * Hook for exporting snippets to Google Docs with chunking support
@@ -27,7 +46,8 @@ export function useExport() {
   const [progress, setProgress] = useState<ExportProgress>({
     currentChunk: 0,
     totalChunks: 0,
-    status: "idle"
+    status: "idle",
+    destination: "drive"
   });
 
   const calculateChunks = useCallback((content: string): string[] => {
@@ -64,9 +84,16 @@ export function useExport() {
     return chunks;
   }, []);
 
+  const sanitizeFileName = useCallback((fileName: string): string => {
+    const trimmed = fileName.trim();
+    const sanitized = trimmed.replace(INVALID_FILE_CHARS, "_").replace(/\s+/g, " ");
+    return sanitized.length > 0 ? sanitized : "export";
+  }, []);
+
   const exportMutation = useMutation({
     mutationFn: async (options: ExportOptions) => {
-      const { fileName, parentFolderId, snippets, onProgress } = options;
+      const destination: ExportDestination = options.destination ?? "drive";
+      const { fileName, snippets, onProgress } = options;
 
       // Combine all snippets with titles
       let combinedContent = "";
@@ -77,24 +104,68 @@ export function useExport() {
         combinedContent += snippet.content + "\n\n";
       }
 
+      const normalizedFileName = sanitizeFileName(fileName);
+
+      const baseProgress: ExportProgress = {
+        currentChunk: 0,
+        totalChunks: destination === "local" ? 1 : 0,
+        status: "creating",
+        destination
+      };
+
+      setProgress(baseProgress);
+      onProgress?.(baseProgress);
+
+      if (destination === "local") {
+        const { enabled, permission, repository } = localBackupStore.getState();
+
+        if (!enabled || permission !== "granted" || !repository) {
+          throw new Error(
+            "Local backups must be enabled with write permission before exporting locally."
+          );
+        }
+
+        const extension = options.fileExtension ?? ".md";
+        const finalFileName = normalizedFileName.endsWith(extension)
+          ? normalizedFileName
+          : `${normalizedFileName}${extension}`;
+
+        await repository.writeExportFile(finalFileName, combinedContent);
+
+        const completedProgress: ExportProgress = {
+          currentChunk: 1,
+          totalChunks: 1,
+          status: "completed",
+          destination
+        };
+        setProgress(completedProgress);
+        onProgress?.(completedProgress);
+
+        return {
+          documentId: undefined,
+          documentName: finalFileName,
+          destination
+        };
+      }
+
+      const { parentFolderId } = options as DriveExportOptions;
+
       // Calculate chunks
       const chunks = calculateChunks(combinedContent);
       const totalChunks = chunks.length;
 
-      setProgress({
+      const creatingProgress: ExportProgress = {
         currentChunk: 0,
         totalChunks,
-        status: "creating"
-      });
-      onProgress?.({
-        currentChunk: 0,
-        totalChunks,
-        status: "creating"
-      });
+        status: "creating",
+        destination
+      };
+      setProgress(creatingProgress);
+      onProgress?.(creatingProgress);
 
       // Create the initial document with first chunk
       let documentId: string | undefined;
-      let documentName = fileName;
+      let documentName = normalizedFileName;
 
       try {
         // Create document with first chunk
@@ -110,29 +181,35 @@ export function useExport() {
 
         // If there's only one chunk, we're done
         if (chunks.length === 1) {
-          setProgress({
+          const completedProgress: ExportProgress = {
             currentChunk: 1,
             totalChunks: 1,
-            status: "completed"
-          });
+            status: "completed",
+            destination
+          };
+          setProgress(completedProgress);
           onProgress?.({
             currentChunk: 1,
             totalChunks: 1,
-            status: "completed"
+            status: "completed",
+            destination
           });
           return { documentId, documentName: createResponse.name };
         }
 
         // Append remaining chunks
-        setProgress({
+        const writingProgress: ExportProgress = {
           currentChunk: 1,
           totalChunks,
-          status: "writing"
-        });
+          status: "writing",
+          destination
+        };
+        setProgress(writingProgress);
         onProgress?.({
           currentChunk: 1,
           totalChunks,
-          status: "writing"
+          status: "writing",
+          destination
         });
 
         // For remaining chunks, we need to append to the document
@@ -154,43 +231,53 @@ export function useExport() {
             mimeType: "application/vnd.google-apps.document"
           });
 
-          setProgress({
+          const chunkProgress: ExportProgress = {
             currentChunk: i + 1,
             totalChunks,
-            status: "writing"
-          });
+            status: "writing",
+            destination
+          };
+          setProgress(chunkProgress);
           onProgress?.({
             currentChunk: i + 1,
             totalChunks,
-            status: "writing"
+            status: "writing",
+            destination
           });
         }
 
-        setProgress({
+        const completedProgress: ExportProgress = {
           currentChunk: totalChunks,
           totalChunks,
-          status: "completed"
-        });
+          status: "completed",
+          destination
+        };
+        setProgress(completedProgress);
         onProgress?.({
           currentChunk: totalChunks,
           totalChunks,
-          status: "completed"
+          status: "completed",
+          destination
         });
 
         return { documentId, documentName: createResponse.name };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Export failed";
-        setProgress({
+        const errorProgress: ExportProgress = {
           currentChunk: 0,
           totalChunks,
           status: "error",
-          error: errorMessage
-        });
+          destination,
+          error:
+            error instanceof Error ? error.message : "Export failed"
+        };
+        const errorMessage =
+          error instanceof Error ? error.message : "Export failed";
+        setProgress(errorProgress);
         onProgress?.({
           currentChunk: 0,
           totalChunks,
           status: "error",
+          destination,
           error: errorMessage
         });
         throw error;

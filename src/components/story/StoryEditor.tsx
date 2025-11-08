@@ -1,9 +1,8 @@
-import { CloudUpload, MoreVert } from "@mui/icons-material";
+import { CloudUpload, SaveAlt } from "@mui/icons-material";
 import {
   Box,
   Button,
   CircularProgress,
-  IconButton,
   Menu,
   MenuItem,
   Stack,
@@ -25,7 +24,9 @@ import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
 import { useExport } from "../../hooks/useExport";
+import { useLocalBackups } from "../../hooks/useLocalBackups";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
+import { useAuth } from "../../hooks/useAuth";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveStory,
@@ -61,7 +62,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const [exportProgress, setExportProgress] = useState<{
     open: boolean;
     fileName: string;
-  }>({ open: false, fileName: "" });
+    destination: "drive" | "local";
+  }>({ open: false, fileName: "", destination: "drive" });
+  const { logout, isLoading: isAuthLoading } = useAuth();
 
   // Track editor content for auto-save
   const [editorContent, setEditorContent] = useState("");
@@ -81,7 +84,8 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       },
       onSaveError: (error) => {
         console.error("Auto-save failed:", error);
-      }
+      },
+      localBackupStoryId: story?.id
     }
   );
 
@@ -91,6 +95,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     isExporting,
     progress: exportProgressState
   } = useExport();
+  const localBackups = useLocalBackups();
+  const canExportLocally =
+    localBackups.enabled && localBackups.permission === "granted";
 
   // Note: Visibility gating for snippet loading is now handled in StorySidebarContent
   // where the snippet list DOM elements exist
@@ -312,7 +319,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     const fileName = prompt("Enter filename for export:", `${story.title} - Chapters`);
     if (!fileName) return;
 
-    setExportProgress({ open: true, fileName });
+    setExportProgress({ open: true, fileName, destination: "drive" });
 
     try {
       // Get story folder ID - we'll need to get this from the story structure
@@ -323,6 +330,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         fileName,
         parentFolderId,
         snippets: snippetsForExport,
+        destination: "drive",
         onProgress: (_progress) => {
           setExportProgress((prev) => ({ ...prev }));
         }
@@ -334,6 +342,48 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       }, 1500);
     } catch (error) {
       console.error("Export failed:", error);
+      // Progress dialog will show error state
+    }
+  };
+
+  const handleExportChaptersLocal = async () => {
+    handleExportClose();
+
+    if (!canExportLocally) {
+      alert("Enable local backups in Settings to export locally.");
+      return;
+    }
+
+    const snippetsForExport = snippets.map((snippet, index) => ({
+      id: snippet.id,
+      title: `Snippet ${index + 1}`,
+      content: snippet.content
+    }));
+
+    const fileName = prompt(
+      "Enter filename for local export:",
+      `${story.title} - Chapters`
+    );
+    if (!fileName) return;
+
+    setExportProgress({ open: true, fileName, destination: "local" });
+
+    try {
+      await exportSnippetsFromHook({
+        fileName,
+        snippets: snippetsForExport,
+        destination: "local",
+        fileExtension: ".md",
+        onProgress: (_progress) => {
+          setExportProgress((prev) => ({ ...prev }));
+        }
+      });
+
+      setTimeout(() => {
+        setExportProgress((prev) => ({ ...prev, open: false }));
+      }, 1500);
+    } catch (error) {
+      console.error("Local export failed:", error);
       // Progress dialog will show error state
     }
   };
@@ -368,23 +418,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           >
             {isPending || isSyncing || isAutoSaving ? "Saving..." : "Save to Drive"}
           </Button>
-          <IconButton
-            onClick={handleExportClick}
-            disabled={isExporting || snippets.length === 0}
-            aria-label="Export options"
-          >
-            <MoreVert />
-          </IconButton>
-          <Menu
-            anchorEl={exportMenuAnchor}
-            open={Boolean(exportMenuAnchor)}
-            onClose={handleExportClose}
-          >
-            <MenuItem onClick={handleExportChapters} disabled={isExporting}>
-              <CloudUpload sx={{ mr: 1 }} />
-              Export Chapters
-            </MenuItem>
-          </Menu>
         </Stack>
       </Stack>
 
@@ -450,7 +483,33 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
             <EditorContent editor={editor} />
           </Box>
         </Box>
-        <EditorFooter />
+        <EditorFooter
+          onExportClick={handleExportClick}
+          exportDisabled={snippets.length === 0}
+          isExporting={isExporting}
+          isExportMenuOpen={Boolean(exportMenuAnchor)}
+          onLogout={logout}
+          isLogoutDisabled={isAuthLoading}
+        />
+        <Menu
+          id="editor-export-menu"
+          anchorEl={exportMenuAnchor}
+          open={Boolean(exportMenuAnchor)}
+          onClose={handleExportClose}
+          MenuListProps={{ "aria-labelledby": "editor-export-button" }}
+        >
+          <MenuItem onClick={handleExportChapters} disabled={isExporting}>
+            <CloudUpload sx={{ mr: 1 }} />
+            Export Chapters
+          </MenuItem>
+          <MenuItem
+            onClick={handleExportChaptersLocal}
+            disabled={isExporting || !canExportLocally}
+          >
+            <SaveAlt sx={{ mr: 1 }} />
+            Export Chapters to Local
+          </MenuItem>
+        </Menu>
       </Box>
 
       <ConflictResolutionModal
@@ -486,7 +545,14 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
       <ExportProgressDialog
         open={exportProgress.open}
-        progress={exportProgressState}
+        progress={
+          exportProgress.open
+            ? {
+                ...exportProgressState,
+                destination: exportProgress.destination
+              }
+            : exportProgressState
+        }
         fileName={exportProgress.fileName}
       />
     </Stack>

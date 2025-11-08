@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
 import { describe, it, expect, vi } from "vitest";
 
 import { StoriesHeader } from "./StoriesHeader";
@@ -13,21 +14,28 @@ describe("StoriesHeader", () => {
     searchQuery: ""
   };
 
+  const renderHeader = (overrideProps: Partial<typeof defaultProps> = {}) =>
+    render(
+      <BrowserRouter>
+        <StoriesHeader {...defaultProps} {...overrideProps} />
+      </BrowserRouter>
+    );
+
   it("renders header with title and subtitle", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     expect(screen.getByText("Yarny")).toBeInTheDocument();
     expect(screen.getByText("Your writing projects")).toBeInTheDocument();
   });
 
   it("renders Your Stories heading", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     expect(screen.getByText("Your Stories")).toBeInTheDocument();
   });
 
   it("renders search input", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     const searchInput = screen.getByPlaceholderText(/Search stories/i);
     expect(searchInput).toBeInTheDocument();
@@ -36,23 +44,29 @@ describe("StoriesHeader", () => {
   it("calls onSearchChange when search input changes", async () => {
     const user = userEvent.setup();
     const onSearchChange = vi.fn();
-    render(<StoriesHeader {...defaultProps} onSearchChange={onSearchChange} />);
+    renderHeader({ onSearchChange });
 
     const searchInput = screen.getByPlaceholderText(/Search stories/i);
     await user.type(searchInput, "test");
 
-    expect(onSearchChange).toHaveBeenCalledWith("test");
+    expect(onSearchChange).toHaveBeenCalledTimes(4);
+    expect(onSearchChange.mock.calls.map(([value]) => value)).toEqual([
+      "t",
+      "e",
+      "s",
+      "t"
+    ]);
   });
 
   it("displays current search query in input", () => {
-    render(<StoriesHeader {...defaultProps} searchQuery="My Story" />);
+    renderHeader({ searchQuery: "My Story" });
 
     const searchInput = screen.getByPlaceholderText(/Search stories/i);
     expect(searchInput).toHaveValue("My Story");
   });
 
   it("renders refresh button", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     const refreshButton = screen.getByRole("button", { name: /Refresh/i });
     expect(refreshButton).toBeInTheDocument();
@@ -61,7 +75,7 @@ describe("StoriesHeader", () => {
   it("calls onRefresh when refresh button is clicked", async () => {
     const user = userEvent.setup();
     const onRefresh = vi.fn();
-    render(<StoriesHeader {...defaultProps} onRefresh={onRefresh} />);
+    renderHeader({ onRefresh });
 
     const refreshButton = screen.getByRole("button", { name: /Refresh/i });
     await user.click(refreshButton);
@@ -70,7 +84,7 @@ describe("StoriesHeader", () => {
   });
 
   it("renders New Story button", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     const newStoryButton = screen.getByRole("button", { name: /New Story/i });
     expect(newStoryButton).toBeInTheDocument();
@@ -79,7 +93,7 @@ describe("StoriesHeader", () => {
   it("calls onNewStory when New Story button is clicked", async () => {
     const user = userEvent.setup();
     const onNewStory = vi.fn();
-    render(<StoriesHeader {...defaultProps} onNewStory={onNewStory} />);
+    renderHeader({ onNewStory });
 
     const newStoryButton = screen.getByRole("button", { name: /New Story/i });
     await user.click(newStoryButton);
@@ -88,7 +102,7 @@ describe("StoriesHeader", () => {
   });
 
   it("renders Sign out button", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     const signOutButton = screen.getByRole("button", { name: /Sign out/i });
     expect(signOutButton).toBeInTheDocument();
@@ -97,7 +111,7 @@ describe("StoriesHeader", () => {
   it("calls onLogout when Sign out button is clicked", async () => {
     const user = userEvent.setup();
     const onLogout = vi.fn();
-    render(<StoriesHeader {...defaultProps} onLogout={onLogout} />);
+    renderHeader({ onLogout });
 
     const signOutButton = screen.getByRole("button", { name: /Sign out/i });
     await user.click(signOutButton);
@@ -106,11 +120,19 @@ describe("StoriesHeader", () => {
   });
 
   it("renders Docs link", () => {
-    render(<StoriesHeader {...defaultProps} />);
+    renderHeader();
 
     const docsLink = screen.getByRole("link", { name: /Docs/i });
     expect(docsLink).toBeInTheDocument();
     expect(docsLink).toHaveAttribute("href", "/docs.html");
+  });
+
+  it("renders Settings link", () => {
+    renderHeader();
+
+    const settingsLink = screen.getByRole("link", { name: /Settings/i });
+    expect(settingsLink).toBeInTheDocument();
+    expect(settingsLink).toHaveAttribute("href", "/settings/storage");
   });
 });
 
