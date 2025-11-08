@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
+import { mirrorNoteOrderWrite, mirrorNoteWrite } from "../services/localFs/localBackupMirror";
 import type { Note, NoteType } from "./useNotesQuery";
 
 interface CreateNoteVariables {
@@ -102,6 +103,8 @@ export function useCreateNoteMutation(storyFolderId: string | undefined) {
         mimeType: "text/plain"
       });
 
+      await mirrorNoteWrite(storyFolderId, noteType, response.id, "");
+
       return {
         id: response.id,
         name: displayName,
@@ -169,6 +172,8 @@ export function useReorderNotesMutation(storyFolderId: string | undefined) {
           content: serialized
         });
       }
+
+      await mirrorNoteOrderWrite(storyFolderId, noteType, serialized);
     },
     onMutate: async ({ noteType, newOrder }) => {
       if (!storyFolderId) {

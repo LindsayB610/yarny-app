@@ -12,6 +12,7 @@ import {
   selectActiveStorySnippets,
   selectStoriesForSelectedProject
 } from "../store/selectors";
+import { mirrorStoryDocument } from "../services/localFs/localBackupMirror";
 
 export const useDriveProjectsQuery = () => {
   const upsert = useYarnyStore((state) => state.upsertEntities);
@@ -65,11 +66,15 @@ export const useDriveSaveStoryMutation = () => {
       const lastSnippet = activeSnippets[activeSnippets.length - 1];
       const revisionId = lastSnippet?.driveRevisionId;
 
-      return driveClient.saveStory({
-        storyId: activeStory.id,
-        content,
-        revisionId
-      });
+      try {
+        await driveClient.saveStory({
+          storyId: activeStory.id,
+          content,
+          revisionId
+        });
+      } finally {
+        await mirrorStoryDocument(activeStory.id, content);
+      }
     },
     onMutate: () => {
       setSyncing(true);

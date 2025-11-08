@@ -15,6 +15,13 @@ import { ACCENT_COLORS } from "../utils/contrastChecker";
 import type { StoryMetadata } from "../utils/storyCreation";
 import { initializeStoryStructure } from "../utils/storyCreation";
 import { clearStoryProgress } from "../utils/storyProgressCache";
+import {
+  mirrorDataJsonWrite,
+  mirrorGoalJsonWrite,
+  mirrorProjectJsonWrite,
+  mirrorSnippetDelete,
+  mirrorSnippetWrite
+} from "../services/localFs/localBackupMirror";
 
 interface StoryDataJson {
   groups?: Record<string, StoryGroupData>;
@@ -96,6 +103,8 @@ async function writeDataJson(
       parentFolderId: storyFolderId
     });
   }
+
+  await mirrorDataJsonWrite(storyFolderId, content);
 
   clearStoryProgress(storyFolderId);
 }
@@ -181,12 +190,16 @@ async function writeProjectJson(
     updatedAt: new Date().toISOString()
   };
 
+  const content = JSON.stringify(updatedProject, null, 2);
+
   await apiClient.writeDriveFile({
     fileId,
     fileName: "project.json",
-    content: JSON.stringify(updatedProject, null, 2),
+    content,
     parentFolderId: storyFolderId
   });
+
+  await mirrorProjectJsonWrite(storyFolderId, content);
 
   clearStoryProgress(storyFolderId);
 }
@@ -489,12 +502,16 @@ export function useReorderChaptersMutation() {
           project.groupIds = newOrder;
           project.updatedAt = new Date().toISOString();
 
+          const serializedProject = JSON.stringify(project, null, 2);
+
           await apiClient.writeDriveFile({
             fileId: projectJsonFile.id,
             fileName: "project.json",
-            content: JSON.stringify(project, null, 2),
+            content: serializedProject,
             parentFolderId: activeStory.driveFileId
           });
+
+          await mirrorProjectJsonWrite(activeStory.driveFileId, serializedProject);
         }
       }
 
@@ -780,6 +797,7 @@ export function useCreateSnippetMutation() {
       chapter.snippetIds = [...(chapter.snippetIds ?? []), snippetId];
 
       await writeDataJson(activeStory.driveFileId, data, fileId);
+      await mirrorSnippetWrite(activeStory.id, snippetId, "");
 
       const updatedChapter: ChapterEntity = {
         id: chapter.id ?? chapterId,
@@ -934,6 +952,8 @@ export function useDuplicateChapterMutation() {
           driveFileId: newDriveFileId,
           updatedAt: now
         });
+
+        await mirrorSnippetWrite(activeStory.id, newSnippetId, snippetBody);
       }
 
       data.groups[newChapterId] = {
@@ -1131,6 +1151,8 @@ export function useDuplicateSnippetMutation() {
         }
       });
 
+      await mirrorSnippetWrite(activeStory.id, newSnippetId, snippetBody);
+
       upsertEntities({
         chapters: [updatedChapter],
         snippets: snippetsToUpdate
@@ -1186,6 +1208,8 @@ export function useDeleteChapterMutation() {
         if (data.snippets) {
           delete data.snippets[snippetId];
         }
+
+        await mirrorSnippetDelete(activeStory.id, snippetId);
       }
 
       delete data.groups[chapterId];
@@ -1257,6 +1281,7 @@ export function useDeleteSnippetMutation() {
       }
 
       await writeDataJson(activeStory.driveFileId, data, fileId);
+      await mirrorSnippetDelete(activeStory.id, snippetId);
 
       removeSnippet(snippetId);
     },
@@ -1489,19 +1514,13 @@ export function useUpdateStoryGoalsMutation() {
       await writeProjectJson(activeStory.driveFileId, updatedProject, fileId);
 
       try {
-        if (goal) {
-          await apiClient.writeDriveFile({
-            fileName: "goal.json",
-            content: JSON.stringify(goal, null, 2),
-            parentFolderId: activeStory.driveFileId
-          });
-        } else {
-          await apiClient.writeDriveFile({
-            fileName: "goal.json",
-            content: "{}",
-            parentFolderId: activeStory.driveFileId
-          });
-        }
+        const goalContent = goal ? JSON.stringify(goal, null, 2) : "{}";
+        await apiClient.writeDriveFile({
+          fileName: "goal.json",
+          content: goalContent,
+          parentFolderId: activeStory.driveFileId
+        });
+        await mirrorGoalJsonWrite(activeStory.id, goalContent);
       } catch (error) {
         console.warn("Failed to write goal.json (non-fatal):", error);
       } finally {

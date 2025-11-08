@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
+import { mirrorStoryDocument } from "../services/localFs/localBackupMirror";
 
 interface QueuedSave {
   fileId: string;
   content: string;
   timestamp: string;
+  storyId?: string;
 }
 
 const readQueuedSaves = (): QueuedSave[] => {
@@ -29,17 +31,23 @@ const readQueuedSaves = (): QueuedSave[] => {
           "content" in entry &&
           "timestamp" in entry
         ) {
-          const { fileId, content, timestamp } = entry as {
+          const { fileId, content, timestamp, storyId } = entry as {
             fileId: unknown;
             content: unknown;
             timestamp: unknown;
+            storyId?: unknown;
           };
           if (
             typeof fileId === "string" &&
             typeof content === "string" &&
             typeof timestamp === "string"
           ) {
-            return { fileId, content, timestamp };
+            return {
+              fileId,
+              content,
+              timestamp,
+              storyId: typeof storyId === "string" ? storyId : undefined
+            };
           }
         }
         return null;
@@ -57,6 +65,7 @@ export interface AutoSaveOptions {
   onSaveStart?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: Error) => void;
+  localBackupStoryId?: string;
 }
 
 /**
@@ -77,7 +86,8 @@ export function useAutoSave(
     debounceMs = 2000,
     onSaveStart,
     onSaveSuccess,
-    onSaveError
+    onSaveError,
+    localBackupStoryId
   } = options;
 
   const queryClient = useQueryClient();
@@ -107,18 +117,29 @@ export function useAutoSave(
     (fileId: string, content: string) => {
       try {
         const queued = readQueuedSaves();
+        const storyId = localBackupStoryId ?? fileId;
         queued.push({
           fileId,
           content,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          storyId
         });
         localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
-        queuedSaveRef.current = { fileId, content, timestamp: new Date().toISOString() };
+        const queuedEntry: QueuedSave = {
+          fileId,
+          content,
+          timestamp: new Date().toISOString(),
+          storyId
+        };
+        queuedSaveRef.current = queuedEntry;
+        if (storyId) {
+          void mirrorStoryDocument(storyId, content);
+        }
       } catch (error) {
         console.error("Failed to queue save:", error);
       }
     },
-    []
+    [localBackupStoryId]
   );
 
   // Process queued saves when coming back online
@@ -138,6 +159,10 @@ export function useAutoSave(
         for (const save of queued) {
           try {
             await processQueuedSavesMutation.mutateAsync(save);
+            const storyId = save.storyId ?? save.fileId;
+            if (storyId) {
+              await mirrorStoryDocument(storyId, save.content);
+            }
           } catch (error) {
             console.error("Failed to process queued save:", error);
             // Keep the save in queue if it fails
@@ -167,7 +192,7 @@ export function useAutoSave(
   }, [isOnline, processQueuedSavesMutation]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { fileId: string; content: string }) => {
+    mutationFn: async (data: { fileId: string; content: string; storyId?: string }) => {
       return apiClient.writeDriveFile({
         fileId: data.fileId,
         fileName: "", // Not needed for existing files
@@ -177,12 +202,16 @@ export function useAutoSave(
     onMutate: () => {
       onSaveStart?.();
     },
-    onSuccess: () => {
+    onSuccess: async (_result, variables) => {
       lastSavedContentRef.current = content;
       onSaveSuccess?.();
       // Invalidate relevant queries
       if (fileId) {
         queryClient.invalidateQueries({ queryKey: ["snippet", fileId] });
+      }
+      const storyId = variables?.storyId ?? localBackupStoryId ?? fileId;
+      if (storyId) {
+        await mirrorStoryDocument(storyId, content);
       }
     },
     onError: (error: Error) => {
@@ -208,7 +237,7 @@ export function useAutoSave(
     // Set new timer
     debounceTimerRef.current = setTimeout(() => {
       if (isOnline) {
-        saveMutation.mutate({ fileId, content });
+        saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
       } else {
         queueSave(fileId, content);
       }
@@ -230,7 +259,7 @@ export function useAutoSave(
     const handleVisibilityChange = () => {
       if (document.hidden && content !== lastSavedContentRef.current) {
         if (isOnline) {
-          saveMutation.mutate({ fileId, content });
+          saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
         } else {
           queueSave(fileId, content);
         }
@@ -271,7 +300,7 @@ export function useAutoSave(
       return;
     }
     if (isOnline) {
-      saveMutation.mutate({ fileId, content });
+      saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
     } else {
       queueSave(fileId, content);
     }
