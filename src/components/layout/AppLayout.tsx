@@ -2,7 +2,7 @@ import { Box, Divider, Stack } from "@mui/material";
 import { useEffect, useMemo, type JSX } from "react";
 
 import { OfflineBanner } from "./OfflineBanner";
-import { useDriveProjectsQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
+import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
@@ -20,6 +20,8 @@ export function AppLayout(): JSX.Element {
   const activeStoryId = useYarnyStore((state) => state.ui.activeStoryId);
   const activeStory = useYarnyStore(selectActiveStory);
   const storiesForProject = useSelectedProjectStories();
+
+  useDriveStoryQuery(activeStoryId);
 
   // Reconcile auth and query state on window focus
   useWindowFocusReconciliation();
