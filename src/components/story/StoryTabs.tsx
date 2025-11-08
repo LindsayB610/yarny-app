@@ -1,5 +1,5 @@
 import { Tab, Tabs, Box } from "@mui/material";
-import { type JSX, useState, type SyntheticEvent } from "react";
+import { type JSX, useEffect, useMemo, useState, type SyntheticEvent } from "react";
 
 export interface TabItem {
   id: string;
@@ -10,46 +10,78 @@ export interface TabItem {
 interface StoryTabsProps {
   tabs: TabItem[];
   defaultTab?: string;
+  value?: string;
   onChange?: (tabId: string) => void;
+  renderActions?: (activeTabId: string) => JSX.Element | null;
 }
 
 export function StoryTabs({
   tabs,
   defaultTab,
-  onChange
+  value,
+  onChange,
+  renderActions
 }: StoryTabsProps): JSX.Element {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id || "");
+  const [internalTab, setInternalTab] = useState(defaultTab || tabs[0]?.id || "");
+  const isControlled = typeof value === "string";
+  const activeTab = isControlled ? (value ?? "") : internalTab;
+
+  useEffect(() => {
+    if (!isControlled) {
+      const nextDefault = defaultTab || tabs[0]?.id || "";
+      if (nextDefault && !tabs.some((tab) => tab.id === internalTab)) {
+        setInternalTab(nextDefault);
+      }
+    }
+  }, [defaultTab, internalTab, isControlled, tabs]);
 
   const handleChange = (_event: SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
+    if (!isControlled) {
+      setInternalTab(newValue);
+    }
     onChange?.(newValue);
   };
 
-  const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
+  const activeTabContent = useMemo(
+    () => tabs.find((tab) => tab.id === activeTab)?.content,
+    [activeTab, tabs]
+  );
+
+  const actions = renderActions?.(activeTab);
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Tabs
-        value={activeTab}
-        onChange={handleChange}
+      <Box
         sx={{
-          borderBottom: 1,
-          borderColor: "divider",
-          "& .MuiTab-root": {
-            color: "rgba(255, 255, 255, 0.7)",
-            "&.Mui-selected": {
-              color: "primary.main"
-            }
-          },
-          "& .MuiTabs-indicator": {
-            bgcolor: "primary.main"
-          }
+          display: "flex",
+          alignItems: "center",
+          gap: 1
         }}
       >
-        {tabs.map((tab) => (
-          <Tab key={tab.id} label={tab.label} value={tab.id} />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeTab}
+          onChange={handleChange}
+          sx={{
+            flex: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+            "& .MuiTab-root": {
+              color: "rgba(255, 255, 255, 0.7)",
+              "&.Mui-selected": {
+                color: "primary.main"
+              }
+            },
+            "& .MuiTabs-indicator": {
+              bgcolor: "primary.main"
+            }
+          }}
+        >
+          {tabs.map((tab) => (
+            <Tab key={tab.id} label={tab.label} value={tab.id} />
+          ))}
+        </Tabs>
+        {actions ? <Box sx={{ display: "flex", alignItems: "center" }}>{actions}</Box> : null}
+      </Box>
       <Box sx={{ mt: 2 }}>{activeTabContent}</Box>
     </Box>
   );

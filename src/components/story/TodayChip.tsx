@@ -1,4 +1,5 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { memo, useCallback, useMemo, type JSX, type KeyboardEvent } from "react";
 
 interface TodayChipProps {
@@ -48,24 +49,27 @@ export const TodayChip = memo(function TodayChip({
       aria-label={onClick ? "Today's writing goal: Click to edit" : undefined}
       onKeyDown={handleKeyDown}
       data-testid="today-chip"
-      sx={{
+      sx={(theme) => ({
         cursor: onClick ? "pointer" : "default",
         mb: 2,
         p: 1.5,
-        borderRadius: 1,
-        bgcolor: "rgba(255, 255, 255, 0.05)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        transition: "all 0.2s",
+        borderRadius: 1.5,
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.4 : 0.08)}`,
+        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+        transition: "background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
         ...(onClick && {
           "&:hover": {
-            bgcolor: "rgba(255, 255, 255, 0.08)"
+            backgroundColor: theme.palette.action.hover,
+            borderColor: alpha(theme.palette.primary.main, 0.3),
+            boxShadow: "0 4px 14px rgba(15, 23, 42, 0.12)"
           },
           "&:focus-visible": {
-            outline: "2px solid #6D4AFF",
+            outline: `2px solid ${theme.palette.primary.main}`,
             outlineOffset: "2px"
           }
         })
-      }}
+      })}
       title={onClick ? "Click to edit goal" : undefined}
     >
       <Box
@@ -76,37 +80,31 @@ export const TodayChip = memo(function TodayChip({
           mb: 1
         }}
       >
-        <Typography
-          variant="body2"
-          sx={{
-            color: "rgba(255, 255, 255, 0.7)",
-            fontWeight: 500
-          }}
-        >
+        <Typography variant="body2" sx={(theme) => ({
+          color: theme.palette.text.secondary,
+          fontWeight: 500
+        })}>
           Today
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "rgba(255, 255, 255, 0.9)",
-            fontWeight: 600
-          }}
-        >
+        <Typography variant="body2" sx={(theme) => ({
+          color: theme.palette.text.primary,
+          fontWeight: 600
+        })}>
           {formattedWords}
         </Typography>
       </Box>
       <LinearProgress
         variant="determinate"
         value={progress}
-        sx={{
+        sx={(theme) => ({
           height: 4,
           borderRadius: 2,
-          bgcolor: "rgba(0, 0, 0, 0.15)",
+          backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.3 : 0.1),
           "& .MuiLinearProgress-bar": {
             borderRadius: 2,
             bgcolor: progressColor
           }
-        }}
+        })}
       />
     </Box>
   );

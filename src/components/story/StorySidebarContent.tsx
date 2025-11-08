@@ -1,11 +1,4 @@
-import {
-  Add,
-  ExpandMore,
-  ChevronRight,
-  Description,
-  MoreVert,
-  Palette
-} from "@mui/icons-material";
+import { Add, ExpandMore, ChevronRight, Description, MoreVert } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -22,16 +15,7 @@ import {
   Typography
 } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-  type JSX,
-  type MouseEvent,
-  type KeyboardEvent
-} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, type JSX, type MouseEvent } from "react";
 
 import { ColorPicker } from "./ColorPicker";
 import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
@@ -84,6 +68,7 @@ export function StorySidebarContent({
   const snippetsById = useYarnyStore((state) => state.entities.snippets);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set());
+  const [lastCreatedChapterId, setLastCreatedChapterId] = useState<string | null>(null);
   const [colorPickerState, setColorPickerState] = useState<{
     chapterId: string;
     anchorEl: HTMLElement | null;
@@ -153,7 +138,6 @@ export function StorySidebarContent({
   const { isPending: isDuplicatingSnippet } = duplicateSnippetMutation;
   const { isPending: isDeletingChapter } = deleteChapterMutation;
   const { isPending: isDeletingSnippet } = deleteSnippetMutation;
-  const { isPending: isReorderingChapters } = reorderChaptersMutation;
   const { isPending: isMovingSnippet } = moveSnippetMutation;
 
   // Build fileIds map for visibility gating
@@ -265,30 +249,12 @@ export function StorySidebarContent({
     moveSnippetMutation.mutate({ snippetId, targetChapterId });
   }, [moveSnippetMutation]);
 
-  const handleOpenColorPicker = useCallback(
-    (chapterId: string, event: MouseEvent<HTMLElement>) => {
-      event.stopPropagation();
-      setColorPickerState({
-        chapterId,
-        anchorEl: event.currentTarget
-      });
-    },
-    []
-  );
-
-  const handleColorPickerKeyDown = useCallback(
-    (chapterId: string, event: KeyboardEvent<HTMLElement>) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        event.stopPropagation();
-        setColorPickerState({
-          chapterId,
-          anchorEl: event.currentTarget as HTMLElement
-        });
-      }
-    },
-    []
-  );
+  const openChapterColorPicker = useCallback((chapterId: string, anchorEl: HTMLElement | null) => {
+    setColorPickerState({
+      chapterId,
+      anchorEl
+    });
+  }, []);
 
   const handleCloseColorPicker = useCallback(() => {
     setColorPickerState(null);
@@ -313,11 +279,20 @@ export function StorySidebarContent({
 
   const handleCreateChapter = useCallback(async () => {
     try {
-      await createChapterMutation.mutateAsync({});
+      const newChapter = await createChapterMutation.mutateAsync({});
+      if (newChapter?.id) {
+        setLastCreatedChapterId(newChapter.id);
+        setCollapsedChapters((prev) => {
+          const next = new Set(prev);
+          next.delete(newChapter.id);
+          persistCollapsedState(next);
+          return next;
+        });
+      }
     } catch (error) {
       console.error("Failed to create chapter:", error);
     }
-  }, [createChapterMutation]);
+  }, [createChapterMutation, persistCollapsedState]);
 
   const handleAddSnippet = useCallback(
     async (chapterId: string) => {
@@ -328,28 +303,6 @@ export function StorySidebarContent({
       }
     },
     [createSnippetMutation]
-  );
-
-  const handleMoveChapter = useCallback(
-    (chapterId: string, direction: -1 | 1) => {
-      closeContextMenu();
-      const orderedIds = chapters.map((chapter) => chapter.id);
-      const currentIndex = orderedIds.indexOf(chapterId);
-      if (currentIndex === -1) {
-        return;
-      }
-
-      const targetIndex = currentIndex + direction;
-      if (targetIndex < 0 || targetIndex >= orderedIds.length) {
-        return;
-      }
-
-      const updatedOrder = [...orderedIds];
-      const [moved] = updatedOrder.splice(currentIndex, 1);
-      updatedOrder.splice(targetIndex, 0, moved);
-      reorderChaptersMutation.mutate(updatedOrder);
-    },
-    [chapters, closeContextMenu, reorderChaptersMutation]
   );
 
   const handleDuplicateChapter = useCallback(
@@ -581,29 +534,24 @@ export function StorySidebarContent({
     }
 
     if (contextMenu.type === "chapter") {
-      const chapterIndex = chapters.findIndex((chapter) => chapter.id === contextMenu.id);
-      const canMoveUp = chapterIndex > 0;
-      const canMoveDown = chapterIndex !== -1 && chapterIndex < chapters.length - 1;
-
       return [
         {
           label: "Rename Chapter",
           onClick: () => openRenameDialog("chapter", contextMenu.id)
         },
         {
+          label: "Choose Color",
+          onClick: () => {
+            if (!contextMenu.id) {
+              return;
+            }
+            openChapterColorPicker(contextMenu.id, contextMenu.anchorEl);
+          }
+        },
+        {
           label: "Duplicate Chapter",
           onClick: () => handleDuplicateChapter(contextMenu.id),
           disabled: isDuplicatingChapter
-        },
-        {
-          label: "Move Up",
-          onClick: () => handleMoveChapter(contextMenu.id, -1),
-          disabled: !canMoveUp || isReorderingChapters
-        },
-        {
-          label: "Move Down",
-          onClick: () => handleMoveChapter(contextMenu.id, 1),
-          disabled: !canMoveDown || isReorderingChapters
         },
         {
           label: "Delete Chapter",
@@ -641,14 +589,13 @@ export function StorySidebarContent({
     contextMenu,
     handleDuplicateChapter,
     handleDuplicateSnippet,
-    handleMoveChapter,
     isDeletingChapter,
     isDeletingSnippet,
     isDuplicatingChapter,
     isDuplicatingSnippet,
     isMovingSnippet,
-    isReorderingChapters,
     openDeleteDialog,
+    openChapterColorPicker,
     openMoveSnippetDialog,
     openRenameDialog
   ]);
@@ -715,8 +662,25 @@ export function StorySidebarContent({
     if (!searchValue) {
       return sortableChapters;
     }
-    return sortableChapters.filter((chapter) => visibleSnippetMap.has(chapter.id));
-  }, [searchValue, sortableChapters, visibleSnippetMap]);
+    return sortableChapters.filter((chapter) => {
+      if (lastCreatedChapterId && chapter.id === lastCreatedChapterId) {
+        return true;
+      }
+      return visibleSnippetMap.has(chapter.id);
+    });
+  }, [lastCreatedChapterId, searchValue, sortableChapters, visibleSnippetMap]);
+
+  useEffect(() => {
+    if (!searchValue) {
+      setLastCreatedChapterId(null);
+    }
+  }, [searchValue]);
+
+  useEffect(() => {
+    if (lastCreatedChapterId && !chapters.some((chapter) => chapter.id === lastCreatedChapterId)) {
+      setLastCreatedChapterId(null);
+    }
+  }, [chapters, lastCreatedChapterId]);
 
   // Render a single chapter
   const renderChapter = (chapter: SortableChapter): JSX.Element => {
@@ -791,22 +755,6 @@ export function StorySidebarContent({
             }}
           >
             <Add fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            data-testid={`chapter-color-${chapter.id}`}
-            aria-label="Chapter color"
-            onClick={(event) => handleOpenColorPicker(chapter.id, event)}
-            onKeyDown={(event) => handleColorPickerKeyDown(chapter.id, event)}
-            sx={{
-              p: 0.5,
-              color: headerTextColor,
-              "&:hover": {
-                bgcolor: iconHoverColor
-              }
-            }}
-          >
-            <Palette fontSize="small" />
           </IconButton>
           <IconButton
             size="small"

@@ -59,6 +59,7 @@ function SortableSnippetItem({
   return (
     <Box
       ref={setNodeRef}
+      data-id={snippet.id}
       style={style}
       {...attributes}
       {...listeners}
@@ -72,6 +73,7 @@ function SortableSnippetItem({
         }
       }}
       sx={{
+        cursor: isDragging ? "grabbing" : "grab",
         "&:focus-visible": {
           outline: "2px solid #6D4AFF",
           outlineOffset: "2px",

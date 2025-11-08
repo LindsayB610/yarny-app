@@ -63,8 +63,13 @@ test.describe.skip("Chapter & Snippet Management (React)", () => {
     await expect(page.getByText("2 snippets")).toBeVisible();
     await expect(page.getByText("1 snippet")).toBeVisible();
 
-    await expect(page.getByTestId("chapter-color-chapter-1")).toBeVisible();
-    await expect(page.getByTestId("chapter-color-chapter-2")).toBeVisible();
+    const chapterMenus = page.getByLabel("Chapter menu");
+    await chapterMenus.nth(0).click();
+    await expect(page.getByRole("menuitem", { name: "Choose Color" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await chapterMenus.nth(1).click();
+    await expect(page.getByRole("menuitem", { name: "Choose Color" })).toBeVisible();
+    await page.keyboard.press("Escape");
   });
 
   test("loads snippet content into editor when snippet is selected", async ({ page }) => {

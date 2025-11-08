@@ -57,6 +57,7 @@ function SortableChapterItem({
   return (
     <Box
       ref={setNodeRef}
+      data-id={chapter.id}
       style={style}
       {...attributes}
       {...listeners}
@@ -70,6 +71,7 @@ function SortableChapterItem({
         }
       }}
       sx={{
+        cursor: isDragging ? "grabbing" : "grab",
         "&:focus-visible": {
           outline: "2px solid #6D4AFF",
           outlineOffset: "2px",

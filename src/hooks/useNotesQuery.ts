@@ -50,6 +50,27 @@ export function useNotesQuery(
         return [];
       }
 
+      // Attempt to load custom ordering metadata
+      let noteOrder: string[] = [];
+      const orderFile = notesFilesResponse.files?.find(
+        (file) => file.name === "_order.json" && file.id
+      );
+      if (orderFile?.id) {
+        try {
+          const orderResponse = await apiClient.readDriveFile({
+            fileId: orderFile.id
+          });
+          const parsed = JSON.parse(orderResponse.content || "{}") as {
+            order?: unknown;
+          };
+          if (Array.isArray(parsed.order)) {
+            noteOrder = parsed.order.filter((id): id is string => typeof id === "string");
+          }
+        } catch (error) {
+          console.warn(`Failed to read notes order for ${folderName}:`, error);
+        }
+      }
+
       // Fetch content for each note file
       const notesPromises = notesFilesResponse.files
         .filter((f) => f.mimeType === "text/plain" || f.mimeType === "text/markdown")
@@ -71,8 +92,29 @@ export function useNotesQuery(
           }
         });
 
-      const notes = await Promise.all(notesPromises);
-      return notes.filter((note): note is Note => note !== null);
+      const notes = (await Promise.all(notesPromises)).filter(
+        (note): note is Note => note !== null
+      );
+
+      if (noteOrder.length === 0) {
+        return notes;
+      }
+
+      const orderMap = new Map<string, number>();
+      noteOrder.forEach((id, index) => {
+        orderMap.set(id, index);
+      });
+
+      return [...notes].sort((a, b) => {
+        const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : Number.MAX_SAFE_INTEGER;
+        const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : Number.MAX_SAFE_INTEGER;
+
+        if (indexA !== indexB) {
+          return indexA - indexB;
+        }
+
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      });
     },
     enabled: enabled && Boolean(storyFolderId),
     staleTime: 30 * 1000 // 30 seconds

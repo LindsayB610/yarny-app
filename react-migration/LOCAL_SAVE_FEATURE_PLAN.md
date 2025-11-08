@@ -10,7 +10,8 @@
 
 - **Primary objective**: When enabled, every story/note/metadata write that currently targets Drive also writes to an equivalent local file structure.
 - **Opt-in**: Setting is disabled by default; user must explicitly choose a local root directory.
-- **Parity with Drive**: Folder and file naming mirrors Drive schema (stories, snippets, notes, metadata, attachments).
+- **Parity with Drive**: Folder and file naming mirrors Drive schema (stories, snippets, notes, metadata, attachments), including deletion flows (chapters/snippets delete immediately; story deletes respect the existing `DELETE` confirmation modal).
+- **Browser scope**: Initial launch targets Chromium-based browsers with File System Access API support; all other browsers see the disabled toggle with fallback messaging.
 - **Security & privacy**: All file system interactions stay within directories explicitly granted by the user. No automatic expansion beyond granted scope.
 - **Progressive enhancement**: Feature gracefully degrades on browsers that lack the File System Access API or similar capabilities.
 - **Testing unblock**: Provide deterministic local fixtures for integration/e2e tests without requiring Google Auth.
@@ -53,7 +54,7 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 - `useAutoSave.ts`: After Drive write resolves, invoke `localFsRepository.writeStory`.
   - On Drive failure but local success, surface warning.
   - On both failure, escalate error (existing conflict detection should still run).
-- `useNotesMutation`, `useMetadataMutation`, etc.: extend to call local FS methods in parallel.
+- `useNotesMutation`, `useMetadataMutation`, etc.: extend to call local FS methods in parallel (including mirrored deletions so local state stays in lockstep with Drive).
 - Create a shared helper (`mirrorDriveWrite`) to reduce duplication.
 - Hook into initial load: if local backup enabled, call `ensureStructure` and pre-flight permission check on mount.
 
@@ -95,8 +96,9 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 - **Unit**: Mock File System Access API to cover repository methods and permission edge cases.
 - **Integration**: Extend `useAutoSave` tests to assert dual-write behavior. Add tests for settings store serialization.
 - **E2E**: Playwright scenario using `browserContext.overridePermissions` to simulate directory access where supported.
-- **Manual QA**: New checklist documenting enabling, writing, revoking, re-enabling.
+- **Manual QA**: New checklist documenting enabling, writing, revoking, re-enabling (coordinate with `testing-workbook.html` phases and React migration smoke tests).
 - **Regression**: Ensure Drive-only workflow unaffected when backups disabled.
+- **Test corpus parity**: Seeded local corpus must match the size/edge-case coverage defined in `react-migration/REACT_MIGRATION_PLAN.md` (small/medium/large projects, RTL/CJK/emoji snippets, large chapter export fixture).
 
 ---
 
@@ -113,9 +115,8 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 
 1. Browser support expectations? Chrome-only initially or require polyfill?
 2. Should local files be encrypted at rest?
-3. Do we sync deletions (two-way) or only mirror writes? Plan assumes one-way mirror.
-4. How do we handle large binary attachments (size cap? chunking?).
-5. Need UX copy review for settings explanations.
+3. How do we handle large binary attachments (size cap? chunking?).
+4. Need UX copy review for settings explanations.
 
 ---
 
@@ -128,4 +129,5 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 - [ ] Auto-save and mutation pipelines writing to local FS.
 - [ ] Tests (unit/integration/e2e) and manual QA checklist.
 - [ ] Telemetry, error handling, and rollout flag.
+- [ ] Generate deterministic local test corpus via repository APIs for manual/Drive testing per workbook (align with `REACT_MIGRATION_PLAN.md` corpus requirements and `testing-workbook` scenarios).
 

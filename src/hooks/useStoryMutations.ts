@@ -14,6 +14,7 @@ import type {
 import { ACCENT_COLORS } from "../utils/contrastChecker";
 import type { StoryMetadata } from "../utils/storyCreation";
 import { initializeStoryStructure } from "../utils/storyCreation";
+import { clearStoryProgress } from "../utils/storyProgressCache";
 
 interface StoryDataJson {
   groups?: Record<string, StoryGroupData>;
@@ -95,6 +96,8 @@ async function writeDataJson(
       parentFolderId: storyFolderId
     });
   }
+
+  clearStoryProgress(storyFolderId);
 }
 
 function generateId(prefix: string): string {
@@ -184,6 +187,8 @@ async function writeProjectJson(
     content: JSON.stringify(updatedProject, null, 2),
     parentFolderId: storyFolderId
   });
+
+  clearStoryProgress(storyFolderId);
 }
 
 async function getChaptersFolderId(storyFolderId: string): Promise<string | undefined> {
@@ -1499,6 +1504,8 @@ export function useUpdateStoryGoalsMutation() {
         }
       } catch (error) {
         console.warn("Failed to write goal.json (non-fatal):", error);
+      } finally {
+        clearStoryProgress(activeStory.driveFileId);
       }
     },
     onSuccess: () => {

@@ -20,13 +20,15 @@ body {
 }
 
 .plain-text-editor {
-  min-height: calc(100vh - 240px);
+  min-height: 320px;
   outline: none;
   font-size: 1.05rem;
   line-height: 1.75;
   white-space: pre-wrap;
   caret-color: #6d4aff;
-  padding: 1.5rem 2rem;
+  padding: 0;
+  width: 100%;
+  word-break: break-word;
 }
 
 .plain-text-editor p {

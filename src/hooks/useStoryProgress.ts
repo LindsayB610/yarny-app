@@ -1,7 +1,14 @@
+import { useMemo } from "react";
+
 import { useQuery } from "@tanstack/react-query";
 
 import type { StoryProgress } from "./useStoriesQuery";
 import { apiClient } from "../api/client";
+import {
+  cacheStoryProgress,
+  getCachedStoryProgress,
+  STORY_PROGRESS_CACHE_DURATION_MS
+} from "../utils/storyProgressCache";
 
 /**
  * Get current date in US Pacific time (same as legacy code)
@@ -181,9 +188,22 @@ function calculateDailyGoalInfo(
  * Hook to fetch story progress data
  */
 export function useStoryProgress(storyFolderId: string | undefined) {
+  const cachedProgress = useMemo(() => {
+    if (!storyFolderId) {
+      return null;
+    }
+
+    return getCachedStoryProgress<StoryProgress>(storyFolderId);
+  }, [storyFolderId]);
+
   return useQuery({
     queryKey: ["drive", "story-progress", storyFolderId],
     enabled: Boolean(storyFolderId),
+    initialData: cachedProgress ?? undefined,
+    initialDataUpdatedAt:
+      cachedProgress != null
+        ? Date.now() - STORY_PROGRESS_CACHE_DURATION_MS - 1
+        : undefined,
     queryFn: async (): Promise<StoryProgress | null> => {
       if (!storyFolderId) {
         return null;
@@ -278,7 +298,7 @@ export function useStoryProgress(storyFolderId: string | undefined) {
         // Calculate daily goal info if goal exists
         const dailyInfo = goal ? calculateDailyGoalInfo(goal, totalWords) : undefined;
 
-        return {
+        const progress: StoryProgress = {
           wordGoal,
           totalWords,
           percentage,
@@ -286,6 +306,10 @@ export function useStoryProgress(storyFolderId: string | undefined) {
           dailyInfo,
           updatedAt
         };
+
+        cacheStoryProgress(storyFolderId, progress);
+
+        return progress;
       } catch (error) {
         console.warn(`Failed to fetch progress for story ${storyFolderId}:`, error);
         return null;
