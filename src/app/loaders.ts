@@ -3,6 +3,7 @@ import { redirect } from "react-router-dom";
 
 import { apiClient, ApiError } from "../api/client";
 import { createDriveClient } from "../api/driveClient";
+import { fetchStories, STORIES_QUERY_KEY } from "../hooks/useStoriesQuery";
 
 function ensureAuthenticated(): void {
   try {
@@ -32,43 +33,17 @@ function handleAuthError(error: unknown): never {
 export async function storiesLoader(queryClient: QueryClient) {
   ensureAuthenticated();
   try {
-    let yarnyStoriesFolder: Awaited<
-      ReturnType<typeof apiClient.getOrCreateYarnyStories>
-    > | null = null;
-
-    try {
-      yarnyStoriesFolder = await queryClient.fetchQuery({
-        queryKey: ["drive", "yarny-stories-folder"],
-        queryFn: () => apiClient.getOrCreateYarnyStories()
-      });
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.warn(
-          "[Loader] Yarny stories folder fetch failed in development; continuing with fallback data.",
-          error
-        );
-      } else {
-        throw error;
-      }
-    }
-
-    // Prefetch stories list (will need folder ID from above)
-    // For now, we'll use the drive client which handles the folder lookup internally
-    const driveClient = createDriveClient();
-    const projects = await queryClient.fetchQuery({
-      queryKey: ["drive", "projects"],
-      queryFn: async () => {
-        const normalized = await driveClient.listProjects();
-        // The driveClient already handles upserting into the store via hooks
-        // But in loaders, we need to manually update if needed
-        return normalized;
-      }
+    const yarnyStoriesFolder = await queryClient.ensureQueryData({
+      queryKey: ["drive", "yarny-stories-folder"],
+      queryFn: () => apiClient.getOrCreateYarnyStories()
     });
 
-    return {
-      yarnyStoriesFolder,
-      projects
-    };
+    await queryClient.ensureQueryData({
+      queryKey: STORIES_QUERY_KEY,
+      queryFn: () => fetchStories(queryClient)
+    });
+
+    return { yarnyStoriesFolder };
   } catch (error) {
     return handleAuthError(error);
   }
