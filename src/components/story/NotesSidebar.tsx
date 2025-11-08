@@ -177,10 +177,7 @@ export function NotesSidebar(): JSX.Element {
         overflow: "hidden"
       }}
     >
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="h6">People · Places · Things</Typography>
-      </Box>
-      <Box sx={{ flex: 1, overflow: "auto" }}>
+      <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
         <StoryTabs tabs={tabs} defaultTab="people" />
       </Box>
     </Box>

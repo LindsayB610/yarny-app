@@ -31,17 +31,31 @@ function handleAuthError(error: unknown): never {
  */
 export async function storiesLoader(queryClient: QueryClient) {
   ensureAuthenticated();
-  // Prefetch Yarny Stories folder
   try {
-    const yarnyStoriesPromise = queryClient.fetchQuery({
-      queryKey: ["drive", "yarny-stories-folder"],
-      queryFn: () => apiClient.getOrCreateYarnyStories()
-    });
+    let yarnyStoriesFolder: Awaited<
+      ReturnType<typeof apiClient.getOrCreateYarnyStories>
+    > | null = null;
+
+    try {
+      yarnyStoriesFolder = await queryClient.fetchQuery({
+        queryKey: ["drive", "yarny-stories-folder"],
+        queryFn: () => apiClient.getOrCreateYarnyStories()
+      });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[Loader] Yarny stories folder fetch failed in development; continuing with fallback data.",
+          error
+        );
+      } else {
+        throw error;
+      }
+    }
 
     // Prefetch stories list (will need folder ID from above)
     // For now, we'll use the drive client which handles the folder lookup internally
     const driveClient = createDriveClient();
-    const projectsPromise = queryClient.fetchQuery({
+    const projects = await queryClient.fetchQuery({
       queryKey: ["drive", "projects"],
       queryFn: async () => {
         const normalized = await driveClient.listProjects();
@@ -51,12 +65,9 @@ export async function storiesLoader(queryClient: QueryClient) {
       }
     });
 
-    // Wait for both to complete
-    await Promise.all([yarnyStoriesPromise, projectsPromise]);
-
     return {
-      yarnyStoriesFolder: await yarnyStoriesPromise,
-      projects: await projectsPromise
+      yarnyStoriesFolder,
+      projects
     };
   } catch (error) {
     return handleAuthError(error);
@@ -69,15 +80,29 @@ export async function storiesLoader(queryClient: QueryClient) {
 export async function editorLoader(queryClient: QueryClient) {
   ensureAuthenticated();
   try {
-    // Prefetch Yarny Stories folder
-    const yarnyStoriesPromise = queryClient.fetchQuery({
-      queryKey: ["drive", "yarny-stories-folder"],
-      queryFn: () => apiClient.getOrCreateYarnyStories()
-    });
+    let yarnyStoriesFolder: Awaited<
+      ReturnType<typeof apiClient.getOrCreateYarnyStories>
+    > | null = null;
+
+    try {
+      yarnyStoriesFolder = await queryClient.fetchQuery({
+        queryKey: ["drive", "yarny-stories-folder"],
+        queryFn: () => apiClient.getOrCreateYarnyStories()
+      });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[Loader] Yarny stories folder fetch failed in development; continuing with fallback data.",
+          error
+        );
+      } else {
+        throw error;
+      }
+    }
 
     // Prefetch projects list
     const driveClient = createDriveClient();
-    const projectsPromise = queryClient.fetchQuery({
+    const projects = await queryClient.fetchQuery({
       queryKey: ["drive", "projects"],
       queryFn: async () => {
         const normalized = await driveClient.listProjects();
@@ -85,11 +110,9 @@ export async function editorLoader(queryClient: QueryClient) {
       }
     });
 
-    await Promise.all([yarnyStoriesPromise, projectsPromise]);
-
     return {
-      yarnyStoriesFolder: await yarnyStoriesPromise,
-      projects: await projectsPromise
+      yarnyStoriesFolder,
+      projects
     };
   } catch (error) {
     return handleAuthError(error);

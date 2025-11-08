@@ -317,11 +317,15 @@ export function GoalsPanelModal({
             disabled={isSaving}
             sx={{
               bgcolor: "primary.main",
+              color: "white",
+              fontWeight: 600,
               "&:hover": {
                 bgcolor: "primary.dark"
               },
-              "&:disabled": {
-                opacity: 0.6
+              "&.Mui-disabled": {
+                bgcolor: "rgba(59, 130, 246, 0.35)",
+                color: "rgba(255, 255, 255, 0.75)",
+                border: "1px solid rgba(59, 130, 246, 0.5)"
               }
             }}
           >

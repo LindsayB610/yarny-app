@@ -1,7 +1,7 @@
 import { immer } from "zustand/middleware/immer";
 import { createStore } from "zustand/vanilla";
 
-import type { EntityId, NormalizedPayload, YarnyStore } from "./types";
+import type { Chapter, EntityId, NormalizedPayload, YarnyStore } from "./types";
 import type { YarnyState } from "./types";
 
 const createDefaultState = (): YarnyState => ({
@@ -24,6 +24,38 @@ const createDefaultState = (): YarnyState => ({
 const ensureOrder = (order: EntityId[], id: EntityId) => {
   if (!order.includes(id)) {
     order.push(id);
+  }
+};
+
+const isIncomingNewerOrEqual = (existing?: string, incoming?: string) => {
+  if (!incoming) {
+    return false;
+  }
+  if (!existing) {
+    return true;
+  }
+
+  const incomingTime = Date.parse(incoming);
+  const existingTime = Date.parse(existing);
+
+  if (Number.isNaN(incomingTime)) {
+    return false;
+  }
+  if (Number.isNaN(existingTime)) {
+    return true;
+  }
+
+  return incomingTime >= existingTime;
+};
+
+const removeSnippetFromChapter = (chapter: Chapter | undefined, snippetId: EntityId) => {
+  if (!chapter) {
+    return;
+  }
+
+  const index = chapter.snippetIds.indexOf(snippetId);
+  if (index !== -1) {
+    chapter.snippetIds.splice(index, 1);
   }
 };
 
@@ -77,12 +109,30 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
       upsertEntities(payload: NormalizedPayload) {
         set((draft) => {
           payload.projects?.forEach((project) => {
-            draft.entities.projects[project.id] = project;
+            const existing = draft.entities.projects[project.id];
+            if (!existing || isIncomingNewerOrEqual(existing.updatedAt, project.updatedAt)) {
+              draft.entities.projects[project.id] = project;
+            }
             ensureOrder(draft.entities.projectOrder, project.id);
           });
 
           payload.stories?.forEach((story) => {
-            draft.entities.stories[story.id] = story;
+            const existing = draft.entities.stories[story.id];
+            if (!existing || isIncomingNewerOrEqual(existing.updatedAt, story.updatedAt)) {
+              const incomingTitle = story.title?.trim();
+              const existingTitle = existing?.title?.trim();
+              const placeholderTitles = new Set(["New Project", "Untitled Story"]);
+              const shouldPreserveExistingTitle =
+                Boolean(existing) &&
+                Boolean(existingTitle) &&
+                existingTitle !== incomingTitle &&
+                Boolean(incomingTitle) &&
+                placeholderTitles.has(incomingTitle);
+
+              draft.entities.stories[story.id] = shouldPreserveExistingTitle
+                ? { ...story, title: existing.title }
+                : story;
+            }
             ensureOrder(draft.entities.storyOrder, story.id);
             const project = draft.entities.projects[story.projectId];
             if (project && !project.storyIds.includes(story.id)) {
@@ -91,7 +141,10 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
           });
 
           payload.chapters?.forEach((chapter) => {
-            draft.entities.chapters[chapter.id] = chapter;
+            const existing = draft.entities.chapters[chapter.id];
+            if (!existing || isIncomingNewerOrEqual(existing.updatedAt, chapter.updatedAt)) {
+              draft.entities.chapters[chapter.id] = chapter;
+            }
             const story = draft.entities.stories[chapter.storyId];
             if (story && !story.chapterIds.includes(chapter.id)) {
               story.chapterIds.push(chapter.id);
@@ -105,7 +158,10 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
           });
 
           payload.snippets?.forEach((snippet) => {
-            draft.entities.snippets[snippet.id] = snippet;
+            const existing = draft.entities.snippets[snippet.id];
+            if (!existing || isIncomingNewerOrEqual(existing.updatedAt, snippet.updatedAt)) {
+              draft.entities.snippets[snippet.id] = snippet;
+            }
             const chapter = draft.entities.chapters[snippet.chapterId];
             if (chapter && !chapter.snippetIds.includes(snippet.id)) {
               chapter.snippetIds.push(snippet.id);
@@ -117,6 +173,43 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
               );
             }
           });
+        });
+      },
+      removeChapter(chapterId) {
+        set((draft) => {
+          const chapter = draft.entities.chapters[chapterId];
+          if (!chapter) {
+            return;
+          }
+
+          // Delete all snippets associated with this chapter
+          chapter.snippetIds.forEach((snippetId) => {
+            delete draft.entities.snippets[snippetId];
+          });
+
+          // Remove the chapter from its story
+          const story = draft.entities.stories[chapter.storyId];
+          if (story) {
+            story.chapterIds = story.chapterIds.filter((id) => id !== chapterId);
+          }
+
+          delete draft.entities.chapters[chapterId];
+        });
+      },
+      removeSnippet(snippetId) {
+        set((draft) => {
+          const snippet = draft.entities.snippets[snippetId];
+          if (snippet) {
+            const chapter = draft.entities.chapters[snippet.chapterId];
+            removeSnippetFromChapter(chapter, snippetId);
+          } else {
+            // Ensure snippet references are removed even if entity is missing
+            Object.values(draft.entities.chapters).forEach((chapter) => {
+              removeSnippetFromChapter(chapter, snippetId);
+            });
+          }
+
+          delete draft.entities.snippets[snippetId];
         });
       },
       clear() {

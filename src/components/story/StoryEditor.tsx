@@ -110,9 +110,10 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   });
 
   // Track if editor is open (authoritative)
-  const [isEditorOpen, setIsEditorOpen] = useState(true);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const previousStoryIdRef = useRef<string | undefined>(story?.id);
   const previousSnippetsKeyRef = useRef<string>("");
+  const lastAppliedDocumentRef = useRef<string>("");
 
   // Track story/snippet switches for performance metrics
   useEffect(() => {
@@ -130,23 +131,35 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   }, [story?.id, snippets, startSnippetSwitch]);
 
   useEffect(() => {
+    lastAppliedDocumentRef.current = "";
+  }, [story?.id]);
+
+  useEffect(() => {
     if (!editor) {
       return;
     }
 
     // Only update editor content if it's not open (not authoritative)
     // When editor is open, it is the source of truth
-    if (!isEditorOpen) {
-      editor.commands.setContent(initialDocument, false, {
-        preserveWhitespace: true
-      });
-      // Editor content is set - snippet switch is complete
-      // Use a small delay to ensure editor is ready for interaction
-      setTimeout(() => {
-        endSnippetSwitch();
-      }, 0);
+    const serializedDocument = JSON.stringify(initialDocument);
+    if (lastAppliedDocumentRef.current === serializedDocument) {
+      return;
     }
-  }, [editor, initialDocument, isEditorOpen, endSnippetSwitch]);
+
+    if (isEditorOpen || hasUnsavedChanges) {
+      return;
+    }
+
+    editor.commands.setContent(initialDocument, false, {
+      preserveWhitespace: true
+    });
+    lastAppliedDocumentRef.current = serializedDocument;
+    // Editor content is set - snippet switch is complete
+    // Use a small delay to ensure editor is ready for interaction
+    setTimeout(() => {
+      endSnippetSwitch();
+    }, 0);
+  }, [editor, initialDocument, isEditorOpen, hasUnsavedChanges, endSnippetSwitch]);
 
   // Check for conflicts when story changes
   useEffect(() => {
@@ -195,11 +208,10 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     const handleUpdate = () => {
       const plainText = extractPlainTextFromDocument(editor.getJSON());
       setEditorContent(plainText);
-      // Mark editor as open/authoritative when user types
-      setIsEditorOpen(true);
-      
-      // Record first keystroke for performance metrics
-      if (!hasRecordedFirstKeystroke) {
+      const isFocused = editor.isFocused();
+
+      // Record first keystroke for performance metrics only when user is actively typing
+      if (!hasRecordedFirstKeystroke && isFocused) {
         recordFirstKeystroke();
         hasRecordedFirstKeystroke = true;
       }

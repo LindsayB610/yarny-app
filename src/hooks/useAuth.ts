@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { apiClient } from "../api/client";
-import type { VerifyGoogleResponse } from "../api/contract";
+import type { ConfigResponse, VerifyGoogleResponse } from "../api/contract";
 
 export interface AuthUser {
   email: string;
@@ -33,11 +33,29 @@ function checkAuthFromStorage(): AuthUser | null {
   return null;
 }
 
+const FALLBACK_CONFIG: ConfigResponse = {
+  clientId: ""
+};
+
 export function useAuthConfig() {
   return useQuery({
     queryKey: ["auth", "config"],
-    queryFn: () => apiClient.getConfig(),
-    staleTime: Infinity // Config doesn't change often
+    queryFn: async () => {
+      try {
+        return await apiClient.getConfig();
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            "[Auth] Config endpoint unavailable in development, using fallback config.",
+            error
+          );
+          return FALLBACK_CONFIG;
+        }
+        throw error;
+      }
+    },
+    staleTime: Infinity, // Config doesn't change often
+    retry: import.meta.env.DEV ? false : undefined
   });
 }
 

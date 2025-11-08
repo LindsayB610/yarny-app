@@ -146,11 +146,15 @@ export function DeleteStoryModal({
           variant="contained"
           sx={{
             bgcolor: "error.main",
+            color: "white",
+            fontWeight: 600,
             "&:hover": {
               bgcolor: "#DC2626"
             },
-            "&:disabled": {
-              opacity: 0.6
+            "&.Mui-disabled": {
+              bgcolor: "rgba(239, 68, 68, 0.35)",
+              color: "rgba(255, 255, 255, 0.7)",
+              border: "1px solid rgba(239, 68, 68, 0.6)"
             }
           }}
         >

@@ -1,5 +1,5 @@
 import { Box, Divider, Stack } from "@mui/material";
-import { useEffect, useMemo, type JSX } from "react";
+import { useEffect, useMemo, useState, type JSX } from "react";
 
 import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
@@ -20,6 +20,7 @@ export function AppLayout(): JSX.Element {
   const activeStoryId = useYarnyStore((state) => state.ui.activeStoryId);
   const activeStory = useYarnyStore(selectActiveStory);
   const storiesForProject = useSelectedProjectStories();
+  const [sidebarSearch, setSidebarSearch] = useState("");
 
   const { isPending: isStoryLoading, isFetching: isStoryFetching } = useDriveStoryQuery(activeStoryId);
   const showEditorLoading = Boolean(activeStoryId) && (isStoryLoading || (!activeStory && isStoryFetching));
@@ -98,9 +99,9 @@ export function AppLayout(): JSX.Element {
           </Box>
           <Divider />
           <Box sx={{ flex: 1, overflow: "auto" }}>
-            <StorySidebarHeader />
+            <StorySidebarHeader searchTerm={sidebarSearch} onSearchChange={setSidebarSearch} />
             <Box sx={{ flex: 1, overflow: "auto" }}>
-              <StorySidebarContent />
+              <StorySidebarContent searchTerm={sidebarSearch} />
             </Box>
           </Box>
         </Stack>

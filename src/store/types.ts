@@ -75,6 +75,8 @@ export interface YarnyActions {
   setSyncing: (isSyncing: boolean) => void;
   setLastSyncedAt: (isoString: string) => void;
   upsertEntities: (payload: NormalizedPayload) => void;
+  removeChapter: (chapterId: EntityId) => void;
+  removeSnippet: (snippetId: EntityId) => void;
   clear: () => void;
 }
 
