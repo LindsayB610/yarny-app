@@ -97,6 +97,13 @@ export function StorySidebarContent({
     id: null,
     anchorEl: null
   });
+  const closeContextMenu = useCallback(() => {
+    setContextMenu({
+      type: null,
+      id: null,
+      anchorEl: null
+    });
+  }, []);
   const [renameDialog, setRenameDialog] = useState<{
     type: "chapter" | "snippet" | null;
     id: string | null;
@@ -484,14 +491,6 @@ export function StorySidebarContent({
 
   const deleteInProgress =
     deleteDialog.type === "chapter" ? isDeletingChapter : isDeletingSnippet;
-
-  const closeContextMenu = useCallback(() => {
-    setContextMenu({
-      type: null,
-      id: null,
-      anchorEl: null
-    });
-  }, []);
 
   const handleChapterMenuOpen = useCallback((chapterId: string, event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
