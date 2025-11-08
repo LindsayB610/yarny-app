@@ -36,10 +36,11 @@ const NotesList = memo(function NotesList({ notes, isLoading, noteType }: NotesL
   }
 
   if (notes.length === 0) {
+    const noteTypeLabel = noteType.charAt(0).toUpperCase() + noteType.slice(1);
     return (
       <Box sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary" textAlign="center">
-          No {noteType} notes yet. Create one to get started.
+          No {noteTypeLabel} entries yet. Create one to get started.
         </Typography>
       </Box>
     );
@@ -161,7 +162,7 @@ export function NotesSidebar(): JSX.Element {
         }}
       >
         <Typography variant="body2" textAlign="center">
-          Select a story to view notes
+          Select a story to view its people, places, and things
         </Typography>
       </Box>
     );
@@ -177,7 +178,7 @@ export function NotesSidebar(): JSX.Element {
       }}
     >
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="h6">Notes</Typography>
+        <Typography variant="h6">People · Places · Things</Typography>
       </Box>
       <Box sx={{ flex: 1, overflow: "auto" }}>
         <StoryTabs tabs={tabs} defaultTab="people" />

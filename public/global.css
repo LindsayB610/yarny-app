@@ -41,6 +41,7 @@
   --color-text-primary: #111827;
   --color-text-secondary: #6B7280;
   --color-text-tertiary: #9CA3AF;
+  --color-tab-inactive: #4B5563;
   --color-bg-primary: #FFFFFF;
   --color-bg-secondary: #F9FAFB;
   --color-bg-tertiary: #F3F4F6;
@@ -114,6 +115,7 @@
     --color-text-primary: #F9FAFB;
     --color-text-secondary: #D1D5DB;
     --color-text-tertiary: #9CA3AF;
+    --color-tab-inactive: #CBD5F5;
     --color-bg-primary: #111827;
     --color-bg-secondary: #1F2937;
     --color-bg-tertiary: #374151;

@@ -1,5 +1,15 @@
 import { CloudUpload, MoreVert } from "@mui/icons-material";
-import { Box, Button, IconButton, Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+  useTheme
+} from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 
@@ -24,12 +34,18 @@ import {
   selectLastSyncedAt
 } from "../../store/selectors";
 
-export function StoryEditor(): JSX.Element {
+type StoryEditorProps = {
+  isLoading: boolean;
+};
+
+export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const theme = useTheme();
   const story = useYarnyStore(selectActiveStory);
   const snippets = useYarnyStore(selectActiveStorySnippets);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
+
+  const showLoadingState = isLoading;
 
   const initialDocument = useMemo(
     () => buildPlainTextDocument(snippets.map((snippet) => snippet.content).join("\n\n")),
@@ -206,6 +222,34 @@ export function StoryEditor(): JSX.Element {
       editor.off("blur", () => {});
     };
   }, [editor, recordFirstKeystroke]);
+
+  if (showLoadingState) {
+    return (
+      <Stack spacing={3} sx={{ height: "100%" }}>
+        <Box
+          sx={{
+            flex: 1,
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.divider}`,
+            backgroundColor: "background.paper",
+            boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.04)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            py: 8
+          }}
+        >
+          <CircularProgress size={32} />
+          <Typography variant="h6">Loading story…</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Fetching your project from Google Drive
+          </Typography>
+        </Box>
+      </Stack>
+    );
+  }
 
   if (!story) {
     return (

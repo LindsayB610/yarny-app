@@ -21,7 +21,8 @@ export function AppLayout(): JSX.Element {
   const activeStory = useYarnyStore(selectActiveStory);
   const storiesForProject = useSelectedProjectStories();
 
-  useDriveStoryQuery(activeStoryId);
+  const { isPending: isStoryLoading, isFetching: isStoryFetching } = useDriveStoryQuery(activeStoryId);
+  const showEditorLoading = Boolean(activeStoryId) && (isStoryLoading || (!activeStory && isStoryFetching));
 
   // Reconcile auth and query state on window focus
   useWindowFocusReconciliation();
@@ -117,7 +118,7 @@ export function AppLayout(): JSX.Element {
         }}
       >
         <OfflineBanner />
-        <StoryEditor />
+        <StoryEditor isLoading={showEditorLoading} />
       </Box>
       {/* Right Sidebar: Notes */}
       <Box

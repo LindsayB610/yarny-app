@@ -5,6 +5,7 @@ import { apiClient } from "../api/client";
 import type { DriveDeleteStoryRequest } from "../api/contract";
 import { useYarnyStore } from "../store/provider";
 import { selectActiveStory } from "../store/selectors";
+import type { NormalizedPayload } from "../store/types";
 import type { StoryMetadata } from "../utils/storyCreation";
 import { initializeStoryStructure } from "../utils/storyCreation";
 
@@ -188,6 +189,7 @@ export function useUpdateChapterColorMutation() {
   const queryClient = useQueryClient();
   const activeStory = useYarnyStore(selectActiveStory);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const activeStoryId = activeStory?.id;
 
   return useMutation({
     mutationFn: async ({
@@ -228,7 +230,35 @@ export function useUpdateChapterColorMutation() {
     },
     onSuccess: (chapter) => {
       upsertEntities({ chapters: [chapter] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
+      if (activeStoryId) {
+        queryClient.setQueryData<NormalizedPayload | null | undefined>(
+          ["drive", "story", activeStoryId],
+          (previous) => {
+            if (!previous?.chapters) {
+              return previous;
+            }
+
+            const nextChapters = previous.chapters.map((existingChapter) =>
+              existingChapter.id === chapter.id
+                ? {
+                    ...existingChapter,
+                    color: chapter.color,
+                    updatedAt: chapter.updatedAt
+                  }
+                : existingChapter
+            );
+
+            return {
+              ...previous,
+              chapters: nextChapters
+            };
+          }
+        );
+
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStoryId] });
+        }, 750);
+      }
     }
   });
 }

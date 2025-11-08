@@ -937,7 +937,7 @@ function renderSnippetsList() {
   newSnippetBtn.appendChild(newSnippetIcon);
   newSnippetBtn.appendChild(newSnippetText);
   newSnippetBtn.addEventListener('click', async () => {
-    await createNewSnippet();
+    await createNewReferenceSnippet();
   });
   listEl.appendChild(newSnippetBtn);
 }
@@ -1888,7 +1888,7 @@ function handleKeyboardShortcuts(e) {
   // Cmd/Ctrl+N = new snippet
   if (cmdOrCtrl && e.key === 'n' && !e.shiftKey) {
     e.preventDefault();
-    createNewSnippet();
+    createNewChapterSnippet();
   }
 
   // Cmd/Ctrl+Shift+N = new group
@@ -1918,7 +1918,7 @@ function handleKeyboardShortcuts(e) {
   }
 }
 
-async function createNewSnippet() {
+async function createNewChapterSnippet() {
   const activeGroupId = state.project.groupIds[0] || null;
   if (!activeGroupId) {
     // Create a default group first
@@ -2579,13 +2579,14 @@ function handleMidnightRollover() {
 
 // Export for global access
 window.addSnippetToGroup = addSnippetToGroup;
+window.createNewChapterSnippet = createNewChapterSnippet;
 
 // ============================================
 // Snippets Management (People/Places/Things)
 // ============================================
 
 // Create a new snippet (People/Places/Things) based on the active tab
-async function createNewSnippet() {
+async function createNewReferenceSnippet() {
   const activeTab = state.project.activeRightTab;
   
   // Map tab names to snippet kinds
@@ -2676,7 +2677,9 @@ async function createNewSnippet() {
 }
 
 // Export for global access
-window.createNewSnippet = createNewSnippet;
+window.createNewReferenceSnippet = createNewReferenceSnippet;
+// Backward compatibility for existing HTML hooks or legacy scripts
+window.createNewSnippet = createNewReferenceSnippet;
 
 // ============================================
 // Color Picker
