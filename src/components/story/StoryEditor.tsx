@@ -425,15 +425,12 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         sx={{
           flex: 1,
           borderRadius: 3,
-          border: `1px solid ${theme.palette.divider}`,
-          backgroundColor:
-            theme.palette.mode === "dark"
-              ? theme.palette.background.default
-              : theme.palette.grey[200],
+          backgroundColor: "#E9E9EB",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          position: "relative"
+          position: "relative",
+          boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.04)"
         }}
       >
         <Box
