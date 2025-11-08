@@ -1,12 +1,25 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { editorLoader, storiesLoader } from "./loaders";
 import { getQueryClient } from "./queryClient";
-import { LoginPage } from "../components/auth/LoginPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
-import { AppLayout } from "../components/layout/AppLayout";
-import { StoriesPage } from "../components/stories/StoriesPage";
+
+const LoginPage = lazy(async () => {
+  const module = await import("../components/auth/LoginPage");
+  return { default: module.LoginPage };
+});
+
+const StoriesPage = lazy(async () => {
+  const module = await import("../components/stories/StoriesPage");
+  return { default: module.StoriesPage };
+});
+
+const AppLayout = lazy(async () => {
+  const module = await import("../components/layout/AppLayout");
+  return { default: module.AppLayout };
+});
 
 // Get shared query client instance
 const queryClient = getQueryClient();

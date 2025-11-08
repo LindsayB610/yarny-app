@@ -6,9 +6,9 @@ import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } 
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
+import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
-import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { StorySidebarContent } from "../story/StorySidebarContent";
 import { StorySidebarHeader } from "../story/StorySidebarHeader";
 

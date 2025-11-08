@@ -6,12 +6,13 @@ import { StoryCard } from "./StoryCard";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 
 interface VirtualizedStoryListProps {
-  stories: (StoryFolder & { searchQuery?: string })[];
+  stories: StoryFolder[];
   /**
    * Threshold for enabling virtualization. If stories.length >= threshold, virtualization is enabled.
    * Default: 20 stories
    */
   virtualizationThreshold?: number;
+  searchQuery?: string;
 }
 
 /**
@@ -21,7 +22,8 @@ interface VirtualizedStoryListProps {
  */
 export function VirtualizedStoryList({
   stories,
-  virtualizationThreshold = 20
+  virtualizationThreshold = 20,
+  searchQuery = ""
 }: VirtualizedStoryListProps): JSX.Element {
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
@@ -76,7 +78,7 @@ export function VirtualizedStoryList({
         }}
       >
         {stories.map((story) => (
-          <StoryCard key={story.id} story={story} searchQuery={story.searchQuery} />
+          <StoryCard key={story.id} story={story} searchQuery={searchQuery} />
         ))}
       </Box>
     );
@@ -142,7 +144,7 @@ export function VirtualizedStoryList({
               }}
             >
               {rowStories.map((story) => (
-                <StoryCard key={story.id} story={story} searchQuery={story.searchQuery} />
+                <StoryCard key={story.id} story={story} searchQuery={searchQuery} />
               ))}
             </Box>
           );

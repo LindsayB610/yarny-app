@@ -11,9 +11,9 @@ import {
   type KeyboardEvent
 } from "react";
 
+import { ColorPicker } from "./ColorPicker";
 import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
 import { SortableSnippetList, type Snippet as SortableSnippet } from "./SortableSnippetList";
-import { ColorPicker } from "./ColorPicker";
 import {
   useMoveSnippetToChapterMutation,
   useReorderChaptersMutation,

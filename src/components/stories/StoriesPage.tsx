@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from "@mui/material";
-import { useState, type JSX } from "react";
+import { useMemo, useState, type JSX } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
@@ -21,10 +21,13 @@ export function StoriesPage(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter stories based on search query
-  const filteredStories =
-    stories?.filter((story) =>
-      story.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) || [];
+  const filteredStories = useMemo(
+    () =>
+      stories?.filter((story) =>
+        story.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ) || [],
+    [stories, searchQuery]
+  );
 
   // Check if Drive is authorized (for now, assume authorized if we can fetch stories)
   // TODO: Add proper Drive auth check
@@ -85,12 +88,7 @@ export function StoriesPage(): JSX.Element {
           ) : filteredStories.length === 0 ? (
             <EmptyState onNewStory={() => setIsNewStoryModalOpen(true)} />
           ) : (
-            <VirtualizedStoryList
-              stories={filteredStories.map((story) => ({
-                ...story,
-                searchQuery
-              }))}
-            />
+            <VirtualizedStoryList stories={filteredStories} searchQuery={searchQuery} />
           )}
         </Box>
       </Container>

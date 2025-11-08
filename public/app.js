@@ -250,6 +250,7 @@ async function initializeGoogleSignIn() {
       client_id: googleClientId,
       callback: handleGoogleSignIn,
       auto_select: false,
+      clientId: googleClientId,
       cancel_on_tap_outside: true,
       itp_support: true, // Intelligent Tracking Prevention support
       use_fedcm_for_prompt: true, // Enable FedCM

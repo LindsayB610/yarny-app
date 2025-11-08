@@ -6,7 +6,7 @@ import {
   ListItemText,
   Typography
 } from "@mui/material";
-import { type JSX } from "react";
+import { memo, useMemo, type JSX } from "react";
 
 import { StoryTabs, type TabItem } from "./StoryTabs";
 import { useNotesQuery, type NoteType } from "../../hooks/useNotesQuery";
@@ -19,7 +19,7 @@ interface NotesListProps {
   noteType: NoteType;
 }
 
-function NotesList({ notes, isLoading, noteType }: NotesListProps): JSX.Element {
+const NotesList = memo(function NotesList({ notes, isLoading, noteType }: NotesListProps): JSX.Element {
   if (isLoading) {
     return (
       <Box
@@ -90,7 +90,7 @@ function NotesList({ notes, isLoading, noteType }: NotesListProps): JSX.Element 
       ))}
     </List>
   );
-}
+});
 
 export function NotesSidebar(): JSX.Element {
   const story = useYarnyStore(selectActiveStory);
@@ -101,6 +101,52 @@ export function NotesSidebar(): JSX.Element {
   const peopleQuery = useNotesQuery(storyFolderId, "people", Boolean(story));
   const placesQuery = useNotesQuery(storyFolderId, "places", Boolean(story));
   const thingsQuery = useNotesQuery(storyFolderId, "things", Boolean(story));
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        id: "people",
+        label: "People",
+        content: (
+          <NotesList
+            notes={peopleQuery.data || []}
+            isLoading={peopleQuery.isLoading}
+            noteType="people"
+          />
+        )
+      },
+      {
+        id: "places",
+        label: "Places",
+        content: (
+          <NotesList
+            notes={placesQuery.data || []}
+            isLoading={placesQuery.isLoading}
+            noteType="places"
+          />
+        )
+      },
+      {
+        id: "things",
+        label: "Things",
+        content: (
+          <NotesList
+            notes={thingsQuery.data || []}
+            isLoading={thingsQuery.isLoading}
+            noteType="things"
+          />
+        )
+      }
+    ],
+    [
+      peopleQuery.data,
+      peopleQuery.isLoading,
+      placesQuery.data,
+      placesQuery.isLoading,
+      thingsQuery.data,
+      thingsQuery.isLoading
+    ]
+  );
 
   if (!story) {
     return (
@@ -120,42 +166,6 @@ export function NotesSidebar(): JSX.Element {
       </Box>
     );
   }
-
-  const tabs: TabItem[] = [
-    {
-      id: "people",
-      label: "People",
-      content: (
-        <NotesList
-          notes={peopleQuery.data || []}
-          isLoading={peopleQuery.isLoading}
-          noteType="people"
-        />
-      )
-    },
-    {
-      id: "places",
-      label: "Places",
-      content: (
-        <NotesList
-          notes={placesQuery.data || []}
-          isLoading={placesQuery.isLoading}
-          noteType="places"
-        />
-      )
-    },
-    {
-      id: "things",
-      label: "Things",
-      content: (
-        <NotesList
-          notes={thingsQuery.data || []}
-          isLoading={thingsQuery.isLoading}
-          noteType="things"
-        />
-      )
-    }
-  ];
 
   return (
     <Box
