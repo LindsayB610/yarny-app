@@ -86,23 +86,120 @@ export const ACCENT_COLORS = [
 ] as const;
 
 /**
- * Generate soft variant of a color (lighter, more transparent)
- * This is a simple approximation - actual soft variants may need manual definition
+ * Normalize a hex color string to the format #RRGGBB
  */
-export function getSoftVariant(color: string): string {
-  // For now, return a semi-transparent version
-  // In practice, soft variants should be manually defined for best results
-  return color; // Placeholder - should be replaced with actual soft variants
+function normalizeHex(color: string, fallback = "#000000"): string {
+  if (!color) {
+    return fallback;
+  }
+
+  let hex = color.trim().replace("#", "");
+
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  if (hex.length !== 6 || !/^[0-9A-Fa-f]{6}$/.test(hex)) {
+    return fallback;
+  }
+
+  return `#${hex.toUpperCase()}`;
 }
 
 /**
- * Generate dark variant of a color (darker)
- * This is a simple approximation - actual dark variants may need manual definition
+ * Blend two colors together
+ */
+function blendColors(color1: string, color2: string, amount: number): string {
+  const ratio = Math.min(Math.max(amount, 0), 1);
+  const c1 = normalizeHex(color1);
+  const c2 = normalizeHex(color2);
+
+  const r1 = parseInt(c1.substring(1, 3), 16);
+  const g1 = parseInt(c1.substring(3, 5), 16);
+  const b1 = parseInt(c1.substring(5, 7), 16);
+
+  const r2 = parseInt(c2.substring(1, 3), 16);
+  const g2 = parseInt(c2.substring(3, 5), 16);
+  const b2 = parseInt(c2.substring(5, 7), 16);
+
+  const r = Math.round(r1 + (r2 - r1) * ratio);
+  const g = Math.round(g1 + (g2 - g1) * ratio);
+  const b = Math.round(b1 + (b2 - b1) * ratio);
+
+  return `#${[r, g, b]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase()}`;
+}
+
+export function lightenColor(color: string, amount = 0.2): string {
+  return blendColors(color, "#FFFFFF", amount);
+}
+
+export function darkenColor(color: string, amount = 0.2): string {
+  return blendColors(color, "#000000", amount);
+}
+
+/**
+ * Generate soft variant of a color (lighter, more transparent)
+ */
+export function getSoftVariant(color: string): string {
+  // Blend heavily with white to create a soft pastel background
+  return lightenColor(color, 0.75);
+}
+
+/**
+ * Generate dark variant of a color (darker) for hover states
  */
 export function getDarkVariant(color: string): string {
-  // For now, return a darker version
-  // In practice, dark variants should be manually defined for best results
-  return color; // Placeholder - should be replaced with actual dark variants
+  return darkenColor(color, 0.25);
+}
+
+const DEFAULT_LIGHT_TEXT = "#FFFFFF";
+const DEFAULT_DARK_TEXT = "#0F172A";
+
+/**
+ * Select a readable text color (light or dark) for a given background
+ */
+export function getReadableTextColor(
+  background: string,
+  {
+    light = DEFAULT_LIGHT_TEXT,
+    dark = DEFAULT_DARK_TEXT,
+    minimumRatio = 4.5
+  }: {
+    light?: string;
+    dark?: string;
+    minimumRatio?: number;
+  } = {}
+): string {
+  const bg = normalizeHex(background);
+  const lightColor = normalizeHex(light);
+  const darkColor = normalizeHex(dark);
+
+  const lightRatio = getContrastRatio(lightColor, bg);
+  const darkRatio = getContrastRatio(darkColor, bg);
+
+  const lightMeets = lightRatio >= minimumRatio;
+  const darkMeets = darkRatio >= minimumRatio;
+
+  if (lightMeets && darkMeets) {
+    return lightRatio >= darkRatio ? lightColor : darkColor;
+  }
+
+  if (lightMeets) {
+    return lightColor;
+  }
+
+  if (darkMeets) {
+    return darkColor;
+  }
+
+  // Fallback to the color with higher contrast even if it doesn't meet the minimum ratio
+  return lightRatio >= darkRatio ? lightColor : darkColor;
 }
 
 /**

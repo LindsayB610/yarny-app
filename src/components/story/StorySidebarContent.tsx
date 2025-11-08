@@ -1,13 +1,24 @@
-import { Add, ExpandMore, ChevronRight, Description } from "@mui/icons-material";
+import { Add, ExpandMore, ChevronRight, Description, MoreVert } from "@mui/icons-material";
 import { Box, Collapse, IconButton, Typography } from "@mui/material";
-import { useState, useRef, useEffect, useCallback, useMemo, type JSX } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  type JSX,
+  type MouseEvent,
+  type KeyboardEvent
+} from "react";
 
 import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
 import { SortableSnippetList, type Snippet as SortableSnippet } from "./SortableSnippetList";
+import { ColorPicker } from "./ColorPicker";
 import {
   useMoveSnippetToChapterMutation,
   useReorderChaptersMutation,
-  useReorderSnippetsMutation
+  useReorderSnippetsMutation,
+  useUpdateChapterColorMutation
 } from "../../hooks/useStoryMutations";
 import { useVisibilityGatedSnippetQueries } from "../../hooks/useVisibilityGatedQueries";
 import { useYarnyStore } from "../../store/provider";
@@ -17,6 +28,11 @@ import {
   selectActiveStorySnippets,
   selectSnippetsForChapter
 } from "../../store/selectors";
+import {
+  darkenColor,
+  getReadableTextColor,
+  getSoftVariant
+} from "../../utils/contrastChecker";
 
 interface StorySidebarContentProps {
   onSnippetClick?: (snippetId: string) => void;
@@ -31,11 +47,16 @@ export function StorySidebarContent({
   const chapters = useYarnyStore(selectActiveStoryChapters);
   const allSnippets = useYarnyStore(selectActiveStorySnippets);
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(new Set());
+  const [colorPickerState, setColorPickerState] = useState<{
+    chapterId: string;
+    anchorEl: HTMLElement | null;
+  } | null>(null);
 
   // Mutations
   const reorderChaptersMutation = useReorderChaptersMutation();
   const reorderSnippetsMutation = useReorderSnippetsMutation();
   const moveSnippetMutation = useMoveSnippetToChapterMutation();
+  const updateChapterColorMutation = useUpdateChapterColorMutation();
 
   // Build fileIds map for visibility gating
   const snippetIds = useMemo(() => allSnippets.map((s) => s.id), [allSnippets]);
@@ -80,6 +101,52 @@ export function StorySidebarContent({
     moveSnippetMutation.mutate({ snippetId, targetChapterId });
   }, [moveSnippetMutation]);
 
+  const handleOpenColorPicker = useCallback(
+    (chapterId: string, event: MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      setColorPickerState({
+        chapterId,
+        anchorEl: event.currentTarget
+      });
+    },
+    []
+  );
+
+  const handleColorPickerKeyDown = useCallback(
+    (chapterId: string, event: KeyboardEvent<HTMLElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        event.stopPropagation();
+        setColorPickerState({
+          chapterId,
+          anchorEl: event.currentTarget as HTMLElement
+        });
+      }
+    },
+    []
+  );
+
+  const handleCloseColorPicker = useCallback(() => {
+    setColorPickerState(null);
+  }, []);
+
+  const handleColorSelect = useCallback((color: string) => {
+    if (!colorPickerState) {
+      return;
+    }
+    updateChapterColorMutation.mutate({
+      chapterId: colorPickerState.chapterId,
+      color
+    });
+  }, [colorPickerState, updateChapterColorMutation]);
+
+  const activeChapterForPicker = useMemo(() => {
+    if (!colorPickerState) {
+      return null;
+    }
+    return chapters.find((chapter) => chapter.id === colorPickerState.chapterId) ?? null;
+  }, [chapters, colorPickerState]);
+
   // Convert store chapters to SortableChapter format
   const sortableChapters: SortableChapter[] = useMemo(
     () => chapters.map((chapter) => ({
@@ -94,6 +161,11 @@ export function StorySidebarContent({
   // Render a single chapter
   const renderChapter = (chapter: SortableChapter): JSX.Element => {
     const isCollapsed = collapsedChapters.has(chapter.id);
+    const baseColor = chapter.color || "#3B82F6";
+    const headerTextColor = getReadableTextColor(baseColor);
+    const headerHoverColor = darkenColor(baseColor, 0.1);
+    const iconHoverColor =
+      headerTextColor === "#FFFFFF" ? "rgba(255, 255, 255, 0.16)" : "rgba(15, 23, 42, 0.12)";
 
     return (
       <Box
@@ -113,10 +185,11 @@ export function StorySidebarContent({
             alignItems: "center",
             gap: 1,
             p: 1,
-            bgcolor: "background.default",
+            bgcolor: baseColor,
+            color: headerTextColor,
             cursor: "pointer",
             "&:hover": {
-              bgcolor: "action.hover"
+              bgcolor: headerHoverColor
             }
           }}
           onClick={() => toggleChapterCollapse(chapter.id)}
@@ -127,24 +200,20 @@ export function StorySidebarContent({
               e.stopPropagation();
               toggleChapterCollapse(chapter.id);
             }}
-            sx={{ p: 0.5 }}
+            sx={{
+              p: 0.5,
+              color: headerTextColor,
+              "&:hover": {
+                bgcolor: iconHoverColor
+              }
+            }}
           >
             {isCollapsed ? <ChevronRight fontSize="small" /> : <ExpandMore fontSize="small" />}
           </IconButton>
-          <Box
-            sx={{
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              bgcolor: chapter.color || "#3B82F6",
-              flexShrink: 0
-            }}
-            data-testid={`chapter-color-${chapter.id}`}
-          />
-          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 600, color: "inherit" }}>
             {chapter.title}
           </Typography>
-          <ChapterSnippetCount chapterId={chapter.id} />
+          <ChapterSnippetCount chapterId={chapter.id} textColor={headerTextColor} />
           <IconButton
             size="small"
             onClick={(e) => {
@@ -152,9 +221,31 @@ export function StorySidebarContent({
               // TODO: Open add snippet dialog
               console.log("Add snippet to chapter", chapter.id);
             }}
-            sx={{ p: 0.5 }}
+            sx={{
+              p: 0.5,
+              color: headerTextColor,
+              "&:hover": {
+                bgcolor: iconHoverColor
+              }
+            }}
           >
             <Add fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            data-testid={`chapter-color-${chapter.id}`}
+            aria-label="Chapter options"
+            onClick={(event) => handleOpenColorPicker(chapter.id, event)}
+            onKeyDown={(event) => handleColorPickerKeyDown(chapter.id, event)}
+            sx={{
+              p: 0.5,
+              color: headerTextColor,
+              "&:hover": {
+                bgcolor: iconHoverColor
+              }
+            }}
+          >
+            <MoreVert fontSize="small" />
           </IconButton>
         </Box>
 
@@ -163,6 +254,7 @@ export function StorySidebarContent({
           <Box sx={{ p: 0.5 }}>
             <ChapterSnippetList
               chapterId={chapter.id}
+              chapterColor={baseColor}
               onReorder={handleSnippetReorder(chapter.id)}
               onMoveToChapter={handleSnippetMoveToChapter}
               onSnippetClick={onSnippetClick}
@@ -196,15 +288,28 @@ export function StorySidebarContent({
         onReorder={handleChapterReorder}
         renderChapter={renderChapter}
       />
+      <ColorPicker
+        open={Boolean(colorPickerState)}
+        anchorEl={colorPickerState?.anchorEl ?? null}
+        currentColor={activeChapterForPicker?.color}
+        onClose={handleCloseColorPicker}
+        onColorSelect={handleColorSelect}
+      />
     </Box>
   );
 }
 
 // Helper component to get snippets for a chapter (needed because hooks can't be called conditionally)
-function ChapterSnippetCount({ chapterId }: { chapterId: string }): JSX.Element {
+function ChapterSnippetCount({
+  chapterId,
+  textColor
+}: {
+  chapterId: string;
+  textColor?: string;
+}): JSX.Element {
   const snippets = useYarnyStore((state) => selectSnippetsForChapter(state, chapterId));
   return (
-    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+    <Typography variant="caption" sx={{ color: textColor ?? "text.secondary" }}>
       {snippets.length} {snippets.length === 1 ? "snippet" : "snippets"}
     </Typography>
   );
@@ -213,6 +318,7 @@ function ChapterSnippetCount({ chapterId }: { chapterId: string }): JSX.Element 
 // Helper component to render snippet list for a chapter
 function ChapterSnippetList({
   chapterId,
+  chapterColor,
   onReorder,
   onMoveToChapter,
   onSnippetClick,
@@ -220,6 +326,7 @@ function ChapterSnippetList({
   registerElement
 }: {
   chapterId: string;
+  chapterColor: string;
   onReorder: (newOrder: string[]) => void;
   onMoveToChapter?: (snippetId: string, targetChapterId: string) => void;
   onSnippetClick?: (snippetId: string) => void;
@@ -249,6 +356,7 @@ function ChapterSnippetList({
           isActive={activeSnippetId === snippet.id}
           onClick={() => onSnippetClick?.(snippet.id)}
           registerElement={registerElement}
+          chapterColor={chapterColor}
         />
       )}
     />
@@ -262,7 +370,8 @@ function SnippetItem({
   wordCount,
   isActive,
   onClick,
-  registerElement
+  registerElement,
+  chapterColor
 }: {
   snippetId: string;
   title: string;
@@ -270,6 +379,7 @@ function SnippetItem({
   isActive: boolean;
   onClick: () => void;
   registerElement: (snippetId: string, element: HTMLElement | null) => void;
+  chapterColor: string;
 }): JSX.Element {
   const elementRef = useRef<HTMLDivElement>(null);
 
@@ -281,6 +391,12 @@ function SnippetItem({
       registerElement(snippetId, null);
     };
   }, [snippetId, registerElement]);
+
+  const softColor = getSoftVariant(chapterColor);
+  const snippetHoverColor = darkenColor(softColor, 0.08);
+  const snippetActiveColor = darkenColor(softColor, 0.16);
+  const snippetBorderColor = darkenColor(softColor, 0.2);
+  const snippetTextColor = getReadableTextColor(softColor, { minimumRatio: 4 });
 
   return (
     <Box
@@ -294,26 +410,30 @@ function SnippetItem({
         p: 1,
         borderRadius: 1,
         cursor: "pointer",
-        bgcolor: isActive ? "action.selected" : "transparent",
+        bgcolor: isActive ? snippetActiveColor : softColor,
+        color: snippetTextColor,
+        border: "1px solid",
+        borderColor: isActive ? darkenColor(chapterColor, 0.25) : snippetBorderColor,
         "&:hover": {
-          bgcolor: "action.hover"
+          bgcolor: isActive ? snippetActiveColor : snippetHoverColor
         }
       }}
     >
-      <Description fontSize="small" sx={{ color: "text.secondary" }} />
+      <Description fontSize="small" sx={{ color: snippetTextColor, opacity: 0.85 }} />
       <Typography
         variant="body2"
         sx={{
           flex: 1,
           overflow: "hidden",
           textOverflow: "ellipsis",
-          whiteSpace: "nowrap"
+          whiteSpace: "nowrap",
+          color: "inherit"
         }}
       >
         {title}
       </Typography>
       {wordCount !== undefined && (
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography variant="caption" sx={{ color: snippetTextColor, opacity: 0.7 }}>
           {wordCount}
         </Typography>
       )}

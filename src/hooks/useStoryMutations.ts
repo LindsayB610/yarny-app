@@ -182,6 +182,58 @@ export function useDeleteStory() {
 }
 
 /**
+ * Hook for updating a chapter's color
+ */
+export function useUpdateChapterColorMutation() {
+  const queryClient = useQueryClient();
+  const activeStory = useYarnyStore(selectActiveStory);
+  const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+
+  return useMutation({
+    mutationFn: async ({
+      chapterId,
+      color
+    }: {
+      chapterId: string;
+      color: string;
+    }) => {
+      if (!activeStory) {
+        throw new Error("No active story selected");
+      }
+
+      const { data, fileId } = await readDataJson(activeStory.driveFileId);
+
+      if (!data.groups || !data.groups[chapterId]) {
+        throw new Error("Chapter not found in data.json");
+      }
+
+      const chapter = data.groups[chapterId];
+      const updatedAt = new Date().toISOString();
+
+      chapter.color = color;
+      chapter.updatedAt = updatedAt;
+
+      await writeDataJson(activeStory.driveFileId, data, fileId);
+
+      return {
+        id: chapter.id ?? chapterId,
+        storyId: activeStory.id,
+        title: chapter.title ?? "Untitled",
+        color: chapter.color,
+        order: chapter.position ?? 0,
+        snippetIds: chapter.snippetIds ?? [],
+        driveFolderId: chapter.driveFolderId ?? "",
+        updatedAt
+      };
+    },
+    onSuccess: (chapter) => {
+      upsertEntities({ chapters: [chapter] });
+      queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
+    }
+  });
+}
+
+/**
  * Hook for refreshing stories list
  */
 export function useRefreshStories() {

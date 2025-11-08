@@ -6,10 +6,9 @@ import { useDriveProjectsQuery, useSelectedProjectStories } from "../../hooks/us
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
-import { ProjectList } from "../navigation/ProjectList";
-import { StoryList } from "../navigation/StoryList";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
+import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { StorySidebarContent } from "../story/StorySidebarContent";
 import { StorySidebarHeader } from "../story/StorySidebarHeader";
 
@@ -90,13 +89,9 @@ export function AppLayout(): JSX.Element {
           flexDirection: "column"
         }}
       >
-        <Stack spacing={1} sx={{ flex: 1, py: 3, overflow: "hidden" }}>
-          <Box sx={{ px: 2 }}>
-            <ProjectList />
-          </Box>
-          <Divider />
-          <Box sx={{ px: 2 }}>
-            <StoryList />
+        <Stack spacing={0} sx={{ flex: 1, py: 3, overflow: "hidden" }}>
+          <Box sx={{ px: 2, pb: 2 }}>
+            <BackToStoriesLink />
           </Box>
           <Divider />
           <Box sx={{ flex: 1, overflow: "auto" }}>
