@@ -1,5 +1,6 @@
 import type { LocalBackupError } from "../../store/localBackupStore";
 import { localBackupStore } from "../../store/localBackupStore";
+import type { Chapter, Snippet, Story, YarnyState } from "../../store/types";
 import { LocalFsPathResolver, type NoteCategory } from "./LocalFsPathResolver";
 import type { LocalFsRepository } from "./LocalFsRepository";
 
@@ -196,6 +197,131 @@ export async function mirrorStoryFolderEnsure(storyId: string): Promise<MirrorRe
   return runWithRepository(storyId, async () => {
     // ensureStory is called in runWithRepository
   });
+}
+
+const buildStoryDocumentFromState = (story: Story, state: YarnyState): string => {
+  const contents: string[] = [];
+  story.chapterIds.forEach((chapterId) => {
+    const chapter = state.entities.chapters[chapterId];
+    if (!chapter) {
+      return;
+    }
+    chapter.snippetIds.forEach((snippetId) => {
+      const snippet = state.entities.snippets[snippetId];
+      if (snippet?.content) {
+        contents.push(snippet.content);
+      }
+    });
+  });
+  return contents.join("\n\n");
+};
+
+const buildProjectJsonFromState = (story: Story, state: YarnyState) => ({
+  name: story.title,
+  groupIds: story.chapterIds,
+  projectId: story.projectId,
+  updatedAt: story.updatedAt,
+  chapterCount: story.chapterIds.length,
+  snippetCount: story.chapterIds.reduce((count, chapterId) => {
+    const chapter = state.entities.chapters[chapterId];
+    return count + (chapter?.snippetIds.length ?? 0);
+  }, 0)
+});
+
+const buildDataJsonFromState = (story: Story, state: YarnyState) => {
+  const groups: Record<string, unknown> = {};
+  const snippets: Record<string, unknown> = {};
+
+  story.chapterIds.forEach((chapterId, index) => {
+    const chapter = state.entities.chapters[chapterId];
+    if (!chapter) {
+      return;
+    }
+
+    groups[chapterId] = {
+      id: chapter.id,
+      storyId: chapter.storyId,
+      title: chapter.title,
+      position: typeof chapter.order === "number" ? chapter.order : index,
+      order: typeof chapter.order === "number" ? chapter.order : index,
+      snippetIds: chapter.snippetIds,
+      updatedAt: chapter.updatedAt
+    };
+
+    chapter.snippetIds.forEach((snippetId, snippetIndex) => {
+      const snippet = state.entities.snippets[snippetId];
+      if (!snippet) {
+        return;
+      }
+      snippets[snippetId] = {
+        id: snippet.id,
+        storyId: snippet.storyId,
+        chapterId: snippet.chapterId,
+        groupId: snippet.chapterId,
+        order:
+          typeof snippet.order === "number" ? snippet.order : snippetIndex,
+        content: snippet.content,
+        body: snippet.content,
+        updatedAt: snippet.updatedAt
+      };
+    });
+  });
+
+  return {
+    groups,
+    snippets
+  };
+};
+
+export async function refreshAllStoriesToLocal(state: YarnyState): Promise<MirrorResult> {
+  const store = localBackupStore.getState();
+  store.setRefreshStatus("running", "Refreshing local backups...");
+
+  if (!shouldMirror()) {
+    store.setRefreshStatus("error", "Enable local backups before running a full refresh.");
+    return { success: false, skipped: true };
+  }
+
+  try {
+    for (const story of Object.values(state.entities.stories)) {
+      if (!story?.id) {
+        continue;
+      }
+
+      await mirrorStoryFolderEnsure(story.id);
+
+      const projectJson = JSON.stringify(buildProjectJsonFromState(story, state), null, 2);
+      await mirrorProjectJsonWrite(story.id, projectJson);
+
+      const dataJson = JSON.stringify(buildDataJsonFromState(story, state), null, 2);
+      await mirrorDataJsonWrite(story.id, dataJson);
+
+      const documentContent = buildStoryDocumentFromState(story, state);
+      await mirrorStoryDocument(story.id, documentContent);
+
+      const chapterIds = state.entities.stories[story.id]?.chapterIds ?? [];
+      for (const chapterId of chapterIds) {
+        const chapter: Chapter | undefined = state.entities.chapters[chapterId];
+        if (!chapter) {
+          continue;
+        }
+        for (const snippetId of chapter.snippetIds) {
+          const snippet: Snippet | undefined = state.entities.snippets[snippetId];
+          if (!snippet) {
+            continue;
+          }
+          await mirrorSnippetWrite(story.id, snippet.id, snippet.content ?? "");
+        }
+      }
+    }
+
+    store.setRefreshStatus("success", "Local backups refreshed successfully.");
+    return { success: true };
+  } catch (error) {
+    recordFailure(error);
+    store.setRefreshStatus("error", getErrorMessage(error));
+    return { success: false, error };
+  }
 }
 
 

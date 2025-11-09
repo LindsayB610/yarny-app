@@ -17,7 +17,10 @@ export function useLocalBackups() {
     rootHandle,
     repository,
     error,
-    lastSyncedAt
+    lastSyncedAt,
+    refreshStatus,
+    refreshMessage,
+    refreshCompletedAt
   } = useLocalBackupStore((state) => ({
     enabled: state.enabled,
     isSupported: state.isSupported,
@@ -26,7 +29,10 @@ export function useLocalBackups() {
     rootHandle: state.rootHandle,
     repository: state.repository,
     error: state.error,
-    lastSyncedAt: state.lastSyncedAt
+    lastSyncedAt: state.lastSyncedAt,
+    refreshStatus: state.refreshStatus,
+    refreshMessage: state.refreshMessage,
+    refreshCompletedAt: state.refreshCompletedAt
   }));
 
   const storeApi = useLocalBackupStoreApi();
@@ -131,6 +137,13 @@ export function useLocalBackups() {
     }
   }, [createError, storeApi]);
 
+  const setRefreshStatus = useCallback(
+    (status: "idle" | "running" | "success" | "error", message?: string | null) => {
+      storeApi.getState().setRefreshStatus(status, message);
+    },
+    [storeApi]
+  );
+
   return {
     enabled,
     isSupported,
@@ -140,6 +153,10 @@ export function useLocalBackups() {
     repository,
     error,
     lastSyncedAt,
+    refreshStatus,
+    refreshMessage,
+    refreshCompletedAt,
+    setRefreshStatus,
     enableLocalBackups,
     disableLocalBackups,
     refreshPermission,

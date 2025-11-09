@@ -11,9 +11,12 @@ import {
   Tooltip,
   Typography
 } from "@mui/material";
-import { type ChangeEvent, useState } from "react";
+import type { AlertColor } from "@mui/material";
+import { type ChangeEvent, useEffect, useState } from "react";
 
 import { useLocalBackups } from "../../hooks/useLocalBackups";
+import { useYarnyStoreApi } from "../../store/provider";
+import { refreshAllStoriesToLocal } from "../../services/localFs/localBackupMirror";
 
 export function StorageSettingsSection(): JSX.Element {
   const {
@@ -23,14 +26,20 @@ export function StorageSettingsSection(): JSX.Element {
     permission,
     lastSyncedAt,
     error,
+    refreshStatus,
+    refreshMessage,
+    refreshCompletedAt,
+    setRefreshStatus,
     enableLocalBackups,
     disableLocalBackups,
     refreshPermission,
     openLocalFolder
   } = useLocalBackups();
+  const yarnyStore = useYarnyStoreApi();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusSeverity, setStatusSeverity] = useState<AlertColor>("info");
 
   const runEnable = async () => {
     if (isProcessing) {
@@ -43,8 +52,10 @@ export function StorageSettingsSection(): JSX.Element {
     try {
       const result = await enableLocalBackups();
       if (result.success) {
+        setStatusSeverity("info");
         setStatusMessage("Local backups enabled. Files will mirror Drive saves.");
       } else if (!isSupported) {
+        setStatusSeverity("error");
         setStatusMessage("Local backups are not supported in this browser.");
       }
     } finally {
@@ -62,6 +73,7 @@ export function StorageSettingsSection(): JSX.Element {
 
     try {
       await disableLocalBackups();
+      setStatusSeverity("info");
       setStatusMessage("Local backups disabled and folder disconnected.");
     } finally {
       setIsProcessing(false);
@@ -102,8 +114,72 @@ export function StorageSettingsSection(): JSX.Element {
     }
   };
 
+  const handleRefreshAll = () => {
+    if (refreshStatus === "running") {
+      return;
+    }
+    if (!enabled || permission !== "granted") {
+      setStatusSeverity("error");
+      setStatusMessage("Enable local backups before running a full refresh.");
+      return;
+    }
+
+    const yarnyState = yarnyStore.getState();
+
+    setStatusSeverity("info");
+    setStatusMessage(
+      "Refreshing local backups. This may take a few minutes; you can continue writing while it completes."
+    );
+    setRefreshStatus("running", "Refreshing local backups...");
+
+    void (async () => {
+      try {
+        const result = await refreshAllStoriesToLocal(yarnyState);
+        if (result.skipped) {
+          setRefreshStatus(
+            "error",
+            "Local backups must remain enabled to run a full refresh."
+          );
+        } else if (!result.success) {
+          setRefreshStatus(
+            "error",
+            "Unable to refresh local backups. Check the banner for details."
+          );
+        }
+      } catch (error) {
+        console.error("[StorageSettingsSection] Refresh local backups failed", error);
+        setRefreshStatus(
+          "error",
+          "Unexpected error while refreshing local backups."
+        );
+      }
+    })();
+  };
+
+  useEffect(() => {
+    if (refreshStatus === "running") {
+      setStatusSeverity("info");
+      setStatusMessage(
+        "Refreshing local backups. This may take a few minutes; you can continue writing while it completes."
+      );
+    } else if (refreshStatus === "success") {
+      setStatusSeverity("success");
+      const timestamp = refreshCompletedAt
+        ? new Date(refreshCompletedAt).toLocaleString()
+        : new Date().toLocaleString();
+      setStatusMessage(`Local backups refreshed successfully at ${timestamp}.`);
+    } else if (refreshStatus === "error") {
+      setStatusSeverity("error");
+      setStatusMessage(
+        refreshMessage ??
+          "Unable to refresh local backups. Check the banner for details."
+      );
+    }
+  }, [refreshStatus, refreshMessage, refreshCompletedAt]);
+
   const showUnsupportedBanner = !isSupported;
   const toggleDisabled = isProcessing || !isSupported;
+  const isRefreshRunning = refreshStatus === "running";
 
   return (
     <Card variant="outlined">
@@ -185,6 +261,14 @@ export function StorageSettingsSection(): JSX.Element {
             >
               Reconnect
             </Button>
+            <Button
+              variant="outlined"
+              onClick={handleRefreshAll}
+              disabled={isRefreshRunning}
+              startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
+            >
+              Refresh Local Backups
+            </Button>
           </Stack>
 
           <Stack spacing={1}>
@@ -202,7 +286,7 @@ export function StorageSettingsSection(): JSX.Element {
           </Stack>
 
           {statusMessage ? (
-            <Alert severity="info" onClose={() => setStatusMessage(null)}>
+            <Alert severity={statusSeverity} onClose={() => setStatusMessage(null)}>
               {statusMessage}
             </Alert>
           ) : null}

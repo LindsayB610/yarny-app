@@ -18,6 +18,9 @@ export interface LocalBackupState {
   repository: LocalFsRepository | null;
   lastSyncedAt: string | null;
   error: LocalBackupError | null;
+  refreshStatus: "idle" | "running" | "success" | "error";
+  refreshMessage: string | null;
+  refreshCompletedAt: string | null;
 }
 
 export interface LocalBackupActions {
@@ -29,6 +32,10 @@ export interface LocalBackupActions {
   setRepository: (repository: LocalFsRepository | null) => void;
   setLastSyncedAt: (iso: string | null) => void;
   setError: (error: LocalBackupError | null) => void;
+  setRefreshStatus: (
+    status: "idle" | "running" | "success" | "error",
+    message?: string | null
+  ) => void;
   reset: () => void;
 }
 
@@ -40,7 +47,10 @@ const createDefaultState = (): LocalBackupState => ({
   rootHandle: null,
   repository: null,
   lastSyncedAt: null,
-  error: null
+  error: null,
+  refreshStatus: "idle",
+  refreshMessage: null,
+  refreshCompletedAt: null
 });
 
 export type LocalBackupStore = LocalBackupState & LocalBackupActions;
@@ -92,6 +102,18 @@ export const createLocalBackupStore = (initial?: Partial<LocalBackupState>) => {
       setError(error) {
         set((draft) => {
           draft.error = error;
+        });
+      },
+      setRefreshStatus(status, message = null) {
+        set((draft) => {
+          draft.refreshStatus = status;
+          draft.refreshMessage = message;
+          if (status === "success") {
+            draft.refreshCompletedAt = new Date().toISOString();
+          }
+          if (status === "idle") {
+            draft.refreshMessage = null;
+          }
         });
       },
       reset() {
