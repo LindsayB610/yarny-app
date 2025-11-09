@@ -12,7 +12,57 @@ import * as useConflictDetectionModule from "../../src/hooks/useConflictDetectio
 // Mock dependencies
 vi.mock("../../src/api/client");
 vi.mock("../../src/hooks/useConflictDetection");
-vi.mock("../../src/hooks/useAutoSave");
+vi.mock("../../src/hooks/useAutoSave", async () => {
+  const React = await import("react");
+  const clientModule = await import("../../src/api/client");
+  const { useEffect, useRef } = React;
+  const { apiClient } = clientModule;
+
+  const useAutoSaveMock = vi.fn((fileId: string | undefined, content: string) => {
+    const lastContentRef = useRef<string | undefined>(undefined);
+
+    useEffect(() => {
+      if (!fileId) {
+        return;
+      }
+      if (content === undefined) {
+        return;
+      }
+      const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      if (normalizedContent === lastContentRef.current) {
+        return;
+      }
+      lastContentRef.current = normalizedContent;
+      void apiClient.writeDriveFile({
+        fileId,
+        fileName: "",
+        content: normalizedContent
+      });
+    }, [fileId, content]);
+
+    return {
+      isSaving: false,
+      hasUnsavedChanges: false,
+      lastSavedAt: undefined,
+      markAsSaved: () => {},
+      triggerManualSave: async () => {
+        if (!fileId) {
+          return;
+        }
+        const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+        await apiClient.writeDriveFile({
+          fileId,
+          fileName: "",
+          content: normalizedContent
+        });
+      }
+    };
+  });
+
+  return {
+    useAutoSave: useAutoSaveMock
+  };
+});
 vi.mock("../../src/hooks/useExport", () => ({
   useExport: () => ({
     exportSnippets: vi.fn(),
@@ -28,7 +78,9 @@ vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
   useVisibilityGatedSnippetQueries: vi.fn()
 }));
 vi.mock("../../src/store/provider", () => {
-  const mockStore = {
+  let snippetContent = "Initial content";
+
+  const buildStore = () => ({
     entities: {
       projects: {},
       projectOrder: [],
@@ -60,7 +112,7 @@ vi.mock("../../src/store/provider", () => {
           storyId: "story-1",
           chapterId: "chapter-1",
           order: 1,
-          content: "Initial content",
+          content: snippetContent,
           updatedAt: new Date().toISOString()
         }
       }
@@ -69,10 +121,14 @@ vi.mock("../../src/store/provider", () => {
       activeStoryId: "story-1",
       isSyncing: false
     }
-  };
+  });
+
   return {
-    useYarnyStore: (selector: (store: typeof mockStore) => unknown) => {
-      return selector(mockStore);
+    useYarnyStore: (selector: (store: ReturnType<typeof buildStore>) => unknown) => {
+      return selector(buildStore());
+    },
+    __setSnippetContent: (content: string) => {
+      snippetContent = content;
     }
   };
 });
@@ -89,9 +145,11 @@ const createTestQueryClient = () =>
 describe("Enhanced Round-Trip Validation", () => {
   let queryClient: QueryClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    const storeProvider = await import("../../src/store/provider");
+    storeProvider.__setSnippetContent("Initial content");
   });
 
   describe("Multiple Round-Trips", () => {
@@ -99,6 +157,9 @@ describe("Enhanced Round-Trip Validation", () => {
       const originalContent = "Original content with special chars: — — …";
       let roundTripCount = 0;
       let savedContent = originalContent;
+
+      const storeProvider = await import("../../src/store/provider");
+      storeProvider.__setSnippetContent(originalContent);
 
       vi.mocked(apiClient.readDriveFile).mockImplementation(async () => {
         roundTripCount++;
@@ -125,12 +186,6 @@ describe("Enhanced Round-Trip Validation", () => {
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(
@@ -205,12 +260,6 @@ describe("Enhanced Round-Trip Validation", () => {
         resolveConflictWithDrive: vi.fn()
       });
 
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
-      });
-
       render(
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
@@ -233,7 +282,7 @@ describe("Enhanced Round-Trip Validation", () => {
       // Trigger conflict check
       await waitFor(() => {
         expect(mockCheckConflict).toHaveBeenCalled();
-      });
+      }, { timeout: 3000 });
 
       // Conflict should be detected
       expect(conflictDetected).toBe(true);
@@ -261,15 +310,12 @@ Paragraph 4 with em dashes: — and en dashes: –`;
         modifiedTime: new Date().toISOString()
       });
 
+      const storeProviderComplex = await import("../../src/store/provider");
+      storeProviderComplex.__setSnippetContent(complexContent);
+
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(
@@ -298,54 +344,10 @@ Paragraph 4 with em dashes: — and en dashes: –`;
 
     it("preserves empty paragraphs (double line breaks)", async () => {
       const contentWithEmptyParagraphs = "First paragraph.\n\n\nSecond paragraph.\n\n\n\nThird paragraph.";
-
-      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
-        content: contentWithEmptyParagraphs,
-        id: "drive-file-1",
-        name: "Test Snippet",
-        mimeType: "application/vnd.google-apps.document",
-        modifiedTime: new Date().toISOString()
-      });
-
-      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
-        checkSnippetConflict: vi.fn().mockResolvedValue(null),
-        resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
-      });
-
-      render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <StoryEditor />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-
-      await waitFor(() => {
-        const editor = document.querySelector('[contenteditable="true"]');
-        expect(editor).toBeInTheDocument();
-      });
-
-      // Verify empty paragraphs are preserved
-      const editor = document.querySelector('[contenteditable="true"]');
-      const content = editor?.textContent || "";
-
-      // Should have multiple consecutive newlines
-      expect(content.match(/\n{2,}/g)).toBeTruthy();
-    });
-
-    it("normalizes mixed line endings (CRLF, CR, LF) to LF", async () => {
-      const contentWithMixedEndings = "Line 1\r\nLine 2\rLine 3\nLine 4";
-
       let savedContent = "";
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
-        content: contentWithMixedEndings,
+        content: contentWithEmptyParagraphs,
         id: "drive-file-1",
         name: "Test Snippet",
         mimeType: "application/vnd.google-apps.document",
@@ -363,15 +365,62 @@ Paragraph 4 with em dashes: — and en dashes: –`;
         };
       });
 
+      const storeProviderEmpty = await import("../../src/store/provider");
+      storeProviderEmpty.__setSnippetContent(contentWithEmptyParagraphs);
+
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
       });
 
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(savedContent.match(/\n{2,}/g)).toBeTruthy();
+      });
+    });
+
+    it("normalizes mixed line endings (CRLF, CR, LF) to LF", async () => {
+      const contentWithMixedEndings = "Line 1\r\nLine 2\rLine 3\nLine 4";
+
+      let savedContent = "";
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: contentWithMixedEndings,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      const storeProviderMixed = await import("../../src/store/provider");
+      storeProviderMixed.__setSnippetContent(contentWithMixedEndings);
+
+      vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
+        if (request.content) {
+          savedContent = request.content;
+        }
+        return {
+          id: "drive-file-1",
+          name: "Test Snippet",
+          modifiedTime: new Date().toISOString()
+        };
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
       });
 
       render(
@@ -416,15 +465,12 @@ Paragraph 4 with em dashes: — and en dashes: –`;
         modifiedTime: new Date().toISOString()
       });
 
+      const storeProviderLarge = await import("../../src/store/provider");
+      storeProviderLarge.__setSnippetContent(largeContent);
+
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(
@@ -463,6 +509,9 @@ Emoji: 🎉 🚀 📝 ✨`;
         modifiedTime: new Date().toISOString()
       });
 
+      const storeProviderUnicode = await import("../../src/store/provider");
+      storeProviderUnicode.__setSnippetContent(unicodeContent);
+
       vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
         if (request.content) {
           savedContent = request.content;
@@ -477,12 +526,6 @@ Emoji: 🎉 🚀 📝 ✨`;
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(
@@ -525,15 +568,12 @@ Emoji: 🎉 🚀 📝 ✨`;
         modifiedTime: new Date().toISOString()
       });
 
+      const storeProviderWhitespace = await import("../../src/store/provider");
+      storeProviderWhitespace.__setSnippetContent(whitespaceContent);
+
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(

@@ -6,12 +6,26 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { apiClient } from "../../src/api/client";
 
 // Mock axios to simulate rate limiting
-vi.mock("axios");
+vi.mock("axios", () => {
+  const create = vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    }
+  }));
+  return {
+    default: { create },
+    create
+  };
+});
 
 describe("Rate Limiting Handling (429 Backoff)", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -21,6 +35,12 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
       }
     });
     vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await vi.runAllTimersAsync();
+    queryClient.clear();
+    vi.useRealTimers();
   });
 
   it("should retry on 429 rate limit error with exponential backoff", async () => {
@@ -66,12 +86,14 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
     const client = new apiClient.constructor();
 
     // Attempt to list files
-    const result = await queryClient.fetchQuery({
+    const resultPromise = queryClient.fetchQuery({
       queryKey: ["drive", "files", "folder-id"],
       queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
     });
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
 
     // Should eventually succeed after retries
     expect(result.files).toBeDefined();
@@ -114,10 +136,8 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
       }
     } as any);
 
-    const startTime = Date.now();
-
     const client = new apiClient.constructor();
-    await queryClient.fetchQuery({
+    const resultPromise = queryClient.fetchQuery({
       queryKey: ["drive", "files", "folder-id"],
       queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
       retry: 1,
@@ -130,10 +150,9 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
         return Math.min(1000 * 2 ** attemptIndex, 30000);
       }
     });
+    await vi.runAllTimersAsync();
+    await resultPromise;
 
-    const elapsedTime = Date.now() - startTime;
-
-    // Should have waited at least retryAfter seconds (with some tolerance)
     expect(lastRetryDelay).toBeGreaterThanOrEqual(retryAfterSeconds * 1000 - 100);
   });
 
@@ -142,29 +161,31 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
     let writeAttempts = 0;
 
     vi.mocked(axios.create).mockReturnValue({
-      get: vi.fn().mockImplementation(async () => {
-        readAttempts++;
-        if (readAttempts <= 2) {
-          const error: any = new Error("Rate limit exceeded");
-          error.response = {
-            status: 429,
-            statusText: "Too Many Requests",
-            data: { error: "Rate limit exceeded" }
+      get: vi.fn(),
+      post: vi.fn().mockImplementation(async (url: string) => {
+        if (url === "/drive-read") {
+          readAttempts++;
+          if (readAttempts <= 2) {
+            const error: any = new Error("Rate limit exceeded");
+            error.response = {
+              status: 429,
+              statusText: "Too Many Requests",
+              data: { error: "Rate limit exceeded" }
+            };
+            throw error;
+          }
+          return {
+            data: {
+              id: "file-1",
+              name: "Test File",
+              content: "Content",
+              modifiedTime: "2025-01-01T00:00:00.000Z",
+              mimeType: "application/vnd.google-apps.document"
+            },
+            status: 200
           };
-          throw error;
         }
-        return {
-          data: {
-            id: "file-1",
-            name: "Test File",
-            content: "Content",
-            modifiedTime: "2025-01-01T00:00:00.000Z",
-            mimeType: "application/vnd.google-apps.document"
-          },
-          status: 200
-        };
-      }),
-      post: vi.fn().mockImplementation(async () => {
+
         writeAttempts++;
         if (writeAttempts <= 2) {
           const error: any = new Error("Rate limit exceeded");
@@ -193,14 +214,15 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
     const client = new apiClient.constructor();
 
     // Make read request
-    await queryClient.fetchQuery({
+    const readPromise = queryClient.fetchQuery({
       queryKey: ["drive", "file", "file-1"],
       queryFn: () => client.readDriveFile({ fileId: "file-1" }),
       retry: 3
     });
+    await vi.runAllTimersAsync();
+    await readPromise;
 
-    // Make write request
-    await queryClient.fetchQuery({
+    const writePromise = queryClient.fetchQuery({
       queryKey: ["drive", "write", "file-1"],
       queryFn: () =>
         client.writeDriveFile({
@@ -211,6 +233,8 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
         }),
       retry: 3
     });
+    await vi.runAllTimersAsync();
+    await writePromise;
 
     // Both should eventually succeed
     expect(readAttempts).toBeGreaterThan(1);
@@ -238,13 +262,14 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
     const client = new apiClient.constructor();
 
     // Should fail after max retries
-    await expect(
-      queryClient.fetchQuery({
-        queryKey: ["drive", "files", "folder-id"],
-        queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
-        retry: 3
-      })
-    ).rejects.toThrow();
+    const failingPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "files", "folder-id"],
+      queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
+      retry: 3
+    });
+    const failingExpectation = expect(failingPromise).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await failingExpectation;
   });
 
   it("should use exponential backoff with jitter", async () => {
@@ -277,16 +302,15 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
 
     const client = new apiClient.constructor();
 
-    try {
-      await queryClient.fetchQuery({
-        queryKey: ["drive", "files", "folder-id"],
-        queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
-        retry: 3,
-        retryDelay: calculateDelay
-      });
-    } catch {
-      // Expected to fail after retries
-    }
+    const promise = queryClient.fetchQuery({
+      queryKey: ["drive", "files", "folder-id"],
+      queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
+      retry: 3,
+      retryDelay: calculateDelay
+    });
+    const handledPromise = promise.catch(() => {});
+    await vi.runAllTimersAsync();
+    await handledPromise;
 
     // Delays should increase exponentially
     expect(delays.length).toBeGreaterThan(1);
@@ -321,16 +345,17 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
 
     const client = new apiClient.constructor();
 
-    await expect(
-      queryClient.fetchQuery({
-        queryKey: ["drive", "files", "folder-id"],
-        queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
-        retry: (failureCount, error: any) => {
-          // Only retry on 429
-          return error?.response?.status === 429 && failureCount < 3;
-        }
-      })
-    ).rejects.toThrow();
+    const nonRetryPromise = queryClient.fetchQuery({
+      queryKey: ["drive", "files", "folder-id"],
+      queryFn: () => client.listDriveFiles({ folderId: "folder-id" }),
+      retry: (failureCount, error: any) => {
+        // Only retry on 429
+        return error?.response?.status === 429 && failureCount < 3;
+      }
+    });
+    const nonRetryExpectation = expect(nonRetryPromise).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await nonRetryExpectation;
 
     // Should not retry (only initial attempt)
     expect(attemptCount).toBe(1);
@@ -369,7 +394,7 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
 
     const client = new apiClient.constructor();
 
-    const result = await queryClient.fetchQuery({
+    const resultPromise = queryClient.fetchQuery({
       queryKey: ["drive", "write", "file-1"],
       queryFn: () =>
         client.writeDriveFile({
@@ -381,6 +406,8 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
     });
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
 
     expect(result.id).toBe("file-1");
     expect(attemptCount).toBe(3);

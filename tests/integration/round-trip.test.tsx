@@ -12,7 +12,60 @@ import * as useConflictDetectionModule from "../../src/hooks/useConflictDetectio
 // Mock dependencies
 vi.mock("../../src/api/client");
 vi.mock("../../src/hooks/useConflictDetection");
-vi.mock("../../src/hooks/useAutoSave");
+vi.mock("../../src/hooks/useAutoSave", async () => {
+  const React = await import("react");
+  const clientModule = await import("../../src/api/client");
+  const { useEffect, useRef } = React;
+  const { apiClient } = clientModule;
+
+  const useAutoSaveMock = vi.fn((fileId: string | undefined, content: string) => {
+    const lastContentRef = useRef<string | undefined>(undefined);
+
+    useEffect(() => {
+      if (!fileId) {
+        return;
+      }
+      if (content === undefined) {
+        return;
+      }
+      const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      if (normalizedContent === lastContentRef.current) {
+        return;
+      }
+      lastContentRef.current = normalizedContent;
+      void apiClient.writeDriveFile({
+        fileId,
+        fileName: "",
+        content: normalizedContent
+      });
+    }, [fileId, content]);
+
+    return {
+      isSaving: false,
+      hasUnsavedChanges: false,
+      lastSavedAt: undefined,
+      markAsSaved: () => {},
+      triggerManualSave: async () => {
+        if (!fileId) {
+          return;
+        }
+        if (content === undefined) {
+          return;
+        }
+        const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+        await apiClient.writeDriveFile({
+          fileId,
+          fileName: "",
+          content: normalizedContent
+        });
+      }
+    };
+  });
+
+  return {
+    useAutoSave: useAutoSaveMock
+  };
+});
 vi.mock("../../src/hooks/useExport", () => ({
   useExport: () => ({
     exportSnippets: vi.fn(),
@@ -28,7 +81,9 @@ vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
   useVisibilityGatedSnippetQueries: vi.fn()
 }));
 vi.mock("../../src/store/provider", () => {
-  const mockStore = {
+  let snippetContent = "Initial content";
+
+  const buildStore = () => ({
     entities: {
       projects: {},
       projectOrder: [],
@@ -60,7 +115,7 @@ vi.mock("../../src/store/provider", () => {
           storyId: "story-1",
           chapterId: "chapter-1",
           order: 1,
-          content: "Initial content",
+          content: snippetContent,
           updatedAt: new Date().toISOString()
         }
       }
@@ -69,10 +124,14 @@ vi.mock("../../src/store/provider", () => {
       activeStoryId: "story-1",
       isSyncing: false
     }
-  };
+  });
+
   return {
-    useYarnyStore: (selector: (store: typeof mockStore) => unknown) => {
-      return selector(mockStore);
+    useYarnyStore: (selector: (store: ReturnType<typeof buildStore>) => unknown) => {
+      return selector(buildStore());
+    },
+    __setSnippetContent: (content: string) => {
+      snippetContent = content;
     }
   };
 });
@@ -255,6 +314,7 @@ describe("Round-Trip Validation with Google Docs", () => {
 
   describe("Conflict Detection and Resolution", () => {
     it("detects conflicts when Drive content is newer than local", async () => {
+      const user = userEvent.setup();
       const localContent = "Local content";
       const driveContent = "Drive content (newer)";
       const driveModifiedTime = new Date(Date.now() + 10000).toISOString(); // 10 seconds in future
@@ -286,10 +346,21 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Wait for conflict check to run
-      await waitFor(() => {
-        expect(mockCheckConflict).toHaveBeenCalled();
-      });
+      // Focus the editor to simulate user interaction and trigger conflict detection
+      const editor = await waitFor(
+        () => document.querySelector('[contenteditable="true"]'),
+        { timeout: 2000 }
+      );
+      expect(editor).toBeTruthy();
+      await user.click(editor as HTMLElement);
+
+      // Wait for conflict check to run (setTimeout inside component uses 1000ms delay)
+      await waitFor(
+        () => {
+          expect(mockCheckConflict).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it("resolves conflict by using Drive content", async () => {

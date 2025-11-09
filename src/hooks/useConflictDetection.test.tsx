@@ -252,9 +252,7 @@ describe("useConflictDetection", () => {
         "folder-1"
       );
 
-      await waitFor(() => {
-        expect(conflict).resolves.toBeNull();
-      });
+      expect(conflict).toBeNull();
     });
 
     it("should use React Query caching for file listing", async () => {

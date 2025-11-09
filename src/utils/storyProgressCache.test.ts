@@ -59,3 +59,5 @@ describe("storyProgressCache", () => {
     expect(getCachedStoryProgress<MockProgress>("story-2")).toBeNull();
   });
 });
+
+

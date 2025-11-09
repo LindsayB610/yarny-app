@@ -1,56 +1,61 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { BrowserRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+import {
+  renderWithProviders,
+  screen,
+  waitFor,
+  userEvent
+} from "../../../tests/utils/test-utils";
 
 import { StoriesPage } from "./StoriesPage";
 import * as useAuthModule from "../../hooks/useAuth";
 import * as useStoriesQueryModule from "../../hooks/useStoriesQuery";
 import * as useStoryMutationsModule from "../../hooks/useStoryMutations";
 
-// Mock dependencies
 vi.mock("../../hooks/useAuth");
 vi.mock("../../hooks/useStoriesQuery");
 vi.mock("../../hooks/useStoryMutations");
+
+const mockUseLoaderData = vi.fn();
+const mockNavigate = vi.fn();
+
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
     ...actual,
-    useNavigate: () => vi.fn()
+    useNavigate: () => mockNavigate,
+    useLoaderData: () => mockUseLoaderData()
   };
 });
 
 const mockStories = [
-  {
-    id: "story-1",
-    name: "My First Novel",
-    modifiedTime: "2025-01-08T10:00:00Z"
-  },
-  {
-    id: "story-2",
-    name: "Short Story Collection",
-    modifiedTime: "2025-01-07T15:30:00Z"
-  },
-  {
-    id: "story-3",
-    name: "Fantasy Epic",
-    modifiedTime: "2025-01-06T09:15:00Z"
-  }
+  { id: "story-1", name: "My First Novel", modifiedTime: "2025-01-08T10:00:00Z" },
+  { id: "story-2", name: "Short Story Collection", modifiedTime: "2025-01-07T15:30:00Z" },
+  { id: "story-3", name: "Fantasy Epic", modifiedTime: "2025-01-06T09:15:00Z" }
 ];
 
+const getStoryTitleNodes = (title: string) =>
+  screen.getAllByText((_, node) => node?.textContent === title);
+const queryStoryTitleNodes = (title: string) =>
+  screen.queryAllByText((_, node) => node?.textContent === title);
+const expectStoryVisible = (title: string) => {
+  expect(getStoryTitleNodes(title).length).toBeGreaterThan(0);
+};
+const expectStoryHidden = (title: string) => {
+  expect(queryStoryTitleNodes(title)).toHaveLength(0);
+};
+
 const renderStoriesPage = () => {
-  return render(
-    <BrowserRouter>
-      <StoriesPage />
-    </BrowserRouter>
-  );
+  return renderWithProviders(<StoriesPage />);
 };
 
 describe("StoriesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
+    mockUseLoaderData.mockReset();
+    mockUseLoaderData.mockReturnValue({ driveAuthorized: true });
 
-    // Default mocks
     vi.mocked(useAuthModule.useAuth).mockReturnValue({
       user: { email: "test@example.com" },
       logout: vi.fn(),
@@ -67,15 +72,25 @@ describe("StoriesPage", () => {
       mutateAsync: vi.fn(),
       isLoading: false
     } as any);
+
+    vi.mocked(useStoryMutationsModule.useCreateStory).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false
+    } as any);
+
+    vi.mocked(useStoryMutationsModule.useDeleteStory).mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false
+    } as any);
   });
 
   describe("Story Management", () => {
     it("renders list of stories", () => {
       renderStoriesPage();
 
-      expect(screen.getByText("My First Novel")).toBeInTheDocument();
-      expect(screen.getByText("Short Story Collection")).toBeInTheDocument();
-      expect(screen.getByText("Fantasy Epic")).toBeInTheDocument();
+      expectStoryVisible("My First Novel");
+      expectStoryVisible("Short Story Collection");
+      expectStoryVisible("Fantasy Epic");
     });
 
     it("displays empty state when no stories exist", () => {
@@ -87,9 +102,7 @@ describe("StoriesPage", () => {
 
       renderStoriesPage();
 
-      expect(
-        screen.getByText(/No stories yet/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/No stories yet/i)).toBeInTheDocument();
     });
 
     it("displays loading state while fetching stories", () => {
@@ -105,6 +118,7 @@ describe("StoriesPage", () => {
     });
 
     it("displays Drive auth prompt when not authorized", () => {
+      mockUseLoaderData.mockReturnValue({ driveAuthorized: false });
       vi.mocked(useStoriesQueryModule.useStoriesQuery).mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -113,9 +127,7 @@ describe("StoriesPage", () => {
 
       renderStoriesPage();
 
-      expect(
-        screen.getByText(/Connect to Google Drive/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Connect to Google Drive/i)).toBeInTheDocument();
     });
   });
 
@@ -128,9 +140,9 @@ describe("StoriesPage", () => {
       await user.type(searchInput, "Novel");
 
       await waitFor(() => {
-        expect(screen.getByText("My First Novel")).toBeInTheDocument();
-        expect(screen.queryByText("Short Story Collection")).not.toBeInTheDocument();
-        expect(screen.queryByText("Fantasy Epic")).not.toBeInTheDocument();
+        expectStoryVisible("My First Novel");
+        expectStoryHidden("Short Story Collection");
+        expectStoryHidden("Fantasy Epic");
       });
     });
 
@@ -142,9 +154,7 @@ describe("StoriesPage", () => {
       await user.type(searchInput, "NonExistentStory");
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/No stories found matching/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/No stories found matching/i)).toBeInTheDocument();
       });
     });
 
@@ -156,7 +166,7 @@ describe("StoriesPage", () => {
       await user.type(searchInput, "novel");
 
       await waitFor(() => {
-        expect(screen.getByText("My First Novel")).toBeInTheDocument();
+        expectStoryVisible("My First Novel");
       });
     });
 
@@ -169,9 +179,9 @@ describe("StoriesPage", () => {
       await user.clear(searchInput);
 
       await waitFor(() => {
-        expect(screen.getByText("My First Novel")).toBeInTheDocument();
-        expect(screen.getByText("Short Story Collection")).toBeInTheDocument();
-        expect(screen.getByText("Fantasy Epic")).toBeInTheDocument();
+        expectStoryVisible("My First Novel");
+        expectStoryVisible("Short Story Collection");
+        expectStoryVisible("Fantasy Epic");
       });
     });
   });
@@ -189,11 +199,10 @@ describe("StoriesPage", () => {
       });
     });
 
-    it("closes new story modal when close button is clicked", async () => {
+    it("closes new story modal when cancel button is clicked", async () => {
       const user = userEvent.setup();
       renderStoriesPage();
 
-      // Open modal
       const newStoryButton = screen.getByRole("button", { name: /New Story/i });
       await user.click(newStoryButton);
 
@@ -201,14 +210,11 @@ describe("StoriesPage", () => {
         expect(screen.getByRole("heading", { name: /Create New Story/i })).toBeInTheDocument();
       });
 
-      // Close modal
-      const closeButton = screen.getByRole("button", { name: /close/i });
-      await user.click(closeButton);
+      const cancelButton = screen.getByRole("button", { name: /cancel/i });
+      await user.click(cancelButton);
 
       await waitFor(() => {
-        expect(
-          screen.queryByRole("heading", { name: /Create New Story/i })
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: /Create New Story/i })).not.toBeInTheDocument();
       });
     });
 
@@ -216,21 +222,19 @@ describe("StoriesPage", () => {
       const user = userEvent.setup();
       renderStoriesPage();
 
-      // Find delete button (Close icon) on first story card
-      const deleteButtons = screen.getAllByRole("button", { name: "" });
-      const deleteButton = deleteButtons.find((btn) =>
-        btn.querySelector('svg[data-testid="CloseIcon"]')
-      );
+      const deleteButton = screen
+        .getAllByRole("button")
+        .find((button) => button.querySelector('svg[data-testid="CloseIcon"]'));
 
-      if (deleteButton) {
-        await user.click(deleteButton);
-
-        await waitFor(() => {
-          expect(
-            screen.getByRole("heading", { name: /Delete Story/i })
-          ).toBeInTheDocument();
-        });
+      if (!deleteButton) {
+        throw new Error("Delete button not found");
       }
+
+      await user.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: /Delete Story/i })).toBeInTheDocument();
+      });
     });
   });
 
@@ -260,15 +264,9 @@ describe("StoriesPage", () => {
         isLoading: false
       });
 
-      const navigate = vi.fn();
-      vi.mocked(require("react-router-dom").useNavigate).mockReturnValue(navigate);
-
       renderStoriesPage();
 
-      // Note: This test may need adjustment based on actual navigation implementation
-      // The component should navigate away when user is null
+      expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
   });
 });
-
-

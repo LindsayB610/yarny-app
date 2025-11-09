@@ -65,6 +65,7 @@ const setupStoreWithRepository = (repository: LocalFsRepository) => {
   store.setInitializing(false);
   store.setEnabled(true);
   store.setPermission("granted" as PermissionState);
+  store.setRootHandle({} as FileSystemDirectoryHandle);
   store.setRepository(repository);
   store.setRefreshStatus("idle");
 };
