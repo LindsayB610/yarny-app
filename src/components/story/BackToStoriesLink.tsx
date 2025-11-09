@@ -1,13 +1,24 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Box, Link, Typography } from "@mui/material";
-import type { JSX } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { useCallback, type JSX, type MouseEvent } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 export function BackToStoriesLink(): JSX.Element {
+  const navigate = useNavigate();
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      navigate("/stories");
+    },
+    [navigate]
+  );
+
   return (
     <Link
       component={RouterLink}
       to="/stories"
+      onClick={handleClick}
       underline="none"
       color="inherit"
       sx={{

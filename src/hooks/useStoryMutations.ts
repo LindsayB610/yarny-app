@@ -741,6 +741,7 @@ interface CreateSnippetParams {
 export function useCreateSnippetMutation() {
   const queryClient = useQueryClient();
   const activeStory = useYarnyStore(selectActiveStory);
+  const chaptersById = useYarnyStore((state) => state.entities.chapters);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
 
   return useMutation({
@@ -799,11 +800,14 @@ export function useCreateSnippetMutation() {
       await writeDataJson(activeStory.driveFileId, data, fileId);
       await mirrorSnippetWrite(activeStory.id, snippetId, "");
 
+      const existingChapterEntity = chaptersById[chapter.id ?? chapterId];
+      const chapterColor = chapter.color ?? existingChapterEntity?.color;
+
       const updatedChapter: ChapterEntity = {
         id: chapter.id ?? chapterId,
         storyId: activeStory.id,
         title: chapter.title ?? "Untitled",
-        color: chapter.color,
+        color: chapterColor,
         order: chapter.position ?? 0,
         snippetIds: chapter.snippetIds ?? [],
         driveFolderId: chapter.driveFolderId ?? "",
