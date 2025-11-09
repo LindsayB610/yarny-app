@@ -123,7 +123,7 @@ export function StorySidebarHeader({
       <StoryInfoModal
         open={infoModalOpen}
         onClose={() => setInfoModalOpen(false)}
-        storyName={story.title}
+        storyName={metadata?.title ?? story.title}
         genre={metadata?.genre}
         description={metadata?.description}
         onSave={handleSaveStoryInfo}

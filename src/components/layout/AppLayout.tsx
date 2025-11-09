@@ -8,6 +8,7 @@ import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
 import { mirrorStoryFolderEnsure } from "../../services/localFs/localBackupMirror";
 import { BackToStoriesLink } from "../story/BackToStoriesLink";
+import { EditorFooterContainer } from "../story/EditorFooterContainer";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
 import { StorySidebarContent } from "../story/StorySidebarContent";
@@ -85,64 +86,75 @@ export function AppLayout(): JSX.Element {
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "320px 1fr 280px" },
-        minHeight: "100vh"
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default"
       }}
     >
-      {/* Left Sidebar: Projects & Stories */}
       <Box
-        component="aside"
         sx={{
-          bgcolor: "background.paper",
-          borderRight: { md: "1px solid", xs: "none" },
-          borderColor: "divider",
-          display: "flex",
-          flexDirection: "column"
+          flex: 1,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "320px 1fr 280px" },
+          minHeight: 0
         }}
       >
-        <Stack spacing={0} sx={{ flex: 1, py: 3, overflow: "hidden" }}>
-          <Box sx={{ px: 2, pb: 2 }}>
-            <BackToStoriesLink />
-          </Box>
-          <Divider />
-          <Box sx={{ flex: 1, overflow: "auto" }}>
-            <StorySidebarHeader searchTerm={sidebarSearch} onSearchChange={setSidebarSearch} />
-            <Box sx={{ flex: 1, overflow: "auto" }}>
-              <StorySidebarContent searchTerm={sidebarSearch} />
+        {/* Left Sidebar: Projects & Stories */}
+        <Box
+          component="aside"
+          sx={{
+            bgcolor: "background.paper",
+            borderRight: { md: "1px solid", xs: "none" },
+            borderColor: "divider",
+            display: "flex",
+            flexDirection: "column"
+          }}
+        >
+          <Stack spacing={0} sx={{ flex: 1, py: 3, overflow: "hidden" }}>
+            <Box sx={{ px: 2, pb: 2 }}>
+              <BackToStoriesLink />
             </Box>
-          </Box>
-        </Stack>
+            <Divider />
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <StorySidebarHeader searchTerm={sidebarSearch} onSearchChange={setSidebarSearch} />
+              <Box sx={{ flex: 1, overflow: "auto" }}>
+                <StorySidebarContent searchTerm={sidebarSearch} />
+              </Box>
+            </Box>
+          </Stack>
+        </Box>
+        {/* Center: Editor */}
+        <Box
+          component="main"
+          sx={{
+            px: { xs: 2, md: 6 },
+            py: 4,
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            overflow: "hidden"
+          }}
+        >
+          <OfflineBanner />
+          <StoryEditor isLoading={showEditorLoading} />
+        </Box>
+        {/* Right Sidebar: Notes */}
+        <Box
+          component="aside"
+          sx={{
+            bgcolor: "background.paper",
+            borderLeft: { md: "1px solid", xs: "none" },
+            borderColor: "divider",
+            display: { xs: "none", md: "flex" },
+            flexDirection: "column",
+            overflow: "hidden"
+          }}
+        >
+          <NotesSidebar />
+        </Box>
       </Box>
-      {/* Center: Editor */}
-      <Box
-        component="main"
-        sx={{
-          px: { xs: 2, md: 6 },
-          py: 4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          overflow: "hidden"
-        }}
-      >
-        <OfflineBanner />
-        <StoryEditor isLoading={showEditorLoading} />
-      </Box>
-      {/* Right Sidebar: Notes */}
-      <Box
-        component="aside"
-        sx={{
-          bgcolor: "background.paper",
-          borderLeft: { md: "1px solid", xs: "none" },
-          borderColor: "divider",
-          display: { xs: "none", md: "flex" },
-          flexDirection: "column",
-          overflow: "hidden"
-        }}
-      >
-        <NotesSidebar />
-      </Box>
+      <EditorFooterContainer />
     </Box>
   );
 }

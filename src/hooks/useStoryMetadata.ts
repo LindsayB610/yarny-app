@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
 
+import { extractStoryTitleFromMetadata } from "../utils/storyMetadata";
+
 export interface StoryMetadataResult {
+  title?: string;
   wordGoal?: number;
   genre?: string;
   description?: string;
@@ -35,6 +38,7 @@ export function useStoryMetadata(storyFolderId: string | undefined) {
       try {
         const parsed = JSON.parse(projectContent.content) as Record<string, unknown>;
         return {
+          title: extractStoryTitleFromMetadata(parsed),
           wordGoal:
             typeof parsed.wordGoal === "number"
               ? parsed.wordGoal

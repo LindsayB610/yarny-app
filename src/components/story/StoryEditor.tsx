@@ -1,10 +1,7 @@
-import { CloudUpload, SaveAlt } from "@mui/icons-material";
 import {
   Box,
   Button,
   CircularProgress,
-  Menu,
-  MenuItem,
   Stack,
   Typography,
   useTheme
@@ -13,8 +10,6 @@ import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
-import { EditorFooter } from "./EditorFooter";
-import { ExportProgressDialog } from "./ExportProgressDialog";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
 import {
   buildPlainTextDocument,
@@ -23,10 +18,8 @@ import {
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
 import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
-import { useExport } from "../../hooks/useExport";
-import { useLocalBackups } from "../../hooks/useLocalBackups";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
-import { useAuth } from "../../hooks/useAuth";
+import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveStory,
@@ -45,6 +38,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const snippets = useYarnyStore(selectActiveStorySnippets);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
+  const { data: storyMetadata } = useStoryMetadata(story?.driveFileId);
 
   const showLoadingState = isLoading;
 
@@ -58,19 +52,16 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   });
 
   const { mutateAsync: saveStory, isPending } = useDriveSaveStoryMutation();
-  const [exportMenuAnchor, setExportMenuAnchor] = useState<HTMLElement | null>(null);
-  const [exportProgress, setExportProgress] = useState<{
-    open: boolean;
-    fileName: string;
-    destination: "drive" | "local";
-  }>({ open: false, fileName: "", destination: "drive" });
-  const { logout, isLoading: isAuthLoading } = useAuth();
 
   // Track editor content for auto-save
   const [editorContent, setEditorContent] = useState("");
 
   // Auto-save hook - saves to story's drive file
-  const { isSaving: isAutoSaving, hasUnsavedChanges } = useAutoSave(
+  const {
+    isSaving: isAutoSaving,
+    hasUnsavedChanges,
+    markAsSaved: markContentAsSaved
+  } = useAutoSave(
     story?.driveFileId,
     editorContent,
     {
@@ -88,16 +79,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       localBackupStoryId: story?.id
     }
   );
-
-  // Export hook
-  const {
-    exportSnippets: exportSnippetsFromHook,
-    isExporting,
-    progress: exportProgressState
-  } = useExport();
-  const localBackups = useLocalBackups();
-  const canExportLocally =
-    localBackups.enabled && localBackups.permission === "granted";
 
   // Note: Visibility gating for snippet loading is now handled in StorySidebarContent
   // where the snippet list DOM elements exist
@@ -296,96 +277,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
     const plainText = extractPlainTextFromDocument(editor.getJSON());
     await saveStory(plainText);
-  };
-
-  const handleExportClick = (event: MouseEvent<HTMLElement>) => {
-    setExportMenuAnchor(event.currentTarget);
-  };
-
-  const handleExportClose = () => {
-    setExportMenuAnchor(null);
-  };
-
-  const handleExportChapters = async () => {
-    handleExportClose();
-    
-    // Get chapter snippets (all snippets for now, since we're combining them)
-    const snippetsForExport = snippets.map((snippet, index) => ({
-      id: snippet.id,
-      title: `Snippet ${index + 1}`,
-      content: snippet.content
-    }));
-
-    const fileName = prompt("Enter filename for export:", `${story.title} - Chapters`);
-    if (!fileName) return;
-
-    setExportProgress({ open: true, fileName, destination: "drive" });
-
-    try {
-      // Get story folder ID - we'll need to get this from the story structure
-      // For now, using the story's driveFileId as parent (may need adjustment)
-      const parentFolderId = story.driveFileId; // This might need to be the story folder, not the file
-
-      await exportSnippetsFromHook({
-        fileName,
-        parentFolderId,
-        snippets: snippetsForExport,
-        destination: "drive",
-        onProgress: (_progress) => {
-          setExportProgress((prev) => ({ ...prev }));
-        }
-      });
-
-      // Close progress dialog after a short delay
-      setTimeout(() => {
-        setExportProgress((prev) => ({ ...prev, open: false }));
-      }, 1500);
-    } catch (error) {
-      console.error("Export failed:", error);
-      // Progress dialog will show error state
-    }
-  };
-
-  const handleExportChaptersLocal = async () => {
-    handleExportClose();
-
-    if (!canExportLocally) {
-      alert("Enable local backups in Settings to export locally.");
-      return;
-    }
-
-    const snippetsForExport = snippets.map((snippet, index) => ({
-      id: snippet.id,
-      title: `Snippet ${index + 1}`,
-      content: snippet.content
-    }));
-
-    const fileName = prompt(
-      "Enter filename for local export:",
-      `${story.title} - Chapters`
-    );
-    if (!fileName) return;
-
-    setExportProgress({ open: true, fileName, destination: "local" });
-
-    try {
-      await exportSnippetsFromHook({
-        fileName,
-        snippets: snippetsForExport,
-        destination: "local",
-        fileExtension: ".md",
-        onProgress: (_progress) => {
-          setExportProgress((prev) => ({ ...prev }));
-        }
-      });
-
-      setTimeout(() => {
-        setExportProgress((prev) => ({ ...prev, open: false }));
-      }, 1500);
-    } catch (error) {
-      console.error("Local export failed:", error);
-      // Progress dialog will show error state
-    }
+    markContentAsSaved(plainText);
   };
 
   const bottomScrollExtension = 720;
@@ -399,7 +291,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         justifyContent="space-between"
       >
         <Box>
-          <Typography variant="h3">{story.title}</Typography>
+          <Typography variant="h3">{storyMetadata?.title ?? story.title}</Typography>
           <Typography variant="body2" color="text.secondary">
             {isAutoSaving || isPending || isSyncing
               ? "Syncing with Google Drive..."
@@ -446,33 +338,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         >
             <EditorContent editor={editor} />
         </Box>
-        <EditorFooter
-          onExportClick={handleExportClick}
-          exportDisabled={snippets.length === 0}
-          isExporting={isExporting}
-          isExportMenuOpen={Boolean(exportMenuAnchor)}
-          onLogout={logout}
-          isLogoutDisabled={isAuthLoading}
-        />
-        <Menu
-          id="editor-export-menu"
-          anchorEl={exportMenuAnchor}
-          open={Boolean(exportMenuAnchor)}
-          onClose={handleExportClose}
-          MenuListProps={{ "aria-labelledby": "editor-export-button" }}
-        >
-          <MenuItem onClick={handleExportChapters} disabled={isExporting}>
-            <CloudUpload sx={{ mr: 1 }} />
-            Export Chapters
-          </MenuItem>
-          <MenuItem
-            onClick={handleExportChaptersLocal}
-            disabled={isExporting || !canExportLocally}
-          >
-            <SaveAlt sx={{ mr: 1 }} />
-            Export Chapters to Local
-          </MenuItem>
-        </Menu>
       </Box>
 
       <ConflictResolutionModal
@@ -487,6 +352,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
               editor.commands.setContent(driveDocument);
               // Update editor content state
               setEditorContent(driveContent);
+              markContentAsSaved(driveContent);
             }
           } else if (action === "useLocal") {
             // Keep local version (editor content is already authoritative)
@@ -495,6 +361,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
               try {
                 const localContent = extractPlainTextFromDocument(editor.getJSON());
                 await saveStory(localContent);
+                markContentAsSaved(localContent);
               } catch (error) {
                 console.error("Failed to save local content:", error);
               }
@@ -504,19 +371,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           }
           setConflictModal({ open: false, conflict: null });
         }}
-      />
-
-      <ExportProgressDialog
-        open={exportProgress.open}
-        progress={
-          exportProgress.open
-            ? {
-                ...exportProgressState,
-                destination: exportProgress.destination
-              }
-            : exportProgressState
-        }
-        fileName={exportProgress.fileName}
       />
     </Stack>
   );

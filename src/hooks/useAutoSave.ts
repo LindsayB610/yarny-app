@@ -306,11 +306,19 @@ export function useAutoSave(
     }
   }, [fileId, content, isOnline, saveMutation, queueSave]);
 
+  const markAsSaved = useCallback(
+    (savedContent?: string) => {
+      lastSavedContentRef.current = savedContent ?? content;
+    },
+    [content]
+  );
+
   return {
     save,
     isSaving: saveMutation.isPending,
     lastSavedContent: lastSavedContentRef.current,
-    hasUnsavedChanges: content !== lastSavedContentRef.current
+    hasUnsavedChanges: content !== lastSavedContentRef.current,
+    markAsSaved
   };
 }
 

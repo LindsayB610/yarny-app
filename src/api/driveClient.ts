@@ -6,6 +6,7 @@ import type { DriveListResponse } from "./contract";
 import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
+import { extractStoryTitleFromMetadata } from "../utils/storyMetadata";
 
 const SaveStoryInputSchema = z.object({
   storyId: z.string(),
@@ -132,7 +133,7 @@ export const createDriveClient = (): DriveClient => ({
           const projectContent = await apiClient.readDriveFile({ fileId: projectFile.id });
           if (projectContent.content) {
             projectMetadata = JSON.parse(projectContent.content) as Record<string, unknown>;
-            const name = (projectMetadata.name ?? projectMetadata.title) as string | undefined;
+            const name = extractStoryTitleFromMetadata(projectMetadata);
             storyTitle = name || storyTitle;
             if (Array.isArray(projectMetadata.groupIds)) {
               groupOrder = projectMetadata.groupIds.filter((id): id is string => typeof id === "string");
