@@ -2,7 +2,8 @@ import type { LocalBackupError } from "../../store/localBackupStore";
 import { localBackupStore } from "../../store/localBackupStore";
 import type { Chapter, Snippet, Story, YarnyState } from "../../store/types";
 import { LocalFsPathResolver, type NoteCategory } from "./LocalFsPathResolver";
-import type { LocalFsRepository } from "./LocalFsRepository";
+import { createLocalFsRepository, type LocalFsRepository } from "./LocalFsRepository";
+import { ensureDirectoryPermission } from "./LocalFsCapability";
 
 interface MirrorResult {
   success: boolean;
@@ -276,6 +277,37 @@ const buildDataJsonFromState = (story: Story, state: YarnyState) => {
 export async function refreshAllStoriesToLocal(state: YarnyState): Promise<MirrorResult> {
   const store = localBackupStore.getState();
   store.setRefreshStatus("running", "Refreshing local backups...");
+
+  const currentState = localBackupStore.getState();
+  if (!currentState.enabled) {
+    store.setRefreshStatus("error", "Enable local backups before running a full refresh.");
+    return { success: false, skipped: true };
+  }
+
+  const handle = currentState.rootHandle;
+  if (!handle) {
+    store.setRefreshStatus("error", "Choose a local folder before running a full refresh.");
+    return { success: false, skipped: true };
+  }
+
+  if (!currentState.repository) {
+    const permission = await ensureDirectoryPermission(handle, "readwrite");
+    store.setPermission(permission);
+    if (permission !== "granted") {
+      store.setRefreshStatus("error", "Grant write access to the selected folder to continue.");
+      return { success: false, skipped: true };
+    }
+
+    const repository = await createLocalFsRepository(handle);
+    if (!repository) {
+      store.setRefreshStatus(
+        "error",
+        "Unable to access the selected folder. Try reconnecting the local backups folder."
+      );
+      return { success: false, error: new Error("Local repository unavailable") };
+    }
+    store.setRepository(repository);
+  }
 
   if (!shouldMirror()) {
     store.setRefreshStatus("error", "Enable local backups before running a full refresh.");
