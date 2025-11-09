@@ -282,22 +282,56 @@ export async function refreshAllStoriesToLocal(state: YarnyState): Promise<Mirro
     return { success: false, skipped: true };
   }
 
+  const handleMirrorFailure = (result: MirrorResult): MirrorResult => {
+    if (result.skipped) {
+      store.setRefreshStatus("error", "Enable local backups before running a full refresh.");
+      return { success: false, skipped: true };
+    }
+
+    const errorMessage = getErrorMessage(result.error);
+    store.setRefreshStatus("error", errorMessage);
+    return {
+      success: false,
+      error: result.error
+    };
+  };
+
+  const ensureSuccess = async (operation: Promise<MirrorResult>): Promise<MirrorResult | null> => {
+    const result = await operation;
+    if (!result.success) {
+      return handleMirrorFailure(result);
+    }
+    return null;
+  };
+
   try {
     for (const story of Object.values(state.entities.stories)) {
       if (!story?.id) {
         continue;
       }
 
-      await mirrorStoryFolderEnsure(story.id);
+      const folderResult = await ensureSuccess(mirrorStoryFolderEnsure(story.id));
+      if (folderResult) {
+        return folderResult;
+      }
 
       const projectJson = JSON.stringify(buildProjectJsonFromState(story, state), null, 2);
-      await mirrorProjectJsonWrite(story.id, projectJson);
+      const projectResult = await ensureSuccess(mirrorProjectJsonWrite(story.id, projectJson));
+      if (projectResult) {
+        return projectResult;
+      }
 
       const dataJson = JSON.stringify(buildDataJsonFromState(story, state), null, 2);
-      await mirrorDataJsonWrite(story.id, dataJson);
+      const dataResult = await ensureSuccess(mirrorDataJsonWrite(story.id, dataJson));
+      if (dataResult) {
+        return dataResult;
+      }
 
       const documentContent = buildStoryDocumentFromState(story, state);
-      await mirrorStoryDocument(story.id, documentContent);
+      const documentResult = await ensureSuccess(mirrorStoryDocument(story.id, documentContent));
+      if (documentResult) {
+        return documentResult;
+      }
 
       const chapterIds = state.entities.stories[story.id]?.chapterIds ?? [];
       for (const chapterId of chapterIds) {
@@ -310,7 +344,12 @@ export async function refreshAllStoriesToLocal(state: YarnyState): Promise<Mirro
           if (!snippet) {
             continue;
           }
-          await mirrorSnippetWrite(story.id, snippet.id, snippet.content ?? "");
+          const snippetResult = await ensureSuccess(
+            mirrorSnippetWrite(story.id, snippet.id, snippet.content ?? "")
+          );
+          if (snippetResult) {
+            return snippetResult;
+          }
         }
       }
     }
