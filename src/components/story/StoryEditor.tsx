@@ -215,7 +215,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     const handleUpdate = () => {
       const plainText = extractPlainTextFromDocument(editor.getJSON());
       setEditorContent(plainText);
-      const isFocused = editor.isFocused();
+      const isFocused = editor.isFocused;
 
       // Record first keystroke for performance metrics only when user is actively typing
       if (!hasRecordedFirstKeystroke && isFocused) {
@@ -440,45 +440,11 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            px: { xs: 2, md: 6 },
             pt: { xs: 3, md: 6 },
             pb: { xs: 3, md: 6 }
           }}
         >
-          <Box
-            sx={{
-              width: "100%",
-              maxWidth: 960,
-              backgroundColor: "background.paper",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              boxShadow:
-                theme.palette.mode === "dark"
-                  ? "0 18px 48px rgba(2, 6, 23, 0.6)"
-                  : "0 32px 48px -12px rgba(15, 23, 42, 0.25)",
-              px: { xs: 3, md: 6 },
-              pt: { xs: 4, md: 6 },
-              pb: (theme) => `calc(${theme.spacing(6)} + ${bottomScrollExtension}px)`,
-              minHeight: `calc(100vh + ${bottomScrollExtension}px)`,
-              position: "relative",
-              transition: "box-shadow 160ms ease",
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: { xs: 96, md: 140 },
-                background: (theme) =>
-                  `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.paper} 75%)`,
-                pointerEvents: "none"
-              }
-            }}
-          >
             <EditorContent editor={editor} />
-          </Box>
         </Box>
         <EditorFooter
           onExportClick={handleExportClick}
