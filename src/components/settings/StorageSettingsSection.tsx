@@ -180,6 +180,22 @@ export function StorageSettingsSection(): JSX.Element {
   const showUnsupportedBanner = !isSupported;
   const toggleDisabled = isProcessing || !isSupported;
   const isRefreshRunning = refreshStatus === "running";
+  const chooseFolderHelpText = !isSupported
+    ? "Local backups require the File System Access API."
+    : "Choose the folder where Yarny will mirror your Drive saves.";
+  const openFolderHelpText =
+    enabled && permission === "granted"
+      ? "Open the local folder that Yarny is mirroring."
+      : "Enable local backups and grant folder access before opening the folder.";
+  const disconnectHelpText = enabled
+    ? "Disconnect Yarny from the current local backup folder."
+    : "Enable local backups before you can disconnect a folder.";
+  const reconnectHelpText = enabled
+    ? "Reconnect Yarny to the backup folder if permissions were revoked."
+    : "Enable local backups before attempting to reconnect.";
+  const refreshHelpText = isRefreshRunning
+    ? "Refreshing local backups. This may take a few minutes."
+    : "Force Yarny to mirror all Drive stories to your local folder.";
 
   return (
     <Card
@@ -264,94 +280,141 @@ export function StorageSettingsSection(): JSX.Element {
           </Stack>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Button
-              variant="contained"
-              onClick={runEnable}
-              disabled={isProcessing || !isSupported}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: "9999px",
-                px: 3,
-                bgcolor: "primary.main",
-                boxShadow: "0 12px 30px rgba(16, 185, 129, 0.45)",
-                "&:hover": {
-                  bgcolor: "primary.dark"
-                }
-              }}
-            >
-              Choose Folder
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleOpenFolder}
-              disabled={isProcessing || !enabled || permission !== "granted"}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: "9999px",
-                px: 3,
-                color: "rgba(148, 163, 184, 0.9)",
-                borderColor: "rgba(148, 163, 184, 0.4)",
-                "&:hover": {
-                  borderColor: "rgba(226, 232, 240, 0.95)",
-                  color: "rgba(226, 232, 240, 0.95)"
-                }
-              }}
-            >
-              Open Folder
-            </Button>
-            <Button
-              color="error"
-              variant="text"
-              onClick={runDisable}
-              disabled={isProcessing || !enabled}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                color: "rgba(248, 113, 113, 0.9)",
-                "&:hover": {
-                  color: "rgba(252, 165, 165, 1)"
-                }
-              }}
-            >
-              Disconnect
-            </Button>
-            <Button
-              variant="text"
-              onClick={handleReconnect}
-              disabled={isProcessing || !enabled}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                color: "rgba(129, 140, 248, 0.9)",
-                "&:hover": {
-                  color: "rgba(165, 180, 252, 1)"
-                }
-              }}
-            >
-              Reconnect
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={handleRefreshAll}
-              disabled={isRefreshRunning}
-              startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: "9999px",
-                px: 3,
-                color: "rgba(94, 234, 212, 0.95)",
-                borderColor: "rgba(94, 234, 212, 0.45)",
-                "&:hover": {
-                  borderColor: "rgba(94, 234, 212, 0.85)",
-                  color: "rgba(125, 248, 225, 1)"
-                }
-              }}
-            >
-              Refresh Local Backups
-            </Button>
+            <Tooltip describeChild title={chooseFolderHelpText}>
+              <span style={{ display: "inline-flex" }}>
+                <Button
+                  variant="contained"
+                  onClick={runEnable}
+                  disabled={isProcessing || !isSupported}
+                  aria-label={
+                    enabled
+                      ? "Choose a different local backup folder"
+                      : "Choose a local backup folder"
+                  }
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: "9999px",
+                    px: 3,
+                    bgcolor: "primary.main",
+                    boxShadow: "0 12px 30px rgba(16, 185, 129, 0.45)",
+                    "&:hover": {
+                      bgcolor: "primary.dark"
+                    }
+                  }}
+                >
+                  Choose Folder
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip describeChild title={openFolderHelpText}>
+              <span style={{ display: "inline-flex" }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleOpenFolder}
+                  disabled={isProcessing || !enabled || permission !== "granted"}
+                  aria-label="Open the local backup folder"
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: "9999px",
+                    px: 3,
+                    color: "rgba(226, 232, 240, 0.98)",
+                    borderColor: "rgba(148, 163, 184, 0.65)",
+                    "&:hover": {
+                      borderColor: "rgba(226, 232, 240, 1)",
+                      color: "rgba(248, 250, 252, 1)"
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(148, 163, 184, 0.6)",
+                      borderColor: "rgba(148, 163, 184, 0.35)"
+                    }
+                  }}
+                >
+                  Open Folder
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip describeChild title={disconnectHelpText}>
+              <span style={{ display: "inline-flex" }}>
+                <Button
+                  color="error"
+                  variant="text"
+                  onClick={runDisable}
+                  disabled={isProcessing || !enabled}
+                  aria-label="Disconnect from the local backup folder"
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(252, 165, 165, 0.95)",
+                    "&:hover": {
+                      color: "rgba(254, 226, 226, 1)"
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(248, 113, 113, 0.45)"
+                    }
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip describeChild title={reconnectHelpText}>
+              <span style={{ display: "inline-flex" }}>
+                <Button
+                  variant="text"
+                  onClick={handleReconnect}
+                  disabled={isProcessing || !enabled}
+                  aria-label="Reconnect to the local backup folder"
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "rgba(165, 180, 252, 0.95)",
+                    "&:hover": {
+                      color: "rgba(204, 219, 255, 1)"
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(129, 140, 248, 0.45)"
+                    }
+                  }}
+                >
+                  Reconnect
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip describeChild title={refreshHelpText}>
+              <span style={{ display: "inline-flex" }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleRefreshAll}
+                  disabled={isRefreshRunning}
+                  aria-label={
+                    isRefreshRunning
+                      ? "Refreshing local backups"
+                      : "Refresh all stories into the local backup folder"
+                  }
+                  startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: "9999px",
+                    px: 3,
+                    color: "rgba(190, 242, 230, 0.98)",
+                    borderColor: "rgba(94, 234, 212, 0.7)",
+                    "&:hover": {
+                      borderColor: "rgba(94, 234, 212, 1)",
+                      color: "rgba(240, 253, 250, 1)"
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(148, 181, 173, 0.55)",
+                      borderColor: "rgba(94, 234, 212, 0.35)"
+                    }
+                  }}
+                >
+                  Refresh Local Backups
+                </Button>
+              </span>
+            </Tooltip>
           </Stack>
 
           <Stack spacing={1}>

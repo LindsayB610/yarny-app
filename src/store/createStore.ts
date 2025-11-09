@@ -16,6 +16,8 @@ const createDefaultState = (): YarnyState => ({
   ui: {
     selectedProjectId: undefined,
     activeStoryId: undefined,
+    activeSnippetId: undefined,
+    activeNote: undefined,
     isSyncing: false,
     lastSyncedAt: undefined
   }
@@ -94,6 +96,24 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
       selectStory(storyId) {
         set((draft) => {
           draft.ui.activeStoryId = storyId;
+          draft.ui.activeSnippetId = undefined;
+          draft.ui.activeNote = undefined;
+        });
+      },
+      selectSnippet(snippetId) {
+        set((draft) => {
+          draft.ui.activeSnippetId = snippetId;
+          if (snippetId) {
+            draft.ui.activeNote = undefined;
+          }
+        });
+      },
+      selectNote(selection) {
+        set((draft) => {
+          draft.ui.activeNote = selection;
+          if (selection) {
+            draft.ui.activeSnippetId = undefined;
+          }
         });
       },
       setSyncing(isSyncing) {
@@ -185,6 +205,9 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
           // Delete all snippets associated with this chapter
           chapter.snippetIds.forEach((snippetId) => {
             delete draft.entities.snippets[snippetId];
+            if (draft.ui.activeSnippetId === snippetId) {
+              draft.ui.activeSnippetId = undefined;
+            }
           });
 
           // Remove the chapter from its story
@@ -210,6 +233,9 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
           }
 
           delete draft.entities.snippets[snippetId];
+          if (draft.ui.activeSnippetId === snippetId) {
+            draft.ui.activeSnippetId = undefined;
+          }
         });
       },
       clear() {

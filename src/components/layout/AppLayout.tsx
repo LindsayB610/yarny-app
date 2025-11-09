@@ -1,16 +1,17 @@
 import { Box, Divider, Stack } from "@mui/material";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useCallback, useEffect, useMemo, useState, type JSX } from "react";
 
 import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
 import { useYarnyStore } from "../../store/provider";
-import { selectActiveStory } from "../../store/selectors";
+import { selectActiveNote, selectActiveSnippetId, selectActiveStory } from "../../store/selectors";
 import { mirrorStoryFolderEnsure } from "../../services/localFs/localBackupMirror";
 import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { EditorFooterContainer } from "../story/EditorFooterContainer";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
+import { NoteEditor } from "../story/NoteEditor";
 import { StorySidebarContent } from "../story/StorySidebarContent";
 import { StorySidebarHeader } from "../story/StorySidebarHeader";
 
@@ -21,11 +22,25 @@ export function AppLayout(): JSX.Element {
   const selectedProjectId = useYarnyStore((state) => state.ui.selectedProjectId);
   const activeStoryId = useYarnyStore((state) => state.ui.activeStoryId);
   const activeStory = useYarnyStore(selectActiveStory);
+  const activeNote = useYarnyStore(selectActiveNote);
+  const selectSnippet = useYarnyStore((state) => state.selectSnippet);
+  const activeSnippetId = useYarnyStore(selectActiveSnippetId);
   const storiesForProject = useSelectedProjectStories();
   const [sidebarSearch, setSidebarSearch] = useState("");
+  const handleSnippetClick = useCallback(
+    (snippetId: string) => {
+      selectSnippet(snippetId);
+    },
+    [selectSnippet]
+  );
+
 
   const { isPending: isStoryLoading, isFetching: isStoryFetching } = useDriveStoryQuery(activeStoryId);
-  const showEditorLoading = Boolean(activeStoryId) && (isStoryLoading || (!activeStory && isStoryFetching));
+  const showEditorLoading =
+    !activeNote &&
+    Boolean(activeStoryId) &&
+    (isStoryLoading || (!activeStory && isStoryFetching));
+  const showNoteEditor = Boolean(activeNote);
 
   // Reconcile auth and query state on window focus
   useWindowFocusReconciliation();
@@ -119,7 +134,11 @@ export function AppLayout(): JSX.Element {
             <Box sx={{ flex: 1, overflow: "auto" }}>
               <StorySidebarHeader searchTerm={sidebarSearch} onSearchChange={setSidebarSearch} />
               <Box sx={{ flex: 1, overflow: "auto" }}>
-                <StorySidebarContent searchTerm={sidebarSearch} />
+                <StorySidebarContent
+                  searchTerm={sidebarSearch}
+                  onSnippetClick={handleSnippetClick}
+                  activeSnippetId={activeSnippetId}
+                />
               </Box>
             </Box>
           </Stack>
@@ -137,7 +156,11 @@ export function AppLayout(): JSX.Element {
           }}
         >
           <OfflineBanner />
-          <StoryEditor isLoading={showEditorLoading} />
+          {showNoteEditor ? (
+            <NoteEditor />
+          ) : (
+            <StoryEditor isLoading={showEditorLoading} />
+          )}
         </Box>
         {/* Right Sidebar: Notes */}
         <Box

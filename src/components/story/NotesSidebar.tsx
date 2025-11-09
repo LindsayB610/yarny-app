@@ -35,7 +35,7 @@ import { StoryTabs, type TabItem } from "./StoryTabs";
 import { useNotesQuery, type NoteType } from "../../hooks/useNotesQuery";
 import { useCreateNoteMutation, useReorderNotesMutation } from "../../hooks/useNotesMutations";
 import { useYarnyStore } from "../../store/provider";
-import { selectActiveStory } from "../../store/selectors";
+import { selectActiveNote, selectActiveStory } from "../../store/selectors";
 
 interface NotesListProps {
   notes: Array<{ id: string; name: string; content: string; modifiedTime: string }>;
@@ -43,6 +43,8 @@ interface NotesListProps {
   noteType: NoteType;
   onReorder?: (noteType: NoteType, newOrder: string[]) => void;
   isReordering?: boolean;
+  activeNoteId?: string;
+  onNoteClick?: (noteType: NoteType, noteId: string) => void;
 }
 
 const NotesList = memo(function NotesList({
@@ -50,7 +52,9 @@ const NotesList = memo(function NotesList({
   isLoading,
   noteType,
   onReorder,
-  isReordering
+  isReordering,
+  activeNoteId,
+  onNoteClick
 }: NotesListProps): JSX.Element {
   const noteTypeLabel = noteType.charAt(0).toUpperCase() + noteType.slice(1);
   const [localNotes, setLocalNotes] = useState(notes);
@@ -145,7 +149,13 @@ const NotesList = memo(function NotesList({
       <SortableContext items={localNotes.map((note) => note.id)} strategy={verticalListSortingStrategy}>
         <List sx={{ p: 0 }}>
           {localNotes.map((note) => (
-            <SortableNoteItem key={note.id} note={note} disabled={isReordering} />
+            <SortableNoteItem
+              key={note.id}
+              note={note}
+              disabled={isReordering}
+              isActive={activeNoteId === note.id}
+              onClick={() => onNoteClick?.(noteType, note.id)}
+            />
           ))}
         </List>
       </SortableContext>
@@ -173,9 +183,11 @@ const NotesList = memo(function NotesList({
 interface SortableNoteItemProps {
   note: { id: string; name: string; content: string; modifiedTime: string };
   disabled?: boolean;
+  isActive?: boolean;
+  onClick?: () => void;
 }
 
-function SortableNoteItem({ note, disabled }: SortableNoteItemProps): JSX.Element {
+function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteItemProps): JSX.Element {
   const {
     attributes,
     listeners,
@@ -200,14 +212,15 @@ function SortableNoteItem({ note, disabled }: SortableNoteItemProps): JSX.Elemen
       style={style}
       {...attributes}
       {...listeners}
+      onClick={onClick}
       sx={{
         borderBottom: 1,
         borderColor: "divider",
-        bgcolor: isDragging ? "action.hover" : undefined,
+        bgcolor: isActive ? "action.selected" : isDragging ? "action.hover" : undefined,
         cursor: disabled ? "not-allowed" : isDragging ? "grabbing" : "grab",
         opacity: disabled ? 0.6 : 1,
         "&:hover": {
-          bgcolor: "action.hover"
+          bgcolor: isActive ? "action.selected" : "action.hover"
         }
       }}
     >
@@ -261,6 +274,8 @@ const NOTE_TYPE_LABELS: Record<NoteType, string> = {
 
 export function NotesSidebar(): JSX.Element {
   const story = useYarnyStore(selectActiveStory);
+  const activeNote = useYarnyStore(selectActiveNote);
+  const selectNote = useYarnyStore((state) => state.selectNote);
 
   // Get story folder ID - stories are folders in Drive, so the story ID is the folder ID
   const storyFolderId = story?.id;
@@ -281,14 +296,24 @@ export function NotesSidebar(): JSX.Element {
   }, []);
 
   const handleCreateNote = useCallback(
-    (noteType: NoteType) => {
+    async (noteType: NoteType) => {
       if (!storyFolderId) {
         return;
       }
 
-      createNoteMutation.mutate({ noteType });
+      try {
+        const result = await createNoteMutation.mutateAsync({ noteType });
+        if (result?.id) {
+          selectNote({
+            id: result.id,
+            type: noteType
+          });
+        }
+      } catch (error) {
+        console.error("Failed to create note:", error);
+      }
     },
-    [createNoteMutation, storyFolderId]
+    [createNoteMutation, selectNote, storyFolderId]
   );
 
   const handleReorderNotes = useCallback(
@@ -299,6 +324,16 @@ export function NotesSidebar(): JSX.Element {
       reorderNotesMutation.mutate({ noteType, newOrder });
     },
     [reorderNotesMutation, storyFolderId]
+  );
+
+  const handleNoteClick = useCallback(
+    (noteType: NoteType, noteId: string) => {
+      selectNote({
+        id: noteId,
+        type: noteType
+      });
+    },
+    [selectNote]
   );
 
   const tabs: TabItem[] = useMemo(
@@ -313,6 +348,8 @@ export function NotesSidebar(): JSX.Element {
             noteType="people"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
+            activeNoteId={activeNote?.type === "people" ? activeNote.id : undefined}
+            onNoteClick={handleNoteClick}
           />
         )
       },
@@ -326,6 +363,8 @@ export function NotesSidebar(): JSX.Element {
             noteType="places"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
+            activeNoteId={activeNote?.type === "places" ? activeNote.id : undefined}
+            onNoteClick={handleNoteClick}
           />
         )
       },
@@ -339,11 +378,14 @@ export function NotesSidebar(): JSX.Element {
             noteType="things"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
+            activeNoteId={activeNote?.type === "things" ? activeNote.id : undefined}
+            onNoteClick={handleNoteClick}
           />
         )
       }
     ],
     [
+      activeNote,
       peopleQuery.data,
       peopleQuery.isLoading,
       placesQuery.data,
@@ -351,7 +393,8 @@ export function NotesSidebar(): JSX.Element {
       thingsQuery.data,
       thingsQuery.isLoading,
       handleReorderNotes,
-      reorderNotesMutation.isPending
+      reorderNotesMutation.isPending,
+      handleNoteClick
     ]
   );
 

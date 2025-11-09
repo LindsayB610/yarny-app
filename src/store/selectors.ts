@@ -40,6 +40,19 @@ export const selectActiveStory = (state: YarnyStore): Story | undefined => {
   return state.entities.stories[activeStoryId];
 };
 
+export const selectActiveSnippetId = (state: YarnyStore): EntityId | undefined =>
+  state.ui.activeSnippetId;
+
+export const selectActiveSnippet = (state: YarnyStore): Snippet | undefined => {
+  const activeSnippetId = state.ui.activeSnippetId;
+  if (!activeSnippetId) {
+    return undefined;
+  }
+  return state.entities.snippets[activeSnippetId];
+};
+
+export const selectActiveNote = (state: YarnyStore) => state.ui.activeNote;
+
 export const selectActiveStoryChapters = (state: YarnyStore): Chapter[] => {
   const story = selectActiveStory(state);
   if (!story) {

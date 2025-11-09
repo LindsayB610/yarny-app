@@ -7,7 +7,7 @@ import {
   useTheme
 } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import { useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
@@ -22,6 +22,9 @@ import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import { useYarnyStore } from "../../store/provider";
 import {
+  selectActiveNote,
+  selectActiveSnippet,
+  selectActiveSnippetId,
   selectActiveStory,
   selectActiveStorySnippets,
   selectIsSyncing,
@@ -36,6 +39,11 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const theme = useTheme();
   const story = useYarnyStore(selectActiveStory);
   const snippets = useYarnyStore(selectActiveStorySnippets);
+  const activeSnippet = useYarnyStore(selectActiveSnippet);
+  const activeSnippetId = useYarnyStore(selectActiveSnippetId);
+  const activeNote = useYarnyStore(selectActiveNote);
+  const selectSnippet = useYarnyStore((state) => state.selectSnippet);
+  const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
   const { data: storyMetadata } = useStoryMetadata(story?.driveFileId);
@@ -43,18 +51,53 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const showLoadingState = isLoading;
 
   const initialDocument = useMemo(
-    () => buildPlainTextDocument(snippets.map((snippet) => snippet.content).join("\n\n")),
-    [snippets]
+    () => buildPlainTextDocument(activeSnippet?.content ?? ""),
+    [activeSnippet?.content]
   );
 
   const editor = usePlainTextEditor({
     content: initialDocument
   });
 
+  const aggregatedStoryContent = useMemo(
+    () => snippets.map((snippet) => snippet.content ?? "").join("\n\n"),
+    [snippets]
+  );
+
   const { mutateAsync: saveStory, isPending } = useDriveSaveStoryMutation();
 
   // Track editor content for auto-save
   const [editorContent, setEditorContent] = useState("");
+
+  useEffect(() => {
+    setEditorContent((previous) =>
+      previous === aggregatedStoryContent ? previous : aggregatedStoryContent
+    );
+  }, [aggregatedStoryContent]);
+
+  useEffect(() => {
+    if (!story || activeNote) {
+      if (activeSnippetId) {
+        selectSnippet(undefined);
+      }
+      return;
+    }
+
+    if (snippets.length === 0) {
+      if (activeSnippetId) {
+        selectSnippet(undefined);
+      }
+      return;
+    }
+
+    const activeExists = activeSnippetId
+      ? snippets.some((snippet) => snippet.id === activeSnippetId)
+      : false;
+
+    if (!activeExists) {
+      selectSnippet(snippets[0].id);
+    }
+  }, [story, snippets, activeSnippetId, selectSnippet]);
 
   // Auto-save hook - saves to story's drive file
   const {
@@ -100,26 +143,26 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   // Track if editor is open (authoritative)
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const previousStoryIdRef = useRef<string | undefined>(story?.id);
-  const previousSnippetsKeyRef = useRef<string>("");
+  const previousActiveSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
+  const lastLoadedSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastAppliedDocumentRef = useRef<string>("");
 
   // Track story/snippet switches for performance metrics
   useEffect(() => {
-    const currentSnippetsKey = snippets.map((s) => s.id).join(",");
     const storyChanged = story?.id !== previousStoryIdRef.current;
-    const snippetsChanged = currentSnippetsKey !== previousSnippetsKeyRef.current;
+    const snippetChanged = activeSnippet?.id !== previousActiveSnippetIdRef.current;
 
-    if (storyChanged || (snippetsChanged && previousSnippetsKeyRef.current !== "")) {
-      // Story or snippets changed - start tracking switch
+    if (storyChanged || snippetChanged) {
       startSnippetSwitch();
     }
 
     previousStoryIdRef.current = story?.id;
-    previousSnippetsKeyRef.current = currentSnippetsKey;
-  }, [story?.id, snippets, startSnippetSwitch]);
+    previousActiveSnippetIdRef.current = activeSnippet?.id;
+  }, [story?.id, activeSnippet?.id, startSnippetSwitch]);
 
   useEffect(() => {
     lastAppliedDocumentRef.current = "";
+    lastLoadedSnippetIdRef.current = undefined;
   }, [story?.id]);
 
   useEffect(() => {
@@ -127,27 +170,39 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       return;
     }
 
-    // Only update editor content if it's not open (not authoritative)
-    // When editor is open, it is the source of truth
     const serializedDocument = JSON.stringify(initialDocument);
-    if (lastAppliedDocumentRef.current === serializedDocument) {
-      return;
-    }
+    const snippetChanged = activeSnippetId !== lastLoadedSnippetIdRef.current;
 
-    if (isEditorOpen || hasUnsavedChanges) {
-      return;
+    if (!snippetChanged) {
+      if (lastAppliedDocumentRef.current === serializedDocument) {
+        return;
+      }
+
+      if (isEditorOpen || hasUnsavedChanges) {
+        return;
+      }
     }
 
     editor.commands.setContent(initialDocument, false, {
       preserveWhitespace: true
     });
     lastAppliedDocumentRef.current = serializedDocument;
-    // Editor content is set - snippet switch is complete
-    // Use a small delay to ensure editor is ready for interaction
+    lastLoadedSnippetIdRef.current = activeSnippetId;
+
     setTimeout(() => {
+      if (activeSnippetId) {
+        editor.commands.focus("end");
+      }
       endSnippetSwitch();
     }, 0);
-  }, [editor, initialDocument, isEditorOpen, hasUnsavedChanges, endSnippetSwitch]);
+  }, [
+    editor,
+    initialDocument,
+    activeSnippetId,
+    isEditorOpen,
+    hasUnsavedChanges,
+    endSnippetSwitch
+  ]);
 
   // Check for conflicts when story changes
   useEffect(() => {
@@ -186,7 +241,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     return () => clearTimeout(timeoutId);
   }, [story, checkSnippetConflict, editor, isEditorOpen]);
 
-  // Watch for editor changes to trigger auto-save
+  // Watch for editor changes to trigger snippet updates
   // Editor is authoritative while open - changes here take precedence
   useEffect(() => {
     if (!editor) return;
@@ -194,8 +249,25 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     let hasRecordedFirstKeystroke = false;
 
     const handleUpdate = () => {
+      if (!activeSnippet) {
+        return;
+      }
+
       const plainText = extractPlainTextFromDocument(editor.getJSON());
-      setEditorContent(plainText);
+      if (plainText === activeSnippet.content) {
+        return;
+      }
+
+      upsertEntities({
+        snippets: [
+          {
+            ...activeSnippet,
+            content: plainText,
+            updatedAt: new Date().toISOString()
+          }
+        ]
+      });
+
       const isFocused = editor.isFocused;
 
       // Record first keystroke for performance metrics only when user is actively typing
@@ -205,23 +277,22 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       }
     };
 
-    // Set initial content
-    const initialText = extractPlainTextFromDocument(editor.getJSON());
-    setEditorContent(initialText);
-
-    editor.on("update", handleUpdate);
-    editor.on("focus", () => setIsEditorOpen(true));
-    editor.on("blur", () => {
+    const handleFocus = () => setIsEditorOpen(true);
+    const handleBlur = () => {
       // Keep editor authoritative for a short time after blur
       setTimeout(() => setIsEditorOpen(false), 5000);
-    });
+    };
+
+    editor.on("update", handleUpdate);
+    editor.on("focus", handleFocus);
+    editor.on("blur", handleBlur);
 
     return () => {
       editor.off("update", handleUpdate);
-      editor.off("focus", () => setIsEditorOpen(true));
-      editor.off("blur", () => {});
+      editor.off("focus", handleFocus);
+      editor.off("blur", handleBlur);
     };
-  }, [editor, recordFirstKeystroke]);
+  }, [editor, activeSnippet, recordFirstKeystroke, upsertEntities]);
 
   if (showLoadingState) {
     return (
@@ -270,17 +341,53 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     );
   }
 
+  if (activeNote) {
+    return (
+      <Stack
+        spacing={2}
+        sx={{
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "text.secondary"
+        }}
+      >
+        <Typography variant="h5">Select a snippet to start writing</Typography>
+        <Typography variant="body2">
+          Pick a chapter snippet from the sidebar to edit your story content. People, places, and things
+          notes open in the notes editor.
+        </Typography>
+      </Stack>
+    );
+  }
+
+  if (!activeSnippet) {
+    return (
+      <Stack
+        spacing={2}
+        sx={{
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "text.secondary"
+        }}
+      >
+        <Typography variant="h5">Create a snippet to start writing</Typography>
+        <Typography variant="body2">
+          Add a snippet from the sidebar, then select it to begin writing.
+        </Typography>
+      </Stack>
+    );
+  }
+
   const handleSave = async () => {
-    if (!editor) {
+    if (!story) {
       return;
     }
 
-    const plainText = extractPlainTextFromDocument(editor.getJSON());
-    await saveStory(plainText);
-    markContentAsSaved(plainText);
+    await saveStory(editorContent);
+    markContentAsSaved(editorContent);
   };
-
-  const bottomScrollExtension = 720;
 
   return (
     <Stack spacing={3} sx={{ height: "100%" }}>
@@ -347,19 +454,32 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           if (action === "useDrive" && conflictModal.conflict) {
             // Use Drive content - it's already in the conflict object
             const driveContent = conflictModal.conflict.driveContent;
-            if (editor && driveContent) {
+            if (editor && driveContent && activeSnippet) {
               const driveDocument = buildPlainTextDocument(driveContent);
               editor.commands.setContent(driveDocument);
-              // Update editor content state
-              setEditorContent(driveContent);
-              markContentAsSaved(driveContent);
+              const now = new Date().toISOString();
+              upsertEntities({
+                snippets: [
+                  {
+                    ...activeSnippet,
+                    content: driveContent,
+                    updatedAt: now
+                  }
+                ]
+              });
+              const updatedAggregatedContent = snippets
+                .map((snippet) =>
+                  snippet.id === activeSnippet.id ? driveContent : snippet.content ?? ""
+                )
+                .join("\n\n");
+              markContentAsSaved(updatedAggregatedContent);
             }
           } else if (action === "useLocal") {
             // Keep local version (editor content is already authoritative)
             // Save local content to Drive
-            if (editor && story) {
+            if (story) {
               try {
-                const localContent = extractPlainTextFromDocument(editor.getJSON());
+                const localContent = editorContent;
                 await saveStory(localContent);
                 markContentAsSaved(localContent);
               } catch (error) {

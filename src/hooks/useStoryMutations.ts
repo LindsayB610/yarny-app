@@ -743,6 +743,7 @@ export function useCreateSnippetMutation() {
   const activeStory = useYarnyStore(selectActiveStory);
   const chaptersById = useYarnyStore((state) => state.entities.chapters);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const selectSnippet = useYarnyStore((state) => state.selectSnippet);
 
   return useMutation({
     mutationFn: async ({ chapterId, title }: CreateSnippetParams) => {
@@ -828,6 +829,8 @@ export function useCreateSnippetMutation() {
         chapters: [updatedChapter],
         snippets: [newSnippet]
       });
+
+      selectSnippet(snippetId);
 
       return newSnippet;
     },
@@ -1043,6 +1046,7 @@ export function useDuplicateSnippetMutation() {
   const activeStory = useYarnyStore(selectActiveStory);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const storeApi = useYarnyStoreApi();
+  const selectSnippet = useYarnyStore((state) => state.selectSnippet);
 
   return useMutation({
     mutationFn: async ({ snippetId }: DuplicateSnippetParams) => {
@@ -1161,6 +1165,8 @@ export function useDuplicateSnippetMutation() {
         chapters: [updatedChapter],
         snippets: snippetsToUpdate
       });
+
+      selectSnippet(newSnippetId);
 
       return newSnippetId;
     },

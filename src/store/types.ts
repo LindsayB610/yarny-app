@@ -53,6 +53,11 @@ export interface YarnyEntities {
 export interface YarnyUIState {
   selectedProjectId?: EntityId;
   activeStoryId?: EntityId;
+  activeSnippetId?: EntityId;
+  activeNote?: {
+    id: EntityId;
+    type: "people" | "places" | "things";
+  };
   isSyncing: boolean;
   lastSyncedAt?: string;
 }
@@ -72,6 +77,15 @@ export interface NormalizedPayload {
 export interface YarnyActions {
   selectProject: (projectId: EntityId | undefined) => void;
   selectStory: (storyId: EntityId | undefined) => void;
+  selectSnippet: (snippetId: EntityId | undefined) => void;
+  selectNote: (
+    selection:
+      | {
+          id: EntityId;
+          type: "people" | "places" | "things";
+        }
+      | undefined
+  ) => void;
   setSyncing: (isSyncing: boolean) => void;
   setLastSyncedAt: (isoString: string) => void;
   upsertEntities: (payload: NormalizedPayload) => void;
