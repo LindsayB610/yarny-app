@@ -36,6 +36,7 @@ export interface LocalBackupActions {
     status: "idle" | "running" | "success" | "error",
     message?: string | null
   ) => void;
+  clearRefreshStatus: () => void;
   reset: () => void;
 }
 
@@ -114,6 +115,12 @@ export const createLocalBackupStore = (initial?: Partial<LocalBackupState>) => {
           if (status === "idle") {
             draft.refreshMessage = null;
           }
+        });
+      },
+      clearRefreshStatus() {
+        set((draft) => {
+          draft.refreshStatus = "idle";
+          draft.refreshMessage = null;
         });
       },
       reset() {

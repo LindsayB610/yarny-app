@@ -3,8 +3,7 @@ import { useCallback } from "react";
 import {
   ensureDirectoryPermission,
   queryDirectoryPermission,
-  requestDirectoryHandle,
-  revokePersistedDirectory
+  requestDirectoryHandle
 } from "../services/localFs";
 import { useLocalBackupStore, useLocalBackupStoreApi } from "../store/localBackupProvider";
 
@@ -74,13 +73,9 @@ export function useLocalBackups() {
   const disableLocalBackups = useCallback(async () => {
     const store = storeApi.getState();
     store.setEnabled(false);
-    store.setRootHandle(null);
-    store.setRepository(null);
-    store.setPermission("prompt");
     store.setLastSyncedAt(null);
     store.setError(null);
-
-    await revokePersistedDirectory();
+    store.setRefreshStatus("idle");
 
     return { success: true as const };
   }, [storeApi]);
@@ -97,7 +92,6 @@ export function useLocalBackups() {
     store.setPermission(permissionState);
     if (permissionState !== "granted") {
       store.setRepository(null);
-      store.setEnabled(false);
       store.setError(
         createError(
           permissionState === "denied"

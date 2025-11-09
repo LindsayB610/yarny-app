@@ -182,15 +182,47 @@ export function StorageSettingsSection(): JSX.Element {
   const isRefreshRunning = refreshStatus === "running";
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        background: "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%)",
+        borderRadius: 3,
+        border: "1px solid rgba(148, 163, 184, 0.25)",
+        boxShadow: "0 25px 60px rgba(15, 23, 42, 0.45)",
+        color: "rgba(248, 250, 252, 0.96)",
+        "& .MuiTypography-root": {
+          color: "rgba(241, 245, 249, 0.95)"
+        },
+        "& .MuiTypography-root.MuiTypography-body2": {
+          color: "rgba(203, 213, 225, 0.78)"
+        },
+        "& .MuiTypography-root.MuiTypography-caption": {
+          color: "rgba(148, 163, 184, 0.7)"
+        }
+      }}
+    >
       <CardHeader
         title="Local Story Backups"
         subheader="Mirror Drive saves to a local folder for offline work and testing."
+        titleTypographyProps={{
+          fontWeight: 700,
+          color: "rgba(241, 245, 249, 0.98)"
+        }}
+        subheaderTypographyProps={{
+          sx: { color: "rgba(191, 219, 254, 0.75)" }
+        }}
       />
       <CardContent>
         <Stack spacing={3}>
           {showUnsupportedBanner ? (
-            <Alert severity="warning">
+            <Alert
+              severity="warning"
+              sx={{
+                bgcolor: "rgba(251, 191, 36, 0.15)",
+                color: "rgba(254, 243, 199, 0.95)",
+                border: "1px solid rgba(251, 191, 36, 0.35)"
+              }}
+            >
               Your browser does not support the File System Access API. Please use a Chromium-based
               browser such as Chrome or Edge to enable local backups.
             </Alert>
@@ -236,6 +268,17 @@ export function StorageSettingsSection(): JSX.Element {
               variant="contained"
               onClick={runEnable}
               disabled={isProcessing || !isSupported}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: "9999px",
+                px: 3,
+                bgcolor: "primary.main",
+                boxShadow: "0 12px 30px rgba(16, 185, 129, 0.45)",
+                "&:hover": {
+                  bgcolor: "primary.dark"
+                }
+              }}
             >
               Choose Folder
             </Button>
@@ -243,6 +286,18 @@ export function StorageSettingsSection(): JSX.Element {
               variant="outlined"
               onClick={handleOpenFolder}
               disabled={isProcessing || !enabled || permission !== "granted"}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: "9999px",
+                px: 3,
+                color: "rgba(148, 163, 184, 0.9)",
+                borderColor: "rgba(148, 163, 184, 0.4)",
+                "&:hover": {
+                  borderColor: "rgba(226, 232, 240, 0.95)",
+                  color: "rgba(226, 232, 240, 0.95)"
+                }
+              }}
             >
               Open Folder
             </Button>
@@ -251,6 +306,14 @@ export function StorageSettingsSection(): JSX.Element {
               variant="text"
               onClick={runDisable}
               disabled={isProcessing || !enabled}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: "rgba(248, 113, 113, 0.9)",
+                "&:hover": {
+                  color: "rgba(252, 165, 165, 1)"
+                }
+              }}
             >
               Disconnect
             </Button>
@@ -258,6 +321,14 @@ export function StorageSettingsSection(): JSX.Element {
               variant="text"
               onClick={handleReconnect}
               disabled={isProcessing || !enabled}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                color: "rgba(129, 140, 248, 0.9)",
+                "&:hover": {
+                  color: "rgba(165, 180, 252, 1)"
+                }
+              }}
             >
               Reconnect
             </Button>
@@ -266,6 +337,18 @@ export function StorageSettingsSection(): JSX.Element {
               onClick={handleRefreshAll}
               disabled={isRefreshRunning}
               startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: "9999px",
+                px: 3,
+                color: "rgba(94, 234, 212, 0.95)",
+                borderColor: "rgba(94, 234, 212, 0.45)",
+                "&:hover": {
+                  borderColor: "rgba(94, 234, 212, 0.85)",
+                  color: "rgba(125, 248, 225, 1)"
+                }
+              }}
             >
               Refresh Local Backups
             </Button>
@@ -286,13 +369,33 @@ export function StorageSettingsSection(): JSX.Element {
           </Stack>
 
           {statusMessage ? (
-            <Alert severity={statusSeverity} onClose={() => setStatusMessage(null)}>
+            <Alert
+              severity={statusSeverity}
+              onClose={() => setStatusMessage(null)}
+              sx={{
+                bgcolor:
+                  statusSeverity === "success"
+                    ? "rgba(134, 239, 172, 0.15)"
+                    : statusSeverity === "error"
+                      ? "rgba(248, 113, 113, 0.15)"
+                      : "rgba(56, 189, 248, 0.18)",
+                color: "rgba(226, 232, 240, 0.95)",
+                border: "1px solid rgba(148, 163, 184, 0.35)"
+              }}
+            >
               {statusMessage}
             </Alert>
           ) : null}
 
           {error ? (
-            <Alert severity="error">
+            <Alert
+              severity="error"
+              sx={{
+                bgcolor: "rgba(248, 113, 113, 0.15)",
+                color: "rgba(254, 226, 226, 0.95)",
+                border: "1px solid rgba(248, 113, 113, 0.4)"
+              }}
+            >
               {error.message}
               <Typography variant="caption" display="block" mt={0.5} color="text.secondary">
                 {new Date(error.timestamp).toLocaleString()}
