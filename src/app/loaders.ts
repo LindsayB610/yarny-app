@@ -30,7 +30,29 @@ function handleAuthError(error: unknown): never {
 /**
  * Route loader for stories page - prefetches Yarny Stories folder and stories list
  */
-export async function storiesLoader(queryClient: QueryClient) {
+export interface StoriesLoaderData {
+  yarnyStoriesFolder: Awaited<
+    ReturnType<typeof apiClient.getOrCreateYarnyStories>
+  > | null;
+  driveAuthorized: boolean;
+}
+
+function isDriveAuthorizationError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    const message = error.data?.error ?? error.message;
+    if (!message) return false;
+    const normalized = message.toLowerCase();
+    return (
+      normalized.includes("no drive tokens found") ||
+      normalized.includes("authorize drive access") ||
+      normalized.includes("no refresh token available")
+    );
+  }
+
+  return false;
+}
+
+export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLoaderData> {
   ensureAuthenticated();
   try {
     const yarnyStoriesFolder = await queryClient.ensureQueryData({
@@ -43,8 +65,21 @@ export async function storiesLoader(queryClient: QueryClient) {
       queryFn: () => fetchStories(queryClient)
     });
 
-    return { yarnyStoriesFolder };
+    return { yarnyStoriesFolder, driveAuthorized: true };
   } catch (error) {
+    if (isDriveAuthorizationError(error)) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[Loader] Drive authorization error encountered. Allowing Stories page to render with Drive auth prompt.",
+          error
+        );
+      }
+      return {
+        yarnyStoriesFolder: null,
+        driveAuthorized: false
+      };
+    }
+
     return handleAuthError(error);
   }
 }

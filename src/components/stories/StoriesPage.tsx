@@ -1,6 +1,6 @@
 import { Box, Container, Typography } from "@mui/material";
 import { useMemo, useState, type JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
 import { EmptyState } from "./EmptyState";
@@ -11,9 +11,11 @@ import { VirtualizedStoryList } from "./VirtualizedStoryList";
 import { useAuth } from "../../hooks/useAuth";
 import { useStoriesQuery } from "../../hooks/useStoriesQuery";
 import { useRefreshStories } from "../../hooks/useStoryMutations";
+import type { StoriesLoaderData } from "../../app/loaders";
 
 export function StoriesPage(): JSX.Element {
   const navigate = useNavigate();
+  const loaderData = useLoaderData() as StoriesLoaderData | undefined;
   const { user, logout } = useAuth();
   const { data: stories, isLoading, error } = useStoriesQuery();
   const refreshStories = useRefreshStories();
@@ -31,7 +33,10 @@ export function StoriesPage(): JSX.Element {
 
   // Check if Drive is authorized (for now, assume authorized if we can fetch stories)
   // TODO: Add proper Drive auth check
-  const isDriveAuthorized = !error && (stories !== undefined || isLoading);
+  const isDriveAuthorized =
+    loaderData?.driveAuthorized === false
+      ? false
+      : !error && (stories !== undefined || isLoading);
 
   const handleLogout = async () => {
     await logout();

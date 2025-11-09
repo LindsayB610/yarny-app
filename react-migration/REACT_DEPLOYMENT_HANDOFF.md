@@ -24,6 +24,7 @@
 - **Phase 1 – Environment Alignment**
   - Ensure React build uses the same analytics, error reporting, and API keys as production.
   - Update `netlify.toml` (or equivalent) so production deploy builds from the React app entry point.
+  - Redirect all temporary React testing URLs (e.g., `/react`, `/react/*`, staging preview slugs) to their new canonical React routes so no orphaned pages remain.
   - Configure redirects/rewrite rules for legacy routes to the React router.
 - **Phase 2 – Staging Verification**
   - Deploy current `main` branch (React app) to staging.
