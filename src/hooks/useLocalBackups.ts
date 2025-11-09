@@ -3,7 +3,8 @@ import { useCallback } from "react";
 import {
   ensureDirectoryPermission,
   queryDirectoryPermission,
-  requestDirectoryHandle
+  requestDirectoryHandle,
+  revokePersistedDirectory
 } from "../services/localFs";
 import { useLocalBackupStore, useLocalBackupStoreApi } from "../store/localBackupProvider";
 
@@ -73,9 +74,14 @@ export function useLocalBackups() {
   const disableLocalBackups = useCallback(async () => {
     const store = storeApi.getState();
     store.setEnabled(false);
+    store.setRootHandle(null);
+    store.setRepository(null);
+    store.setPermission("prompt");
     store.setLastSyncedAt(null);
     store.setError(null);
-    store.setRefreshStatus("idle");
+    store.clearRefreshStatus();
+
+    await revokePersistedDirectory();
 
     return { success: true as const };
   }, [storeApi]);
