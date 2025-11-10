@@ -2,11 +2,11 @@ import axios from "axios";
 import { z } from "zod";
 
 import { apiClient } from "./client";
-import type { DriveListResponse } from "./contract";
 import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
-import { extractStoryTitleFromMetadata } from "../utils/storyMetadata";
+import { extractGroupOrderFromMetadata, extractStoryTitleFromMetadata } from "../utils/storyMetadata";
+import { listAllDriveFiles } from "./listAllDriveFiles";
 
 const SaveStoryInputSchema = z.object({
   storyId: z.string(),
@@ -80,8 +80,8 @@ export const createDriveClient = (): DriveClient => ({
   async listProjects() {
     try {
       const yarnyFolder = await apiClient.getOrCreateYarnyStories();
-      const storiesResponse = await apiClient.listDriveFiles({ folderId: yarnyFolder.id });
-      const storyFolders = (storiesResponse.files ?? []).filter(
+      const storiesResponse = await listAllDriveFiles(yarnyFolder.id);
+      const storyFolders = storiesResponse.filter(
         (file) => file.mimeType === "application/vnd.google-apps.folder" && !file.trashed
       );
 
@@ -114,9 +114,8 @@ export const createDriveClient = (): DriveClient => ({
   },
   async getStory(storyId: string) {
     try {
-      const topLevel = await apiClient.listDriveFiles({ folderId: storyId });
-      const files = topLevel.files ?? [];
-      const fileMap = new Map<string, DriveListResponse["files"][number]>();
+      const files = await listAllDriveFiles(storyId);
+      const fileMap = new Map<string, (typeof files)[number]>();
       for (const file of files) {
         if (file.name) {
           fileMap.set(file.name, file);
@@ -135,9 +134,7 @@ export const createDriveClient = (): DriveClient => ({
             projectMetadata = JSON.parse(projectContent.content) as Record<string, unknown>;
             const name = extractStoryTitleFromMetadata(projectMetadata);
             storyTitle = name || storyTitle;
-            if (Array.isArray(projectMetadata.groupIds)) {
-              groupOrder = projectMetadata.groupIds.filter((id): id is string => typeof id === "string");
-            }
+            groupOrder = extractGroupOrderFromMetadata(projectMetadata) ?? groupOrder;
           }
         } catch (projectError) {
           console.warn(`[DriveClient] Failed to read project.json for story ${storyId}`, projectError);

@@ -87,6 +87,38 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     return baseName.toLowerCase().endsWith(".doc") ? baseName : `${baseName}.doc`;
   }, [activeSnippet, editorContent]);
 
+  const placeholderTitleSet = useMemo(
+    () => new Set(["new project", "untitled story", "new story", "story title", "project title"]),
+    []
+  );
+
+  const displayTitle = useMemo(() => {
+    const normalize = (value: string | undefined | null) => {
+      const trimmed = value?.trim();
+      return trimmed && trimmed.length > 0 ? trimmed : undefined;
+    };
+
+    const prefer = (value: string | undefined) => {
+      if (!value) {
+        return undefined;
+      }
+      return placeholderTitleSet.has(value.toLowerCase()) ? undefined : value;
+    };
+
+    const metadataTitle = prefer(normalize(storyMetadata?.title));
+    const storeTitle = prefer(normalize(story?.title));
+    const fallbackMetadata = normalize(storyMetadata?.title);
+    const fallbackStoreTitle = normalize(story?.title);
+
+    return (
+      metadataTitle ??
+      storeTitle ??
+      fallbackMetadata ??
+      fallbackStoreTitle ??
+      "Untitled Story"
+    );
+  }, [placeholderTitleSet, story?.title, storyMetadata?.title]);
+
   useEffect(() => {
     if (!story || activeNote) {
       if (activeSnippetId) {
@@ -428,7 +460,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         justifyContent="space-between"
       >
         <Box>
-          <Typography variant="h3">{storyMetadata?.title ?? story.title}</Typography>
+          <Typography variant="h3">{displayTitle}</Typography>
           <Typography variant="body2" color="text.secondary">
             {isAutoSaving || isSyncing
               ? "Syncing with Google Drive..."
