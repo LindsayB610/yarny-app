@@ -207,6 +207,12 @@
         if (backdrop) backdrop.classList.remove("active");
       });
     });
+
+    const currentYear = String(new Date().getFullYear());
+    const yearTargets = document.querySelectorAll("[data-current-year]");
+    yearTargets.forEach((node) => {
+      node.textContent = currentYear;
+    });
   });
 })();
 
