@@ -39,17 +39,9 @@ describe("NewStoryModal", () => {
     const user = userEvent.setup();
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
-    // Find the form and submit button
-    const form = screen.getByRole("dialog").querySelector("form");
+    // Submit the form directly via the button to trigger validation
     const submitButton = screen.getByRole("button", { name: /create story/i });
-    
-    // Submit the form directly to trigger validation
-    if (form) {
-      const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
-      form.dispatchEvent(submitEvent);
-    } else {
-      await user.click(submitButton);
-    }
+    await user.click(submitButton);
 
     // Wait for the error message to appear
     await waitFor(

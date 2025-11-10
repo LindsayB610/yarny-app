@@ -137,7 +137,7 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
       <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
         Create New Story
       </DialogTitle>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <DialogContent>
           {error && (
             <Box

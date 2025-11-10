@@ -217,7 +217,9 @@ export function parseApiResponse<T>(
     return schema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("API response validation error:", error.errors);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("API response validation error:", error.errors);
+      }
       throw new Error(
         `Invalid API response: ${error.errors.map((e) => e.message).join(", ")}`
       );

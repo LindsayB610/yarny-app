@@ -81,7 +81,9 @@ export function useConflictDetection() {
 
         return null;
       } catch (error) {
-        console.error("Error checking conflict:", error);
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Error checking conflict:", error);
+        }
         return null;
       }
     },
