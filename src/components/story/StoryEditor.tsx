@@ -17,7 +17,6 @@ import {
 } from "../../editor/textExtraction";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
-import { useDriveSaveStoryMutation } from "../../hooks/useDriveQueries";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import { useYarnyStore } from "../../store/provider";
@@ -44,6 +43,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const activeNote = useYarnyStore(selectActiveNote);
   const selectSnippet = useYarnyStore((state) => state.selectSnippet);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const chaptersById = useYarnyStore((state) => state.entities.chapters);
+  const setSyncing = useYarnyStore((state) => state.setSyncing);
+  const setLastSyncedAtAction = useYarnyStore((state) => state.setLastSyncedAt);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
   const { data: storyMetadata } = useStoryMetadata(story?.driveFileId);
@@ -59,21 +61,31 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     content: initialDocument
   });
 
-  const aggregatedStoryContent = useMemo(
-    () => snippets.map((snippet) => snippet.content ?? "").join("\n\n"),
-    [snippets]
-  );
-
-  const { mutateAsync: saveStory, isPending } = useDriveSaveStoryMutation();
-
-  // Track editor content for auto-save
-  const [editorContent, setEditorContent] = useState("");
+  // Track editor content for auto-save (per snippet)
+  const [editorContent, setEditorContent] = useState(activeSnippet?.content ?? "");
 
   useEffect(() => {
-    setEditorContent((previous) =>
-      previous === aggregatedStoryContent ? previous : aggregatedStoryContent
-    );
-  }, [aggregatedStoryContent]);
+    setEditorContent(activeSnippet?.content ?? "");
+  }, [activeSnippet?.id, activeSnippet?.content]);
+
+  const activeChapter = activeSnippet ? chaptersById[activeSnippet.chapterId] : undefined;
+
+  const snippetFileName = useMemo(() => {
+    if (!activeSnippet) {
+      return "Snippet.doc";
+    }
+
+    const lines = editorContent.split(/\r?\n/);
+    const firstNonEmptyLine =
+      lines.map((line) => line.trim()).find((line) => line.length > 0) ??
+      `Snippet ${activeSnippet.order + 1}`;
+
+    const sanitized = firstNonEmptyLine.replace(/[\\/:*?"<>|]+/g, "").slice(0, 60).trim();
+    const baseName =
+      sanitized.length > 0 ? sanitized : `Snippet-${activeSnippet.order + 1}`;
+
+    return baseName.toLowerCase().endsWith(".doc") ? baseName : `${baseName}.doc`;
+  }, [activeSnippet, editorContent]);
 
   useEffect(() => {
     if (!story || activeNote) {
@@ -99,27 +111,34 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     }
   }, [story, snippets, activeSnippetId, selectSnippet]);
 
-  // Auto-save hook - saves to story's drive file
+  // Auto-save hook - saves the active snippet's Google Doc
   const {
+    save: saveSnippet,
     isSaving: isAutoSaving,
     hasUnsavedChanges,
     markAsSaved: markContentAsSaved
   } = useAutoSave(
-    story?.driveFileId,
+    activeSnippet?.driveFileId,
     editorContent,
     {
-      enabled: Boolean(story?.driveFileId),
+      enabled: Boolean(activeSnippet?.driveFileId),
       debounceMs: 2000,
       onSaveStart: () => {
-        // Update syncing state
+        setSyncing(true);
       },
       onSaveSuccess: () => {
-        // Save successful
+        setSyncing(false);
+        setLastSyncedAtAction(new Date().toISOString());
       },
       onSaveError: (error) => {
         console.error("Auto-save failed:", error);
+        setSyncing(false);
       },
-      localBackupStoryId: story?.id
+      localBackupStoryId: story?.id,
+      localBackupSnippetId: activeSnippet?.id,
+      fileName: snippetFileName,
+      mimeType: "application/vnd.google-apps.document",
+      parentFolderId: activeChapter?.driveFolderId
     }
   );
 
@@ -206,21 +225,19 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
   // Check for conflicts when story changes
   useEffect(() => {
-    if (!story || !editor || !isEditorOpen) {
+    if (!story || !editor || !isEditorOpen || !activeSnippet || !activeSnippet.driveFileId) {
       return;
     }
 
     const checkConflicts = async () => {
       try {
-        // Get current editor content as local content
-        const localContent = extractPlainTextFromDocument(editor.getJSON());
+        const localContent = editorContent;
 
-        // Check if there's a conflict with Drive
         const conflict = await checkSnippetConflict(
-          story.id,
-          story.updatedAt,
-          story.driveFileId,
-          story.driveFileId // Using driveFileId as parent folder ID for now
+          activeSnippet.id,
+          activeSnippet.updatedAt,
+          activeSnippet.driveFileId,
+          activeChapter?.driveFolderId ?? story.driveFileId
         );
 
         if (conflict) {
@@ -239,7 +256,15 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     // Check conflicts after a short delay to avoid race conditions
     const timeoutId = setTimeout(checkConflicts, 1000);
     return () => clearTimeout(timeoutId);
-  }, [story, checkSnippetConflict, editor, isEditorOpen]);
+  }, [
+    story,
+    activeSnippet,
+    activeChapter,
+    checkSnippetConflict,
+    editor,
+    isEditorOpen,
+    editorContent
+  ]);
 
   // Watch for editor changes to trigger snippet updates
   // Editor is authoritative while open - changes here take precedence
@@ -254,6 +279,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       }
 
       const plainText = extractPlainTextFromDocument(editor.getJSON());
+      setEditorContent(plainText);
       if (plainText === activeSnippet.content) {
         return;
       }
@@ -381,12 +407,16 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   }
 
   const handleSave = async () => {
-    if (!story) {
+    if (!activeSnippet?.driveFileId) {
       return;
     }
 
-    await saveStory(editorContent);
-    markContentAsSaved(editorContent);
+    try {
+      await saveSnippet();
+      markContentAsSaved(editorContent);
+    } catch (error) {
+      console.error("Manual save failed:", error);
+    }
   };
 
   return (
@@ -400,7 +430,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
         <Box>
           <Typography variant="h3">{storyMetadata?.title ?? story.title}</Typography>
           <Typography variant="body2" color="text.secondary">
-            {isAutoSaving || isPending || isSyncing
+            {isAutoSaving || isSyncing
               ? "Syncing with Google Drive..."
               : hasUnsavedChanges
               ? "Unsaved changes"
@@ -413,9 +443,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           <Button
             onClick={handleSave}
             variant="contained"
-            disabled={isPending || isSyncing || isAutoSaving}
+            disabled={isAutoSaving || isSyncing || !activeSnippet?.driveFileId}
           >
-            {isPending || isSyncing || isAutoSaving ? "Saving..." : "Save to Drive"}
+            {isSyncing || isAutoSaving ? "Saving..." : "Save to Drive"}
           </Button>
         </Stack>
       </Stack>
@@ -467,21 +497,16 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
                   }
                 ]
               });
-              const updatedAggregatedContent = snippets
-                .map((snippet) =>
-                  snippet.id === activeSnippet.id ? driveContent : snippet.content ?? ""
-                )
-                .join("\n\n");
-              markContentAsSaved(updatedAggregatedContent);
+              setEditorContent(driveContent);
+              markContentAsSaved(driveContent);
             }
           } else if (action === "useLocal") {
             // Keep local version (editor content is already authoritative)
             // Save local content to Drive
-            if (story) {
+            if (activeSnippet?.driveFileId) {
               try {
-                const localContent = editorContent;
-                await saveStory(localContent);
-                markContentAsSaved(localContent);
+                await saveSnippet();
+                markContentAsSaved(editorContent);
               } catch (error) {
                 console.error("Failed to save local content:", error);
               }

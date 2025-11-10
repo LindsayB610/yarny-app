@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { NewStoryModal } from "./NewStoryModal";
 import { server } from "../../../tests/setup/msw-server";
+import { runAxe } from "../../../tests/utils/a11y-test-utils";
 import { renderWithProviders, screen, waitFor } from "../../../tests/utils/test-utils";
 
 
@@ -12,6 +13,12 @@ describe("NewStoryModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("has no accessibility violations when open with default state", async () => {
+    const { container } = renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
+
+    await expect(runAxe(container)).resolves.toHaveNoViolations();
   });
 
   it("renders when open", () => {

@@ -130,6 +130,18 @@ const countWords = (text: string): number => {
   return trimmed.split(/\s+/).length;
 };
 
+const createSnippetFileName = (content: string, fallback: string): string => {
+  const firstLine = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  const sanitized = (firstLine ?? fallback).replace(/[\\/:*?"<>|]+/g, "").slice(0, 60).trim();
+  const baseName = sanitized.length > 0 ? sanitized : fallback;
+
+  return baseName.toLowerCase().endsWith(".doc") ? baseName : `${baseName}.doc`;
+};
+
 interface ProjectJson {
   name?: string;
   projectId?: string;
@@ -1614,7 +1626,52 @@ export function useMoveSnippetToChapterMutation() {
       }
 
       // Move the snippet file in Drive if it has a driveFileId
-      // TODO: Implement actual file move in Drive
+      if (snippet?.driveFileId) {
+        try {
+          let targetFolderId = targetChapter.driveFolderId;
+
+          if (!targetFolderId) {
+            const chaptersFolderId = await getChaptersFolderId(activeStory.driveFileId);
+            if (chaptersFolderId) {
+              try {
+                const createdFolder = await apiClient.createDriveFolder({
+                  name: targetChapter.title ?? "Untitled Chapter",
+                  parentFolderId: chaptersFolderId
+                });
+                targetFolderId = createdFolder.id;
+                targetChapter.driveFolderId = createdFolder.id;
+              } catch (folderError) {
+                console.warn(
+                  "Failed to create target chapter folder while moving snippet:",
+                  folderError
+                );
+              }
+            }
+          }
+
+          if (targetFolderId) {
+            const snippetContent = snippet.body ?? snippet.content ?? "";
+            const fallbackName = `Snippet-${snippetId.slice(0, 8) || "moved"}`;
+            const fileName = createSnippetFileName(snippetContent, fallbackName);
+
+            const createdFile = await apiClient.writeDriveFile({
+              fileName,
+              content: snippetContent,
+              parentFolderId: targetFolderId,
+              mimeType: "application/vnd.google-apps.document"
+            });
+
+            await apiClient.deleteDriveFile({ fileId: snippet.driveFileId });
+
+            snippet.driveFileId = createdFile.id;
+            snippet.driveRevisionId = undefined;
+
+            await mirrorSnippetWrite(activeStory.id, snippetId, snippetContent);
+          }
+        } catch (error) {
+          console.warn("Failed to relocate snippet document in Drive:", error);
+        }
+      }
 
       // Write updated data.json
       await writeDataJson(activeStory.driveFileId, data, fileId);

@@ -80,7 +80,7 @@ vi.mock("../../src/hooks/useVisibilityGatedQueries", () => ({
 vi.mock("../../src/store/provider", () => {
   let snippetContent = "Initial content";
 
-  const buildStore = () => ({
+  const buildState = () => ({
     entities: {
       projects: {},
       projectOrder: [],
@@ -113,20 +113,42 @@ vi.mock("../../src/store/provider", () => {
           chapterId: "chapter-1",
           order: 1,
           content: snippetContent,
+          driveFileId: "drive-file-1",
           updatedAt: new Date().toISOString()
         }
       }
     },
     ui: {
       activeStoryId: "story-1",
+      activeSnippetId: "snippet-1",
       isSyncing: false
     }
+  });
+
+  const buildStore = () => ({
+    ...buildState(),
+    selectProject: vi.fn(),
+    selectStory: vi.fn(),
+    selectSnippet: vi.fn(),
+    selectNote: vi.fn(),
+    setSyncing: vi.fn(),
+    setLastSyncedAt: vi.fn(),
+    upsertEntities: vi.fn(),
+    removeChapter: vi.fn(),
+    removeSnippet: vi.fn(),
+    clear: vi.fn()
   });
 
   return {
     useYarnyStore: (selector: (store: ReturnType<typeof buildStore>) => unknown) => {
       return selector(buildStore());
     },
+    useYarnyStoreApi: () => ({
+      getState: buildStore,
+      setState: vi.fn(),
+      subscribe: vi.fn(),
+      destroy: vi.fn()
+    }),
     __setSnippetContent: (content: string) => {
       snippetContent = content;
     }

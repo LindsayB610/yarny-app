@@ -3,13 +3,20 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
-import { mirrorStoryDocument } from "../services/localFs/localBackupMirror";
+import {
+  mirrorSnippetWrite,
+  mirrorStoryDocument
+} from "../services/localFs/localBackupMirror";
 
 interface QueuedSave {
   fileId: string;
   content: string;
   timestamp: string;
   storyId?: string;
+  snippetId?: string;
+  fileName?: string;
+  mimeType?: string;
+  parentFolderId?: string;
 }
 
 const readQueuedSaves = (): QueuedSave[] => {
@@ -31,11 +38,15 @@ const readQueuedSaves = (): QueuedSave[] => {
           "content" in entry &&
           "timestamp" in entry
         ) {
-          const { fileId, content, timestamp, storyId } = entry as {
+          const { fileId, content, timestamp, storyId, snippetId, fileName, mimeType, parentFolderId } = entry as {
             fileId: unknown;
             content: unknown;
             timestamp: unknown;
             storyId?: unknown;
+            snippetId?: unknown;
+            fileName?: unknown;
+            mimeType?: unknown;
+            parentFolderId?: unknown;
           };
           if (
             typeof fileId === "string" &&
@@ -46,7 +57,12 @@ const readQueuedSaves = (): QueuedSave[] => {
               fileId,
               content,
               timestamp,
-              storyId: typeof storyId === "string" ? storyId : undefined
+              storyId: typeof storyId === "string" ? storyId : undefined,
+              snippetId: typeof snippetId === "string" ? snippetId : undefined,
+              fileName: typeof fileName === "string" ? fileName : undefined,
+              mimeType: typeof mimeType === "string" ? mimeType : undefined,
+              parentFolderId:
+                typeof parentFolderId === "string" ? parentFolderId : undefined
             };
           }
         }
@@ -66,6 +82,10 @@ export interface AutoSaveOptions {
   onSaveSuccess?: () => void;
   onSaveError?: (error: Error) => void;
   localBackupStoryId?: string;
+  localBackupSnippetId?: string;
+  fileName?: string;
+  mimeType?: string;
+  parentFolderId?: string;
 }
 
 /**
@@ -87,7 +107,11 @@ export function useAutoSave(
     onSaveStart,
     onSaveSuccess,
     onSaveError,
-    localBackupStoryId
+    localBackupStoryId,
+    localBackupSnippetId,
+    fileName: providedFileName,
+    mimeType,
+    parentFolderId
   } = options;
 
   const queryClient = useQueryClient();
@@ -96,50 +120,92 @@ export function useAutoSave(
   const lastSavedContentRef = useRef<string>("");
   const queuedSaveRef = useRef<QueuedSave | null>(null);
 
+  const resolvedFileName = providedFileName ?? "Yarny Auto Save";
+  const writeLocalBackup = useCallback(
+    async (contentToPersist: string, storyId?: string, snippetId?: string) => {
+      const targetStoryId = storyId ?? localBackupStoryId;
+      const targetSnippetId = snippetId ?? localBackupSnippetId;
+      if (targetStoryId && targetSnippetId) {
+        await mirrorSnippetWrite(targetStoryId, targetSnippetId, contentToPersist);
+      } else if (targetStoryId) {
+        await mirrorStoryDocument(targetStoryId, contentToPersist);
+      }
+    },
+    [localBackupStoryId, localBackupSnippetId]
+  );
+
+  type SavePayload = {
+    fileId: string;
+    content: string;
+    storyId?: string;
+    snippetId?: string;
+    fileName?: string;
+    mimeType?: string;
+    parentFolderId?: string;
+  };
+
+  const buildPayload = useCallback(
+    (contentValue: string, explicitFileId?: string): SavePayload | null => {
+      const effectiveFileId = explicitFileId ?? fileId;
+      if (!effectiveFileId) {
+        return null;
+      }
+      return {
+        fileId: effectiveFileId,
+        content: contentValue,
+        storyId: localBackupStoryId,
+        snippetId: localBackupSnippetId,
+        fileName: providedFileName,
+        mimeType,
+        parentFolderId
+      };
+    },
+    [fileId, localBackupStoryId, localBackupSnippetId, providedFileName, mimeType, parentFolderId]
+  );
+
   // Mutation for processing queued saves - uses React Query for proper error handling and retry logic
   const processQueuedSavesMutation = useMutation({
     mutationFn: async (save: QueuedSave) => {
       return apiClient.writeDriveFile({
         fileId: save.fileId,
-        fileName: "", // Not needed for existing files
-        content: save.content
+        fileName: save.fileName ?? resolvedFileName,
+        content: save.content,
+        parentFolderId: save.parentFolderId ?? parentFolderId,
+        mimeType: save.mimeType ?? mimeType
       });
     },
-    onSuccess: (_, save) => {
+    onSuccess: async (_result, save) => {
       // Invalidate relevant queries after successful save
       queryClient.invalidateQueries({ queryKey: ["snippet", save.fileId] });
       queryClient.invalidateQueries({ queryKey: ["drive", "file", save.fileId] });
+      await writeLocalBackup(save.content, save.storyId, save.snippetId);
     }
   });
 
   // Queue save for later when offline
   const queueSave = useCallback(
-    (fileId: string, content: string) => {
+    (payload: SavePayload) => {
       try {
         const queued = readQueuedSaves();
-        const storyId = localBackupStoryId ?? fileId;
-        queued.push({
-          fileId,
-          content,
-          timestamp: new Date().toISOString(),
-          storyId
-        });
-        localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
         const queuedEntry: QueuedSave = {
-          fileId,
-          content,
-          timestamp: new Date().toISOString(),
-          storyId
+          ...payload,
+          timestamp: new Date().toISOString()
         };
+        queued.push(queuedEntry);
+        localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
         queuedSaveRef.current = queuedEntry;
-        if (storyId) {
-          void mirrorStoryDocument(storyId, content);
+        if (payload.storyId || localBackupStoryId) {
+          void writeLocalBackup(
+            payload.content,
+            payload.storyId ?? localBackupStoryId,
+            payload.snippetId ?? localBackupSnippetId
+          );
         }
       } catch (error) {
         console.error("Failed to queue save:", error);
       }
     },
-    [localBackupStoryId]
+    [localBackupStoryId, localBackupSnippetId, writeLocalBackup]
   );
 
   // Process queued saves when coming back online
@@ -159,10 +225,11 @@ export function useAutoSave(
         for (const save of queued) {
           try {
             await processQueuedSavesMutation.mutateAsync(save);
-            const storyId = save.storyId ?? save.fileId;
-            if (storyId) {
-              await mirrorStoryDocument(storyId, save.content);
-            }
+            await writeLocalBackup(
+              save.content,
+              save.storyId ?? localBackupStoryId,
+              save.snippetId ?? localBackupSnippetId
+            );
           } catch (error) {
             console.error("Failed to process queued save:", error);
             // Keep the save in queue if it fails
@@ -189,43 +256,51 @@ export function useAutoSave(
     return () => {
       window.removeEventListener("yarny:retry-queued-saves", handleRetry);
     };
-  }, [isOnline, processQueuedSavesMutation]);
+  }, [
+    isOnline,
+    processQueuedSavesMutation,
+    writeLocalBackup,
+    localBackupStoryId,
+    localBackupSnippetId
+  ]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: { fileId: string; content: string; storyId?: string }) => {
+    mutationFn: async (payload: SavePayload) => {
       return apiClient.writeDriveFile({
-        fileId: data.fileId,
-        fileName: "", // Not needed for existing files
-        content: data.content
+        fileId: payload.fileId,
+        fileName: payload.fileName ?? resolvedFileName,
+        content: payload.content,
+        parentFolderId: payload.parentFolderId ?? parentFolderId,
+        mimeType: payload.mimeType ?? mimeType
       });
     },
     onMutate: () => {
       onSaveStart?.();
     },
     onSuccess: async (_result, variables) => {
-      lastSavedContentRef.current = content;
+      lastSavedContentRef.current = variables.content;
       onSaveSuccess?.();
-      // Invalidate relevant queries
-      if (fileId) {
-        queryClient.invalidateQueries({ queryKey: ["snippet", fileId] });
-      }
-      const storyId = variables?.storyId ?? localBackupStoryId ?? fileId;
-      if (storyId) {
-        await mirrorStoryDocument(storyId, content);
-      }
+      queryClient.invalidateQueries({ queryKey: ["snippet", variables.fileId] });
+      queryClient.invalidateQueries({ queryKey: ["drive", "file", variables.fileId] });
+      await writeLocalBackup(variables.content, variables.storyId, variables.snippetId);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
       onSaveError?.(error);
       // Queue save if offline
-      if (!isOnline && fileId) {
-        queueSave(fileId, content);
+      if (!isOnline && variables) {
+        queueSave(variables);
       }
     }
   });
 
   // Auto-save when content changes (debounced)
   useEffect(() => {
-    if (!enabled || !fileId || content === lastSavedContentRef.current) {
+    if (!enabled || content === lastSavedContentRef.current) {
+      return;
+    }
+
+    const payload = buildPayload(content);
+    if (!payload) {
       return;
     }
 
@@ -237,9 +312,9 @@ export function useAutoSave(
     // Set new timer
     debounceTimerRef.current = setTimeout(() => {
       if (isOnline) {
-        saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
+        saveMutation.mutate(payload);
       } else {
-        queueSave(fileId, content);
+        queueSave(payload);
       }
     }, debounceMs);
 
@@ -248,20 +323,24 @@ export function useAutoSave(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [enabled, fileId, content, debounceMs, isOnline, saveMutation, queueSave]);
+  }, [enabled, content, debounceMs, isOnline, saveMutation, queueSave, buildPayload]);
 
   // Save when tab becomes hidden (visibility change)
   useEffect(() => {
-    if (!enabled || !fileId) {
+    if (!enabled) {
       return;
     }
 
     const handleVisibilityChange = () => {
       if (document.hidden && content !== lastSavedContentRef.current) {
+        const payload = buildPayload(content);
+        if (!payload) {
+          return;
+        }
         if (isOnline) {
-          saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
+          saveMutation.mutate(payload);
         } else {
-          queueSave(fileId, content);
+          queueSave(payload);
         }
       }
     };
@@ -271,19 +350,23 @@ export function useAutoSave(
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [enabled, fileId, content, isOnline, saveMutation, queueSave]);
+  }, [enabled, content, isOnline, saveMutation, queueSave, buildPayload]);
 
   // Save before page unload
   useEffect(() => {
-    if (!enabled || !fileId) {
+    if (!enabled) {
       return;
     }
 
     const handleBeforeUnload = () => {
       if (content !== lastSavedContentRef.current) {
+        const payload = buildPayload(content);
+        if (!payload) {
+          return;
+        }
         // Queue save for when page reloads or user comes back
         // sendBeacon doesn't work well with POST requests that need authentication
-        queueSave(fileId, content);
+        queueSave(payload);
       }
     };
 
@@ -292,19 +375,20 @@ export function useAutoSave(
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [enabled, fileId, content, isOnline, queueSave]);
+  }, [enabled, content, buildPayload, queueSave]);
 
   // Manual save function
-  const save = useCallback(() => {
-    if (!fileId) {
+  const save = useCallback(async () => {
+    const payload = buildPayload(content);
+    if (!payload) {
       return;
     }
     if (isOnline) {
-      saveMutation.mutate({ fileId, content, storyId: localBackupStoryId ?? fileId });
+      await saveMutation.mutateAsync(payload);
     } else {
-      queueSave(fileId, content);
+      queueSave(payload);
     }
-  }, [fileId, content, isOnline, saveMutation, queueSave]);
+  }, [buildPayload, content, isOnline, queueSave, saveMutation]);
 
   const markAsSaved = useCallback(
     (savedContent?: string) => {

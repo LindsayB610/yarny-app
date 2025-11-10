@@ -14,6 +14,11 @@ vi.mock("../api/client", () => ({
   }
 }));
 
+vi.mock("../services/localFs/localBackupMirror", () => ({
+  mirrorStoryDocument: vi.fn(async () => ({ success: true })),
+  mirrorSnippetWrite: vi.fn(async () => ({ success: true }))
+}));
+
 vi.mock("./useNetworkStatus", () => ({
   useNetworkStatus: vi.fn(() => ({ isOnline: true }))
 }));
@@ -321,11 +326,13 @@ describe("useAutoSave - Session Persistence", () => {
 
       await waitFor(
         () => {
-          expect(apiClient.writeDriveFile).toHaveBeenCalledWith({
-            fileId: "file-1",
-            fileName: "",
-            content: "content to save"
-          });
+          expect(apiClient.writeDriveFile).toHaveBeenCalledWith(
+            expect.objectContaining({
+              fileId: "file-1",
+              fileName: "Yarny Auto Save",
+              content: "content to save"
+            })
+          );
         },
         { timeout: 1000 }
       );

@@ -12,14 +12,14 @@
 
 ### Prerequisites
 - ✅ App modal stories render correctly under React Testing Library.
-- 🟡 Stable test fixtures for Drive-backed data (blocked until model data updates land).
+- ✅ Stable test fixtures for Drive-backed data (MSW handlers + fixtures provide deterministic Drive responses; keep in sync with future model updates).
 - ✅ Node-based test runner (Vitest) already configured.
 
 ### Implementation Steps
 1. **Tooling Setup**
-   - Install `axe-core` + `jest-axe` (compatible with Vitest via `vitest-axe` helper).
+   - Install `axe-core` + `vitest-axe` (ships `toHaveNoViolations` matcher with Vitest-native typings).
    - Add shared utility `tests/utils/a11y-test-utils.ts` to wrap `axe()` with recommended rules.
-   - Configure Vitest globals to extend matchers (`toHaveNoViolations`).
+   - Configure Vitest globals by extending Vitest's `expect` with `toHaveNoViolations` inside `vitest.setup.ts`.
 2. **Component Accessibility Smoke Tests**
    - For each modal, write a test that renders the component in default + disabled-state variants.
    - Run `axe()` and assert no violations.
@@ -29,7 +29,7 @@
    - Create `tests/e2e/accessibility.modals.spec.ts` that opens each modal and runs `axeBuilder.analyze()` using the actual app shell.
    - Gate on `violations.length === 0`.
 4. **CI Integration**
-   - Wire component tests into existing `pnpm test` script.
+   - Wire component tests into existing `npm run test` workflow (same script already used locally).
    - Add Playwright test tag (`--grep @a11y`) so suite can run independently or per-push.
 5. **Documentation**
    - Update `react-migration/MIGRATION_GAP_ANALYSIS.md` and `MANUAL_TESTING_CHECKLIST.md` with the new automated coverage and manual fallback steps.

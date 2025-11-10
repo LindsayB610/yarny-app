@@ -1,7 +1,10 @@
 import "./src/setupTests";
-import { beforeAll, afterEach, afterAll } from "vitest";
+import { beforeAll, afterEach, afterAll, expect } from "vitest";
+import { toHaveNoViolations } from "vitest-axe/matchers";
 
 import { server } from "./tests/setup/msw-server";
+
+expect.extend({ toHaveNoViolations });
 
 // Establish API mocking before all tests
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));

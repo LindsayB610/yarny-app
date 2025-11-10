@@ -286,11 +286,6 @@ export function StorageSettingsSection(): JSX.Element {
                   variant="contained"
                   onClick={runEnable}
                   disabled={isProcessing || !isSupported}
-                  aria-label={
-                    enabled
-                      ? "Choose a different local backup folder"
-                      : "Choose a local backup folder"
-                  }
                   sx={{
                     textTransform: "none",
                     fontWeight: 600,
@@ -388,11 +383,7 @@ export function StorageSettingsSection(): JSX.Element {
                   variant="outlined"
                   onClick={handleRefreshAll}
                   disabled={isRefreshRunning}
-                  aria-label={
-                    isRefreshRunning
-                      ? "Refreshing local backups"
-                      : "Refresh all stories into the local backup folder"
-                  }
+                  aria-label={isRefreshRunning ? "Refreshing local backups" : undefined}
                   startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
                   sx={{
                     textTransform: "none",

@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { DeleteStoryModal } from "./DeleteStoryModal";
 import { server } from "../../../tests/setup/msw-server";
+import { runAxe } from "../../../tests/utils/a11y-test-utils";
 import { renderWithProviders, screen, waitFor } from "../../../tests/utils/test-utils";
 
 
@@ -14,6 +15,19 @@ describe("DeleteStoryModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("has no accessibility violations in initial state", async () => {
+    const { container } = renderWithProviders(
+      <DeleteStoryModal
+        open={true}
+        onClose={mockOnClose}
+        storyId={storyId}
+        storyName={storyName}
+      />
+    );
+
+    await expect(runAxe(container)).resolves.toHaveNoViolations();
   });
 
   it("renders when open", () => {
