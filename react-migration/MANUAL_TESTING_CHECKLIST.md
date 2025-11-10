@@ -175,7 +175,7 @@ This checklist contains all manual testing items that should be added to the tes
 
 ### Visual Parity Manual Verification
 - [ ] **Side-by-side browser windows**
-  - [ ] Open React app at `/react/editor` in one window
+  - [ ] Open React app at `/editor` in one window
   - [ ] Open legacy app at `/editor.html` in other window
   - [ ] Compare Goal Meter side-by-side
   - [ ] Compare Today Chip side-by-side

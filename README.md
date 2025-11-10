@@ -1,6 +1,8 @@
 # Yarny - Personal Writing Tool
 
 > ⚠️ **Alpha Version**: Yarny is currently in alpha testing. Features may change, and there may be bugs or incomplete functionality.
+>
+> ℹ️ **React SPA Default**: The production app now serves the React experience at `/`. The legacy vanilla interface is archived under `/vanilla-app/` for parity and rollback only.
 
 A simple, secure writing tool with Google Sign-In authentication and Google Drive integration for cloud storage. Perfect for writers who want a distraction-free environment with powerful organization features.
 
@@ -82,14 +84,15 @@ Yarny is designed for **desktop and laptop computers**. Mobile devices (phones a
 
 ## Tech Stack
 
-- **Frontend**: Vanilla HTML/JS/CSS (no framework dependencies)
+- **Frontend (Production)**: React + TypeScript, Vite build pipeline, Material UI component system, Zustand store, TanStack Query data layer, TipTap editor.
+- **Frontend (Legacy)**: Vanilla HTML/JS/CSS bundle retained under `/vanilla-app/` for archival parity and rollback.
 - **Backend**: Netlify Functions (serverless)
 - **Authentication**: Google Identity Services (GSI)
 - **Storage**: 
   - Google Drive API with `https://www.googleapis.com/auth/drive.file` scope
   - Google Docs API with `https://www.googleapis.com/auth/documents` scope
   - Netlify Blobs for OAuth token storage (multi-user support)
-- **Deployment**: Netlify
+- **Deployment**: Netlify (`dist/` publishes React SPA, legacy HTML available at `/vanilla-app/`)
 - **Analytics**: Plausible (privacy-friendly analytics)
 
 ### Migration to React + TypeScript
@@ -176,8 +179,8 @@ git push -u origin main
 2. Click **Add new site > Import an existing project**
 3. Connect your GitHub repository
 4. Configure build settings:
-   - **Build command**: Leave empty (or `echo 'No build step needed'`)
-   - **Publish directory**: `public`
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
 5. Add environment variables (from step 3)
 6. Click **Deploy site**
 

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { StoryProgress } from "./useStoriesQuery";
 import { apiClient } from "../api/client";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
 import {
   cacheStoryProgress,
   getCachedStoryProgress,
@@ -211,12 +212,9 @@ export function useStoryProgress(storyFolderId: string | undefined) {
 
       try {
         // List files in the story folder
-        const filesResponse = await apiClient.listDriveFiles({
-          folderId: storyFolderId
-        });
-
+        const files = await listAllDriveFiles(storyFolderId);
         const fileMap: Record<string, string> = {};
-        (filesResponse.files || []).forEach((file) => {
+        files.forEach((file) => {
           fileMap[file.name] = file.id;
         });
 

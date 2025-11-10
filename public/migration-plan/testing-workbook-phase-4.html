@@ -497,14 +497,14 @@ Notes: He's been to many places… but never talks about them.</pre>
           <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
             <p><strong>React App Testing (Phase 5):</strong> These tests apply to both the classic app and the React app. For React app testing:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> (or <code>http://localhost:5173/react/editor</code> for local testing)</li>
+              <li><strong>React App URL:</strong> Navigate to <code>/editor</code> (or <code>http://localhost:5173/editor</code> for local testing)</li>
               <li><strong>UI Differences:</strong> React app uses Material UI components - look for Material UI button styles, dialogs, and menu components</li>
-              <li><strong>Story Selection:</strong> React app uses Zustand store - select stories via the stories list at <code>/react/stories</code>, not URL parameters</li>
+              <li><strong>Story Selection:</strong> React app uses Zustand store - select stories via the stories list at <code>/stories</code>, not URL parameters</li>
               <li><strong>Component Structure:</strong> React app components: ConflictResolutionModal, SortableChapterList, SortableSnippetList, ContextMenu, RenameModal</li>
               <li><strong>Drag & Drop:</strong> Implemented using <code>@dnd-kit</code> - test drag and drop operations with Material UI components</li>
               <li><strong>Conflict Resolution:</strong> Uses <code>ConflictResolutionModal</code> component - conflict detection happens when switching snippets</li>
               <li><strong>Automated Tests:</strong> E2E tests in <code>tests/e2e/</code> need updates for React app compatibility (see OPEN_TODOS_CHECKLIST.md Phase 5 notes)</li>
-              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/react/editor</code></li>
+              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/editor</code></li>
             </ul>
           </div>
         
@@ -1177,14 +1177,14 @@ Notes: He's been to many places… but never talks about them.</pre>
               <li><strong>Test Update Progress:</strong>
                 <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
                   <li>Conflict Resolution: Helper created, React test file created, needs full test suite update</li>
-                  <li>Chapter/Snippet Management: Needs route updates to <code>/react/editor</code>, API mock updates</li>
+                    <li>Chapter/Snippet Management: Needs route updates to <code>/editor</code>, API mock updates</li>
                   <li>Color Coding: Needs Material UI selector updates, component interaction updates</li>
                   <li>Goals: Needs Material UI selector updates, modal interaction updates</li>
                 </ul>
               </li>
               <li><strong>Next Steps for Automated Tests:</strong>
                 <ol style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                  <li>Update test routes from <code>/editor</code> to <code>/react/editor</code></li>
+                    <li>Update test routes from classic `/editor.html` to React SPA `/editor`</li>
                   <li>Update UI selectors to match Material UI component structure</li>
                   <li>Update API mocks to match React app's normalized payload structure</li>
                   <li>Update story selection to use Zustand store (via localStorage or UI clicks)</li>
@@ -1203,7 +1203,7 @@ Notes: He's been to many places… but never talks about them.</pre>
           <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
             <p><strong>React App Testing (Phase 5):</strong> Color coding is implemented in the React app using the <code>ColorPicker</code> component. For React app testing:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> and select a story</li>
+              <li><strong>React App URL:</strong> Navigate to <code>/editor</code> and select a story</li>
               <li><strong>Color Picker Component:</strong> Located in <code>src/components/story/ColorPicker.tsx</code> - uses Material UI Dialog/Popover</li>
               <li><strong>Color Application:</strong> Colors are applied to chapters via the color chip next to chapter titles in the sidebar</li>
               <li><strong>12 Accent Colors:</strong> Red, Orange, Amber, Yellow, Lime, Emerald, Teal, Cyan, Blue, Indigo, Violet, Fuchsia</li>
@@ -1638,13 +1638,13 @@ Notes: He's been to many places… but never talks about them.</pre>
           <div class="note-box" style="margin-bottom: var(--space-xl); background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3B82F6;">
             <p><strong>React App Testing (Phase 5):</strong> Goals functionality is implemented in the React app using the GoalsPanelModal, GoalMeter, and TodayChip components. For React app testing:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li><strong>React App URL:</strong> Navigate to <code>/react/editor</code> and select a story</li>
+              <li><strong>React App URL:</strong> Navigate to <code>/editor</code> and select a story</li>
               <li><strong>Goals Panel:</strong> Click the "Today" chip to open the GoalsPanelModal - located in <code>src/components/story/GoalsPanelModal.tsx</code></li>
               <li><strong>Goal Meter:</strong> Displays in the left sidebar - shows progress toward word count target - located in <code>src/components/story/GoalMeter.tsx</code></li>
               <li><strong>Today Chip:</strong> Shows daily word count and progress - located in <code>src/components/story/TodayChip.tsx</code></li>
               <li><strong>Goal Storage:</strong> Goals are stored in <code>goal.json</code> file in the story folder in Google Drive</li>
               <li><strong>Modes:</strong> Elastic mode (rebalances daily targets) and Strict mode (fixed daily targets) - both modes are supported</li>
-              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/react/editor</code></li>
+              <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/editor</code></li>
             </ul>
           </div>
 

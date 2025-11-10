@@ -35,10 +35,21 @@
   to = "/migration-plan.html"
   status = 200
 
-# React app at /react path - must come before catch-all
+# Redirect deprecated /react paths to new SPA routes
 [[redirects]]
   from = "/react/*"
-  to = "/react/index.html"
+  to = "/:splat"
+  status = 301
+
+# Legacy vanilla app access
+[[redirects]]
+  from = "/vanilla-app"
+  to = "/vanilla-app/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/vanilla-app/*"
+  to = "/vanilla-app/:splat"
   status = 200
 
 # Catch-all for other routes (SPA fallback)

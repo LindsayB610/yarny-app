@@ -85,9 +85,6 @@ export const router = createBrowserRouter(
       ),
       errorElement: <RouteErrorBoundary />
     }
-  ],
-  {
-    basename: "/react"
-  }
+  ]
 );
 

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
 
 import { extractStoryTitleFromMetadata } from "../utils/storyMetadata";
 
@@ -21,11 +22,8 @@ export function useStoryMetadata(storyFolderId: string | undefined) {
         return null;
       }
 
-      const filesResponse = await apiClient.listDriveFiles({
-        folderId: storyFolderId
-      });
-
-      const projectFile = filesResponse.files?.find((file) => file.name === "project.json");
+      const files = await listAllDriveFiles(storyFolderId);
+      const projectFile = files.find((file) => file.name === "project.json");
       if (!projectFile?.id) {
         return null;
       }

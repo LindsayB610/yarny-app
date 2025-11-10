@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "dev:functions": "netlify dev",
-    "build": "npm run build:functions && vite build && node scripts/move-react-build.js",
+    "build": "npm run build:functions && vite build",
     "build:functions": "tsc -p tsconfig.functions.json",
     "preview": "vite preview",
     "lint": "eslint .",

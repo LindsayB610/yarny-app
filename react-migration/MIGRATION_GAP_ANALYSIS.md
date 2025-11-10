@@ -107,7 +107,7 @@ This analysis is based on:
 - [x] **Populate medium project (`test-medium`)** - **✅ UPLOAD GUIDE CREATED** - Comprehensive upload guide created in `POPULATE_TEST_MEDIUM_GUIDE.md`. Local files are generated (80 snippets, 30 notes). Guide includes step-by-step instructions for manual upload to Google Drive, folder structure setup, file conversion to Google Docs, and metadata.json updates. Ready for manual execution.
 - [x] **Classic UX anchors visual parity check**: Goal meter, "Today" chip, footer counts (pixel diff or side-by-side comparison) - **✅ CHECKLIST CREATED** - Comprehensive visual parity checklist created in `VISUAL_PARITY_CHECKLIST.md` and added to testing workbook Section 5. Includes side-by-side comparison instructions, measurement tables, and detailed checks for Goal Meter, Today Chip, and Footer Counts. Ready for manual execution after `/react` deployment.
 - [x] **Success Criteria**: Visual parity side-by-side `/react` vs. root checks - **✅ CHECKLIST CREATED** - Visual parity validation workflow documented with side-by-side comparison steps, measurement guidelines, and pass/fail criteria. See `VISUAL_PARITY_CHECKLIST.md` and testing workbook Section 5.
-- [x] **Deployment to `/react` path** - **✅ CONFIGURED** - `netlify.toml` updated with `/react/*` redirect to `/react/index.html`. `vite.config.ts` configured with `base: "/react/"`. React Router configured with `basename: "/react"`. Ready for deployment and visual parity testing.
+- [x] **Deployment to production path** - **✅ CONFIGURED** - React bundle now serves from the root (`/`). `netlify.toml` publishes `dist/` with `/vanilla-app/*` redirects, Vite uses the default base, and React Router removes the `basename`.
 
 ---
 
@@ -150,7 +150,7 @@ This analysis is based on:
   - Special characters preservation
   - Multiple round-trips integrity
   - Empty and very long content handling
-- [ ] **React-specific E2E regression coverage** - **BLOCKED** - `tests/e2e/chapter-snippet-management-react.spec.ts` and `tests/e2e/conflict-resolution-react.spec.ts` are currently skipped. Waiting on normalized Drive fixtures for React app routing (`/react/editor`) before re-enabling the suites.
+- [ ] **React-specific E2E regression coverage** - **BLOCKED** - `tests/e2e/chapter-snippet-management-react.spec.ts` and `tests/e2e/conflict-resolution-react.spec.ts` are currently skipped. Waiting on normalized Drive fixtures for React app routing (root `/editor`) before re-enabling the suites.
 
 ---
 
@@ -238,7 +238,7 @@ This analysis is based on:
   - Editor layout comparison test exists
   - Uses pixel-diff comparison with 5% threshold
 - [ ] **Execute visual parity tests manually** - Tests exist but need to be run and validated
-- [x] **Deploy to `/react` path for comparison** - **✅ CONFIGURED** - `netlify.toml` has `/react/*` redirect, `vite.config.ts` has `base: "/react/"`, React Router has `basename: "/react"`
+- [x] **Deploy React bundle for comparison** - **✅ CONFIGURED** - Production deployment serves the React SPA at `/` with legacy HTML accessible under `/vanilla-app/`.
 
 #### Accessibility
 - [ ] **Verify keyboard-only flows** for create, rename, reorder, export tasks - Manual testing needed
@@ -304,7 +304,7 @@ This analysis is based on:
 - [x] **Round-tripping validation** - **✅ TESTED** - Tests exist in `tests/integration/round-trip.test.ts` and `tests/integration/round-trip-enhanced.test.ts`
 - [x] **Visibility-based request gating** - **✅ TESTED** - Tests exist in `tests/e2e/visibility-gating.spec.ts`
 - [ ] **Rate limiting handling** (429 backoff) - No tests found
-- [ ] **React app parity E2E coverage** - **BLOCKED** - Playwright specs targeting `/react/editor` are skipped pending real Drive payloads that match the new normalized schema. React regression relies on classic app tests until fixtures are created.
+- [ ] **React app parity E2E coverage** - **BLOCKED** - Playwright specs targeting the React editor (`/editor`) are skipped pending real Drive payloads that match the new normalized schema. React regression relies on classic app tests until fixtures are created.
 
 #### Performance Tests
 - [ ] **Large story performance** (25+ chapters, 200+ snippets) - Tests exist but may not cover large scale

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { apiClient } from "../api/client";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
 import type { DriveDeleteStoryRequest } from "../api/contract";
 import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
 import { selectActiveStory } from "../store/selectors";
@@ -58,11 +59,9 @@ async function readDataJson(storyFolderId: string): Promise<{
   fileId: string;
 }> {
   // List files in the story folder
-  const filesResponse = await apiClient.listDriveFiles({
-    folderId: storyFolderId
-  });
+  const files = await listAllDriveFiles(storyFolderId);
 
-  const dataJsonFile = filesResponse.files?.find((file) => file.name === "data.json");
+  const dataJsonFile = files.find((file) => file.name === "data.json");
   if (!dataJsonFile) {
     throw new Error("data.json not found in story folder");
   }
@@ -157,11 +156,9 @@ async function readProjectJson(storyFolderId: string): Promise<{
   project: ProjectJson;
   fileId: string | undefined;
 }> {
-  const filesResponse = await apiClient.listDriveFiles({
-    folderId: storyFolderId
-  });
+  const files = await listAllDriveFiles(storyFolderId);
 
-  const projectJsonFile = filesResponse.files?.find((file) => file.name === "project.json");
+  const projectJsonFile = files.find((file) => file.name === "project.json");
 
   if (!projectJsonFile?.id) {
     return {
@@ -218,11 +215,9 @@ async function writeProjectJson(
 
 async function getChaptersFolderId(storyFolderId: string): Promise<string | undefined> {
   try {
-    const filesResponse = await apiClient.listDriveFiles({
-      folderId: storyFolderId
-    });
+    const files = await listAllDriveFiles(storyFolderId);
 
-    const chaptersFolder = filesResponse.files?.find(
+    const chaptersFolder = files.find(
       (file) =>
         file.mimeType === "application/vnd.google-apps.folder" && file.name === "Chapters"
     );
@@ -500,10 +495,8 @@ export function useReorderChaptersMutation() {
 
       // Update project.json groupIds order
       // Read project.json to update groupIds
-      const filesResponse = await apiClient.listDriveFiles({
-        folderId: activeStory.driveFileId
-      });
-      const projectJsonFile = filesResponse.files?.find((file) => file.name === "project.json");
+      const files = await listAllDriveFiles(activeStory.driveFileId);
+      const projectJsonFile = files.find((file) => file.name === "project.json");
       if (projectJsonFile) {
         const projectContent = await apiClient.readDriveFile({ fileId: projectJsonFile.id });
         if (projectContent.content) {

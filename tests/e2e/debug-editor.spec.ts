@@ -22,7 +22,7 @@ test("debug editor error", async ({ page }) => {
     console.log(`console(${message.type()}): ${message.text()}`);
   });
 
-  await page.goto("/react/editor");
+  await page.goto("/editor");
 
   await page.waitForTimeout(5000);
 });

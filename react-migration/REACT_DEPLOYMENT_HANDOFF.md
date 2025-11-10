@@ -18,14 +18,14 @@
 ## Migration Strategy
 - **Phase 0 – Codebase Prep**
   - Freeze legacy vanilla JS code except for emergency fixes.
-  - Create `legacy/vanilla-app/` directory (or similar) and move the existing `public/app.js`, `public/editor.css`, and related assets there.
-  - Update `.gitignore`, build scripts, and deployment tooling to exclude the legacy directory from bundles.
-  - Add README note referencing the archived code path.
+  - Relocate the classic login shell to `public/vanilla-app/index.html` so it no longer overwrites the React build output.
+  - Remove the `/react`-specific build plumbing (Vite `base`, React Router `basename`, `scripts/move-react-build.js`, Netlify `/react/*` redirect).
+  - Add README note referencing the archived code path and explain how to reach the legacy experience (`/vanilla-app/` entry point).
 - **Phase 1 – Environment Alignment**
   - Ensure React build uses the same analytics, error reporting, and API keys as production.
-  - Update `netlify.toml` (or equivalent) so production deploy builds from the React app entry point.
-  - Redirect all temporary React testing URLs (e.g., `/react`, `/react/*`, staging preview slugs) to their new canonical React routes so no orphaned pages remain.
-  - Configure redirects/rewrite rules for legacy routes to the React router.
+  - Update `netlify.toml` so production deploys publish the React bundle at `/` and expose the legacy bundle at `/vanilla-app/*`.
+  - Redirect all temporary React testing URLs (e.g., `/react`, staging preview slugs) to their new canonical routes so no orphaned pages remain.
+  - Confirm legacy routes that must stay accessible (e.g., `/editor.html`, `/stories.html`) continue to resolve or are aliased under `/vanilla-app/`.
 - **Phase 2 – Staging Verification**
   - Deploy current `main` branch (React app) to staging.
   - Run smoke tests, accessibility regression suite, and analytics validation.
@@ -37,9 +37,9 @@
   - Monitor logs, key metrics (errors, latency, session length), and user feedback channels for at least 2 hours post-launch.
 
 ## Legacy Code Archival Plan
-- Move legacy assets to `legacy/vanilla-app/` with a short `README` describing context and dependencies.
+- Move remaining vanilla HTML/CSS/JS assets into `public/vanilla-app/` (or archive directory of choice) with a short `README` describing context and dependencies.
 - Remove legacy build commands from package scripts and CI workflows.
-- Mark legacy code as unsupported in documentation.
+- Mark legacy code as unsupported in documentation and point to `/vanilla-app/` only for reference.
 - Create a Git tag (e.g., `legacy-vanilla-final`) referencing the last runnable state.
 
 ## Documentation Updates

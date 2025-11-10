@@ -224,7 +224,7 @@ test.describe("Visual Regression - React vs Legacy Comparison", () => {
     const diffPath = join(screenshotsDir, "diff-goal-meter.png");
 
     // Take screenshot of React app goal meter
-    await page.goto("/react/editor");
+    await page.goto("/editor");
     await page.waitForSelector('[contenteditable="true"]', { timeout: 10000 });
     await page.waitForTimeout(500); // Wait for any animations
     
@@ -265,7 +265,7 @@ test.describe("Visual Regression - React vs Legacy Comparison", () => {
     const diffPath = join(screenshotsDir, "diff-today-chip.png");
 
     // Take screenshot of React app Today chip
-    await page.goto("/react/editor");
+    await page.goto("/editor");
     await page.waitForSelector('[contenteditable="true"]', { timeout: 10000 });
     await page.waitForTimeout(500);
     
@@ -306,7 +306,7 @@ test.describe("Visual Regression - React vs Legacy Comparison", () => {
     const diffPath = join(screenshotsDir, "diff-footer.png");
 
     // Take screenshot of React app footer
-    await page.goto("/react/editor");
+    await page.goto("/editor");
     await page.waitForSelector('[contenteditable="true"]', { timeout: 10000 });
     await page.waitForTimeout(500);
     
@@ -347,7 +347,7 @@ test.describe("Visual Regression - React vs Legacy Comparison", () => {
     const diffPath = join(screenshotsDir, "diff-stories-page.png");
 
     // Take screenshot of React app stories page
-    await page.goto("/react/stories");
+    await page.goto("/stories");
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(500);
     await page.screenshot({
@@ -384,7 +384,7 @@ test.describe("Visual Regression - React vs Legacy Comparison", () => {
     const diffPath = join(screenshotsDir, "diff-editor.png");
 
     // Take screenshot of React app editor
-    await page.goto("/react/editor");
+    await page.goto("/editor");
     await page.waitForSelector('[contenteditable="true"]', { timeout: 10000 });
     await page.waitForTimeout(500);
     await page.screenshot({

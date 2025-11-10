@@ -22,7 +22,7 @@ describe("BackToStoriesLink", () => {
 
   it("navigates to /stories when clicked", async () => {
     render(
-      <MemoryRouter initialEntries={["/react/editor"]}>
+      <MemoryRouter initialEntries={["/editor"]}>
         <BackToStoriesLink />
       </MemoryRouter>
     );

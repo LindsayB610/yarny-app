@@ -213,8 +213,8 @@ export async function navigateToReactEditor(
     );
   }, storyId, storyName);
 
-  // Navigate to React editor
-  await page.goto("/react/editor");
+  // Navigate to editor
+  await page.goto("/editor");
   
   // Wait for React app to load
   await page.waitForLoadState("networkidle");
@@ -247,7 +247,7 @@ export async function getReactEditor(page: Page) {
  * Clicks on a story card in the stories list
  */
 export async function clickStoryCard(page: Page, storyTitle: string): Promise<void> {
-  await page.goto("/react/stories");
+  await page.goto("/stories");
   await page.waitForLoadState("networkidle");
   
   // Find and click the story card
@@ -255,6 +255,6 @@ export async function clickStoryCard(page: Page, storyTitle: string): Promise<vo
   await storyCard.click();
   
   // Wait for navigation to editor
-  await page.waitForURL("**/react/editor", { timeout: 10000 });
+  await page.waitForURL("**/editor", { timeout: 10000 });
 }
 

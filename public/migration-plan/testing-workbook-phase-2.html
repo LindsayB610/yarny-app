@@ -281,64 +281,74 @@
         <!-- Section 5: Classic UX Anchors - Visual Parity -->
         <div class="test-section" data-section-anchor id="section-5">
           <h2><i class="material-icons">track_changes</i> Section 5: Classic UX Anchors - Visual Parity</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require side-by-side visual comparison between the classic app (root) and React app (`/react`) to verify design parity. This is <strong>REQUIRED before closing the editor phase</strong>. Functional goal tests (set goal, calculations, updates) are automated.</p>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require side-by-side visual comparison between the classic app (root HTML pages) and the React SPA (served at `/`). This is <strong>REQUIRED before closing the editor phase</strong>. Functional goal tests (set goal, calculations, updates) are automated.</p>
         
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong> Before starting visual parity checks:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li>React app deployed to <code>/react</code> path (verify <code>netlify.toml</code> is configured)</li>
-              <li>Build completed successfully (React app builds to <code>dist/</code> with <code>/react/</code> base path)</li>
-              <li>Both apps accessible: Classic app at root (<code>/editor.html</code>), React app at <code>/react/editor</code></li>
+              <li>React app deployed to the root path (verify <code>netlify.toml</code> is configured)</li>
+              <li>Build completed successfully (React app builds to <code>dist/</code> with root-relative asset paths)</li>
+              <li>Both apps accessible: Classic app remains at <code>/editor.html</code>, React app at root SPA (<code>/editor</code>)</li>
               <li>Same test data loaded in both apps (same story, same goals, same content)</li>
               <li>Browser setup: Open both apps side-by-side or use browser dev tools for comparison</li>
             </ul>
           </div>
 
           <div class="test-item">
-            <h4>Test 5.1: Setup - Deploy React App to /react Path</h4>
-            <p>Verify that the React app is properly deployed to the <code>/react</code> path for side-by-side comparison. This is a <strong>REQUIRED</strong> step before visual parity checks.</p>
+            <h4>Test 5.1: Setup - Deploy React App at Root Path</h4>
+            <p>Verify that the React app is properly deployed to the root path for side-by-side comparison. This is a <strong>REQUIRED</strong> step before visual parity checks.</p>
             <div class="test-steps">
               <ol>
                 <li><strong>Verify netlify.toml configuration:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li>Open <code>netlify.toml</code> in the project root</li>
-                    <li>Verify a redirect rule exists for <code>/react/*</code>:
+                    <li>Verify redirect rules expose the legacy bundle and SPA fallback:
                       <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0; overflow-x: auto; font-size: 0.9em;">[[redirects]]
-  from = "/react/*"
-  to = "/react/index.html"
+  from = "/vanilla-app"
+  to = "/vanilla-app/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/vanilla-app/*"
+  to = "/vanilla-app/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200</pre>
                     </li>
-                    <li>If the redirect rule is missing, add it to <code>netlify.toml</code></li>
+                    <li>If the redirect rules are missing, add them to <code>netlify.toml</code></li>
                   </ul>
                 </li>
                 <li><strong>Verify vite.config.ts configuration:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li>Open <code>vite.config.ts</code> in the project root</li>
-                    <li>Verify <code>base: "/react/"</code> is set in the config</li>
+                    <li>Verify no <code>base</code> option is set (defaults to root deployment)</li>
                     <li>Verify <code>build.outDir: "dist"</code> is set</li>
-                    <li>If missing, update the configuration</li>
+                    <li>If outdated values remain, update the configuration</li>
                   </ul>
                 </li>
                 <li><strong>Verify src/app/routes.tsx configuration:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li>Open <code>src/app/routes.tsx</code></li>
-                    <li>Verify <code>basename: "/react"</code> is set in <code>createBrowserRouter</code></li>
-                    <li>If missing, add it to the router configuration</li>
+                    <li>Verify <code>createBrowserRouter</code> is called without a <code>basename</code></li>
+                    <li>If a <code>basename</code> remains, remove it from the router configuration</li>
                   </ul>
                 </li>
                 <li><strong>Build the React app:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li>Run <code>npm run build</code> in the project root</li>
                     <li>Verify build completes without errors</li>
-                    <li>Verify post-build script runs (moves React build to <code>dist/react/</code>)</li>
+                    <li>Verify no post-build move script runs (React output stays in <code>dist/</code>)</li>
                   </ul>
                 </li>
                 <li><strong>Verify build output structure:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Check that <code>dist/react/index.html</code> exists</li>
-                    <li>Check that <code>dist/react/assets/</code> directory exists</li>
-                    <li>Verify classic app files remain in <code>dist/</code> (not moved)</li>
-                    <li>Open <code>dist/react/index.html</code> and verify asset paths start with <code>/react/</code></li>
+                    <li>Check that <code>dist/index.html</code> exists</li>
+                    <li>Check that <code>dist/assets/</code> directory exists</li>
+                    <li>Verify legacy HTML files (e.g., <code>editor.html</code>) remain in <code>dist/</code></li>
+                    <li>Open <code>dist/index.html</code> and verify asset paths start with <code>/assets/</code></li>
                   </ul>
                 </li>
                 <li><strong>Deploy to Netlify:</strong>
@@ -352,7 +362,7 @@
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li><strong>Check React app accessibility:</strong>
                       <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                        <li>Navigate to <code>https://yarny.lindsaybrunner.com/react/</code></li>
+                        <li>Navigate to <code>https://yarny.lindsaybrunner.com/</code></li>
                         <li>Confirm React app loads correctly (no 404 errors)</li>
                         <li>Check browser console for any JavaScript errors</li>
                         <li>Verify React app renders (not blank page)</li>
@@ -360,9 +370,9 @@
                     </li>
                     <li><strong>Test React Router routes:</strong>
                       <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                        <li>Navigate to <code>/react/stories</code> - should load stories page</li>
-                        <li>Navigate to <code>/react/editor</code> - should load editor page</li>
-                        <li>Navigate to <code>/react/login</code> - should load login page</li>
+                        <li>Navigate to <code>/stories</code> - should load stories page</li>
+                        <li>Navigate to <code>/editor</code> - should load editor page</li>
+                        <li>Navigate to <code>/login</code> - should load login page</li>
                         <li>Verify all routes work without page refresh (SPA navigation)</li>
                       </ul>
                     </li>
@@ -370,7 +380,7 @@
                       <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
                         <li>Open browser DevTools → Network tab</li>
                         <li>Reload page and check asset requests</li>
-                        <li>Verify all <code>/react/assets/</code> requests return 200 status codes</li>
+                        <li>Verify all <code>/assets/</code> requests return 200 status codes</li>
                         <li>Check for any 404 errors on asset requests</li>
                         <li>Verify CSS and JS files load correctly</li>
                       </ul>
@@ -378,7 +388,7 @@
                     <li><strong>Test React Router navigation:</strong>
                       <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
                         <li>Click navigation links in the app</li>
-                        <li>Verify URL changes to <code>/react/...</code> paths</li>
+                        <li>Verify URL changes to React SPA paths (no <code>/react</code> prefix)</li>
                         <li>Test browser back/forward buttons</li>
                         <li>Test direct URL navigation (type URL in address bar)</li>
                         <li>Verify no full page reloads occur (SPA behavior)</li>
@@ -461,7 +471,7 @@
                 <li><strong>Open both apps side-by-side:</strong>
                   <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
                     <li>Open classic app: <code>https://yarny.lindsaybrunner.com/editor.html</code></li>
-                    <li>Open React app: <code>https://yarny.lindsaybrunner.com/react/editor</code></li>
+                    <li>Open React app: <code>https://yarny.lindsaybrunner.com/editor</code></li>
                     <li>Arrange windows side-by-side (use browser window management or split screen)</li>
                     <li>Ensure both apps show the same story with the same goal settings</li>
                   </ul>

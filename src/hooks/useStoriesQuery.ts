@@ -3,6 +3,7 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
 import type { DriveFile } from "../api/contract";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
 
 export interface StoryFolder extends DriveFile {
   // Story folders are Drive folders
@@ -43,12 +44,10 @@ export async function fetchStories(queryClient: QueryClient): Promise<StoryFolde
     queryFn: fetchYarnyStoriesFolder
   });
 
-  const response = await apiClient.listDriveFiles({
-    folderId: yarnyFolder.id
-  });
+  const response = await listAllDriveFiles(yarnyFolder.id);
 
   const storyFolders =
-    response.files?.filter(
+    response.filter(
       (file) =>
         file.mimeType === "application/vnd.google-apps.folder" &&
         !file.trashed
