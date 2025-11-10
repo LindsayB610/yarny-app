@@ -15,8 +15,8 @@ import type { AlertColor } from "@mui/material";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import { useLocalBackups } from "../../hooks/useLocalBackups";
-import { useYarnyStoreApi } from "../../store/provider";
 import { refreshAllStoriesToLocal } from "../../services/localFs/localBackupMirror";
+import { useYarnyStoreApi } from "../../store/provider";
 
 export function StorageSettingsSection(): JSX.Element {
   const {

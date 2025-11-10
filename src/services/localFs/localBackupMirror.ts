@@ -1,9 +1,9 @@
+import { ensureDirectoryPermission } from "./LocalFsCapability";
+import { LocalFsPathResolver, type NoteCategory } from "./LocalFsPathResolver";
+import { createLocalFsRepository, type LocalFsRepository } from "./LocalFsRepository";
 import type { LocalBackupError } from "../../store/localBackupStore";
 import { localBackupStore } from "../../store/localBackupStore";
 import type { Chapter, Snippet, Story, YarnyState } from "../../store/types";
-import { LocalFsPathResolver, type NoteCategory } from "./LocalFsPathResolver";
-import { createLocalFsRepository, type LocalFsRepository } from "./LocalFsRepository";
-import { ensureDirectoryPermission } from "./LocalFsCapability";
 
 interface MirrorResult {
   success: boolean;

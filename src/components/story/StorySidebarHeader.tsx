@@ -1,3 +1,4 @@
+import { Search, Settings } from "@mui/icons-material";
 import {
   Box,
   IconButton,
@@ -6,7 +7,6 @@ import {
   Tooltip,
   Typography
 } from "@mui/material";
-import { Search, Settings } from "@mui/icons-material";
 import { useState, type JSX } from "react";
 
 import { GoalMeter } from "./GoalMeter";
@@ -14,11 +14,11 @@ import { GoalsPanelModal, type Goal } from "./GoalsPanelModal";
 import { StoryInfoModal } from "./StoryInfoModal";
 import { TodayChip } from "./TodayChip";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
-import { useStoryProgress } from "../../hooks/useStoryProgress";
 import {
   useUpdateStoryGoalsMutation,
   useUpdateStoryMetadataMutation
 } from "../../hooks/useStoryMutations";
+import { useStoryProgress } from "../../hooks/useStoryProgress";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStory } from "../../store/selectors";
 

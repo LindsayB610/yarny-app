@@ -52,6 +52,7 @@ export default [
       ...reactPlugin.configs.recommended.rules,
       ...jsxA11y.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
+      "no-undef": "off",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
       "import/order": [

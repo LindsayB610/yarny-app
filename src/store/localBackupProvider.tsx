@@ -3,16 +3,16 @@ import { createContext, useContext, useEffect, useRef } from "react";
 import { useStore } from "zustand";
 
 import {
+  localBackupStore,
+  type LocalBackupStore,
+  type LocalBackupStoreApi
+} from "./localBackupStore";
+import {
   createLocalFsRepository,
   getPersistedDirectoryHandle,
   isFileSystemAccessSupported,
   queryDirectoryPermission
 } from "../services/localFs";
-import {
-  localBackupStore,
-  type LocalBackupStore,
-  type LocalBackupStoreApi
-} from "./localBackupStore";
 
 const ENABLED_STORAGE_KEY = "yarny_local_backups_enabled_v1";
 

@@ -4,14 +4,14 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from "react";
 import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
 import { useWindowFocusReconciliation } from "../../hooks/useWindowFocusReconciliation";
+import { mirrorStoryFolderEnsure } from "../../services/localFs/localBackupMirror";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveNote, selectActiveSnippetId, selectActiveStory } from "../../store/selectors";
-import { mirrorStoryFolderEnsure } from "../../services/localFs/localBackupMirror";
 import { BackToStoriesLink } from "../story/BackToStoriesLink";
 import { EditorFooterContainer } from "../story/EditorFooterContainer";
+import { NoteEditor } from "../story/NoteEditor";
 import { NotesSidebar } from "../story/NotesSidebar";
 import { StoryEditor } from "../story/StoryEditor";
-import { NoteEditor } from "../story/NoteEditor";
 import { StorySidebarContent } from "../story/StorySidebarContent";
 import { StorySidebarHeader } from "../story/StorySidebarHeader";
 

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
 import { listAllDriveFiles } from "../api/listAllDriveFiles";
-
 import { extractStoryTitleFromMetadata } from "../utils/storyMetadata";
 
 export interface StoryMetadataResult {

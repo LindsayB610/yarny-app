@@ -8,10 +8,11 @@ import { LoadingState } from "./LoadingState";
 import { NewStoryModal } from "./NewStoryModal";
 import { StoriesHeader } from "./StoriesHeader";
 import { VirtualizedStoryList } from "./VirtualizedStoryList";
+import type { StoriesLoaderData } from "../../app/loaders";
 import { useAuth } from "../../hooks/useAuth";
 import { useStoriesQuery } from "../../hooks/useStoriesQuery";
 import { useRefreshStories } from "../../hooks/useStoryMutations";
-import type { StoriesLoaderData } from "../../app/loaders";
+import { AppFooter } from "../layout/AppFooter";
 
 export function StoriesPage(): JSX.Element {
   const navigate = useNavigate();
@@ -53,56 +54,61 @@ export function StoriesPage(): JSX.Element {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)",
-        pb: 4
-      }}
-    >
-      <Container maxWidth="lg" sx={{ pt: 6, pb: 4 }}>
-        <StoriesHeader
-          onLogout={handleLogout}
-          onNewStory={() => setIsNewStoryModalOpen(true)}
-          onRefresh={handleRefresh}
-          onSearchChange={setSearchQuery}
-          searchQuery={searchQuery}
-        />
+    <>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          background:
+            "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
+        }}
+      >
+        <Container maxWidth="lg" sx={{ pt: 6, pb: 4, flexGrow: 1 }}>
+          <StoriesHeader
+            onLogout={handleLogout}
+            onNewStory={() => setIsNewStoryModalOpen(true)}
+            onRefresh={handleRefresh}
+            onSearchChange={setSearchQuery}
+            searchQuery={searchQuery}
+          />
 
-        <Box
-          sx={{
-            mt: 4,
-            bgcolor: "rgba(31, 41, 55, 0.95)",
-            backdropFilter: "blur(10px)",
-            borderRadius: 3,
-            p: 4,
-            boxShadow: 6
-          }}
-        >
-          {!isDriveAuthorized ? (
-            <DriveAuthPrompt />
-          ) : isLoading ? (
-            <LoadingState />
-          ) : filteredStories.length === 0 && searchQuery ? (
-            <Box sx={{ textAlign: "center", py: 6 }}>
-              <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                No stories found matching &quot;{searchQuery}&quot;
-              </Typography>
-            </Box>
-          ) : filteredStories.length === 0 ? (
-            <EmptyState onNewStory={() => setIsNewStoryModalOpen(true)} />
-          ) : (
-            <VirtualizedStoryList stories={filteredStories} searchQuery={searchQuery} />
-          )}
-        </Box>
-      </Container>
+          <Box
+            sx={{
+              mt: 4,
+              bgcolor: "rgba(31, 41, 55, 0.95)",
+              backdropFilter: "blur(10px)",
+              borderRadius: 3,
+              p: 4,
+              boxShadow: 6
+            }}
+          >
+            {!isDriveAuthorized ? (
+              <DriveAuthPrompt />
+            ) : isLoading ? (
+              <LoadingState />
+            ) : filteredStories.length === 0 && searchQuery ? (
+              <Box sx={{ textAlign: "center", py: 6 }}>
+                <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                  No stories found matching &quot;{searchQuery}&quot;
+                </Typography>
+              </Box>
+            ) : filteredStories.length === 0 ? (
+              <EmptyState onNewStory={() => setIsNewStoryModalOpen(true)} />
+            ) : (
+              <VirtualizedStoryList stories={filteredStories} searchQuery={searchQuery} />
+            )}
+          </Box>
+        </Container>
+
+        <AppFooter variant="dark" />
+      </Box>
 
       <NewStoryModal
         open={isNewStoryModalOpen}
         onClose={() => setIsNewStoryModalOpen(false)}
       />
-    </Box>
+    </>
   );
 }
 

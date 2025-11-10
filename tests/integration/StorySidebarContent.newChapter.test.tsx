@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor, renderWithProviders, userEvent } from "../utils/test-utils";
-import { StorySidebarContent } from "../../src/components/story/StorySidebarContent";
+import type * as ApiClientModule from "../../src/api/client";
 import { useYarnyStoreApi } from "../../src/store/provider";
 import { type Chapter, type Project, type Story } from "../../src/store/types";
 import { useEffect, type ReactNode } from "react";
+import { StorySidebarContent } from "../../src/components/story/StorySidebarContent";
 
 vi.mock("../../src/api/client", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("../../src/api/client")>();
+  const mod = await importOriginal<typeof ApiClientModule>();
 
   let nextFolderId = 2;
 

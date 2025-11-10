@@ -6,8 +6,8 @@ import {
   Typography,
   useTheme
 } from "@mui/material";
-import { EditorContent } from "@tiptap/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EditorContent } from "@tiptap/react";
 import {
   useCallback,
   useEffect,
@@ -17,6 +17,7 @@ import {
   type JSX
 } from "react";
 
+import { apiClient } from "../../api/client";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
 import {
   buildPlainTextDocument,
@@ -24,7 +25,6 @@ import {
   normalizePlainText
 } from "../../editor/textExtraction";
 import { useNotesQuery, type Note } from "../../hooks/useNotesQuery";
-import { apiClient } from "../../api/client";
 import { mirrorNoteWrite } from "../../services/localFs/localBackupMirror";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveNote, selectActiveStory } from "../../store/selectors";
@@ -101,7 +101,7 @@ export function NoteEditor(): JSX.Element {
     lastSavedContentRef.current = note.content ?? "";
     setEditorContent(note.content ?? "");
     setLastSavedAt(note.modifiedTime);
-  }, [note?.id, note?.content, note?.modifiedTime]);
+  }, [note]);
 
   useEffect(() => {
     editorContentRef.current = editorContent;

@@ -6,13 +6,13 @@ import {
 import { useMemo } from "react";
 
 import { createDriveClient } from "../api/driveClient";
+import { mirrorStoryDocument } from "../services/localFs/localBackupMirror";
 import { useYarnyStore } from "../store/provider";
 import {
   selectActiveStory,
   selectActiveStorySnippets,
   selectStoriesForSelectedProject
 } from "../store/selectors";
-import { mirrorStoryDocument } from "../services/localFs/localBackupMirror";
 
 export const useDriveProjectsQuery = () => {
   const upsert = useYarnyStore((state) => state.upsertEntities);

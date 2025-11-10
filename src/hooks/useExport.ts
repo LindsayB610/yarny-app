@@ -36,7 +36,13 @@ export interface LocalExportOptions extends ExportOptionsBase {
 
 export type ExportOptions = DriveExportOptions | LocalExportOptions;
 
-const INVALID_FILE_CHARS = /[<>:"/\\|?*\u0000-\u001F]/g;
+const INVALID_FILE_SYMBOLS = /[<>:"/\\|?*]/g;
+
+const stripControlCharacters = (value: string): string =>
+  value
+    .split("")
+    .map((char) => (char.charCodeAt(0) < 32 ? "_" : char))
+    .join("");
 
 /**
  * Hook for exporting snippets to Google Docs with chunking support
@@ -85,8 +91,8 @@ export function useExport() {
   }, []);
 
   const sanitizeFileName = useCallback((fileName: string): string => {
-    const trimmed = fileName.trim();
-    const sanitized = trimmed.replace(INVALID_FILE_CHARS, "_").replace(/\s+/g, " ");
+    const trimmed = stripControlCharacters(fileName.trim());
+    const sanitized = trimmed.replace(INVALID_FILE_SYMBOLS, "_").replace(/\s+/g, " ");
     return sanitized.length > 0 ? sanitized : "export";
   }, []);
 

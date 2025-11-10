@@ -1,15 +1,15 @@
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import BackupIcon from "@mui/icons-material/Backup";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CloudOffIcon from "@mui/icons-material/CloudOff";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import MenuIcon from "@mui/icons-material/Menu";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import AutoStoriesIcon from "@mui/icons-material/AutoStories";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import BackupIcon from "@mui/icons-material/Backup";
-import CloudOffIcon from "@mui/icons-material/CloudOff";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import {
   Alert,
   AppBar,
@@ -20,6 +20,7 @@ import {
   Drawer,
   IconButton,
   List,
+  ListSubheader,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -163,14 +164,27 @@ function SectionPaper({
       id={id}
       elevation={8}
       sx={{
-        background:
+        backgroundColor:
           theme.palette.mode === "dark"
-            ? "rgba(15, 23, 42, 0.9)"
-            : "linear-gradient(135deg, rgba(17, 24, 39, 0.92) 0%, rgba(30, 41, 59, 0.9) 100%)",
-        color: "rgba(241, 245, 249, 0.95)",
+            ? "rgba(15, 23, 42, 0.94)"
+            : "rgba(255, 255, 255, 0.96)",
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%)"
+            : "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%)",
+        color:
+          theme.palette.mode === "dark"
+            ? "rgba(241, 245, 249, 0.95)"
+            : theme.palette.text.primary,
         borderRadius: 4,
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        boxShadow: "0 25px 60px rgba(15, 23, 42, 0.45)",
+        border:
+          theme.palette.mode === "dark"
+            ? "1px solid rgba(148, 163, 184, 0.18)"
+            : "1px solid rgba(148, 163, 184, 0.22)",
+        boxShadow:
+          theme.palette.mode === "dark"
+            ? "0 25px 60px rgba(15, 23, 42, 0.45)"
+            : "0 16px 40px rgba(15, 23, 42, 0.12)",
         p: { xs: 3, md: 4 },
         mb: { xs: 4, md: 6 },
         scrollMarginTop: { xs: 96, md: 120 }
@@ -202,11 +216,16 @@ function BulletList({
 }: {
   items: Array<string | JSX.Element>;
 }): JSX.Element {
+  const theme = useTheme();
+
   return (
     <List
       dense
       sx={{
-        color: "rgba(226, 232, 240, 0.9)",
+        color:
+          theme.palette.mode === "dark"
+            ? "rgba(226, 232, 240, 0.85)"
+            : theme.palette.text.secondary,
         "& .MuiListItemButton-root": {
           borderRadius: 2
         }
@@ -226,7 +245,10 @@ function BulletList({
             sx={{
               minWidth: 32,
               mt: "4px",
-              color: "primary.light"
+              color:
+                theme.palette.mode === "dark"
+                  ? "primary.light"
+                  : theme.palette.primary.main
             }}
           >
             <CheckCircleOutlineIcon fontSize="small" />
@@ -523,91 +545,6 @@ export function DocsPage(): JSX.Element {
         )
       },
       {
-        id: "testing-workbook",
-        title: "Testing Workbook",
-        icon: <AssignmentTurnedInIcon fontSize="small" />,
-        body: (
-          <Stack spacing={3}>
-            <Typography variant="body1">
-              Our migration from the legacy app to the React experience is tracked through a
-              series of structured testing workbooks. Each phase documents goals, scenarios,
-              and validation steps. Reference these when planning manual QA passes or
-              onboarding new contributors to test coverage.
-            </Typography>
-            <BulletList
-              items={[
-                <Typography key="overview" component="span" variant="body1">
-                  <strong>Workbook Overview:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    testing-workbook.html
-                  </Typography>{" "}
-                  — complete index of test artifacts.
-                </Typography>,
-                <Typography key="phase-1" component="span" variant="body1">
-                  <strong>Phase 1 – Foundations & Access:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook-phase-1.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    phase-1 workbook
-                  </Typography>
-                </Typography>,
-                <Typography key="phase-2" component="span" variant="body1">
-                  <strong>Phase 2 – Auth & Stories:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook-phase-2.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    phase-2 workbook
-                  </Typography>
-                </Typography>,
-                <Typography key="phase-3" component="span" variant="body1">
-                  <strong>Phase 3 – Editor Experience:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook-phase-3.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    phase-3 workbook
-                  </Typography>
-                </Typography>,
-                <Typography key="phase-4" component="span" variant="body1">
-                  <strong>Phase 4 – Tri-pane & Notes:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook-phase-4.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    phase-4 workbook
-                  </Typography>
-                </Typography>,
-                <Typography key="phase-5" component="span" variant="body1">
-                  <strong>Phase 5 – Exports & Library Features:</strong>{" "}
-                  <Typography
-                    component="a"
-                    href="/migration-plan/testing-workbook-phase-5.html"
-                    sx={{ color: "primary.light" }}
-                  >
-                    phase-5 workbook
-                  </Typography>
-                </Typography>
-              ]}
-            />
-            <Typography variant="body1">
-              Each workbook includes pass/fail tracking and links back to the broader
-              migration plan. Use them as checklists during regression cycles or to audit how
-              the React app aligns with the original Yarny behavior.
-            </Typography>
-          </Stack>
-        )
-      },
-      {
         id: "support",
         title: "Support & Feedback",
         icon: <SupportAgentIcon fontSize="small" />,
@@ -641,6 +578,41 @@ export function DocsPage(): JSX.Element {
     []
   );
 
+  const sectionMap = useMemo(
+    () =>
+      sections.reduce<Record<string, SectionDefinition>>((acc, section) => {
+        acc[section.id] = section;
+        return acc;
+      }, {}),
+    [sections]
+  );
+
+  const sectionGroups = useMemo(
+    () => [
+      {
+        label: "Overview",
+        sectionIds: ["getting-started", "stories-dashboard"]
+      },
+      {
+        label: "Writing Workflow",
+        sectionIds: ["genres", "writing-editor", "people-places-things"]
+      },
+      {
+        label: "Goals & Metrics",
+        sectionIds: ["word-count-goals"]
+      },
+      {
+        label: "Operations & Sync",
+        sectionIds: ["exporting-backups", "drive-integration", "offline-sync"]
+      },
+      {
+        label: "Support & Resources",
+        sectionIds: ["troubleshooting", "tips", "support"]
+      }
+    ],
+    []
+  );
+
   const handleSectionNav = useCallback(
     (event: MouseEvent<HTMLDivElement> | MouseEvent<HTMLAnchorElement>, id: string) => {
       event.preventDefault();
@@ -665,9 +637,18 @@ export function DocsPage(): JSX.Element {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background:
-          "linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 118, 110, 0.85) 100%)",
-        color: "rgba(226, 232, 240, 0.92)"
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? "rgba(15, 23, 42, 0.97)"
+            : "rgba(255, 255, 255, 0.95)",
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 118, 110, 0.85) 100%)"
+            : "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
+        color:
+          theme.palette.mode === "dark"
+            ? "rgba(226, 232, 240, 0.92)"
+            : theme.palette.text.primary
       }}
     >
       <Toolbar sx={{ minHeight: 88 }}>
@@ -675,37 +656,98 @@ export function DocsPage(): JSX.Element {
           Yarny Guide
         </Typography>
       </Toolbar>
+      <Box sx={{ px: 2, pt: 1, pb: 2 }}>
+        <Button
+          component="a"
+          href="/migration-plan/testing-workbook.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          color="secondary"
+          variant="contained"
+          startIcon={<AssignmentTurnedInIcon />}
+          sx={{
+            width: "100%",
+            borderRadius: 2,
+            textTransform: "none",
+            fontWeight: 600,
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? "0 12px 30px rgba(15, 23, 42, 0.45)"
+                : "0 10px 24px rgba(15, 118, 110, 0.25)"
+          }}
+        >
+          Testing Workbook
+        </Button>
+      </Box>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
       <List
         sx={{
           flex: 1,
           overflowY: "auto",
-          px: 1
+          px: 1,
+          py: 1
         }}
       >
-        {sections.map((section) => (
-          <ListItemButton
-            key={section.id}
-            onClick={(event) => handleSectionNav(event, section.id)}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              color: "inherit",
-              "&:hover": {
-                bgcolor: "rgba(148, 163, 184, 0.12)"
-              }
-            }}
-          >
-            <ListItemIcon
+        {sectionGroups.map((group) => (
+          <Box key={group.label} sx={{ mb: 2 }}>
+            <ListSubheader
+              component="div"
+              disableSticky
               sx={{
-                minWidth: 32,
-                color: "primary.light"
+                lineHeight: 1.6,
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: 0.6,
+                fontSize: "0.75rem",
+                bgcolor: "transparent",
+                color:
+                  theme.palette.mode === "dark"
+                    ? "rgba(148, 163, 184, 0.9)"
+                    : theme.palette.text.secondary,
+                px: 2,
+                pb: 0.5
               }}
             >
-              {section.icon}
-            </ListItemIcon>
-            <ListItemText primary={section.title} />
-          </ListItemButton>
+              {group.label}
+            </ListSubheader>
+            {group.sectionIds.map((sectionId) => {
+              const section = sectionMap[sectionId];
+              if (!section) {
+                return null;
+              }
+
+              return (
+                <ListItemButton
+                  key={section.id}
+                  onClick={(event) => handleSectionNav(event, section.id)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 0.5,
+                    color: "inherit",
+                    "&:hover": {
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(148, 163, 184, 0.12)"
+                          : "rgba(148, 163, 184, 0.18)"
+                    }
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 32,
+                      color:
+                        theme.palette.mode === "dark"
+                          ? "primary.light"
+                          : theme.palette.primary.main
+                    }}
+                  >
+                    {section.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={section.title} />
+                </ListItemButton>
+              );
+            })}
+          </Box>
         ))}
       </List>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
@@ -730,7 +772,12 @@ export function DocsPage(): JSX.Element {
       sx={{
         display: "flex",
         minHeight: "100vh",
-        background: "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
+        backgroundColor:
+          theme.palette.mode === "dark" ? "rgba(15, 23, 42, 0.98)" : theme.palette.grey[50],
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 55%), radial-gradient(circle at 30% 20%, rgba(45, 212, 191, 0.18), transparent 50%)"
+            : "radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 55%), radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.12), transparent 55%)"
       }}
     >
       <CssBaseline />
@@ -739,8 +786,16 @@ export function DocsPage(): JSX.Element {
         elevation={0}
         sx={{
           backdropFilter: "blur(14px)",
-          background: "rgba(15, 23, 42, 0.85)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          backgroundColor:
+            theme.palette.mode === "dark" ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.92)",
+          color:
+            theme.palette.mode === "dark"
+              ? "rgba(226, 232, 240, 0.98)"
+              : theme.palette.text.primary,
+          borderBottom:
+            theme.palette.mode === "dark"
+              ? "1px solid rgba(255, 255, 255, 0.08)"
+              : "1px solid rgba(148, 163, 184, 0.18)",
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           ml: { md: `${DRAWER_WIDTH}px` }
         }}
@@ -854,11 +909,23 @@ export function DocsPage(): JSX.Element {
             severity="warning"
             variant="outlined"
             sx={{
-              backgroundColor: "rgba(254, 243, 199, 0.12)",
-              borderColor: "rgba(251, 191, 36, 0.45)",
-              color: "rgba(180, 83, 9, 0.95)",
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(254, 243, 199, 0.12)"
+                  : "rgba(252, 211, 77, 0.2)",
+              borderColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(251, 191, 36, 0.45)"
+                  : "rgba(217, 119, 6, 0.35)",
+              color:
+                theme.palette.mode === "dark"
+                  ? "rgba(180, 83, 9, 0.95)"
+                  : theme.palette.warning.dark,
               "& .MuiAlert-icon": {
-                color: "rgba(217, 119, 6, 1)"
+                color:
+                  theme.palette.mode === "dark"
+                    ? "rgba(217, 119, 6, 1)"
+                    : theme.palette.warning.main
               }
             }}
           >
@@ -866,6 +933,24 @@ export function DocsPage(): JSX.Element {
             incorporating writer feedback. Report anything unexpected so we can tighten the
             experience quickly.
           </Alert>
+
+          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="flex-end">
+            <Button
+              component={RouterLink}
+              to="/stories"
+              color="primary"
+              variant="contained"
+              startIcon={<AutoStoriesIcon />}
+              sx={{
+                alignSelf: { xs: "stretch", sm: "flex-start" },
+                borderRadius: "9999px",
+                textTransform: "none",
+                fontWeight: 600
+              }}
+            >
+              Back to Stories
+            </Button>
+          </Stack>
 
           <SectionPaper id="getting-started" title="Getting Started">
             {sections.find((section) => section.id === "getting-started")?.body ?? null}
@@ -909,10 +994,6 @@ export function DocsPage(): JSX.Element {
 
           <SectionPaper id="tips" title="Tips & Best Practices">
             {sections.find((section) => section.id === "tips")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="testing-workbook" title="Testing Workbook">
-            {sections.find((section) => section.id === "testing-workbook")?.body ?? null}
           </SectionPaper>
 
           <SectionPaper id="support" title="Support & Feedback">

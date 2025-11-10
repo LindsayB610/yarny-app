@@ -7,7 +7,7 @@ import {
   useTheme
 } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
+import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
@@ -141,7 +141,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     if (!activeExists) {
       selectSnippet(snippets[0].id);
     }
-  }, [story, snippets, activeSnippetId, selectSnippet]);
+  }, [story, snippets, activeSnippetId, selectSnippet, activeNote]);
 
   // Auto-save hook - saves the active snippet's Google Doc
   const {

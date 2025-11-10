@@ -14,12 +14,16 @@ import {
   MenuItem,
   Typography
 } from "@mui/material";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
+import Select from "@mui/material/Select";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import { useState, useRef, useEffect, useCallback, useMemo, type JSX, type MouseEvent } from "react";
 
 import { ColorPicker } from "./ColorPicker";
+import { ContextMenu, type ContextMenuAction } from "./ContextMenu";
+import { RenameModal } from "./RenameModal";
 import { SortableChapterList, type Chapter as SortableChapter } from "./SortableChapterList";
 import { SortableSnippetList, type Snippet as SortableSnippet } from "./SortableSnippetList";
+import { normalizePlainText } from "../../editor/textExtraction";
 import {
   useCreateChapterMutation,
   useCreateSnippetMutation,
@@ -47,9 +51,6 @@ import {
   getReadableTextColor,
   getSoftVariant
 } from "../../utils/contrastChecker";
-import { normalizePlainText } from "../../editor/textExtraction";
-import { ContextMenu, type ContextMenuAction } from "./ContextMenu";
-import { RenameModal } from "./RenameModal";
 
 interface StorySidebarContentProps {
   searchTerm: string;
@@ -870,7 +871,8 @@ export function StorySidebarContent({
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            Are you sure you want to delete "{deleteDialog.name}"? This action cannot be undone.
+            Are you sure you want to delete &ldquo;{deleteDialog.name}&rdquo;? This action cannot be
+            undone.
           </Typography>
         </DialogContent>
         <DialogActions>

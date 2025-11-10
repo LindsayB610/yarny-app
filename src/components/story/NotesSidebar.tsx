@@ -1,15 +1,3 @@
-import { Add, DragIndicator } from "@mui/icons-material";
-import {
-  Box,
-  CircularProgress,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Tooltip,
-  Typography
-} from "@mui/material";
 import {
   KeyboardSensor,
   PointerSensor,
@@ -29,11 +17,23 @@ import {
   sortableKeyboardCoordinates
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Add, DragIndicator } from "@mui/icons-material";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Typography
+} from "@mui/material";
 import { memo, useMemo, useState, useCallback, useEffect, type JSX, type CSSProperties } from "react";
 
 import { StoryTabs, type TabItem } from "./StoryTabs";
-import { useNotesQuery, type NoteType } from "../../hooks/useNotesQuery";
 import { useCreateNoteMutation, useReorderNotesMutation } from "../../hooks/useNotesMutations";
+import { useNotesQuery, type NoteType } from "../../hooks/useNotesQuery";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveNote, selectActiveStory } from "../../store/selectors";
 

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import type { Note, NoteType } from "./useNotesQuery";
 import { apiClient } from "../api/client";
 import { mirrorNoteOrderWrite, mirrorNoteWrite } from "../services/localFs/localBackupMirror";
-import type { Note, NoteType } from "./useNotesQuery";
 
 interface CreateNoteVariables {
   noteType: NoteType;

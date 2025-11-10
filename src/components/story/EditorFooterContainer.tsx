@@ -4,9 +4,9 @@ import { useState, type MouseEvent, type JSX } from "react";
 
 import { EditorFooter } from "./EditorFooter";
 import { ExportProgressDialog } from "./ExportProgressDialog";
+import { useAuth } from "../../hooks/useAuth";
 import { useExport } from "../../hooks/useExport";
 import { useLocalBackups } from "../../hooks/useLocalBackups";
-import { useAuth } from "../../hooks/useAuth";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveStory,

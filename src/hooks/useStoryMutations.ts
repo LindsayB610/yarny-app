@@ -2,8 +2,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { apiClient } from "../api/client";
-import { listAllDriveFiles } from "../api/listAllDriveFiles";
 import type { DriveDeleteStoryRequest } from "../api/contract";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
+import {
+  mirrorDataJsonWrite,
+  mirrorGoalJsonWrite,
+  mirrorProjectJsonWrite,
+  mirrorSnippetDelete,
+  mirrorSnippetWrite
+} from "../services/localFs/localBackupMirror";
 import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
 import { selectActiveStory } from "../store/selectors";
 import type {
@@ -16,13 +23,6 @@ import { ACCENT_COLORS } from "../utils/contrastChecker";
 import type { StoryMetadata } from "../utils/storyCreation";
 import { initializeStoryStructure } from "../utils/storyCreation";
 import { clearStoryProgress } from "../utils/storyProgressCache";
-import {
-  mirrorDataJsonWrite,
-  mirrorGoalJsonWrite,
-  mirrorProjectJsonWrite,
-  mirrorSnippetDelete,
-  mirrorSnippetWrite
-} from "../services/localFs/localBackupMirror";
 
 interface StoryDataJson {
   groups?: Record<string, StoryGroupData>;

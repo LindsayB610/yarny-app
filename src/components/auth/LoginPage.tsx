@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type JSX, type MouseEvent } 
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
+import { AppFooter } from "../layout/AppFooter";
 
 declare global {
   interface Window {
@@ -176,17 +177,29 @@ export function LoginPage(): JSX.Element {
 
   if (configLoading) {
     return (
-      <Container
-        maxWidth="sm"
+      <Box
         sx={{
+          minHeight: "100vh",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh"
+          flexDirection: "column",
+          background:
+            "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
         }}
       >
-        <Typography>Loading...</Typography>
-      </Container>
+        <Container
+          maxWidth="sm"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexGrow: 1,
+            p: 3
+          }}
+        >
+          <Typography>Loading...</Typography>
+        </Container>
+        <AppFooter variant="dark" />
+      </Box>
     );
   }
 
@@ -195,13 +208,20 @@ export function LoginPage(): JSX.Element {
       sx={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
         background: "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)",
         p: 3
       }}
     >
-      <Container maxWidth="sm">
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1
+        }}
+      >
         <Box
           sx={{
             bgcolor: "rgba(31, 41, 55, 0.95)",
@@ -272,7 +292,9 @@ export function LoginPage(): JSX.Element {
           </Box>
         </Box>
       </Container>
+      <AppFooter variant="dark" />
     </Box>
   );
 }
+
 
