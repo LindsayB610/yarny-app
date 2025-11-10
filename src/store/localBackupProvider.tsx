@@ -54,8 +54,13 @@ export function LocalBackupProvider({ children }: PropsWithChildren): JSX.Elemen
     initRef.current = true;
 
     const store = localBackupStore;
-    const { setSupported, setInitializing, setRootHandle, setPermission, setEnabled } =
-      store.getState();
+    const {
+      setSupported,
+      setInitializing,
+      setRootHandle,
+      setPermission,
+      setEnabled
+    } = store.getState();
 
     const initialize = async () => {
       const supported = isFileSystemAccessSupported();
@@ -74,11 +79,8 @@ export function LocalBackupProvider({ children }: PropsWithChildren): JSX.Elemen
         setRootHandle(handle);
         const permission = await queryDirectoryPermission(handle, "readwrite");
         setPermission(permission);
-        if (permission !== "granted" && preference) {
-          setEnabled(false);
-        }
       } else if (preference) {
-        setEnabled(false);
+        setPermission("prompt");
       }
 
       setInitializing(false);
@@ -106,7 +108,7 @@ export function LocalBackupProvider({ children }: PropsWithChildren): JSX.Elemen
     const unsubscribe = store.subscribe(
       (state) => state.rootHandle,
       async (handle) => {
-        const { setRepository, setPermission, setEnabled } = store.getState();
+        const { setRepository, setPermission } = store.getState();
 
         if (!handle) {
           setRepository(null);
@@ -119,9 +121,6 @@ export function LocalBackupProvider({ children }: PropsWithChildren): JSX.Elemen
 
         if (permission !== "granted") {
           setRepository(null);
-          if (permission === "denied") {
-            setEnabled(false);
-          }
           return;
         }
 

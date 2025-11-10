@@ -197,6 +197,14 @@ export function StorageSettingsSection(): JSX.Element {
     ? "Refreshing local backups. This may take a few minutes."
     : "Force Yarny to mirror all Drive stories to your local folder.";
 
+  const actionButtonSx = {
+    textTransform: "none",
+    fontWeight: 600,
+    borderRadius: "9999px",
+    px: 3,
+    minHeight: 44
+  } as const;
+
   return (
     <Card
       variant="outlined"
@@ -287,10 +295,7 @@ export function StorageSettingsSection(): JSX.Element {
                   onClick={runEnable}
                   disabled={isProcessing || !isSupported}
                   sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: "9999px",
-                    px: 3,
+                    ...actionButtonSx,
                     bgcolor: "primary.main",
                     boxShadow: "0 12px 30px rgba(16, 185, 129, 0.45)",
                     "&:hover": {
@@ -310,10 +315,7 @@ export function StorageSettingsSection(): JSX.Element {
                   disabled={isProcessing || !enabled || permission !== "granted"}
                   aria-label="Open the local backup folder"
                   sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: "9999px",
-                    px: 3,
+                    ...actionButtonSx,
                     color: "rgba(226, 232, 240, 0.98)",
                     borderColor: "rgba(148, 163, 184, 0.65)",
                     "&:hover": {
@@ -339,8 +341,7 @@ export function StorageSettingsSection(): JSX.Element {
                   disabled={isProcessing || !enabled}
                   aria-label="Disconnect from the local backup folder"
                   sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
+                    ...actionButtonSx,
                     color: "rgba(252, 165, 165, 0.95)",
                     "&:hover": {
                       color: "rgba(254, 226, 226, 1)"
@@ -362,8 +363,7 @@ export function StorageSettingsSection(): JSX.Element {
                   disabled={isProcessing || !enabled}
                   aria-label="Reconnect to the local backup folder"
                   sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
+                    ...actionButtonSx,
                     color: "rgba(165, 180, 252, 0.95)",
                     "&:hover": {
                       color: "rgba(204, 219, 255, 1)"
@@ -386,10 +386,7 @@ export function StorageSettingsSection(): JSX.Element {
                   aria-label={isRefreshRunning ? "Refreshing local backups" : undefined}
                   startIcon={isRefreshRunning ? <CircularProgress size={16} /> : undefined}
                   sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: "9999px",
-                    px: 3,
+                    ...actionButtonSx,
                     color: "rgba(190, 242, 230, 0.98)",
                     borderColor: "rgba(94, 234, 212, 0.7)",
                     "&:hover": {

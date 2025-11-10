@@ -31,6 +31,11 @@
   status = 200
 
 [[redirects]]
+  from = "/migration-plan/testing-workbook"
+  to = "/migration-plan/testing-workbook.html"
+  status = 200
+
+[[redirects]]
   from = "/migration-plan.html"
   to = "/migration-plan.html"
   status = 200

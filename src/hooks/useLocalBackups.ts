@@ -57,10 +57,7 @@ export function useLocalBackups() {
 
     if (permissionState !== "granted") {
       store.setRootHandle(null);
-      store.setEnabled(false);
-       store.setError(
-        createError("Write permission was not granted for the selected folder.")
-      );
+      store.setError(createError("Write permission was not granted for the selected folder."));
       return { success: false as const };
     }
 

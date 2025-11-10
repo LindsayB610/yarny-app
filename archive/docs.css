@@ -6,6 +6,18 @@ html {
   scroll-behavior: smooth;
 }
 
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-family-base);
+  background: hsla(160, 84%, 39%, 1);
+  background: linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  background: -moz-linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  background: -webkit-linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%);
+  filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#10B981", endColorstr="#059999", GradientType=1 );
+  color: var(--color-white);
+}
+
 .docs-container {
   min-height: 100vh;
   display: flex;
@@ -73,32 +85,46 @@ html {
 }
 
 .docs-nav {
-  display: flex;
+  position: sticky;
+  top: var(--space-2xl);
+  display: inline-flex;
   gap: var(--space-md);
   align-items: center;
-  position: absolute;
-  top: calc((var(--space-5xl) + 60px) / 2); /* Center vertically between top and first section */
-  right: calc(100% - 1000px - var(--space-4xl)); /* Align with 1000px max-width sections right edge */
+  justify-content: flex-end;
+  margin-bottom: var(--space-4xl);
+  margin-left: auto;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(17, 24, 39, 0.4);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6);
   z-index: 10;
-  transform: translateY(-50%); /* Center the buttons on the calculated position */
 }
 
 .docs-nav .btn-secondary {
-  background: rgba(31, 41, 55, 0.95);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
   color: var(--color-white);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
+  backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.6);
 }
 
 .docs-nav .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.42);
   color: var(--color-white);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 24px -16px rgba(0, 0, 0, 0.7);
 }
 
 /* ============================================
@@ -362,8 +388,8 @@ html {
   padding: var(--space-5xl) var(--space-4xl);
   max-width: calc(100vw - 280px);
   box-sizing: border-box;
-  position: relative; /* Allow absolute positioning of nav inside */
-  padding-top: calc(var(--space-5xl) + 60px); /* Add top padding to account for nav buttons */
+  position: relative;
+  padding-top: var(--space-5xl);
 }
 
 .docs-section {
@@ -508,6 +534,51 @@ html {
   color: var(--color-primary);
 }
 
+.docs-callout {
+  max-width: 1000px;
+  margin: 0 auto var(--space-3xl);
+  padding: var(--space-4xl);
+  background: rgba(17, 24, 39, 0.88);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.36), 0 10px 10px -5px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(14px);
+  color: var(--color-white);
+}
+
+.docs-callout h2 {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.docs-callout p {
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: var(--line-height-relaxed);
+}
+
+.docs-callout i.material-icons {
+  font-size: 24px;
+}
+
+.docs-callout-warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.docs-callout-warning h2 {
+  color: var(--color-warning);
+}
+
+.docs-callout-warning p,
+.docs-callout-warning strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* Warning banner styling - removed to match section styling requirements */
 
 /* Footer styles moved to footer.css */
@@ -554,8 +625,10 @@ html {
   }
 
   .docs-nav {
-    top: var(--space-md);
-    right: var(--space-lg);
+    position: static;
+    margin: 0 auto var(--space-3xl);
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .docs-footer {
@@ -576,6 +649,10 @@ html {
   .docs-nav .btn-secondary {
     padding: var(--space-xs) var(--space-md);
     font-size: var(--font-size-sm);
+  }
+
+  .docs-callout {
+    padding: var(--space-3xl);
   }
 
   .docs-section {

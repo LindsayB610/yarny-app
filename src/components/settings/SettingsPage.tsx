@@ -113,6 +113,7 @@ export function SettingsPage(): JSX.Element {
               alignSelf: { xs: "stretch", sm: "flex-start" },
               bgcolor: "rgba(15, 23, 42, 0.65)",
               borderRadius: "9999px",
+              overflow: "hidden",
               p: 0.75,
               "& .MuiTab-root": {
                 textTransform: "none",

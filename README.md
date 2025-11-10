@@ -32,7 +32,7 @@ The original vanilla HTML/JS implementation has been preserved for parity, audit
 - `archive/` contains the full legacy UI (docs, editor, stories) plus migration planning artifacts.
 - `archive/vanilla-app/index.html` serves the historic single-page experience that once lived at `/vanilla-app/`.
 
-Nothing in `archive/` is part of the production bundle, but keeping it checked in makes it easy to compare behaviours or recover assets during the React migration. Feel free to load the files locally or deploy them independently when validation against the legacy UI is needed.
+During the migration phase these assets are published alongside the React app so internal testers can reference the legacy documentation (for example `/migration-plan/testing-workbook.html`). The source of truth still lives in `archive/`, which Vite now copies into the production bundle at build time.
 
 ## Prerequisites
 

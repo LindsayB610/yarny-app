@@ -1,35 +1,14 @@
-import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { editorLoader, storiesLoader } from "./loaders";
 import { getQueryClient } from "./queryClient";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
-
-const LoginPage = lazy(async () => {
-  const module = await import("../components/auth/LoginPage");
-  return { default: module.LoginPage };
-});
-
-const StoriesPage = lazy(async () => {
-  const module = await import("../components/stories/StoriesPage");
-  return { default: module.StoriesPage };
-});
-
-const DocsPage = lazy(async () => {
-  const module = await import("../components/docs/DocsPage");
-  return { default: module.DocsPage };
-});
-
-const SettingsPage = lazy(async () => {
-  const module = await import("../components/settings/SettingsPage");
-  return { default: module.SettingsPage };
-});
-
-const AppLayout = lazy(async () => {
-  const module = await import("../components/layout/AppLayout");
-  return { default: module.AppLayout };
-});
+import { LoginPage } from "../components/auth/LoginPage";
+import { StoriesPage } from "../components/stories/StoriesPage";
+import { DocsPage } from "../components/docs/DocsPage";
+import { SettingsPage } from "../components/settings/SettingsPage";
+import { AppLayout } from "../components/layout/AppLayout";
 
 // Get shared query client instance
 const queryClient = getQueryClient();

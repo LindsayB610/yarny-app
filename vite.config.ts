@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
+  publicDir: path.resolve(__dirname, "archive"),
   build: {
     outDir: "dist"
   },
