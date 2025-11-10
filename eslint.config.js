@@ -9,7 +9,14 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["dist", "coverage", "node_modules", "public", "netlify/**/*.js"]
+    ignores: [
+      "dist",
+      "coverage",
+      "node_modules",
+      "public",
+      "netlify/**/*.js",
+      "archive/**"
+    ]
   },
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
