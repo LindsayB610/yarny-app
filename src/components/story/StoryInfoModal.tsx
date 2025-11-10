@@ -5,10 +5,16 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography
 } from "@mui/material";
-import { useState, type JSX, type FormEvent } from "react";
+import { useId, useMemo, useState, type JSX, type FormEvent } from "react";
+
+import { STORY_GENRES, isStoryGenre } from "../../constants/storyGenres";
 
 interface StoryInfoModalProps {
   open: boolean;
@@ -31,6 +37,15 @@ export function StoryInfoModal({
   const [description, setDescription] = useState(initialDescription);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const genreLabelId = useId();
+  const genreSelectId = useId();
+
+  const genreOptions = useMemo(() => {
+    const extras = [initialGenre, genre].filter(
+      (value): value is string => Boolean(value && !isStoryGenre(value))
+    );
+    return [...new Set([...extras, ...STORY_GENRES])];
+  }, [genre, initialGenre]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,30 +114,59 @@ export function StoryInfoModal({
             </Box>
           )}
 
-          <TextField
-            fullWidth
-            label="Genre (optional)"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            placeholder="e.g., Fantasy, Sci-Fi, Romance"
-            sx={{ mb: 3 }}
-            InputLabelProps={{ style: { color: "rgba(255, 255, 255, 0.7)" } }}
-            InputProps={{
-              sx: {
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel id={genreLabelId} sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+              Genre (optional)
+            </InputLabel>
+            <Select
+              labelId={genreLabelId}
+              id={genreSelectId}
+              value={genre}
+              label="Genre (optional)"
+              onChange={(event) => setGenre(event.target.value)}
+              displayEmpty
+              renderValue={(selected) =>
+                selected ? (
+                  selected
+                ) : (
+                  <Typography sx={{ color: "rgba(255, 255, 255, 0.7)" }}>None</Typography>
+                )
+              }
+              sx={{
                 bgcolor: "rgba(255, 255, 255, 0.1)",
                 color: "white",
-                "& fieldset": {
+                "& .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255, 255, 255, 0.2)"
                 },
-                "&:hover fieldset": {
+                "&:hover .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255, 255, 255, 0.3)"
                 },
-                "&.Mui-focused fieldset": {
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                   borderColor: "primary.main"
+                },
+                "& .MuiSelect-icon": {
+                  color: "rgba(255, 255, 255, 0.7)"
                 }
-              }
-            }}
-          />
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: "rgba(15, 23, 42, 0.98)",
+                    color: "rgba(255, 255, 255, 0.92)"
+                  }
+                }
+              }}
+            >
+              <MenuItem value="">
+                <Typography sx={{ color: "rgba(255, 255, 255, 0.85)" }}>None</Typography>
+              </MenuItem>
+              {genreOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <TextField
             fullWidth

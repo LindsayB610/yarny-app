@@ -1,6 +1,7 @@
 import { FileDownload, Logout, MenuBook } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { memo, useMemo, type JSX, type MouseEvent } from "react";
+import { Link as RouterLink } from "react-router-dom";
 
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStorySnippets } from "../../store/selectors";
@@ -137,8 +138,8 @@ export const EditorFooter = memo(function EditorFooter({
             {lastModifiedLabel}
           </Typography>
           <Button
-            component="a"
-            href="/docs.html"
+            component={RouterLink}
+            to="/docs"
             variant="text"
             size="small"
             startIcon={<MenuBook />}

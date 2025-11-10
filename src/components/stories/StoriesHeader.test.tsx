@@ -124,7 +124,7 @@ describe("StoriesHeader", () => {
 
     const docsLink = screen.getByRole("link", { name: /Docs/i });
     expect(docsLink).toBeInTheDocument();
-    expect(docsLink).toHaveAttribute("href", "/docs.html");
+    expect(docsLink).toHaveAttribute("href", "/docs");
   });
 
   it("renders Settings link", () => {

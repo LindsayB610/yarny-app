@@ -6,18 +6,19 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
   FormGroup,
-  TextField,
-  Typography,
+  InputLabel,
   MenuItem,
   Select,
-  FormControl,
-  InputLabel
+  TextField,
+  Typography
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 
 import { useCreateStory } from "../../hooks/useStoryMutations";
+import { STORY_GENRES, isStoryGenre } from "../../constants/storyGenres";
 
 interface NewStoryModalProps {
   open: boolean;
@@ -30,12 +31,20 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
   const [storyName, setStoryName] = useState("");
   const [genre, setGenre] = useState("");
   const [description, setDescription] = useState("");
-  const [goalTarget, setGoalTarget] = useState(3000);
+  const [goalTarget, setGoalTarget] = useState("3000");
   const [goalDeadline, setGoalDeadline] = useState("");
   const [goalMode, setGoalMode] = useState<"elastic" | "strict">("elastic");
   const [writingDays, setWritingDays] = useState([true, true, true, true, true, true, true]);
   const [daysOff, setDaysOff] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const genreLabelId = useId();
+  const genreSelectId = useId();
+
+  const genreOptions = useMemo(() => {
+    const extras = genre ? [genre] : [];
+    const customOptions = extras.filter((value) => value && !isStoryGenre(value));
+    return [...new Set([...customOptions, ...STORY_GENRES])];
+  }, [genre]);
 
   const createStory = useCreateStory();
 
@@ -48,6 +57,15 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
       return;
     }
 
+    // Make sure word goal is valid before continuing
+    const trimmedGoalTarget = goalTarget.trim();
+    const parsedGoalTarget = parseInt(trimmedGoalTarget, 10);
+
+    if (!trimmedGoalTarget || Number.isNaN(parsedGoalTarget) || parsedGoalTarget <= 0) {
+      setError("Please enter a word count greater than 0");
+      return;
+    }
+
     // Parse days off
     const daysOffArray = daysOff
       .split(",")
@@ -57,7 +75,7 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
     // Build goal metadata if deadline is provided
     const goalMetadata = goalDeadline
       ? {
-          target: goalTarget,
+          target: parsedGoalTarget,
           deadline: goalDeadline + "T23:59:59", // End of day
           writingDays,
           daysOff: daysOffArray,
@@ -71,7 +89,7 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
         metadata: {
           genre: genre.trim() || undefined,
           description: description.trim() || undefined,
-          wordGoal: goalTarget,
+          wordGoal: parsedGoalTarget,
           goal: goalMetadata
         }
       });
@@ -86,7 +104,7 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
     setStoryName("");
     setGenre("");
     setDescription("");
-    setGoalTarget(3000);
+    setGoalTarget("3000");
     setGoalDeadline("");
     setGoalMode("elastic");
     setWritingDays([true, true, true, true, true, true, true]);
@@ -163,30 +181,59 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
             }}
           />
 
-          <TextField
-            fullWidth
-            label="Genre (optional)"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            placeholder="e.g., Fantasy, Sci-Fi, Romance"
-            sx={{ mb: 3 }}
-            InputLabelProps={{ style: { color: "rgba(255, 255, 255, 0.7)" } }}
-            InputProps={{
-              sx: {
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel id={genreLabelId} sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+              Genre (optional)
+            </InputLabel>
+            <Select
+              labelId={genreLabelId}
+              id={genreSelectId}
+              value={genre}
+              label="Genre (optional)"
+              onChange={(event) => setGenre(event.target.value)}
+              displayEmpty
+              renderValue={(selected) =>
+                selected ? (
+                  selected
+                ) : (
+                  <Typography sx={{ color: "rgba(255, 255, 255, 0.7)" }}>None</Typography>
+                )
+              }
+              sx={{
                 bgcolor: "rgba(255, 255, 255, 0.1)",
                 color: "white",
-                "& fieldset": {
+                "& .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255, 255, 255, 0.2)"
                 },
-                "&:hover fieldset": {
+                "&:hover .MuiOutlinedInput-notchedOutline": {
                   borderColor: "rgba(255, 255, 255, 0.3)"
                 },
-                "&.Mui-focused fieldset": {
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                   borderColor: "primary.main"
+                },
+                "& .MuiSelect-icon": {
+                  color: "rgba(255, 255, 255, 0.7)"
                 }
-              }
-            }}
-          />
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: "rgba(15, 23, 42, 0.98)",
+                    color: "rgba(255, 255, 255, 0.92)"
+                  }
+                }
+              }}
+            >
+              <MenuItem value="">
+                <Typography sx={{ color: "rgba(255, 255, 255, 0.85)" }}>None</Typography>
+              </MenuItem>
+              {genreOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <TextField
             fullWidth
@@ -223,11 +270,15 @@ export function NewStoryModal({ open, onClose }: NewStoryModalProps) {
           <TextField
             fullWidth
             label="Word Count Target"
-            type="number"
             required
             value={goalTarget}
-            onChange={(e) => setGoalTarget(parseInt(e.target.value) || 3000)}
-            inputProps={{ min: 1 }}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                setGoalTarget(value);
+              }
+            }}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             helperText="Total words you want to write"
             sx={{ mb: 3 }}
             InputLabelProps={{ style: { color: "rgba(255, 255, 255, 0.7)" } }}

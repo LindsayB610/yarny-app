@@ -50,8 +50,8 @@ export function StoriesHeader({
 
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <Button
-            component="a"
-            href="/docs.html"
+            component={RouterLink}
+            to="/docs"
             sx={{
               color: "white",
               borderColor: "rgba(255, 255, 255, 0.3)",

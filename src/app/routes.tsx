@@ -16,6 +16,11 @@ const StoriesPage = lazy(async () => {
   return { default: module.StoriesPage };
 });
 
+const DocsPage = lazy(async () => {
+  const module = await import("../components/docs/DocsPage");
+  return { default: module.DocsPage };
+});
+
 const SettingsPage = lazy(async () => {
   const module = await import("../components/settings/SettingsPage");
   return { default: module.SettingsPage };
@@ -34,6 +39,16 @@ export const router = createBrowserRouter(
     {
       path: "/login",
       element: <LoginPage />,
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/docs",
+      element: <DocsPage />,
+      errorElement: <RouteErrorBoundary />
+    },
+    {
+      path: "/docs.html",
+      element: <DocsPage />,
       errorElement: <RouteErrorBoundary />
     },
     {

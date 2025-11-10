@@ -95,11 +95,13 @@ describe("NewStoryModal", () => {
 
     renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
 
-    // Use getByRole for textboxes and spinbutton for number input
+    // Use getByRole for textboxes
     await user.type(screen.getByRole("textbox", { name: /story name/i }), "My Novel");
-    await user.type(screen.getByRole("textbox", { name: /genre/i }), "Fantasy");
-    // Number input uses spinbutton role
-    const wordCountInput = screen.getByRole("spinbutton", { name: /word count target/i });
+    const genreSelect = screen.getByRole("combobox", { name: /genre/i });
+    await user.click(genreSelect);
+    const fantasyOption = await screen.findByRole("option", { name: "Fantasy" });
+    await user.click(fantasyOption);
+    const wordCountInput = screen.getByRole("textbox", { name: /word count target/i });
     await user.clear(wordCountInput);
     await user.type(wordCountInput, "5000");
 
@@ -109,6 +111,23 @@ describe("NewStoryModal", () => {
     await waitFor(() => {
       expect(capturedRequest).toBeTruthy();
       expect(capturedRequest.name).toBe("My Novel");
+    });
+  });
+
+  it("prevents submission when word count is zero or less", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<NewStoryModal open={true} onClose={mockOnClose} />);
+
+    await user.type(screen.getByRole("textbox", { name: /story name/i }), "My Novel");
+    const wordCountInput = screen.getByRole("textbox", { name: /word count target/i });
+    await user.clear(wordCountInput);
+    await user.type(wordCountInput, "0");
+
+    const submitButton = screen.getByRole("button", { name: /create story/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/please enter a word count greater than 0/i)).toBeInTheDocument();
     });
   });
 

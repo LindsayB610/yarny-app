@@ -775,6 +775,7 @@ export function useCreateSnippetMutation() {
       const snippetOrder = existingSnippetCount;
 
       let driveFileId: string | undefined;
+      let driveModifiedTime: string | undefined;
       try {
         if (chapter.driveFolderId) {
           const driveFile = await apiClient.writeDriveFile({
@@ -784,10 +785,13 @@ export function useCreateSnippetMutation() {
             mimeType: "application/vnd.google-apps.document"
           });
           driveFileId = driveFile.id;
+          driveModifiedTime = driveFile.modifiedTime;
         }
       } catch (error) {
         console.warn("Failed to create Drive document for snippet (non-fatal):", error);
       }
+
+      const effectiveUpdatedAt = driveModifiedTime ?? now;
 
       data.snippets[snippetId] = {
         id: snippetId,
@@ -798,7 +802,7 @@ export function useCreateSnippetMutation() {
         chars: 0,
         order: snippetOrder,
         driveFileId,
-        updatedAt: now
+        updatedAt: effectiveUpdatedAt
       };
 
       chapter.snippetIds = [...(chapter.snippetIds ?? []), snippetId];
@@ -817,7 +821,7 @@ export function useCreateSnippetMutation() {
         order: chapter.position ?? 0,
         snippetIds: chapter.snippetIds ?? [],
         driveFolderId: chapter.driveFolderId ?? "",
-        updatedAt: now
+        updatedAt: effectiveUpdatedAt
       };
 
       const newSnippet: SnippetEntity = {
@@ -827,7 +831,7 @@ export function useCreateSnippetMutation() {
         order: snippetOrder,
         content: "",
         driveFileId,
-        updatedAt: now
+        updatedAt: effectiveUpdatedAt
       };
 
       upsertEntities({

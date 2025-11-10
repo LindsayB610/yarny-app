@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState, type JSX, type MouseEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
 
@@ -255,9 +255,9 @@ export function LoginPage(): JSX.Element {
           </Button>
 
           <Box sx={{ mt: 4 }}>
-            <Typography
-              component="a"
-              href="/docs.html"
+          <Typography
+            component={RouterLink}
+            to="/docs"
               sx={{
                 color: "primary.main",
                 textDecoration: "underline",
