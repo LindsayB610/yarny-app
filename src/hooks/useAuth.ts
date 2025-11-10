@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { apiClient } from "../api/client";
-import type { ConfigResponse, VerifyGoogleResponse } from "../api/contract";
+import type {
+  ConfigResponse,
+  VerifyGoogleResponse
+} from "../api/contract";
 
 export interface AuthUser {
   email: string;
@@ -61,24 +64,36 @@ export function useAuthConfig() {
 
 export function useAuth(): AuthState & {
   login: (token: string) => Promise<VerifyGoogleResponse>;
+  loginWithBypass: (secret: string) => Promise<VerifyGoogleResponse>;
   logout: () => Promise<void>;
 } {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(() => checkAuthFromStorage());
 
+  const handleAuthSuccess = (data: VerifyGoogleResponse) => {
+    const authUser: AuthUser = {
+      email: data.user,
+      name: data.name,
+      picture: data.picture,
+      token: data.token
+    };
+    setUser(authUser);
+    localStorage.setItem("yarny_auth", authUser.token);
+    localStorage.setItem("yarny_user", JSON.stringify(authUser));
+  };
+
   const verifyMutation = useMutation({
     mutationFn: (token: string) => apiClient.verifyGoogle({ token }),
-    onSuccess: (data) => {
-      const authUser: AuthUser = {
-        email: data.user,
-        name: data.name,
-        picture: data.picture,
-        token: data.token
-      };
-      setUser(authUser);
-      localStorage.setItem("yarny_auth", authUser.token);
-      localStorage.setItem("yarny_user", JSON.stringify(authUser));
-    }
+    onSuccess: handleAuthSuccess
+  });
+
+  const bypassMutation = useMutation({
+    mutationFn: (secret: string) =>
+      apiClient.verifyGoogle({
+        mode: "local-bypass",
+        secret
+      }),
+    onSuccess: handleAuthSuccess
   });
 
   const logoutMutation = useMutation({
@@ -112,8 +127,12 @@ export function useAuth(): AuthState & {
   return {
     user,
     isAuthenticated: !!user,
-    isLoading: verifyMutation.isPending || logoutMutation.isPending,
+    isLoading:
+      verifyMutation.isPending ||
+      bypassMutation.isPending ||
+      logoutMutation.isPending,
     login: (token: string) => verifyMutation.mutateAsync(token),
+    loginWithBypass: (secret: string) => bypassMutation.mutateAsync(secret),
     logout: () => logoutMutation.mutateAsync()
   };
 }

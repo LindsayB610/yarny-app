@@ -334,7 +334,27 @@ ALLOWED_EMAIL=your-email@gmail.com,another@email.com
 NETLIFY_SITE_ID=your-site-id
 NETLIFY_AUTH_TOKEN=your-netlify-token
 GDRIVE_REDIRECT_URI=http://localhost:8888/.netlify/functions/drive-auth-callback
+LOCAL_DEV_BYPASS_EMAIL=dev@example.com
+LOCAL_DEV_BYPASS_NAME=Dev User
+# Optional but nice for the avatar shown in the UI
+LOCAL_DEV_BYPASS_PICTURE=https://ui-avatars.com/api/?name=Dev+User
+# Shared secret that authorises the bypass flow (only checked on localhost)
+LOCAL_DEV_BYPASS_SECRET=run-`openssl rand -hex 32`-and-paste-here
 ```
+
+#### Local Google Sign-In Bypass (localhost only)
+
+Setting the `LOCAL_DEV_BYPASS_*` variables lets you click the login button on `http://localhost:8888/` without invoking the Google FedCM prompt. Instead, the login page will display “Continue as Dev User” (or whatever name you configure) and immediately mint the same cookies a real Google sign-in would generate.
+
+- The bypass is ignored unless the app is served from `localhost`/`127.0.0.1`.
+- You **still need** valid Google Drive/API credentials (`GOOGLE_CLIENT_ID`, `GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`) so the Netlify functions can talk to Drive.
+- Pick any email that’s listed in `ALLOWED_EMAIL`. The Drive integration will store OAuth tokens for that account as usual.
+- Generate a random secret with `openssl rand -hex 32` (macOS/Linux) or `python -c 'import secrets; print(secrets.token_hex(32))'`. Keep it in `.env`; it never leaves your machine but prevents accidental activation.
+- The first time you click the login button you’ll be prompted to paste the secret. Hold **Option/Alt** while clicking later if you need to update or clear the stored value.
+- To switch users, remove `session`/`auth` cookies and update the env vars before restarting `npm run dev`.
+- After bypass login you can still launch the Google Drive authorization flow from the stories page when Drive access hasn’t been granted yet.
+
+If `LOCAL_DEV_BYPASS_SECRET` is unset, the login flow falls back to the regular Google Sign-In experience.
 
 ### Error Logging
 

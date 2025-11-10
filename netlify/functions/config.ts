@@ -24,6 +24,19 @@ export const handler: NetlifyFunctionHandler = async (
     clientId.substring(0, 20) + "...)"
   );
 
-  return addCorsHeaders(createSuccessResponse({ clientId }));
+  const localBypassSecret = (process.env.LOCAL_DEV_BYPASS_SECRET || "").trim();
+  const localBypassEnabled = Boolean(localBypassSecret);
+
+  const localBypass = localBypassEnabled
+    ? {
+        enabled: true,
+        email: (process.env.LOCAL_DEV_BYPASS_EMAIL || "").trim(),
+        name: (process.env.LOCAL_DEV_BYPASS_NAME || "").trim(),
+        picture:
+          (process.env.LOCAL_DEV_BYPASS_PICTURE || "").trim() || undefined
+      }
+    : { enabled: false };
+
+  return addCorsHeaders(createSuccessResponse({ clientId, localBypass }));
 };
 

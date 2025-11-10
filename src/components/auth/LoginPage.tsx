@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
-import { useCallback, useEffect, useState, type JSX } from "react";
+import { useCallback, useEffect, useMemo, useState, type JSX, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
@@ -23,7 +23,7 @@ declare global {
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useAuthConfig();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if already authenticated
@@ -32,6 +32,27 @@ export function LoginPage(): JSX.Element {
       navigate("/stories", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  const isLocalhost = useMemo(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    const hostname = window.location.hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  }, []);
+
+  const localBypassInfo = config?.localBypass;
+  const bypassActive = Boolean(localBypassInfo?.enabled && isLocalhost);
+  const bypassDisplayName =
+    localBypassInfo?.name ||
+    localBypassInfo?.email ||
+    "Local Dev User";
+
+  useEffect(() => {
+    if (bypassActive) {
+      console.log("[Auth] Local bypass enabled for", bypassDisplayName);
+    }
+  }, [bypassActive, bypassDisplayName]);
 
   const handleGoogleSignIn = useCallback(
     async (response: { credential: string }) => {
@@ -48,6 +69,10 @@ export function LoginPage(): JSX.Element {
 
   // Initialize Google Sign-In
   useEffect(() => {
+    if (bypassActive) {
+      return;
+    }
+
     if (!config?.clientId || !window.google) {
       return;
     }
@@ -56,9 +81,65 @@ export function LoginPage(): JSX.Element {
       client_id: config.clientId,
       callback: handleGoogleSignIn
     });
-  }, [config?.clientId, handleGoogleSignIn]);
+  }, [bypassActive, config?.clientId, handleGoogleSignIn]);
 
-  const handleSignInClick = () => {
+  const resolveBypassSecret = useCallback(
+    (forcePrompt: boolean) => {
+      if (typeof window === "undefined") {
+        return "";
+      }
+
+      const LOCAL_STORAGE_KEY = "yarny_local_bypass_secret";
+      const existing = window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? "";
+
+      if (existing && !forcePrompt) {
+        return existing.trim();
+      }
+
+      const promptMessage = "Enter the LOCAL_DEV_BYPASS_SECRET value from your local .env file.";
+      const input = window.prompt(promptMessage, existing) ?? "";
+      const secret = input.trim();
+
+      if (secret) {
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, secret);
+      } else {
+        window.localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+
+      return secret;
+    },
+    []
+  );
+
+  const handleLocalBypass = useCallback(
+    async (event: MouseEvent<HTMLButtonElement>) => {
+      const forcePrompt = event.altKey || event.metaKey || event.ctrlKey;
+      const secret = resolveBypassSecret(forcePrompt);
+
+      if (!secret) {
+        setError("Local bypass secret is required. Hold Option/Alt while clicking to re-enter it.");
+        return;
+      }
+
+      try {
+        setError(null);
+        await loginWithBypass(secret);
+        navigate("/stories", { replace: true });
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Authentication failed. Please try again."
+        );
+      }
+    },
+    [loginWithBypass, navigate, resolveBypassSecret]
+  );
+
+  const handleSignInClick = (event: MouseEvent<HTMLButtonElement>) => {
+    if (bypassActive) {
+      void handleLocalBypass(event);
+      return;
+    }
+
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
     } else {
@@ -68,6 +149,10 @@ export function LoginPage(): JSX.Element {
 
   // Load Google Sign-In script
   useEffect(() => {
+    if (bypassActive) {
+      return;
+    }
+
     if (window.google?.accounts) {
       return; // Already loaded
     }
@@ -87,7 +172,7 @@ export function LoginPage(): JSX.Element {
         existingScript.remove();
       }
     };
-  }, []);
+  }, [bypassActive]);
 
   if (configLoading) {
     return (
@@ -137,6 +222,15 @@ export function LoginPage(): JSX.Element {
             Sign in to continue writing
           </Typography>
 
+          {bypassActive && (
+            <Alert
+              severity="success"
+              sx={{ mb: 3, bgcolor: "rgba(16, 185, 129, 0.2)" }}
+            >
+              Local bypass active – continue as {bypassDisplayName}. Hold Option/Alt while clicking to re-enter the secret.
+            </Alert>
+          )}
+
           {error && (
             <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239, 68, 68, 0.2)" }}>
               {error}
@@ -148,7 +242,7 @@ export function LoginPage(): JSX.Element {
             fullWidth
             size="large"
             onClick={handleSignInClick}
-            disabled={!config?.clientId}
+            disabled={(!config?.clientId && !bypassActive) || isLoading}
             sx={{
               py: 1.5,
               borderRadius: "9999px",
@@ -157,7 +251,7 @@ export function LoginPage(): JSX.Element {
               fontSize: "1rem"
             }}
           >
-            Sign in with Google
+            {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
           </Button>
 
           <Box sx={{ mt: 4 }}>

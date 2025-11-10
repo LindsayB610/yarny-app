@@ -10,6 +10,16 @@ const handler = async (_event) => {
     }
     // Log length and first few characters for debugging (don't log full ID for security)
     console.log("Serving Client ID (length:", clientId.length + ", prefix:", clientId.substring(0, 20) + "...)");
-    return (0, types_1.addCorsHeaders)((0, types_1.createSuccessResponse)({ clientId }));
+    const localBypassSecret = (process.env.LOCAL_DEV_BYPASS_SECRET || "").trim();
+    const localBypassEnabled = Boolean(localBypassSecret);
+    const localBypass = localBypassEnabled
+        ? {
+            enabled: true,
+            email: (process.env.LOCAL_DEV_BYPASS_EMAIL || "").trim(),
+            name: (process.env.LOCAL_DEV_BYPASS_NAME || "").trim(),
+            picture: (process.env.LOCAL_DEV_BYPASS_PICTURE || "").trim() || undefined
+        }
+        : { enabled: false };
+    return (0, types_1.addCorsHeaders)((0, types_1.createSuccessResponse)({ clientId, localBypass }));
 };
 exports.handler = handler;

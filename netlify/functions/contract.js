@@ -12,9 +12,15 @@ const zod_1 = require("zod");
 // ============================================================================
 // Authentication API Contracts
 // ============================================================================
-exports.VerifyGoogleRequestSchema = zod_1.z.object({
-    token: zod_1.z.string()
-});
+exports.VerifyGoogleRequestSchema = zod_1.z.union([
+    zod_1.z.object({
+        token: zod_1.z.string()
+    }),
+    zod_1.z.object({
+        mode: zod_1.z.literal("local-bypass"),
+        secret: zod_1.z.string()
+    })
+]);
 // ============================================================================
 // Drive API Contracts
 // ============================================================================

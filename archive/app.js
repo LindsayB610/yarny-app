@@ -1,5 +1,44 @@
+function isLocalHost() {
+  return (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '::1'
+  );
+}
+
+function getStoredBypassSecret() {
+  return localStorage.getItem(LOCAL_BYPASS_STORAGE_KEY) || '';
+}
+
+function resolveBypassSecret(forcePrompt = false) {
+  let existing = getStoredBypassSecret();
+
+  if (existing && !forcePrompt) {
+    return existing.trim();
+  }
+
+  const promptMessage =
+    'Enter the LOCAL_DEV_BYPASS_SECRET value from your local .env file.';
+  const input = window.prompt(promptMessage, existing);
+
+  if (!input) {
+    if (forcePrompt) {
+      localStorage.removeItem(LOCAL_BYPASS_STORAGE_KEY);
+    }
+    return '';
+  }
+
+  const secret = input.trim();
+  if (secret) {
+    localStorage.setItem(LOCAL_BYPASS_STORAGE_KEY, secret);
+  }
+  return secret;
+}
+
 const API_BASE = '/.netlify/functions';
+const LOCAL_BYPASS_STORAGE_KEY = 'yarny_local_bypass_secret';
 let googleClientId = '';
+let localBypassConfig = { enabled: false, email: '', name: '', picture: '' };
 
 // Session expiration: 48 hours in milliseconds
 const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
@@ -158,12 +197,28 @@ function showSuccess(message) {
 
 function setLoading(loading) {
   const btn = document.getElementById('googleSignInBtn');
+  if (!btn) return;
+
+  const bypassActive = localBypassConfig.enabled && isLocalHost();
+  const displayName =
+    localBypassConfig.name ||
+    localBypassConfig.email ||
+    'Local Dev User';
+
   if (loading) {
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span>Authenticating...';
   } else {
     btn.disabled = false;
-    btn.innerHTML = `
+    if (bypassActive) {
+      btn.innerHTML = `Continue as ${displayName}`;
+      btn.classList.add('local-bypass');
+      btn.title =
+        'Local bypass active. Hold Option/Alt when clicking to re-enter the secret.';
+    } else {
+      btn.classList.remove('local-bypass');
+      btn.removeAttribute('title');
+      btn.innerHTML = `
       <svg class="google-icon" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -172,16 +227,126 @@ function setLoading(loading) {
       </svg>
       Sign in with Google
     `;
+    }
   }
 }
 
-// Initialize Google Sign-In
-async function initializeGoogleSignIn() {
-  // Get client ID from environment or config
-  // For now, we'll need to get it from a config endpoint or set it directly
-  // You'll need to set GOOGLE_CLIENT_ID in Netlify environment variables
+function updateLocalBypassNotice() {
+  const notice = document.getElementById('localBypassNotice');
+  if (!notice) return;
 
-  // Wait for Google API to load
+  if (localBypassConfig.enabled && isLocalHost()) {
+    const displayName =
+      localBypassConfig.name ||
+      localBypassConfig.email ||
+      'Local Dev User';
+    notice.textContent = `Local bypass active: continuing as ${displayName}`;
+    notice.classList.remove('hidden');
+  } else {
+    notice.classList.add('hidden');
+    notice.textContent = '';
+  }
+}
+
+function completeLogin(result) {
+  if (!result || !result.verified) {
+    throw new Error('Verification failed');
+  }
+
+  if (result.token) {
+    localStorage.setItem('yarny_auth', result.token);
+    localStorage.setItem(
+      'yarny_user',
+      JSON.stringify({
+        name: result.name,
+        user: result.user,
+        picture: result.picture
+      })
+    );
+  }
+
+  showSuccess('Login successful!');
+
+  setTimeout(() => {
+    window.location.href = '/stories.html';
+  }, 300);
+}
+
+// Initialize Google Sign-In or local bypass
+async function initializeGoogleSignIn() {
+  let config;
+
+  try {
+    const configResponse = await fetch(`${API_BASE}/config`);
+    if (configResponse.ok) {
+      config = await configResponse.json();
+      const loadedClientId = (config.clientId || '').trim();
+      if (loadedClientId) {
+        googleClientId = loadedClientId;
+        const preview =
+          googleClientId.length > 20
+            ? `${googleClientId.substring(0, 10)}...${googleClientId.substring(
+                googleClientId.length - 5
+              )}`
+            : '***';
+        console.log(
+          'Google Client ID loaded:',
+          'Yes (length:',
+          googleClientId.length + ', preview:',
+          preview + ')'
+        );
+      }
+    } else {
+      const errorMsg = `Config endpoint error: ${configResponse.status}`;
+      console.warn(errorMsg);
+      if (!isLocalHost()) {
+        throw new Error(errorMsg);
+      }
+    }
+  } catch (error) {
+    console.error('Error getting config:', error);
+    if (!isLocalHost()) {
+      showError(
+        'Configuration error. Please check server settings. Error: ' +
+          (error instanceof Error ? error.message : String(error))
+      );
+      return;
+    }
+  }
+
+  const serverBypass = config?.localBypass || {};
+  if (serverBypass.enabled && isLocalHost()) {
+    localBypassConfig = {
+      enabled: true,
+      email: (serverBypass.email || '').trim(),
+      name: (serverBypass.name || '').trim(),
+      picture: (serverBypass.picture || '').trim()
+    };
+    console.log(
+      'Local bypass enabled for',
+      localBypassConfig.email || 'local dev user'
+    );
+    updateLocalBypassNotice();
+    setLoading(false);
+    return;
+  }
+
+  localBypassConfig = { enabled: false, email: '', name: '', picture: '' };
+  updateLocalBypassNotice();
+
+  if (!googleClientId) {
+    if (isLocalHost()) {
+      console.warn(
+        'Google Sign-In not configured. Use the local bypass or set GOOGLE_CLIENT_ID.'
+      );
+    } else {
+      showError(
+        'Google Client ID is empty. Please check Netlify environment variables.'
+      );
+    }
+    return;
+  }
+
   await new Promise((resolve) => {
     if (window.google) {
       resolve();
@@ -196,55 +361,6 @@ async function initializeGoogleSignIn() {
     }
   });
 
-  // Get client ID from server config endpoint
-  try {
-    const configResponse = await fetch(`${API_BASE}/config`);
-    if (configResponse.ok) {
-      const config = await configResponse.json();
-      googleClientId = (config.clientId || '').trim(); // Trim whitespace
-
-      if (!googleClientId) {
-        console.error('Client ID is empty after parsing');
-        showError('Google Client ID is empty. Please check Netlify environment variables.');
-        return;
-      }
-
-      // Log first and last few characters for debugging (don't log full ID)
-      const preview = googleClientId.length > 20
-        ? googleClientId.substring(0, 10) + '...' + googleClientId.substring(googleClientId.length - 5)
-        : '***';
-      console.log('Google Client ID loaded:', 'Yes (length:', googleClientId.length + ', preview:', preview + ')');
-    } else {
-      // On localhost/dev, functions might not be available. Show a gentle warning
-      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const errorMsg = `Config endpoint error: ${configResponse.status}`;
-      console.warn(errorMsg);
-
-      if (!isDev) {
-        // On production, this is an error
-        throw new Error(errorMsg);
-      }
-      // On dev, continue - user can use dev mode
-    }
-  } catch (error) {
-    console.error('Error getting config:', error);
-
-    // On localhost, this is expected when functions aren't available
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (!isDev) {
-      showError('Configuration error. Please check server settings. Error: ' + error.message);
-      return;
-    }
-  }
-
-  // If we don't have a client ID, we'll skip Google Sign-In initialization
-  // Users can still use dev mode on localhost
-  if (!googleClientId) {
-    console.warn('Google Sign-In not configured. Use dev mode on localhost or set GOOGLE_CLIENT_ID environment variable for production.');
-    return;
-  }
-
-  // Initialize Google Sign-In with FedCM support
   try {
     google.accounts.id.initialize({
       client_id: googleClientId,
@@ -252,25 +368,20 @@ async function initializeGoogleSignIn() {
       auto_select: false,
       clientId: googleClientId,
       cancel_on_tap_outside: true,
-      itp_support: true, // Intelligent Tracking Prevention support
-      use_fedcm_for_prompt: true, // Enable FedCM
+      itp_support: true,
+      use_fedcm_for_prompt: true
     });
 
-    // Render a Google Sign-In button that overlays our custom button
-    // This ensures users can always log in, even if not already signed in to Google
-    // The Google-rendered button will always show the account selector/login screen
     const setupGoogleButtonOverlay = () => {
       const customButton = document.getElementById('googleSignInBtn');
       if (!customButton) {
-        // Retry after a short delay if button not found yet
         setTimeout(setupGoogleButtonOverlay, 100);
         return;
       }
 
       const buttonContainer = document.createElement('div');
       buttonContainer.id = 'googleSignInButtonContainer';
-      
-      // Position the Google button to overlay our custom button
+
       const updatePosition = () => {
         const rect = customButton.getBoundingClientRect();
         buttonContainer.style.position = 'fixed';
@@ -279,59 +390,51 @@ async function initializeGoogleSignIn() {
         buttonContainer.style.width = rect.width + 'px';
         buttonContainer.style.height = rect.height + 'px';
       };
-      
+
       updatePosition();
-      buttonContainer.style.opacity = '0'; // Make it invisible but still clickable
-      buttonContainer.style.pointerEvents = 'auto'; // Make sure it's clickable
-      buttonContainer.style.zIndex = '1000'; // Above our custom button
-      buttonContainer.style.overflow = 'hidden'; // Ensure iframe doesn't overflow
-      buttonContainer.style.cursor = 'pointer'; // Show pointer cursor
-      
+      buttonContainer.style.opacity = '0';
+      buttonContainer.style.pointerEvents = 'auto';
+      buttonContainer.style.zIndex = '1000';
+      buttonContainer.style.overflow = 'hidden';
+      buttonContainer.style.cursor = 'pointer';
+
       document.body.appendChild(buttonContainer);
 
-      // Render the Google button - this will always show account selector when clicked
-      // We'll style it to match our custom button size
       const rect = customButton.getBoundingClientRect();
-      google.accounts.id.renderButton(
-        buttonContainer,
-        {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left',
-          width: rect.width, // Match custom button width
-        }
-      );
+      google.accounts.id.renderButton(buttonContainer, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        shape: 'rectangular',
+        logo_alignment: 'left',
+        width: rect.width
+      });
 
-      // Wait for the button to render (it's async), then update position
       const checkButtonRendered = setInterval(() => {
-        if (buttonContainer.querySelector('iframe') || buttonContainer.querySelector('div[role="button"]')) {
+        if (
+          buttonContainer.querySelector('iframe') ||
+          buttonContainer.querySelector('div[role="button"]')
+        ) {
           clearInterval(checkButtonRendered);
-          updatePosition(); // Update position once button is rendered
+          updatePosition();
         }
       }, 100);
 
-      // Clear interval after 5 seconds if button still not rendered
       setTimeout(() => clearInterval(checkButtonRendered), 5000);
 
-      // Store reference to button container for later use
       window.googleSignInButtonContainer = buttonContainer;
-      
-      // Update position if window is resized or scrolled
+
       const updatePositionHandler = () => updatePosition();
       window.addEventListener('resize', updatePositionHandler);
       window.addEventListener('scroll', updatePositionHandler, true);
-      
-      // Store cleanup function
+
       buttonContainer._cleanup = () => {
         window.removeEventListener('resize', updatePositionHandler);
         window.removeEventListener('scroll', updatePositionHandler, true);
       };
     };
 
-    // Start setting up the overlay
     setupGoogleButtonOverlay();
 
     console.log('Google Sign-In initialized with FedCM support');
@@ -362,28 +465,7 @@ async function handleGoogleSignIn(response) {
     }
 
     const result = await verifyResponse.json();
-    
-    if (result.verified) {
-      // Store auth token in localStorage as backup
-      if (result.token) {
-        localStorage.setItem('yarny_auth', result.token);
-        localStorage.setItem('yarny_user', JSON.stringify({
-          name: result.name,
-          user: result.user,
-          picture: result.picture
-        }));
-      }
-      
-      showSuccess('Login successful!');
-      
-      // Small delay to ensure cookies are set before redirect
-      setTimeout(() => {
-        // Redirect to stories page instead of editor
-        window.location.href = '/stories.html';
-      }, 300);
-    } else {
-      throw new Error('Verification failed');
-    }
+    completeLogin(result);
   } catch (error) {
     console.error('Google Sign-In error:', error);
     showError(error.message || 'Authentication failed. Please try again.');
@@ -392,8 +474,64 @@ async function handleGoogleSignIn(response) {
   }
 }
 
+async function handleLocalBypassLogin(event) {
+  const forcePrompt =
+    !!event && (event.metaKey || event.ctrlKey || event.altKey);
+  const secret = resolveBypassSecret(forcePrompt);
+
+  if (!secret) {
+    showError(
+      'Local bypass secret required. Hold Option/Alt while clicking to re-enter it.'
+    );
+    return;
+  }
+
+  try {
+    setLoading(true);
+    showError('');
+
+    const verifyResponse = await fetch(`${API_BASE}/verify-google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'local-bypass', secret })
+    });
+
+    if (!verifyResponse.ok) {
+      let errorMessage = 'Authentication failed';
+      try {
+        const error = await verifyResponse.json();
+        errorMessage = error.error || error.message || errorMessage;
+      } catch (_) {
+        // ignore JSON parse errors
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await verifyResponse.json();
+    completeLogin(result);
+  } catch (error) {
+    console.error('Local bypass error:', error);
+    showError(
+      error instanceof Error
+        ? error.message
+        : 'Authentication failed. Please try again.'
+    );
+  } finally {
+    setLoading(false);
+  }
+}
+
 // Sign in with Google button click
 window.signInWithGoogle = function(event) {
+  if (localBypassConfig.enabled && isLocalHost()) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    handleLocalBypassLogin(event);
+    return;
+  }
+
   if (!googleClientId) {
     // On localhost, suggest using dev mode
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';

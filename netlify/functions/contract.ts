@@ -10,9 +10,15 @@ import { z } from "zod";
 // Authentication API Contracts
 // ============================================================================
 
-export const VerifyGoogleRequestSchema = z.object({
-  token: z.string()
-});
+export const VerifyGoogleRequestSchema = z.union([
+  z.object({
+    token: z.string()
+  }),
+  z.object({
+    mode: z.literal("local-bypass"),
+    secret: z.string()
+  })
+]);
 
 export type VerifyGoogleRequest = z.infer<typeof VerifyGoogleRequestSchema>;
 

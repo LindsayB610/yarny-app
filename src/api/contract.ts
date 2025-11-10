@@ -4,15 +4,29 @@ import { z } from "zod";
 // Authentication API Contracts
 // ============================================================================
 
+export const LocalBypassConfigSchema = z.object({
+  enabled: z.boolean(),
+  email: z.string().optional(),
+  name: z.string().optional(),
+  picture: z.string().optional()
+});
+
 export const ConfigResponseSchema = z.object({
-  clientId: z.string()
+  clientId: z.string(),
+  localBypass: LocalBypassConfigSchema.optional()
 });
 
 export type ConfigResponse = z.infer<typeof ConfigResponseSchema>;
 
-export const VerifyGoogleRequestSchema = z.object({
-  token: z.string()
-});
+export const VerifyGoogleRequestSchema = z.union([
+  z.object({
+    token: z.string()
+  }),
+  z.object({
+    mode: z.literal("local-bypass"),
+    secret: z.string()
+  })
+]);
 
 export type VerifyGoogleRequest = z.infer<typeof VerifyGoogleRequestSchema>;
 

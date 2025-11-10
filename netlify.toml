@@ -64,4 +64,5 @@
 [dev]
   command = "npm run dev"
   targetPort = 5173
-  publish = "public"
+  publish = "dist"
+  framework = "vite"
