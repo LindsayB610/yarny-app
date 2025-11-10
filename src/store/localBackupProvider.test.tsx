@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, waitFor } from "@testing-library/react";
 
 const localFsMocks = vi.hoisted(() => ({
   isFileSystemAccessSupported: vi.fn<() => boolean>(),
@@ -11,9 +11,9 @@ const localFsMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../services/localFs", async () => {
-  const actual = await vi.importActual<typeof import("../services/localFs")>("../services/localFs");
+  const actual = await vi.importActual("../services/localFs");
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     isFileSystemAccessSupported: localFsMocks.isFileSystemAccessSupported,
     getPersistedDirectoryHandle: localFsMocks.getPersistedDirectoryHandle,
     queryDirectoryPermission: localFsMocks.queryDirectoryPermission,

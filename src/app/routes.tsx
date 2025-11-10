@@ -2,13 +2,13 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { editorLoader, storiesLoader } from "./loaders";
 import { getQueryClient } from "./queryClient";
-import { ProtectedRoute } from "../components/auth/ProtectedRoute";
-import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
 import { LoginPage } from "../components/auth/LoginPage";
-import { StoriesPage } from "../components/stories/StoriesPage";
+import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { DocsPage } from "../components/docs/DocsPage";
-import { SettingsPage } from "../components/settings/SettingsPage";
+import { RouteErrorBoundary } from "../components/errors/RouteErrorBoundary";
 import { AppLayout } from "../components/layout/AppLayout";
+import { SettingsPage } from "../components/settings/SettingsPage";
+import { StoriesPage } from "../components/stories/StoriesPage";
 
 // Get shared query client instance
 const queryClient = getQueryClient();

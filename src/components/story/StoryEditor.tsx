@@ -257,7 +257,12 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
   // Check for conflicts when story changes
   useEffect(() => {
-    if (!story || !editor || !isEditorOpen || !activeSnippet || !activeSnippet.driveFileId) {
+    if (!story || !editor || !isEditorOpen || !activeSnippet) {
+      return;
+    }
+
+    const driveFileId = activeSnippet.driveFileId;
+    if (!driveFileId) {
       return;
     }
 
@@ -265,12 +270,12 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       try {
         const localContent = editorContent;
 
-        const conflict = await checkSnippetConflict(
-          activeSnippet.id,
-          activeSnippet.updatedAt,
-          activeSnippet.driveFileId,
-          activeChapter?.driveFolderId ?? story.driveFileId
-        );
+        const parentFolderId = activeChapter?.driveFolderId ?? story.driveFileId;
+        if (typeof parentFolderId !== "string" || parentFolderId.length === 0) {
+          return;
+        }
+
+        const conflict = await checkSnippetConflict(activeSnippet.id, activeSnippet.updatedAt, driveFileId, parentFolderId);
 
         if (conflict) {
           // Add local content to conflict info
