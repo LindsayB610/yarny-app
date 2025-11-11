@@ -15,7 +15,8 @@ export default [
       "node_modules",
       "public",
       "netlify/**/*.js",
-      "archive/**"
+      "archive/**",
+      "legacy-vanilla/**"
     ]
   },
   {

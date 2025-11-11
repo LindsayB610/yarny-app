@@ -13,16 +13,21 @@
     Access-Control-Allow-Origin = "*"
     Content-Type = "application/json"
 
-# Allow direct access to editor.html and stories.html
+# Redirect legacy vanilla HTML entry points to the React SPA
 [[redirects]]
   from = "/editor.html"
-  to = "/editor.html"
-  status = 200
+  to = "/editor"
+  status = 301
 
 [[redirects]]
   from = "/stories.html"
-  to = "/stories.html"
-  status = 200
+  to = "/stories"
+  status = 301
+
+[[redirects]]
+  from = "/docs.html"
+  to = "/docs"
+  status = 301
 
 # Allow direct access to migration-plan.html (public, no auth required)
 [[redirects]]
@@ -49,13 +54,13 @@
 # Legacy vanilla app access
 [[redirects]]
   from = "/vanilla-app"
-  to = "/vanilla-app/index.html"
-  status = 200
+  to = "/stories"
+  status = 301
 
 [[redirects]]
   from = "/vanilla-app/*"
-  to = "/vanilla-app/:splat"
-  status = 200
+  to = "/stories"
+  status = 301
 
 # Catch-all for other routes (SPA fallback)
 [[redirects]]
