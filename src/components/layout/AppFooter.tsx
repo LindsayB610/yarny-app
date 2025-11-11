@@ -1,4 +1,4 @@
-import { Box, Container, Link, Stack, Typography } from "@mui/material";
+import { Box, Link, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 type FooterVariant = "auto" | "dark" | "light";
@@ -15,7 +15,6 @@ type FooterLink =
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: "User Guide", to: "/docs" },
-  { label: "Migration Plan", href: "/migration-plan.html" },
   { label: "Testing Workbook", href: "/migration-plan/testing-workbook.html" }
 ];
 
@@ -50,17 +49,34 @@ export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JS
       component="footer"
       sx={{
         mt: "auto",
+        width: "100%",
         borderTop: `1px solid ${palette.border}`,
         backgroundColor: palette.background,
         backdropFilter: "blur(10px)"
       }}
     >
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Stack spacing={2} alignItems="center">
-          <Typography variant="body2" sx={{ color: palette.text, textAlign: "center" }}>
+      <Box
+        sx={{
+          mx: "auto",
+          width: "100%",
+          maxWidth: 1280,
+          py: 3,
+          px: { xs: 3, md: 6 }
+        }}
+      >
+        <Stack spacing={2} alignItems={{ xs: "flex-start", md: "center" }}>
+          <Typography
+            variant="body2"
+            sx={{ color: palette.text, textAlign: { xs: "left", md: "center" } }}
+          >
             © {currentYear} Yarny. Your personal writing tool.
           </Typography>
-          <Stack direction="row" spacing={3}>
+          <Stack
+            direction="row"
+            spacing={{ xs: 2, md: 3 }}
+            flexWrap="wrap"
+            justifyContent={{ xs: "flex-start", md: "center" }}
+          >
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.label}
@@ -83,7 +99,7 @@ export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JS
             ))}
           </Stack>
         </Stack>
-      </Container>
+      </Box>
     </Box>
   );
 }

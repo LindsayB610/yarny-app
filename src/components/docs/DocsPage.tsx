@@ -657,27 +657,62 @@ export function DocsPage(): JSX.Element {
         </Typography>
       </Toolbar>
       <Box sx={{ px: 2, pt: 1, pb: 2 }}>
-        <Button
-          component="a"
-          href="/migration-plan/testing-workbook.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          color="secondary"
-          variant="contained"
-          startIcon={<AssignmentTurnedInIcon />}
+        <Paper
+          elevation={0}
           sx={{
-            width: "100%",
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-            boxShadow:
+            p: 2,
+            borderRadius: 3,
+            border:
               theme.palette.mode === "dark"
-                ? "0 12px 30px rgba(15, 23, 42, 0.45)"
-                : "0 10px 24px rgba(15, 118, 110, 0.25)"
+                ? "1px solid rgba(45, 212, 191, 0.45)"
+                : "1px solid rgba(13, 148, 136, 0.35)",
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(15, 118, 110, 0.2)"
+                : "rgba(240, 253, 250, 0.85)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5
           }}
         >
-          Testing Workbook
-        </Button>
+          <Typography
+            variant="overline"
+            sx={{
+              letterSpacing: 1.2,
+              fontWeight: 700,
+              color:
+                theme.palette.mode === "dark"
+                  ? "rgba(34, 211, 238, 0.9)"
+                  : theme.palette.primary.main
+            }}
+          >
+            QA resources
+          </Typography>
+          <Typography variant="body2" sx={{ color: "inherit", opacity: 0.85 }}>
+            Open the Testing Workbook to log smoke tests, validation steps, and status.
+          </Typography>
+          <Button
+            component="a"
+            href="/migration-plan/testing-workbook.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="secondary"
+            variant="contained"
+            startIcon={<AssignmentTurnedInIcon />}
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 12px 30px rgba(15, 23, 42, 0.45)"
+                  : "0 10px 24px rgba(15, 118, 110, 0.25)"
+            }}
+          >
+            Testing Workbook
+          </Button>
+        </Paper>
       </Box>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
       <List

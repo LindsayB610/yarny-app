@@ -151,7 +151,7 @@ export async function initializeStoryStructure(
         id: groupId,
         projectId: "default",
         title: "Chapter 1",
-        color: "#E57A24",
+        color: "#10B981",
         position: 0,
         snippetIds: [snippetId],
         driveFolderId: chapter1Folder.id

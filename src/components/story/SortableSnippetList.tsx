@@ -99,14 +99,19 @@ export function SortableSnippetList({
       }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: (event, { context }) => {
-        const activeId = context.active.id;
-        const activeElement = document.querySelector(`[data-id="${activeId}"]`) as HTMLElement;
-        
+      coordinateGetter: (_event, { context }) => {
+        const activeId = context.active?.id;
+
+        if (!activeId) {
+          return { x: 0, y: 0 };
+        }
+
+        const activeElement = document.querySelector(`[data-id="${activeId}"]`) as HTMLElement | null;
+
         if (!activeElement) {
           return { x: 0, y: 0 };
         }
-        
+
         const rect = activeElement.getBoundingClientRect();
         return {
           x: rect.left + rect.width / 2,
