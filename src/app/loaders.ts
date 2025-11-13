@@ -45,7 +45,9 @@ function isDriveAuthorizationError(error: unknown): boolean {
     return (
       normalized.includes("no drive tokens found") ||
       normalized.includes("authorize drive access") ||
-      normalized.includes("no refresh token available")
+      normalized.includes("no refresh token available") ||
+      normalized.includes("refresh token expired") ||
+      normalized.includes("refresh token revoked")
     );
   }
 
