@@ -1,6 +1,6 @@
-import { Box, Container, Typography } from "@mui/material";
-import { useMemo, useState, type JSX } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { Alert, Box, Container, Typography } from "@mui/material";
+import { useEffect, useMemo, useState, type JSX } from "react";
+import { useLoaderData, useNavigate, useSearchParams } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
 import { EmptyState } from "./EmptyState";
@@ -16,12 +16,49 @@ import { AppFooter } from "../layout/AppFooter";
 
 export function StoriesPage(): JSX.Element {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loaderData = useLoaderData() as StoriesLoaderData | undefined;
   const { user, logout } = useAuth();
   const { data: stories, isLoading, error } = useStoriesQuery();
   const refreshStories = useRefreshStories();
   const [isNewStoryModalOpen, setIsNewStoryModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState(false);
+
+  // Check for auth error or success in URL params
+  useEffect(() => {
+    const errorParam = searchParams.get("drive_auth_error");
+    const successParam = searchParams.get("drive_auth_success");
+
+    if (errorParam) {
+      const errorMessage = decodeURIComponent(errorParam);
+      setAuthError(errorMessage);
+      
+      // If it's an invalid_grant error, invalidate Drive queries to force re-check
+      // This will cause the loader to re-run and detect missing tokens
+      if (errorMessage.toLowerCase().includes("invalid_grant")) {
+        // Invalidate Drive-related queries so the loader will re-check authorization
+        refreshStories.mutateAsync().catch(() => {
+          // Ignore errors - this is just to trigger a re-check
+        });
+      }
+      
+      // Clear the error param from URL
+      searchParams.delete("drive_auth_error");
+      setSearchParams(searchParams, { replace: true });
+    }
+
+    if (successParam === "true") {
+      setAuthSuccess(true);
+      // Clear the success param from URL
+      searchParams.delete("drive_auth_success");
+      setSearchParams(searchParams, { replace: true });
+      // Clear success message after 5 seconds
+      const timer = setTimeout(() => setAuthSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, setSearchParams, refreshStories]);
 
   // Filter stories based on search query
   const filteredStories = useMemo(
@@ -32,10 +69,10 @@ export function StoriesPage(): JSX.Element {
     [stories, searchQuery]
   );
 
-  // Check if Drive is authorized (for now, assume authorized if we can fetch stories)
-  // TODO: Add proper Drive auth check
+  // Check if Drive is authorized
+  // If we have an auth error (especially invalid_grant), treat as unauthorized
   const isDriveAuthorized =
-    loaderData?.driveAuthorized === false
+    loaderData?.driveAuthorized === false || authError !== null
       ? false
       : !error && (stories !== undefined || isLoading);
 
@@ -83,8 +120,66 @@ export function StoriesPage(): JSX.Element {
               boxShadow: 6
             }}
           >
-            {!isDriveAuthorized ? (
+            {authError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 3 }}
+                onClose={() => setAuthError(null)}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      setAuthError(null);
+                      window.location.href = "/.netlify/functions/drive-auth";
+                    }}
+                  >
+                    Try Again
+                  </Button>
+                }
+              >
+                <Typography variant="h6" gutterBottom>
+                  Google Drive Authorization Failed
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2 }}>
+                  You&apos;re still logged in to the app. This error is about connecting to Google Drive.
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "inherit",
+                    mb: 0,
+                    fontSize: "0.875rem",
+                    bgcolor: "rgba(0, 0, 0, 0.1)",
+                    p: 1,
+                    borderRadius: 1
+                  }}
+                >
+                  {authError}
+                </Typography>
+              </Alert>
+            )}
+
+            {authSuccess && (
+              <Alert severity="success" sx={{ mb: 3 }} onClose={() => setAuthSuccess(false)}>
+                <Typography variant="body1">
+                  Successfully connected to Google Drive! Your stories will now sync with Drive.
+                </Typography>
+              </Alert>
+            )}
+
+            {!isDriveAuthorized && !authError ? (
+              // Only show DriveAuthPrompt if there's no error (error alert handles the error case)
               <DriveAuthPrompt />
+            ) : !isDriveAuthorized && authError ? (
+              // If there's an error, show a simplified prompt below the error
+              <Box sx={{ textAlign: "center", py: 4 }}>
+                <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 3 }}>
+                  Click &quot;Try Again&quot; above to reconnect to Google Drive.
+                </Typography>
+              </Box>
             ) : isLoading ? (
               <LoadingState />
             ) : filteredStories.length === 0 && searchQuery ? (

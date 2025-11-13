@@ -128,13 +128,42 @@ export const handler: NetlifyFunctionHandler = async (
   console.log("Client Secret length (after trim):", GDRIVE_CLIENT_SECRET?.length);
   console.log("Client Secret validation: PASSED");
 
-  const { code, state, error } = event.queryStringParameters || {};
+  const { code, state, error, error_description } = event.queryStringParameters || {};
 
   if (error) {
+    let errorMessage = error;
+    if (error_description) {
+      errorMessage += ": " + decodeURIComponent(error_description);
+    }
+
+    // Add helpful context for common errors
+    if (error === "invalid_grant") {
+      errorMessage =
+        "Google Drive authorization failed. This doesn't affect your app login - you're still signed in.\n\n" +
+        errorMessage;
+      errorMessage += "\n\nCommon causes:";
+      errorMessage +=
+        "\n• The authorization code was already used (codes can only be used once)";
+      errorMessage +=
+        "\n• The authorization code expired (they expire after a few minutes)";
+      errorMessage +=
+        "\n• The redirect URI doesn't match what's configured in Google Cloud Console";
+      errorMessage += "\n\nTo fix this:";
+      errorMessage += "\n• Click 'Try Again' to start a fresh authorization";
+      errorMessage +=
+        "\n• Complete the authorization in one session (don't close the browser tab)";
+    } else if (error === "access_denied") {
+      errorMessage =
+        "Google Drive authorization was canceled. This doesn't affect your app login.\n\n" +
+        errorMessage;
+      errorMessage += "\n\nYou canceled the authorization or didn't grant permission.";
+      errorMessage += "\nClick 'Try Again' and approve the authorization when prompted.";
+    }
+
     return {
       statusCode: 302,
       headers: {
-        Location: "/stories.html?drive_auth_error=" + encodeURIComponent(error)
+        Location: "/stories.html?drive_auth_error=" + encodeURIComponent(errorMessage)
       },
       body: ""
     };
@@ -367,14 +396,16 @@ export const handler: NetlifyFunctionHandler = async (
       }).response?.data;
       errorMessage += " - " + responseData?.error_description;
     }
-    if (
+    // Check for specific OAuth error types
+    const errorType =
       error instanceof Error &&
       "response" in error &&
       typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error ===
-        "string" &&
-      (error as { response?: { data?: { error?: string } } }).response?.data?.error ===
-        "invalid_client"
-    ) {
+        "string"
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : null;
+
+    if (errorType === "invalid_client") {
       errorMessage += "\n\nTroubleshooting:";
       errorMessage +=
         "\n1. Verify GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET in Netlify env vars match EXACTLY what's in Google Cloud Console";
@@ -387,6 +418,21 @@ export const handler: NetlifyFunctionHandler = async (
       errorMessage += "\n5. If you regenerated the client secret, make sure you updated the env var";
       errorMessage += "\n6. Ensure Google Drive API is enabled for this OAuth client's project";
       errorMessage += "\n7. Check that the OAuth consent screen is configured correctly";
+    } else if (errorType === "invalid_grant") {
+      errorMessage =
+        "Google Drive authorization failed. This doesn't affect your app login - you're still signed in.\n\n" +
+        errorMessage;
+      errorMessage += "\n\nCommon causes:";
+      errorMessage +=
+        "\n• The authorization code was already used (codes can only be used once)";
+      errorMessage +=
+        "\n• The authorization code expired (they expire after a few minutes)";
+      errorMessage +=
+        "\n• The redirect URI doesn't match what's configured in Google Cloud Console";
+      errorMessage += "\n\nTo fix this:";
+      errorMessage += "\n• Click 'Try Again' to start a fresh authorization";
+      errorMessage +=
+        "\n• Complete the authorization in one session (don't close the browser tab)";
     }
 
     return {
