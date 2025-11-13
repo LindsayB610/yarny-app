@@ -163,7 +163,7 @@ export const handler: NetlifyFunctionHandler = async (
     return {
       statusCode: 302,
       headers: {
-        Location: "/stories.html?drive_auth_error=" + encodeURIComponent(errorMessage)
+        Location: "/stories?drive_auth_error=" + encodeURIComponent(errorMessage)
       },
       body: ""
     };
@@ -365,7 +365,7 @@ export const handler: NetlifyFunctionHandler = async (
         "Set-Cookie": [clearStateCookie]
       },
       headers: {
-        Location: "/stories.html?drive_auth_success=true"
+        Location: "/stories?drive_auth_success=true"
       },
       body: ""
     };
@@ -438,7 +438,7 @@ export const handler: NetlifyFunctionHandler = async (
     return {
       statusCode: 302,
       headers: {
-        Location: "/stories.html?drive_auth_error=" + encodeURIComponent(errorMessage)
+        Location: "/stories?drive_auth_error=" + encodeURIComponent(errorMessage)
       },
       body: ""
     };

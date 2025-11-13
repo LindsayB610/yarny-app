@@ -35,6 +35,11 @@ export function StoriesPage(): JSX.Element {
     const hasErrorParam = errorParam !== null;
     const hasSuccessParam = successParam !== null;
 
+    // If URL params were cleared but error state persists, clear the error state
+    if (!hasErrorParam && authError !== null) {
+      setAuthError(null);
+    }
+
     if (hasErrorParam) {
       const errorMessage = decodeURIComponent(errorParam);
       setAuthError(errorMessage);
@@ -47,6 +52,11 @@ export function StoriesPage(): JSX.Element {
           // Ignore errors - this is just to trigger a re-check
         });
       }
+      
+      // Clear error param from URL immediately after reading it
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("drive_auth_error");
+      setSearchParams(newParams, { replace: true });
     }
 
     if (hasSuccessParam && successParam === "true") {
@@ -55,21 +65,14 @@ export function StoriesPage(): JSX.Element {
       const timer = setTimeout(() => setAuthSuccess(false), 5000);
       
       // Clear params from URL
-      if (hasErrorParam || hasSuccessParam) {
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete("drive_auth_error");
-        newParams.delete("drive_auth_success");
-        setSearchParams(newParams, { replace: true });
-      }
-      
-      return () => clearTimeout(timer);
-    } else if (hasErrorParam) {
-      // Clear error param from URL immediately after reading it
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("drive_auth_error");
+      newParams.delete("drive_auth_success");
       setSearchParams(newParams, { replace: true });
+      
+      return () => clearTimeout(timer);
     }
-  }, [searchParams, setSearchParams, refreshStories]);
+  }, [searchParams, setSearchParams, refreshStories, authError]);
 
   // Filter stories based on search query
   const filteredStories = useMemo(
