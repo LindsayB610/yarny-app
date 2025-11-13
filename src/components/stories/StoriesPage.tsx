@@ -197,16 +197,10 @@ export function StoriesPage(): JSX.Element {
               </Alert>
             )}
 
-            {!isDriveAuthorized && !authError ? (
-              // Only show DriveAuthPrompt if there's no error (error alert handles the error case)
+            {!isDriveAuthorized ? (
+              // Show DriveAuthPrompt when Drive is not authorized
+              // This appears whether or not there's an error (error alert is shown above)
               <DriveAuthPrompt />
-            ) : !isDriveAuthorized && authError ? (
-              // If there's an error, show a simplified prompt below the error
-              <Box sx={{ textAlign: "center", py: 4 }}>
-                <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 3 }}>
-                  Click &quot;Try Again&quot; above to reconnect to Google Drive.
-                </Typography>
-              </Box>
             ) : isLoading ? (
               <LoadingState />
             ) : filteredStories.length === 0 && searchQuery ? (
