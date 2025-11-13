@@ -40,6 +40,7 @@ export const router = createBrowserRouter(
       errorElement: <RouteErrorBoundary />,
       // Note: React Router v6.4+ handles loading states via Suspense
       // We'll wrap routes in Suspense in App.tsx
+      // Navigate with replace doesn't preserve query params by default, which is what we want
     },
     {
       path: "/stories",

@@ -31,7 +31,11 @@ export function StoriesPage(): JSX.Element {
     const errorParam = searchParams.get("drive_auth_error");
     const successParam = searchParams.get("drive_auth_success");
 
-    if (errorParam) {
+    // Always clear error/success params from URL to prevent them from persisting
+    const hasErrorParam = errorParam !== null;
+    const hasSuccessParam = successParam !== null;
+
+    if (hasErrorParam) {
       const errorMessage = decodeURIComponent(errorParam);
       setAuthError(errorMessage);
       
@@ -43,20 +47,27 @@ export function StoriesPage(): JSX.Element {
           // Ignore errors - this is just to trigger a re-check
         });
       }
-      
-      // Clear the error param from URL
-      searchParams.delete("drive_auth_error");
-      setSearchParams(searchParams, { replace: true });
     }
 
-    if (successParam === "true") {
+    if (hasSuccessParam && successParam === "true") {
       setAuthSuccess(true);
-      // Clear the success param from URL
-      searchParams.delete("drive_auth_success");
-      setSearchParams(searchParams, { replace: true });
       // Clear success message after 5 seconds
       const timer = setTimeout(() => setAuthSuccess(false), 5000);
+      
+      // Clear params from URL
+      if (hasErrorParam || hasSuccessParam) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("drive_auth_error");
+        newParams.delete("drive_auth_success");
+        setSearchParams(newParams, { replace: true });
+      }
+      
       return () => clearTimeout(timer);
+    } else if (hasErrorParam) {
+      // Clear error param from URL immediately after reading it
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("drive_auth_error");
+      setSearchParams(newParams, { replace: true });
     }
   }, [searchParams, setSearchParams, refreshStories]);
 
@@ -124,14 +135,27 @@ export function StoriesPage(): JSX.Element {
               <Alert
                 severity="error"
                 sx={{ mb: 3 }}
-                onClose={() => setAuthError(null)}
+                onClose={() => {
+                  setAuthError(null);
+                  // Also clear from URL if it somehow persists
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete("drive_auth_error");
+                  setSearchParams(newParams, { replace: true });
+                }}
                 action={
                   <Button
                     color="inherit"
                     size="small"
                     onClick={() => {
                       setAuthError(null);
-                      window.location.href = "/.netlify/functions/drive-auth";
+                      // Clear from URL before redirecting
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete("drive_auth_error");
+                      setSearchParams(newParams, { replace: true });
+                      // Small delay to ensure URL is cleared before redirect
+                      setTimeout(() => {
+                        window.location.href = "/.netlify/functions/drive-auth";
+                      }, 100);
                     }}
                   >
                     Try Again
