@@ -19,7 +19,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Box, Typography } from "@mui/material";
 import { type CSSProperties } from "react";
-import { useState, type JSX } from "react";
+import { useState, useRef, type JSX } from "react";
 
 export interface Snippet {
   id: string;
@@ -49,6 +49,7 @@ function SortableSnippetItem({
     transition,
     isDragging
   } = useSortable({ id: snippet.id });
+  const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -62,23 +63,38 @@ function SortableSnippetItem({
       data-id={snippet.id}
       style={style}
       {...attributes}
-      {...listeners}
-      tabIndex={0}
-      role="button"
-      aria-label={`Snippet: ${snippet.title}. Press Space to activate drag mode, then use arrow keys to reorder.`}
-      onKeyDown={(e) => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault();
-          // Keyboard activation is handled by KeyboardSensor
+      onPointerDown={(e) => {
+        // Track pointer down for click detection
+        pointerDownRef.current = {
+          x: e.clientX,
+          y: e.clientY,
+          time: Date.now()
+        };
+        // Apply drag listeners
+        if (listeners?.onPointerDown) {
+          listeners.onPointerDown(e);
+        }
+      }}
+      onClick={(e) => {
+        // If this was a click (not a drag), ensure it reaches the child snippet item
+        const pointerDown = pointerDownRef.current;
+        if (pointerDown) {
+          const timeDiff = Date.now() - pointerDown.time;
+          const moved = Math.abs(e.clientX - pointerDown.x) > 5 || Math.abs(e.clientY - pointerDown.y) > 5;
+          
+          // If it was a quick click without much movement, forward to child
+          if (timeDiff < 300 && !moved) {
+            const childSnippetItem = e.currentTarget.querySelector('[data-snippet-id]') as HTMLElement;
+            if (childSnippetItem && e.target !== childSnippetItem && !childSnippetItem.contains(e.target as Node)) {
+              e.stopPropagation();
+              childSnippetItem.click();
+            }
+          }
+          pointerDownRef.current = null;
         }
       }}
       sx={{
-        cursor: isDragging ? "grabbing" : "grab",
-        "&:focus-visible": {
-          outline: "2px solid #6D4AFF",
-          outlineOffset: "2px",
-          borderRadius: "4px"
-        }
+        cursor: isDragging ? "grabbing" : "grab"
       }}
     >
       {children}

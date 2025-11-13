@@ -100,21 +100,11 @@ export function StoriesHeader({
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           mb: 3
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{
-            color: "white",
-            fontWeight: 600
-          }}
-        >
-          Your Stories
-        </Typography>
-
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <TextField
             size="small"

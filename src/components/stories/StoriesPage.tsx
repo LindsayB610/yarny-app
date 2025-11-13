@@ -1,4 +1,4 @@
-import { Alert, Box, Container, Typography } from "@mui/material";
+import { Alert, Box, Button, Container, Typography } from "@mui/material";
 import { useEffect, useMemo, useState, type JSX } from "react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -134,6 +134,17 @@ export function StoriesPage(): JSX.Element {
               boxShadow: 6
             }}
           >
+            <Typography
+              variant="h5"
+              sx={{
+                color: "white",
+                fontWeight: 600,
+                mb: 3
+              }}
+            >
+              Your Stories
+            </Typography>
+
             {authError && (
               <Alert
                 severity="error"

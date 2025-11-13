@@ -149,17 +149,57 @@ async function getAuthenticatedDriveClient(email) {
         if (!tokens.refresh_token) {
             throw new Error("No refresh token available. Please re-authorize Drive access.");
         }
-        const newTokens = await refreshAccessToken(email, tokens.refresh_token);
-        // Update stored tokens - preserve scope from original tokens
-        // Refresh tokens maintain the original scopes, so new access token has same scopes
-        tokens = {
-            access_token: newTokens.access_token,
-            refresh_token: tokens.refresh_token, // Keep original refresh token
-            expiry_date: newTokens.expiry_date,
-            scope: tokens.scope || newTokens.scope // Preserve scope from original or use from refresh
-        };
-        console.log("Refreshed tokens - scope preserved:", tokens.scope);
-        await saveTokens(email, tokens);
+        try {
+            const newTokens = await refreshAccessToken(email, tokens.refresh_token);
+            // Update stored tokens - preserve scope from original tokens
+            // Refresh tokens maintain the original scopes, so new access token has same scopes
+            tokens = {
+                access_token: newTokens.access_token,
+                refresh_token: tokens.refresh_token, // Keep original refresh token
+                expiry_date: newTokens.expiry_date,
+                scope: tokens.scope || newTokens.scope // Preserve scope from original or use from refresh
+            };
+            console.log("Refreshed tokens - scope preserved:", tokens.scope);
+            await saveTokens(email, tokens);
+        }
+        catch (refreshError) {
+            // Check if refresh token itself is expired/revoked
+            const errorMessage = refreshError instanceof Error ? refreshError.message : String(refreshError);
+            const errorData = refreshError instanceof Error &&
+                "response" in refreshError &&
+                typeof refreshError.response?.data === "object"
+                ? refreshError.response?.data
+                : null;
+            if (errorMessage.includes("invalid_grant") ||
+                errorData?.error === "invalid_grant" ||
+                errorMessage.includes("Token has been expired or revoked")) {
+                // Refresh token is expired/revoked - clear stored tokens and require re-authorization
+                console.error("Refresh token expired or revoked. Clearing stored tokens for:", email);
+                try {
+                    // Clear tokens for this user
+                    const store = (0, blobs_1.getStore)(getStoreOptions());
+                    let allTokens = {};
+                    try {
+                        const data = await store.get(STORAGE_KEY);
+                        if (data && typeof data === "string") {
+                            allTokens = JSON.parse(data);
+                        }
+                    }
+                    catch {
+                        // No existing data
+                    }
+                    delete allTokens[email];
+                    await store.set(STORAGE_KEY, JSON.stringify(allTokens, null, 2));
+                    console.log("Cleared expired tokens for:", email);
+                }
+                catch (clearError) {
+                    console.error("Error clearing expired tokens:", clearError);
+                }
+                throw new Error("Refresh token expired or revoked. Please re-authorize Drive access.");
+            }
+            // Re-throw other errors
+            throw refreshError;
+        }
     }
     // Create OAuth2 client with current tokens
     const oauth2Client = new google_auth_library_1.OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);

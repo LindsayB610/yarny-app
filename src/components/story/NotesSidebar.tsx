@@ -29,7 +29,7 @@ import {
   Tooltip,
   Typography
 } from "@mui/material";
-import { memo, useMemo, useState, useCallback, useEffect, type JSX, type CSSProperties } from "react";
+import { memo, useMemo, useState, useCallback, useEffect, useRef, type JSX, type CSSProperties } from "react";
 
 import { StoryTabs, type TabItem } from "./StoryTabs";
 import { useCreateNoteMutation, useReorderNotesMutation } from "../../hooks/useNotesMutations";
@@ -199,6 +199,7 @@ function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteIte
     id: note.id,
     disabled
   });
+  const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -211,8 +212,35 @@ function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteIte
       data-id={note.id}
       style={style}
       {...attributes}
-      {...listeners}
-      onClick={onClick}
+      onPointerDown={(e) => {
+        // Track pointer down for click detection
+        pointerDownRef.current = {
+          x: e.clientX,
+          y: e.clientY,
+          time: Date.now()
+        };
+        // Apply drag listeners
+        if (listeners?.onPointerDown) {
+          listeners.onPointerDown(e);
+        }
+      }}
+      onClick={(e) => {
+        // Ensure clicks work even when drag listeners are present
+        const pointerDown = pointerDownRef.current;
+        if (pointerDown) {
+          const timeDiff = Date.now() - pointerDown.time;
+          const moved = Math.abs(e.clientX - pointerDown.x) > 5 || Math.abs(e.clientY - pointerDown.y) > 5;
+          
+          // If it was a quick click without much movement, trigger onClick
+          if (timeDiff < 300 && !moved && onClick) {
+            onClick();
+          }
+          pointerDownRef.current = null;
+        } else if (onClick) {
+          // Fallback: if pointer tracking didn't work, still try onClick
+          onClick();
+        }
+      }}
       sx={{
         borderBottom: 1,
         borderColor: "divider",

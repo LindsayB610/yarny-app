@@ -28,11 +28,7 @@ describe("StoriesHeader", () => {
     expect(screen.getByText("Your writing projects")).toBeInTheDocument();
   });
 
-  it("renders Your Stories heading", () => {
-    renderHeader();
-
-    expect(screen.getByText("Your Stories")).toBeInTheDocument();
-  });
+  // Note: "Your Stories" heading was moved to StoriesPage component
 
   it("renders search input", () => {
     renderHeader();
