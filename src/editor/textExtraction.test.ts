@@ -14,16 +14,21 @@ describe("textExtraction utilities", () => {
   it("builds a TipTap document with paragraphs and hard breaks", () => {
     const doc = buildPlainTextDocument("Line one\nLine two\n\nNext paragraph");
 
+    // With new behavior: each line becomes a separate paragraph
     expect(doc).toMatchObject({
       type: "doc",
       content: [
         {
           type: "paragraph",
-          content: [
-            { type: "text", text: "Line one" },
-            { type: "hardBreak" },
-            { type: "text", text: "Line two" }
-          ]
+          content: [{ type: "text", text: "Line one" }]
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Line two" }]
+        },
+        {
+          type: "paragraph",
+          content: [] // empty paragraph from double newline
         },
         {
           type: "paragraph",

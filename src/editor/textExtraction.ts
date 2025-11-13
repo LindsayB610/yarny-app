@@ -5,29 +5,35 @@ export const normalizePlainText = (value: string): string =>
 
 export const buildPlainTextDocument = (text: string): JSONContent => {
   const normalized = normalizePlainText(text);
-  const paragraphs = normalized.split(/\n{2,}/);
+  
+  // Split by single newlines to preserve line breaks exactly as they are
+  // Each line becomes a paragraph, matching legacy behavior
+  const lines = normalized.split("\n");
+
+  // Ensure at least one paragraph exists (TipTap requires at least one)
+  if (lines.length === 0) {
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: []
+        }
+      ]
+    };
+  }
 
   return {
     type: "doc",
-    content: paragraphs.map((paragraph) => ({
+    content: lines.map((line) => ({
       type: "paragraph",
-      content: paragraph.length
-        ? paragraph.split("\n").flatMap((line, index, array) => {
-            const nodes: JSONContent[] = [
-              {
-                type: "text",
-                text: line
-              }
-            ];
-
-            if (index < array.length - 1) {
-              nodes.push({
-                type: "hardBreak"
-              });
+      content: line.length > 0
+        ? [
+            {
+              type: "text",
+              text: line
             }
-
-            return nodes;
-          })
+          ]
         : []
     }))
   };
@@ -41,39 +47,32 @@ export const extractPlainTextFromDocument = (
   }
 
   const lines: string[] = [];
-  let currentParagraph: string[] = [];
-
-  const flushParagraph = () => {
-    if (currentParagraph.length > 0) {
-      lines.push(currentParagraph.join("\n"));
-      currentParagraph = [];
-    }
-  };
 
   doc.content.forEach((node) => {
     if (node.type === "paragraph") {
-      const paragraphLines: string[] = [];
+      // Extract text from paragraph, handling hard breaks within it
+      const paragraphText: string[] = [];
 
       node.content?.forEach((child) => {
         if (child.type === "text" && typeof child.text === "string") {
-          if (!paragraphLines.length) {
-            paragraphLines.push(child.text);
+          if (paragraphText.length === 0) {
+            paragraphText.push(child.text);
           } else {
-            paragraphLines[paragraphLines.length - 1] += child.text;
+            paragraphText[paragraphText.length - 1] += child.text;
           }
         } else if (child.type === "hardBreak") {
-          paragraphLines.push("");
+          paragraphText.push("");
         }
       });
 
-      currentParagraph.push(paragraphLines.join(""));
-      flushParagraph();
+      // Join paragraph content (handles hard breaks within paragraph)
+      const paragraphContent = paragraphText.length > 0 ? paragraphText.join("\n") : "";
+      lines.push(paragraphContent);
     }
   });
 
-  flushParagraph();
-
-  return lines.join("\n\n").trim();
+  // Join all paragraphs with single newlines (each paragraph is a line)
+  return lines.join("\n");
 };
 
 export const toGoogleDocsPlainText = (text: string): string =>

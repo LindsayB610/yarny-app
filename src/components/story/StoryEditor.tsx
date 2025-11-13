@@ -196,7 +196,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const previousStoryIdRef = useRef<string | undefined>(story?.id);
   const previousActiveSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastLoadedSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
-  const lastAppliedDocumentRef = useRef<string>("");
+  const lastAppliedContentRef = useRef<string>("");
 
   // Track story/snippet switches for performance metrics
   useEffect(() => {
@@ -211,51 +211,79 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     previousActiveSnippetIdRef.current = activeSnippet?.id;
   }, [story?.id, activeSnippet?.id, startSnippetSwitch]);
 
+  // Reset tracking refs when story changes
   useEffect(() => {
-    lastAppliedDocumentRef.current = "";
+    lastAppliedContentRef.current = "";
     lastLoadedSnippetIdRef.current = undefined;
   }, [story?.id]);
 
+  // Handle snippet content loading and editor reset
+  // Only reset when snippet actually changes, not on every content update
   useEffect(() => {
     if (!editor) {
       return;
     }
 
-    const serializedDocument = JSON.stringify(initialDocument);
     const snippetChanged = activeSnippetId !== lastLoadedSnippetIdRef.current;
+    const contentChanged = activeSnippet?.content !== lastAppliedContentRef.current;
 
-    if (!snippetChanged) {
-      if (lastAppliedDocumentRef.current === serializedDocument) {
-        return;
-      }
-
-      if (isEditorOpen || hasUnsavedChanges) {
-        return;
-      }
+    // Only reset content if:
+    // 1. Snippet changed (switching to different snippet), OR
+    // 2. Content changed externally AND editor is not open (user not typing)
+    if (!snippetChanged && (!contentChanged || isEditorOpen || hasUnsavedChanges)) {
+      return;
     }
 
-    editor.commands.setContent(initialDocument, false, {
+    // Ensure editor is editable before setting content
+    if (!editor.isEditable) {
+      editor.setEditable(true);
+    }
+
+    // Set content from the snippet
+    const newDocument = buildPlainTextDocument(activeSnippet?.content ?? "");
+    editor.commands.setContent(newDocument, false, {
       preserveWhitespace: true
     });
-    lastAppliedDocumentRef.current = serializedDocument;
+
+    // Update tracking refs
+    lastAppliedContentRef.current = activeSnippet?.content ?? "";
     lastLoadedSnippetIdRef.current = activeSnippetId;
 
-    setTimeout(() => {
-      if (activeSnippetId) {
-        editor.commands.focus("end");
+    // Focus the editor after content is set
+    // Use requestAnimationFrame to ensure DOM is updated, then focus
+    requestAnimationFrame(() => {
+      if (activeSnippetId && editor.isEditable) {
+        // Try to focus, with retry logic for empty content
+        const tryFocus = () => {
+          if (editor.isDestroyed) return;
+          
+          editor.commands.focus("end");
+          
+          // If editor still isn't focused and content is empty, try again
+          if (!editor.isFocused && (!activeSnippet?.content || activeSnippet.content.trim() === "")) {
+            setTimeout(() => {
+              if (!editor.isDestroyed && editor.isEditable) {
+                editor.commands.focus("end");
+              }
+            }, 50);
+          }
+        };
+
+        tryFocus();
       }
       endSnippetSwitch();
-    }, 0);
+    });
   }, [
     editor,
-    initialDocument,
     activeSnippetId,
+    activeSnippet?.content,
     isEditorOpen,
     hasUnsavedChanges,
     endSnippetSwitch
   ]);
 
-  // Check for conflicts when story changes
+  // Check for conflicts when story/snippet changes or editor opens
+  // Note: editorContent is read inside the effect but not in deps to avoid checking on every keystroke
   useEffect(() => {
     if (!story || !editor || !isEditorOpen || !activeSnippet) {
       return;
@@ -268,6 +296,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
     const checkConflicts = async () => {
       try {
+        // Read current editorContent at the time of check, not from closure
         const localContent = editorContent;
 
         const parentFolderId = activeChapter?.driveFolderId ?? story.driveFileId;
@@ -299,8 +328,8 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     activeChapter,
     checkSnippetConflict,
     editor,
-    isEditorOpen,
-    editorContent
+    isEditorOpen
+    // editorContent intentionally omitted - we read it inside the effect but don't want to trigger checks on every keystroke
   ]);
 
   // Watch for editor changes to trigger snippet updates
@@ -497,6 +526,12 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           flexDirection: "column",
           position: "relative",
           boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.04)"
+        }}
+        onClick={() => {
+          // Ensure editor is focused when clicking on the editor area
+          if (editor && !editor.isDestroyed && editor.isEditable && !editor.isFocused) {
+            editor.commands.focus("end");
+          }
         }}
       >
         <Box
