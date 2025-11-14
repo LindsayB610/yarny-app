@@ -933,12 +933,14 @@ export function DocsPage(): JSX.Element {
           position: { md: "fixed" },
           top: { md: 88 },
           right: 0,
-          pb: { md: 20 } // Add padding bottom for footer
+          pb: { md: 12 } // Add padding bottom for footer
         }}
       >
         <Box
           sx={{
-            p: { xs: 3, md: 6 }
+            pt: { xs: 2, md: 3 },
+            px: { xs: 3, md: 6 },
+            pb: { xs: 3, md: 6 }
           }}
         >
           <Toolbar sx={{ minHeight: 88 }} />
@@ -962,6 +964,7 @@ export function DocsPage(): JSX.Element {
               px: 5,
               maxWidth: "1000px",
               mx: "auto",
+              mt: { xs: -2, md: -3 },
               "& .MuiAlert-icon": {
                 color: "#F59E0B",
                 fontSize: "1.5rem",
@@ -1055,7 +1058,7 @@ export function DocsPage(): JSX.Element {
         backgroundColor: "rgba(15, 23, 42, 0.9)",
         backdropFilter: "blur(10px)",
         borderTop: "1px solid rgba(148, 163, 184, 0.2)",
-        py: { xs: 3, md: 4 },
+        py: { xs: 1.5, md: 2 },
         px: { xs: 3, md: 3 },
         mt: { xs: 6, md: 0 },
         zIndex: (theme) => theme.zIndex.drawer + 1
@@ -1068,7 +1071,7 @@ export function DocsPage(): JSX.Element {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 1.5,
+          gap: 0.75,
           textAlign: "center"
         }}
       >
@@ -1076,9 +1079,10 @@ export function DocsPage(): JSX.Element {
           variant="body2"
           sx={{
             color: "rgba(226, 232, 240, 0.78)",
-            fontSize: "0.875rem",
+            fontSize: "0.8125rem",
             fontWeight: 500,
-            m: 0
+            m: 0,
+            lineHeight: 1.4
           }}
         >
           © {new Date().getFullYear()} Yarny. Your personal writing tool.
@@ -1092,22 +1096,22 @@ export function DocsPage(): JSX.Element {
           aria-label="Footer navigation"
         >
           {user && (
-            <Link
-              component={RouterLink}
-              to="/stories"
-              sx={{
-                color: "rgba(34, 211, 238, 0.9)",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                transition: "color 0.2s ease",
-                "&:hover": {
-                  color: "rgba(165, 243, 252, 0.95)"
-                }
-              }}
-            >
-              My Stories
-            </Link>
+          <Link
+            component={RouterLink}
+            to="/stories"
+            sx={{
+              color: "rgba(34, 211, 238, 0.9)",
+              textDecoration: "none",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              transition: "color 0.2s ease",
+              "&:hover": {
+                color: "rgba(165, 243, 252, 0.95)"
+              }
+            }}
+          >
+            My Stories
+          </Link>
           )}
           <Link
             component={RouterLink}
@@ -1115,7 +1119,7 @@ export function DocsPage(): JSX.Element {
             sx={{
               color: "rgba(34, 211, 238, 0.9)",
               textDecoration: "none",
-              fontSize: "0.875rem",
+              fontSize: "0.8125rem",
               fontWeight: 600,
               transition: "color 0.2s ease",
               "&:hover": {
@@ -1131,7 +1135,7 @@ export function DocsPage(): JSX.Element {
             sx={{
               color: "rgba(34, 211, 238, 0.9)",
               textDecoration: "none",
-              fontSize: "0.875rem",
+              fontSize: "0.8125rem",
               fontWeight: 600,
               transition: "color 0.2s ease",
               "&:hover": {
@@ -1147,7 +1151,7 @@ export function DocsPage(): JSX.Element {
             sx={{
               color: "rgba(34, 211, 238, 0.9)",
               textDecoration: "none",
-              fontSize: "0.875rem",
+              fontSize: "0.8125rem",
               fontWeight: 600,
               transition: "color 0.2s ease",
               "&:hover": {
@@ -1164,7 +1168,7 @@ export function DocsPage(): JSX.Element {
               sx={{
                 color: "rgba(34, 211, 238, 0.9)",
                 textDecoration: "none",
-                fontSize: "0.875rem",
+                fontSize: "0.8125rem",
                 fontWeight: 600,
                 transition: "color 0.2s ease",
                 "&:hover": {

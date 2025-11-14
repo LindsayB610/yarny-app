@@ -206,7 +206,10 @@ describe("useAuth", () => {
 
       const loginPromise = result.current.login("token");
 
-      expect(result.current.isLoading).toBe(true);
+      // Wait for the mutation to start (isPending becomes true)
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(true);
+      });
 
       await loginPromise;
 

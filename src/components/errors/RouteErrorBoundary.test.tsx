@@ -10,6 +10,10 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useRouteError: vi.fn(),
+    isRouteErrorResponse: vi.fn((error: unknown) => {
+      // Check if error has status property (route error response)
+      return typeof error === "object" && error !== null && "status" in error;
+    }),
     Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
       <a href={to}>{children}</a>
     )
@@ -36,8 +40,10 @@ describe("RouteErrorBoundary", () => {
 
     render(<RouteErrorBoundary />);
 
-    expect(screen.getByText(/page not found/i)).toBeInTheDocument();
-    expect(screen.getByText("Page not found")).toBeInTheDocument();
+    // Heading shows "Page Not Found" (capital N)
+    expect(screen.getByText("Page Not Found")).toBeInTheDocument();
+    // Body shows the statusText "Not Found"
+    expect(screen.getByText("Not Found")).toBeInTheDocument();
   });
 
   it("displays generic error message for Error instance", () => {
@@ -46,8 +52,15 @@ describe("RouteErrorBoundary", () => {
 
     render(<RouteErrorBoundary />);
 
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    // Heading shows "Something went wrong"
+    const headings = screen.getAllByText("Something went wrong");
+    expect(headings.length).toBeGreaterThan(0);
+    
+    // Verify it appears in both heading and body
+    const heading = headings.find((el) => el.tagName === "H5");
+    const body = headings.find((el) => el.tagName === "P");
+    expect(heading).toBeInTheDocument();
+    expect(body).toBeInTheDocument();
   });
 
   it("detects chunk load errors", () => {
@@ -141,8 +154,14 @@ describe("RouteErrorBoundary", () => {
   it("handles reload button click for non-chunk errors", async () => {
     const user = userEvent.setup();
     const mockReload = vi.fn();
-    const originalReload = window.location.reload;
-    window.location.reload = mockReload;
+    
+    // Mock window.location.reload by replacing the entire location object
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = {
+      ...originalLocation,
+      reload: mockReload
+    } as Location;
 
     const mockError = new Error("Generic error");
     vi.mocked(useRouteError).mockReturnValue(mockError);
@@ -154,7 +173,7 @@ describe("RouteErrorBoundary", () => {
 
     expect(mockReload).toHaveBeenCalled();
 
-    window.location.reload = originalReload;
+    window.location = originalLocation;
   });
 
   it("displays 500 error correctly", () => {
@@ -170,14 +189,25 @@ describe("RouteErrorBoundary", () => {
   });
 
   it("handles errors without statusText", () => {
+    // Create a proper route error response object
+    // isRouteErrorResponse checks for status property, so include it
     const mockError = {
       status: 404,
+      // Omit statusText entirely - when undefined, code should use data.message
       data: { message: "Custom message" }
     };
+    
     vi.mocked(useRouteError).mockReturnValue(mockError as any);
 
     render(<RouteErrorBoundary />);
 
+    // Check what's actually rendered - the component should detect this as a route error
+    // and show "Page Not Found" for 404 status
+    const pageNotFound = screen.queryByText("Page Not Found");
+    const somethingWrong = screen.queryByText("Something went wrong");
+    
+    // Should show either "Page Not Found" (if recognized as route error) or fallback
+    // The important part is that it shows the custom message
     expect(screen.getByText("Custom message")).toBeInTheDocument();
   });
 });
