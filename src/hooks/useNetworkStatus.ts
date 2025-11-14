@@ -24,9 +24,8 @@ export interface NetworkStatus {
  * Detects online/offline state and slow connections
  */
 export function useNetworkStatus(): NetworkStatus {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== "undefined" ? navigator.onLine : true
-  );
+  // Initialize with safe defaults to avoid hydration mismatches
+  const [isOnline, setIsOnline] = useState(true);
   const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
 
@@ -34,6 +33,9 @@ export function useNetworkStatus(): NetworkStatus {
     if (typeof navigator === "undefined") {
       return;
     }
+
+    // Set initial online state after mount to avoid hydration mismatch
+    setIsOnline(navigator.onLine);
 
     const handleOnline = () => {
       setIsOnline(true);
