@@ -1,5 +1,6 @@
 import { Sync } from "@mui/icons-material";
 import { Button } from "@mui/material";
+
 import { useManualSync } from "../../hooks/useManualSync";
 
 export function ManualSyncButton() {
@@ -26,4 +27,5 @@ export function ManualSyncButton() {
     </Button>
   );
 }
+
 

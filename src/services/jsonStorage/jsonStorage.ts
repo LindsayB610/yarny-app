@@ -119,3 +119,4 @@ export function compareContent(jsonContent: string, gdocContent: string): boolea
   return normalizedJson !== normalizedGdoc;
 }
 
+

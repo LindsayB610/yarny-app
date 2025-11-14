@@ -1,12 +1,12 @@
 import {
   Box,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
   LinearProgress,
   Typography
 } from "@mui/material";
+
 import type { MigrationProgress } from "../../services/migration";
 
 interface MigrationProgressDialogProps {

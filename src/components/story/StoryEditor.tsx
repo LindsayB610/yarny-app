@@ -10,6 +10,7 @@ import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
+import { ManualSyncButton } from "./ManualSyncButton";
 import { usePlainTextEditor } from "../../editor/plainTextEditor";
 import {
   buildPlainTextDocument,
@@ -19,7 +20,6 @@ import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
-import { ManualSyncButton } from "./ManualSyncButton";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveNote,
@@ -348,6 +348,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       clearTimeout(timeoutId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     story,
     activeSnippet,

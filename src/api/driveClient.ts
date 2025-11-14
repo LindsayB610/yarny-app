@@ -5,9 +5,9 @@ import { apiClient } from "./client";
 import { listAllDriveFiles } from "./listAllDriveFiles";
 import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
+import { readSnippetJson } from "../services/jsonStorage";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
 import { extractGroupOrderFromMetadata, extractStoryTitleFromMetadata } from "../utils/storyMetadata";
-import { readSnippetJson, getSnippetJsonFileName } from "../services/jsonStorage";
 
 const SaveStoryInputSchema = z.object({
   storyId: z.string(),

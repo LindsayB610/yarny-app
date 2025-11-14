@@ -1,4 +1,5 @@
 import type { AxeResults, ElementContext, RunOptions } from "axe-core";
+
 import { axe } from "vitest-axe";
 
 type AxeTarget = ElementContext | HTMLElement | DocumentFragment;

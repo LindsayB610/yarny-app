@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { SyncStatusIndicator, type SyncStatus } from "./SyncStatusIndicator";
+import { SyncStatusIndicator } from "./SyncStatusIndicator";
 
 describe("SyncStatusIndicator", () => {
   it("should render synced status", () => {
@@ -56,8 +56,7 @@ describe("SyncStatusIndicator", () => {
     expect(onRetry).toHaveBeenCalled();
   });
 
-  it("should not call onRetry when status is not failed", async () => {
-    const user = userEvent.setup();
+  it("should not call onRetry when status is not failed", () => {
     const onRetry = vi.fn();
     render(
       <SyncStatusIndicator status="synced" onRetry={onRetry} />

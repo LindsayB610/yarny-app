@@ -10,13 +10,22 @@ import globals from "globals";
 export default [
   {
     ignores: [
-      "dist",
-      "coverage",
-      "node_modules",
-      "public",
+      "dist/**",
+      "coverage/**",
+      "node_modules/**",
+      "public/**",
       "netlify/**/*.js",
+      ".netlify/**",
       "archive/**",
-      "legacy-vanilla/**"
+      "legacy-vanilla/**",
+      "test-corpus/**",
+      "playwright-report/**",
+      "test-results/**",
+      "tests/**",
+      "vitest.setup.ts",
+      "*.config.js",
+      "*.config.ts",
+      "*.config.cjs"
     ]
   },
   {
@@ -24,7 +33,7 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        projectService: true,
+        project: ["./tsconfig.app.json", "./tsconfig.node.json", "./tsconfig.functions.json"],
         jsxPragma: "React",
         ecmaFeatures: {
           jsx: true

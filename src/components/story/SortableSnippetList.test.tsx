@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { SortableSnippetList, type Snippet } from "./SortableSnippetList";
@@ -8,7 +7,7 @@ import { SortableSnippetList, type Snippet } from "./SortableSnippetList";
 vi.mock("@dnd-kit/utilities", () => ({
   CSS: {
     Transform: {
-      toString: (transform: any) => transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ""
+      toString: (transform: { x: number; y: number } | null) => transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ""
     }
   }
 }));
@@ -46,7 +45,7 @@ const renderSnippetList = (
       snippets={snippets}
       onReorder={onReorder}
       onMoveToChapter={onMoveToChapter}
-      renderSnippet={(snippet, index) => (
+      renderSnippet={(snippet, _index) => (
         <div data-testid={`snippet-${snippet.id}`} data-snippet-id={snippet.id}>
           <span>{snippet.title}</span>
           {snippet.wordCount && (

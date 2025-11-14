@@ -1,5 +1,5 @@
 import { CheckCircle, Error, Sync } from "@mui/icons-material";
-import { Box, Chip, Tooltip, Typography } from "@mui/material";
+import { Box, Chip, Tooltip } from "@mui/material";
 import { useMemo } from "react";
 
 export type SyncStatus = "synced" | "syncing" | "failed" | "pending";
@@ -87,4 +87,5 @@ export function SyncStatusIndicator({
     </Box>
   );
 }
+
 

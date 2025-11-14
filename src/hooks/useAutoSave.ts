@@ -3,13 +3,11 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
+import { writeSnippetJson } from "../services/jsonStorage";
 import {
   mirrorSnippetWrite,
   mirrorStoryDocument
 } from "../services/localFs/localBackupMirror";
-import {
-  writeSnippetJson
-} from "../services/jsonStorage";
 
 interface QueuedSave {
   fileId: string;

@@ -3,11 +3,11 @@ import { Box, Button, Typography } from "@mui/material";
 import { memo, useMemo, type JSX, type MouseEvent } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
+import { SyncStatusIndicator } from "./SyncStatusIndicator";
+import { useSyncStatus } from "../../hooks/useSyncStatus";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStorySnippets } from "../../store/selectors";
 import { countCharacters, countWords } from "../../utils/wordCount";
-import { SyncStatusIndicator } from "./SyncStatusIndicator";
-import { useSyncStatus } from "../../hooks/useSyncStatus";
 
 type EditorFooterProps = {
   onExportClick: (event: MouseEvent<HTMLButtonElement>) => void;

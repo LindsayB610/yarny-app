@@ -10,7 +10,7 @@
     "build": "npm run build:functions && vite build",
     "build:functions": "tsc -p tsconfig.functions.json",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.functions.json",
     "test": "vitest run",

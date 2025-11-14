@@ -1,8 +1,9 @@
-import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
 
-import { createErrorResponse, createSuccessResponse, parseSessionFromEvent } from "./types";
 import { getAuthenticatedDriveClient, getTokens } from "./drive-client";
+import type { NetlifyFunctionContext, NetlifyFunctionEvent } from "./types";
+import { createErrorResponse, createSuccessResponse, parseSessionFromEvent } from "./types";
 
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
@@ -11,7 +12,7 @@ const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
  * Background function to sync JSON file content to Google Doc
  * This runs independently of the client connection (up to 15 minutes)
  */
-export const handler = async (event: any, context: any) => {
+export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunctionContext) => {
   // Set function timeout to use as much time as available
   context.callbackWaitsForEmptyEventLoop = false;
 
@@ -94,8 +95,8 @@ export const handler = async (event: any, context: any) => {
       if (!existingFile.data.trashed && existingFile.data.mimeType === "application/vnd.google-apps.document") {
         docExists = true;
       }
-    } catch (error: any) {
-      if (error.code === 404) {
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === 404) {
         docExists = false;
       } else {
         throw error;

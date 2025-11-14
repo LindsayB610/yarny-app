@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import type { ConflictInfo } from "../../hooks/useConflictDetection";
+
 import { runAxe } from "../../../tests/utils/a11y-test-utils";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 

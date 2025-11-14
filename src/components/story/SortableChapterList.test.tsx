@@ -1,5 +1,4 @@
-import { DndContext } from "@dnd-kit/core";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -9,7 +8,7 @@ import { SortableChapterList, type Chapter } from "./SortableChapterList";
 vi.mock("@dnd-kit/utilities", () => ({
   CSS: {
     Transform: {
-      toString: (transform: any) => transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ""
+      toString: (transform: { x: number; y: number } | null) => transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ""
     }
   }
 }));
@@ -43,7 +42,7 @@ const renderChapterList = (
     <SortableChapterList
       chapters={chapters}
       onReorder={onReorder}
-      renderChapter={(chapter, index) => (
+      renderChapter={(chapter, _index) => (
         <div data-testid={`chapter-${chapter.id}`}>
           <span>{chapter.title}</span>
           <span data-testid={`chapter-color-${chapter.id}`}>{chapter.color}</span>
