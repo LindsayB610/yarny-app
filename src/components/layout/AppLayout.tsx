@@ -1,5 +1,5 @@
 import { Box, Divider, Stack } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState, type JSX } from "react";
+import { useCallback, useEffect, useState, type JSX } from "react";
 
 import { OfflineBanner } from "./OfflineBanner";
 import { useDriveProjectsQuery, useDriveStoryQuery, useSelectedProjectStories } from "../../hooks/useDriveQueries";
@@ -45,19 +45,24 @@ export function AppLayout(): JSX.Element {
   // Reconcile auth and query state on window focus
   useWindowFocusReconciliation();
 
-  const storedStory = useMemo(() => {
+  // Read localStorage in useState/useEffect to avoid hydration mismatches
+  const [storedStory, setStoredStory] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
-      return null;
+      return;
     }
 
     try {
       const raw = window.localStorage.getItem("yarny_current_story");
       if (!raw) {
-        return null;
+        setStoredStory(null);
+        return;
       }
-      return JSON.parse(raw) as { id: string };
+      const parsed = JSON.parse(raw) as { id: string };
+      setStoredStory(parsed);
     } catch {
-      return null;
+      setStoredStory(null);
     }
   }, []);
 
