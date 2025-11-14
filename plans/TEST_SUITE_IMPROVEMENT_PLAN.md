@@ -281,3 +281,4 @@ E2E tests exist but were not executed during this review.
 - Existing coverage gaps: `plans/TEST_COVERAGE_GAPS.md`
 - Test suite documentation: `tests/README.md`
 
+
