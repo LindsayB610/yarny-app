@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const googleapis_1 = require("googleapis");
 const google_auth_library_1 = require("google-auth-library");
-const types_1 = require("./types");
+const googleapis_1 = require("googleapis");
 const drive_client_1 = require("./drive-client");
+const types_1 = require("./types");
 const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
 const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
 /**
@@ -87,7 +87,7 @@ const handler = async (event, context) => {
             }
         }
         catch (error) {
-            if (error.code === 404) {
+            if (error && typeof error === "object" && "code" in error && error.code === 404) {
                 docExists = false;
             }
             else {

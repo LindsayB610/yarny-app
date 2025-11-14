@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 // Component that throws an error
@@ -84,25 +85,38 @@ describe("ErrorBoundary", () => {
 
   it("resets error state when Try again is clicked", async () => {
     const user = userEvent.setup();
+    let shouldThrow = true;
+    
+    const ThrowErrorControlled = () => {
+      if (shouldThrow) {
+        throw new Error("Test error");
+      }
+      return <div>No error</div>;
+    };
+
     const { rerender } = render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
+        <ThrowErrorControlled />
       </ErrorBoundary>
     );
 
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 
+    // Change shouldThrow to false before clicking try again
+    shouldThrow = false;
     const tryAgainButton = screen.getByText(/try again/i);
     await user.click(tryAgainButton);
 
-    // Rerender without error
+    // Rerender - error boundary should now render children without error
     rerender(
       <ErrorBoundary>
-        <ThrowError shouldThrow={false} />
+        <ThrowErrorControlled />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText("No error")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("No error")).toBeInTheDocument();
+    });
   });
 
   it("handles errors without error message", () => {

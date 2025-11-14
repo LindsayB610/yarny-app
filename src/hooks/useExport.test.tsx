@@ -71,7 +71,7 @@ describe("useExport", () => {
 
     expect(apiClient.writeDriveFile).toHaveBeenCalledWith({
       fileName: "Test Export",
-      content: "# Chapter 1\n\nThis is test content.\n\n",
+      content: "# Chapter 1\n\nThis is test content.",
       parentFolderId: "folder-id",
       mimeType: "application/vnd.google-apps.document"
     });

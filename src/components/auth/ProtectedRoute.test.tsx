@@ -44,14 +44,14 @@ describe("ProtectedRoute", () => {
       logout: vi.fn()
     });
 
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <ProtectedRoute>
         <div>Protected Content</div>
       </ProtectedRoute>
     );
 
-    // Navigate component should redirect
-    expect(container.querySelector('div')).not.toHaveTextContent("Protected Content");
+    // Navigate component should redirect, so protected content should not be visible
+    expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
   });
 
   it("renders children when authenticated", () => {
