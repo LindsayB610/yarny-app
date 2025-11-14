@@ -964,7 +964,7 @@ export function DocsPage(): JSX.Element {
               px: 5,
               maxWidth: "1000px",
               mx: "auto",
-              mt: { xs: -2, md: -3 },
+              mt: { xs: -2, md: -5 },
               "& .MuiAlert-icon": {
                 color: "#F59E0B",
                 fontSize: "1.5rem",
