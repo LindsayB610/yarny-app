@@ -7,6 +7,7 @@ import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
 import { extractGroupOrderFromMetadata, extractStoryTitleFromMetadata } from "../utils/storyMetadata";
+import { readSnippetJson, getSnippetJsonFileName } from "../services/jsonStorage";
 
 const SaveStoryInputSchema = z.object({
   storyId: z.string(),
@@ -223,7 +224,7 @@ export const createDriveClient = (): DriveClient => ({
 
       const chapterIds = chapters.map((chapter) => chapter.id);
 
-      // Construct snippets
+      // Construct snippets - read from JSON files first (JSON primary architecture)
       const snippets: Snippet[] = [];
       for (const [snippetId, snippet] of Object.entries(rawSnippets)) {
         if (!snippet) continue;
@@ -242,23 +243,50 @@ export const createDriveClient = (): DriveClient => ({
             ? snippet.order
             : chapter?.snippetIds?.indexOf(snippetId) ?? 0;
 
+        // Determine parent folder for JSON file lookup
+        const parentFolderId = chapter?.driveFolderId || storyId;
+
+        // Try to read from JSON file first (JSON primary)
+        let snippetContent = "";
+        let snippetUpdatedAt = 
+          typeof snippet.updatedAt === "string"
+            ? snippet.updatedAt
+            : chapter?.updatedAt ?? nowIso;
+
+        try {
+          const jsonData = await readSnippetJson(snippetId, parentFolderId);
+          if (jsonData) {
+            snippetContent = jsonData.content;
+            snippetUpdatedAt = jsonData.modifiedTime;
+          } else {
+            // Fallback to data.json content if JSON file doesn't exist
+            snippetContent =
+              typeof snippet.body === "string"
+                ? snippet.body
+                : typeof snippet.content === "string"
+                  ? snippet.content
+                  : "";
+          }
+        } catch (error) {
+          // If JSON read fails, fall back to data.json content
+          console.warn(`Failed to read JSON for snippet ${snippetId}, using data.json fallback:`, error);
+          snippetContent =
+            typeof snippet.body === "string"
+              ? snippet.body
+              : typeof snippet.content === "string"
+                ? snippet.content
+                : "";
+        }
+
         snippets.push({
           id: snippetId,
           storyId,
           chapterId,
           order: snippetOrder,
-          content:
-            typeof snippet.body === "string"
-              ? snippet.body
-              : typeof snippet.content === "string"
-                ? snippet.content
-                : "",
+          content: snippetContent,
           driveRevisionId: typeof snippet.driveRevisionId === "string" ? snippet.driveRevisionId : undefined,
           driveFileId: typeof snippet.driveFileId === "string" ? snippet.driveFileId : undefined,
-          updatedAt:
-            typeof snippet.updatedAt === "string"
-              ? snippet.updatedAt
-              : chapter?.updatedAt ?? nowIso
+          updatedAt: snippetUpdatedAt
         });
       }
 

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import { apiClient } from "../api/client";
+import { readSnippetJson, compareContent } from "../services/jsonStorage";
 
 export interface ConflictInfo {
   snippetId: string;
@@ -22,23 +23,28 @@ export function useConflictDetection() {
   const queryClient = useQueryClient();
 
   /**
-   * Check if a snippet has been modified in Drive since we last loaded it
-   * Uses React Query's fetchQuery to ensure proper caching and request deduplication
+   * Check if a snippet has been modified in Drive since we last saved it to JSON
+   * JSON Primary Architecture: Compares JSON file vs Google Doc modifiedTime and content
    */
   const checkSnippetConflict = useCallback(
     async (
       snippetId: string,
       localModifiedTime: string,
       driveFileId: string,
-      parentFolderId: string
+      parentFolderId: string,
+      localContent?: string
     ): Promise<ConflictInfo | null> => {
       if (!driveFileId || !parentFolderId) {
         return null;
       }
 
       try {
-        // Use React Query's fetchQuery instead of direct API call
-        // This ensures proper caching, request deduplication, and retry logic
+        // Read JSON file (primary source)
+        const jsonData = await readSnippetJson(snippetId, parentFolderId);
+        const jsonModifiedTime = jsonData?.modifiedTime || localModifiedTime;
+        const jsonContent = jsonData?.content || localContent || "";
+
+        // Get Google Doc metadata
         const filesResponse = await queryClient.fetchQuery({
           queryKey: ["drive", "files", parentFolderId],
           queryFn: () =>
@@ -55,12 +61,12 @@ export function useConflictDetection() {
         }
 
         const driveModifiedTime = driveFile.modifiedTime;
-        const localTime = new Date(localModifiedTime).getTime();
+        const jsonTime = new Date(jsonModifiedTime).getTime();
         const driveTime = new Date(driveModifiedTime).getTime();
 
-        // If Drive is newer, there's a potential conflict
-        if (driveTime > localTime) {
-          // Use React Query's fetchQuery to read Drive content
+        // If Google Doc is newer, check if content differs
+        if (driveTime > jsonTime) {
+          // Read Google Doc content
           const driveContentResponse = await queryClient.fetchQuery({
             queryKey: ["drive", "file", driveFileId],
             queryFn: () =>
@@ -70,13 +76,18 @@ export function useConflictDetection() {
             staleTime: 30 * 1000 // 30 seconds - conflict checks need fresh data
           });
 
-          return {
-            snippetId,
-            localModifiedTime,
-            driveModifiedTime,
-            localContent: "", // Will be provided by caller
-            driveContent: driveContentResponse.content || ""
-          };
+          const driveContent = driveContentResponse.content || "";
+
+          // Compare content (normalized) - only show conflict if content actually differs
+          if (compareContent(jsonContent, driveContent)) {
+            return {
+              snippetId,
+              localModifiedTime: jsonModifiedTime,
+              driveModifiedTime,
+              localContent: jsonContent,
+              driveContent
+            };
+          }
         }
 
         return null;

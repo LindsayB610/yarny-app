@@ -14,6 +14,12 @@ vi.mock("../api/client", () => ({
   }
 }));
 
+// Mock JSON storage
+vi.mock("../services/jsonStorage", () => ({
+  readSnippetJson: vi.fn(),
+  compareContent: vi.fn((a, b) => a !== b)
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -88,6 +94,14 @@ describe("useConflictDetection", () => {
     it("should return null when local version is newer than Drive", async () => {
       const localTime = "2025-01-08T12:00:00Z";
       const driveTime = "2025-01-08T10:00:00Z";
+      const jsonContent = "Local content";
+
+      const { readSnippetJson } = await import("../services/jsonStorage");
+      vi.mocked(readSnippetJson).mockResolvedValue({
+        content: jsonContent,
+        modifiedTime: localTime,
+        version: 1
+      });
 
       vi.mocked(apiClient.listDriveFiles).mockResolvedValue({
         files: [
@@ -108,7 +122,8 @@ describe("useConflictDetection", () => {
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
 
       await waitFor(async () => {
@@ -120,7 +135,15 @@ describe("useConflictDetection", () => {
     it("should detect conflict when Drive version is newer than local", async () => {
       const localTime = "2025-01-08T10:00:00Z";
       const driveTime = "2025-01-08T12:00:00Z";
+      const jsonContent = "Local JSON content";
       const driveContent = "Drive content\n\nUpdated in Drive";
+
+      const { readSnippetJson } = await import("../services/jsonStorage");
+      vi.mocked(readSnippetJson).mockResolvedValue({
+        content: jsonContent,
+        modifiedTime: localTime,
+        version: 1
+      });
 
       vi.mocked(apiClient.listDriveFiles).mockResolvedValue({
         files: [
@@ -146,7 +169,8 @@ describe("useConflictDetection", () => {
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
 
       await waitFor(async () => {
@@ -156,13 +180,21 @@ describe("useConflictDetection", () => {
         expect(conflictResult?.localModifiedTime).toBe(localTime);
         expect(conflictResult?.driveModifiedTime).toBe(driveTime);
         expect(conflictResult?.driveContent).toBe(driveContent);
-        expect(conflictResult?.localContent).toBe(""); // Will be provided by caller
+        expect(conflictResult?.localContent).toBe(jsonContent);
       });
     });
 
     it("should detect conflict when times are equal but Drive is slightly newer", async () => {
       const localTime = "2025-01-08T10:00:00.000Z";
       const driveTime = "2025-01-08T10:00:00.001Z"; // 1ms newer
+      const jsonContent = "Local content";
+
+      const { readSnippetJson } = await import("../services/jsonStorage");
+      vi.mocked(readSnippetJson).mockResolvedValue({
+        content: jsonContent,
+        modifiedTime: localTime,
+        version: 1
+      });
 
       vi.mocked(apiClient.listDriveFiles).mockResolvedValue({
         files: [
@@ -188,7 +220,8 @@ describe("useConflictDetection", () => {
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
 
       await waitFor(async () => {
@@ -201,6 +234,14 @@ describe("useConflictDetection", () => {
     it("should handle empty Drive content", async () => {
       const localTime = "2025-01-08T10:00:00Z";
       const driveTime = "2025-01-08T12:00:00Z";
+      const jsonContent = "Local JSON content";
+
+      const { readSnippetJson } = await import("../services/jsonStorage");
+      vi.mocked(readSnippetJson).mockResolvedValue({
+        content: jsonContent,
+        modifiedTime: localTime,
+        version: 1
+      });
 
       vi.mocked(apiClient.listDriveFiles).mockResolvedValue({
         files: [
@@ -226,13 +267,16 @@ describe("useConflictDetection", () => {
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
 
       await waitFor(async () => {
         const conflictResult = await conflictPromise;
+        // Should detect conflict if content differs (empty vs non-empty)
         expect(conflictResult).not.toBeNull();
         expect(conflictResult?.driveContent).toBe("");
+        expect(conflictResult?.localContent).toBe(jsonContent);
       });
     });
 
@@ -258,6 +302,14 @@ describe("useConflictDetection", () => {
     it("should use React Query caching for file listing", async () => {
       const localTime = "2025-01-08T10:00:00Z";
       const driveTime = "2025-01-08T12:00:00Z";
+      const jsonContent = "Local content";
+
+      const { readSnippetJson } = await import("../services/jsonStorage");
+      vi.mocked(readSnippetJson).mockResolvedValue({
+        content: jsonContent,
+        modifiedTime: localTime,
+        version: 1
+      });
 
       vi.mocked(apiClient.listDriveFiles).mockResolvedValue({
         files: [
@@ -284,13 +336,15 @@ describe("useConflictDetection", () => {
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
       await result.current.checkSnippetConflict(
         "snippet-1",
         localTime,
         "file-1",
-        "folder-1"
+        "folder-1",
+        jsonContent
       );
 
       // Should only call listDriveFiles once due to caching (within staleTime window)

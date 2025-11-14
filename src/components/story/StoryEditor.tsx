@@ -19,6 +19,7 @@ import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
 import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
+import { ManualSyncButton } from "./ManualSyncButton";
 import { useYarnyStore } from "../../store/provider";
 import {
   selectActiveNote,
@@ -319,14 +320,11 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           return;
         }
 
-        const conflict = await checkSnippetConflict(activeSnippet.id, activeSnippet.updatedAt, driveFileId, parentFolderId);
+        const conflict = await checkSnippetConflict(activeSnippet.id, activeSnippet.updatedAt, driveFileId, parentFolderId, localContent);
 
         if (conflict) {
-          // Add local content to conflict info
-          const conflictWithLocalContent = {
-            ...conflict,
-            localContent
-          };
+          // Conflict already includes localContent from JSON file
+          const conflictWithLocalContent = conflict;
           setConflictModal({ open: true, conflict: conflictWithLocalContent });
         }
       } catch (error) {
@@ -336,7 +334,20 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
     // Check conflicts after a short delay to avoid race conditions
     const timeoutId = setTimeout(checkConflicts, 1000);
-    return () => clearTimeout(timeoutId);
+    
+    // Also check conflicts on visibility change (when tab becomes visible)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isEditorOpen) {
+        setTimeout(checkConflicts, 500);
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [
     story,
     activeSnippet,
@@ -526,6 +537,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
+          <ManualSyncButton />
           <Button
             onClick={handleSave}
             variant="contained"

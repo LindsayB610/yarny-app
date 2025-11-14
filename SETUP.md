@@ -27,7 +27,7 @@ After signing in for the first time:
 - **Snippets**: Add writing snippets to chapters - they appear instantly so you can start typing right away
 - **Search**: Search across all your writing
 - **Notes**: Keep track of people, places, and things
-- **Auto-Save**: Everything saves automatically to Google Drive
+- **Auto-Save**: Everything saves automatically to Google Drive. Changes are saved to JSON files first (fast, reliable), then synced to Google Docs in the background. You'll see a sync status indicator showing when changes are synced.
 
 ## Troubleshooting
 

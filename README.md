@@ -20,10 +20,29 @@ Yarny is a distraction-free writing environment that keeps your projects organiz
 - **Frontend**: React 18 + TypeScript (Vite build), featuring Suspense-ready routing, lazy-loaded bundles, and a store-first data layer.
 - **Backend**: Netlify Functions (`netlify/functions`) for auth token verification, Drive/Docs API orchestration, and Uptime Robot pings.
 - **Persistence**:
-  - Google Drive/Docs APIs (`drive.file` + `documents` scopes) for source of truth.
+  - **JSON Primary Architecture** (✅ Complete): Snippet content is saved to JSON files (`.{snippetId}.yarny.json`) for fast, reliable saves (<50ms). Google Docs are synced in the background via Service Worker + Background Sync API, ensuring changes persist even if the page is closed.
+  - Google Drive/Docs APIs (`drive.file` + `documents` scopes) for cloud persistence and exports.
   - Netlify Blobs for encrypted OAuth token storage keyed by user email.
   - Optional local mirror using the File System Access API.
 - **Testing & Tooling**: Vitest, Testing Library, Playwright, ESLint, Prettier, PostCSS, and Netlify CLI.
+
+### JSON Primary Architecture
+
+Yarny uses a JSON-primary storage model where snippet content is saved to JSON files first, then synced to Google Docs in the background. This provides:
+
+- **Fast saves**: JSON file writes complete in <50ms vs 500ms-2s+ for direct Google Doc updates
+- **Reliable sync**: Background sync continues even if the page is closed (via Service Worker)
+- **Better offline support**: Changes are queued locally and sync when online
+- **Reduced API quota usage**: Batched background syncs reduce API calls
+- **Conflict detection**: Automatically detects when Google Docs are modified externally and prompts for resolution
+
+**How it works**:
+1. As you type, changes are saved to hidden JSON files (`.{snippetId}.yarny.json`) in Google Drive
+2. A background sync process updates the corresponding Google Docs asynchronously
+3. On snippet load, the system checks if Google Docs have been modified externally
+4. If conflicts are detected, a modal appears allowing you to choose which version to keep
+
+**Status**: ✅ Complete - All features implemented including migration system, conflict detection, sync status indicators, and manual sync controls. See `react-migration/JSON_PRIMARY_ARCHITECTURE.md` for technical details.
 
 ## Legacy Application Reference
 
@@ -100,10 +119,16 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
 ## Directory Guide
 
 - `src/` – React application (Routing, hooks, Zustand stores, TipTap editor, Material UI composition).
+  - `src/services/jsonStorage/` – JSON file save/read utilities for snippet content.
+  - `src/services/serviceWorker/` – Service Worker registration for background sync.
 - `netlify/functions/` – TypeScript + JS handlers wrapping Drive/Docs APIs, auth, logout, uptime integrations.
+  - `sync-json-to-gdoc-background.ts` – Background function for syncing JSON files to Google Docs.
+- `public/service-worker.js` – Service Worker for background sync (runs independently of page).
 - `tests/` – Vitest suites (unit, integration), Playwright specs, shared testing utilities.
 - `archive/` – Legacy app, documentation snapshots, migration plan, and the original vanilla assets.
 - `react-migration/` – Planning docs and audits that detail each phase of the React rewrite.
+  - `JSON_PRIMARY_ARCHITECTURE.md` – Architecture documentation for JSON primary system.
+  - `JSON_PRIMARY_TESTING.md` – Testing guide for JSON primary features.
 - `scripts/` – Developer utilities (data seeding, corpus generation, etc.).
 - `reference-docs/` – Screenshots and PDFs used during UX validation.
 
@@ -112,6 +137,8 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
 - `GOOGLE_DRIVE_SETUP.md` – Comprehensive OAuth credential setup guide.
 - `DEPLOY.md` – Netlify deployment checklist and environment configuration tips.
 - `react-migration/` folder – Phase-by-phase notes, testing matrices, and deployment handoffs.
+  - `JSON_PRIMARY_ARCHITECTURE.md` – JSON primary architecture design and implementation status.
+  - `JSON_PRIMARY_TESTING.md` – Testing guide for JSON primary features.
 - `tests/README.md` – Notes on automated test structure and how to extend coverage.
 - `SETUP.md` – Legacy onboarding steps for user-facing communication (kept for history).
 

@@ -6,6 +6,8 @@ import { Link as RouterLink } from "react-router-dom";
 import { useYarnyStore } from "../../store/provider";
 import { selectActiveStorySnippets } from "../../store/selectors";
 import { countCharacters, countWords } from "../../utils/wordCount";
+import { SyncStatusIndicator } from "./SyncStatusIndicator";
+import { useSyncStatus } from "../../hooks/useSyncStatus";
 
 type EditorFooterProps = {
   onExportClick: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -25,6 +27,7 @@ export const EditorFooter = memo(function EditorFooter({
   isLogoutDisabled = false
 }: EditorFooterProps): JSX.Element {
   const snippets = useYarnyStore(selectActiveStorySnippets);
+  const { status, lastSyncedAt, errorMessage, retry } = useSyncStatus();
 
   const { totalWords, totalCharacters, lastModified } = useMemo(() => {
     const words = snippets.reduce(
@@ -116,6 +119,15 @@ export const EditorFooter = memo(function EditorFooter({
             {totalCharacters.toLocaleString()}{" "}
             {totalCharacters === 1 ? "character" : "characters"}
           </Typography>
+          <Typography variant="body2" color="text.disabled">
+            —
+          </Typography>
+          <SyncStatusIndicator
+            status={status}
+            lastSyncedAt={lastSyncedAt}
+            errorMessage={errorMessage}
+            onRetry={retry}
+          />
         </Box>
 
         <Box

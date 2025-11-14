@@ -7,6 +7,9 @@ import {
   mirrorSnippetWrite,
   mirrorStoryDocument
 } from "../services/localFs/localBackupMirror";
+import {
+  writeSnippetJson
+} from "../services/jsonStorage";
 
 interface QueuedSave {
   fileId: string;
@@ -17,6 +20,15 @@ interface QueuedSave {
   fileName?: string;
   mimeType?: string;
   parentFolderId?: string;
+  jsonFileId?: string; // JSON file ID for background sync
+}
+
+interface QueuedSync {
+  snippetId: string;
+  content: string;
+  gdocFileId: string;
+  parentFolderId: string;
+  timestamp: string;
 }
 
 const readQueuedSaves = (): QueuedSave[] => {
@@ -163,9 +175,85 @@ export function useAutoSave(
     [fileId, localBackupStoryId, localBackupSnippetId, providedFileName, mimeType, parentFolderId]
   );
 
-  // Mutation for processing queued saves - uses React Query for proper error handling and retry logic
+  const readQueuedSyncs = (): QueuedSync[] => {
+    try {
+      const raw = localStorage.getItem("yarny_queued_syncs");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((entry): entry is QueuedSync => {
+        return (
+          entry &&
+          typeof entry === "object" &&
+          "snippetId" in entry &&
+          "content" in entry &&
+          "gdocFileId" in entry &&
+          "parentFolderId" in entry &&
+          typeof entry.snippetId === "string" &&
+          typeof entry.content === "string" &&
+          typeof entry.gdocFileId === "string" &&
+          typeof entry.parentFolderId === "string"
+        );
+      });
+    } catch (error) {
+      console.error("Failed to parse queued syncs:", error);
+      return [];
+    }
+  };
+
+  // Queue Google Doc sync for background processing
+  const queueGoogleDocSync = useCallback(
+    (sync: QueuedSync) => {
+      try {
+        const queued = readQueuedSyncs();
+        queued.push(sync);
+        localStorage.setItem("yarny_queued_syncs", JSON.stringify(queued));
+        
+        // Register background sync if Service Worker is available
+        if ("serviceWorker" in navigator && "sync" in ServiceWorkerRegistration.prototype) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.sync.register("sync-json-to-gdoc").catch((error) => {
+              console.warn("Failed to register background sync:", error);
+            });
+          });
+        }
+      } catch (error) {
+        console.error("Failed to queue Google Doc sync:", error);
+      }
+    },
+    []
+  );
+
+  // Mutation for processing queued saves - now saves to JSON files
   const processQueuedSavesMutation = useMutation({
     mutationFn: async (save: QueuedSave) => {
+      // Save to JSON file (fast, primary storage)
+      if (save.snippetId && save.parentFolderId) {
+        const result = await writeSnippetJson(
+          save.snippetId,
+          save.content,
+          save.parentFolderId,
+          save.fileId, // gdocFileId
+          undefined // gdocModifiedTime - will be updated after sync
+        );
+        
+        // Queue Google Doc sync for background processing
+        queueGoogleDocSync({
+          snippetId: save.snippetId,
+          content: save.content,
+          gdocFileId: save.fileId,
+          parentFolderId: save.parentFolderId,
+          timestamp: new Date().toISOString()
+        });
+        
+        return {
+          id: result.fileId,
+          name: save.fileName ?? resolvedFileName,
+          modifiedTime: result.modifiedTime
+        };
+      }
+      
+      // Fallback for non-snippet saves (story documents, etc.)
       return apiClient.writeDriveFile({
         fileId: save.fileId,
         fileName: save.fileName ?? resolvedFileName,
@@ -176,7 +264,10 @@ export function useAutoSave(
     },
     onSuccess: async (_result, save) => {
       // Invalidate relevant queries after successful save
-      queryClient.invalidateQueries({ queryKey: ["snippet", save.fileId] });
+      if (save.snippetId) {
+        queryClient.invalidateQueries({ queryKey: ["snippet", save.snippetId] });
+        queryClient.invalidateQueries({ queryKey: ["snippet-json", save.snippetId] });
+      }
       queryClient.invalidateQueries({ queryKey: ["drive", "file", save.fileId] });
       await writeLocalBackup(save.content, save.storyId, save.snippetId);
     }
@@ -266,6 +357,33 @@ export function useAutoSave(
 
   const saveMutation = useMutation({
     mutationFn: async (payload: SavePayload) => {
+      // If this is a snippet save, save to JSON file (fast, primary storage)
+      if (payload.snippetId && payload.parentFolderId) {
+        const result = await writeSnippetJson(
+          payload.snippetId,
+          payload.content,
+          payload.parentFolderId,
+          payload.fileId, // gdocFileId
+          undefined // gdocModifiedTime - will be updated after sync
+        );
+        
+        // Queue Google Doc sync for background processing
+        queueGoogleDocSync({
+          snippetId: payload.snippetId,
+          content: payload.content,
+          gdocFileId: payload.fileId,
+          parentFolderId: payload.parentFolderId,
+          timestamp: new Date().toISOString()
+        });
+        
+        return {
+          id: result.fileId,
+          name: payload.fileName ?? resolvedFileName,
+          modifiedTime: result.modifiedTime
+        };
+      }
+      
+      // Fallback for non-snippet saves (story documents, etc.) - keep existing behavior
       return apiClient.writeDriveFile({
         fileId: payload.fileId,
         fileName: payload.fileName ?? resolvedFileName,
@@ -280,7 +398,10 @@ export function useAutoSave(
     onSuccess: async (_result, variables) => {
       lastSavedContentRef.current = variables.content;
       onSaveSuccess?.();
-      queryClient.invalidateQueries({ queryKey: ["snippet", variables.fileId] });
+      if (variables.snippetId) {
+        queryClient.invalidateQueries({ queryKey: ["snippet", variables.snippetId] });
+        queryClient.invalidateQueries({ queryKey: ["snippet-json", variables.snippetId] });
+      }
       queryClient.invalidateQueries({ queryKey: ["drive", "file", variables.fileId] });
       await writeLocalBackup(variables.content, variables.storyId, variables.snippetId);
     },
