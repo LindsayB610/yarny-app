@@ -270,7 +270,7 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />);
     
     await waitFor(() => {
-      expect(screen.getByText(/continue as local dev user/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /continue as local dev user/i })).toBeInTheDocument();
     });
     
     // Google Sign-In should not be initialized when bypass is active

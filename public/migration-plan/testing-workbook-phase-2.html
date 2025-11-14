@@ -12,23 +12,27 @@
   <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
 <body data-storage-key="testingWorkbookPhase2">
-  <header class="docs-header-bar">
-    <div class="header-left">
-      <button class="mobile-menu-btn" aria-label="Open navigation menu">
-        <i class="material-icons">menu</i>
-      </button>
-      <h1 class="header-title">Phase 2 · Testing Workbook</h1>
-    </div>
-    <nav class="header-nav">
-      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
-        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
-        Back to Stories
-      </a>
-      <a href="/docs.html" class="btn-outlined">Docs</a>
-      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
-    </nav>
-  </header>
   <div class="docs-container">
+    <header class="docs-appbar">
+      <div class="appbar-content">
+        <div class="appbar-left">
+          <button class="mobile-menu-btn" aria-label="Open navigation menu" style="display: none;">
+            <i class="material-icons">menu</i>
+          </button>
+          <h1 class="appbar-title">Phase 2 · Testing Workbook</h1>
+        </div>
+        <nav class="appbar-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+            <i class="material-icons" style="font-size: 1.2rem; margin-right: 0.5rem;">auto_stories</i>
+            Back to Stories
+          </a>
+          <a href="/docs.html" class="btn-outlined">Docs</a>
+          <a href="/migration-plan" class="btn-outlined">Migration Plan</a>
+          <a href="/migration-plan/testing-workbook" class="btn-outlined">Workbook Overview</a>
+          <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+        </nav>
+      </div>
+    </header>
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
@@ -61,10 +65,15 @@
           <span>Phase 2 · Core Editor Experience</span>
         </div>
 
-        <div class="workbook-intro" id="phase-intro" data-section-anchor>
-          <h1>Phase 2 · Core Editor Experience</h1>
+        <section class="docs-section" id="phase-intro" data-section-anchor>
+          <div class="phase-breadcrumbs">
+            <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+            <span>/</span>
+            <span>Phase 2 · Core Editor Experience</span>
+          </div>
+          <h2>Phase 2 · Core Editor Experience</h2>
           <p>Validate the editor in its React form: text handling, IME composition, drag-and-drop flows, and UX anchors that writers rely on.</p>
-          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.78);">
+          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl);">
             <li>Confirm editing fidelity including formatting, undo/redo, and IME scenarios.</li>
             <li>Exercise the drag-and-drop interactions for chapter snippets and notes.</li>
             <li>Check that classic UX anchors remain visually and functionally aligned.</li>
@@ -75,12 +84,12 @@
             <a href="/migration-plan/testing-workbook-phase-4.html">Phase 4</a>
             <a href="/migration-plan/testing-workbook-phase-5.html">Phase 5</a>
           </div>
-        </div>
+        </section>
 
         <!-- Section 3: Editor - Visual & IME Testing -->
-        <div class="test-section" data-section-anchor id="section-3">
+        <section class="docs-section" data-section-anchor id="section-3">
           <h2><i class="material-icons">edit</i> Section 3: Editor - Visual & IME Testing</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification or human judgment.</p>
+          <p>These tests require visual verification or human judgment.</p>
         
         <div class="test-item">
           <h4>Test 1.1: Plain Text Only (No Rich Formatting) - Visual Verification</h4>
@@ -215,13 +224,12 @@
               <label for="test-1-5">RTL words count correctly and pasted content normalizes as expected</label>
             </div>
           </div>
-
-      </div>
+        </section>
 
         <!-- Section 4: Drag & Drop Visual Testing -->
-        <div class="test-section" data-section-anchor id="section-4">
+        <section class="docs-section" data-section-anchor id="section-4">
           <h2><i class="material-icons">folder</i> Section 4: Drag & Drop Visual Testing</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification of drag & drop feedback.</p>
+          <p>These tests require visual verification of drag & drop feedback.</p>
         
         <div class="test-item">
           <h4>Test 4.1: Drag & Drop Reorder Chapters - Visual Feedback</h4>
@@ -283,13 +291,12 @@
             <label for="test-2-3">I can move snippets between chapters by dragging and dropping</label>
           </div>
         </div>
-
-      </div>
+        </section>
 
         <!-- Section 5: Classic UX Anchors - Visual Parity -->
-        <div class="test-section" data-section-anchor id="section-5">
+        <section class="docs-section" data-section-anchor id="section-5">
           <h2><i class="material-icons">track_changes</i> Section 5: Classic UX Anchors - Visual Parity</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require side-by-side visual comparison between the classic app (root HTML pages) and the React SPA (served at `/`). This is <strong>REQUIRED before closing the editor phase</strong>.</p>
+          <p>These tests require side-by-side visual comparison between the classic app (root HTML pages) and the React SPA (served at `/`). This is <strong>REQUIRED before closing the editor phase</strong>.</p>
         
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong> Before starting visual parity checks:</p>
@@ -928,12 +935,12 @@
             </ul>
             <p style="margin-top: var(--space-md);"><strong>Note:</strong> All UX anchors must pass visual parity checks and be documented with screenshots before closing the editor phase.</p>
           </div>
-      </div>
+        </section>
 
         <!-- Section 6: Notes Drag & Drop Visual Testing -->
-        <div class="test-section" data-section-anchor id="section-6">
+        <section class="docs-section" data-section-anchor id="section-6">
           <h2><i class="material-icons">note</i> Section 6: Notes Drag & Drop Visual Testing</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This test requires visual verification of drag & drop feedback.</p>
+          <p>This test requires visual verification of drag & drop feedback.</p>
         
         <div class="test-item">
           <h4>Test 6.1: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
@@ -953,11 +960,11 @@
             <label for="test-4-1">I can reorder notes by dragging and dropping</label>
           </div>
         </div>
-      </div>
+        </section>
 
-        <div class="summary-section" id="phase-summary" data-section-anchor>
+        <section class="docs-section" id="phase-summary" data-section-anchor>
           <h2>Phase 2 Progress</h2>
-          <p style="color: rgba(255, 255, 255, 0.78); margin-bottom: var(--space-xl);">Use this as the final checklist before leaving the editor-focused phase.</p>
+          <p style="margin-bottom: var(--space-xl);">Use this as the final checklist before leaving the editor-focused phase.</p>
           <div class="summary-stats">
             <div class="stat-box">
               <div class="stat-number" id="totalTests">0</div>
@@ -976,7 +983,7 @@
               <div class="stat-label">Completion</div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
 

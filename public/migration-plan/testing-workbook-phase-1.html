@@ -12,23 +12,27 @@
   <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
 <body data-storage-key="testingWorkbookPhase1">
-  <header class="docs-header-bar">
-    <div class="header-left">
-      <button class="mobile-menu-btn" aria-label="Open navigation menu">
-        <i class="material-icons">menu</i>
-      </button>
-      <h1 class="header-title">Phase 1 · Testing Workbook</h1>
-    </div>
-    <nav class="header-nav">
-      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
-        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
-        Back to Stories
-      </a>
-      <a href="/docs.html" class="btn-outlined">Docs</a>
-      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
-    </nav>
-  </header>
   <div class="docs-container">
+    <header class="docs-appbar">
+      <div class="appbar-content">
+        <div class="appbar-left">
+          <button class="mobile-menu-btn" aria-label="Open navigation menu" style="display: none;">
+            <i class="material-icons">menu</i>
+          </button>
+          <h1 class="appbar-title">Phase 1 · Testing Workbook</h1>
+        </div>
+        <nav class="appbar-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+            <i class="material-icons" style="font-size: 1.2rem; margin-right: 0.5rem;">auto_stories</i>
+            Back to Stories
+          </a>
+          <a href="/docs.html" class="btn-outlined">Docs</a>
+          <a href="/migration-plan" class="btn-outlined">Migration Plan</a>
+          <a href="/migration-plan/testing-workbook" class="btn-outlined">Workbook Overview</a>
+          <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+        </nav>
+      </div>
+    </header>
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
@@ -54,16 +58,15 @@
       </aside>
 
       <div class="docs-content">
-        <div class="phase-breadcrumbs">
-          <a href="/migration-plan/testing-workbook">Testing Workbook</a>
-          <span>/</span>
-          <span>Phase 1 · Setup &amp; Foundations</span>
-        </div>
-
-        <div class="workbook-intro" id="phase-intro" data-section-anchor>
-          <h1>Phase 1 · Setup &amp; Foundations</h1>
+        <section class="docs-section" id="phase-intro" data-section-anchor>
+          <div class="phase-breadcrumbs">
+            <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+            <span>/</span>
+            <span>Phase 1 · Setup &amp; Foundations</span>
+          </div>
+          <h2>Phase 1 · Setup &amp; Foundations</h2>
           <p>Establish a reliable baseline before functional testing begins. This phase covers test corpus provisioning, local tooling smoke checks, and Google Drive integration.</p>
-          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.78);">
+          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl);">
             <li>Prepare consistent sample data across small, medium, and large projects.</li>
             <li>Confirm the React app boots with expected mocks and infrastructure.</li>
             <li>Verify Google Drive sync prerequisites so later phases run smoothly.</li>
@@ -74,12 +77,12 @@
             <a href="/migration-plan/testing-workbook-phase-4.html">Phase 4</a>
             <a href="/migration-plan/testing-workbook-phase-5.html">Phase 5</a>
           </div>
-        </div>
+        </section>
 
         <!-- Section 0: Test Corpus Setup -->
-        <div class="test-section" data-section-anchor id="section-0">
+        <section class="docs-section" data-section-anchor id="section-0">
           <h2><i class="material-icons">folder</i> Section 0: Test Corpus Setup</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Before running comprehensive tests, set up the test corpus in Google Drive. This provides standardized test data for validating all functionality across different project sizes.</p>
+          <p>Before running comprehensive tests, set up the test corpus in Google Drive. This provides standardized test data for validating all functionality across different project sizes.</p>
         
         <div class="test-item">
           <h4>Setup 0.1: Generate Test Corpus Files (If Not Already Done)</h4>
@@ -645,8 +648,7 @@
             <li><strong>test-medium:</strong> Realistic project size, performance testing, export operations</li>
             <li><strong>test-large:</strong> Stress testing, virtualization validation, lazy loading, export chunking (especially Chapter 13 with 50+ snippets)</li>
           </ul>
-        </div>
-      </div>
+        </section>
 
         <!-- 
           Logical Testing Order (sections are now numbered in this order):
@@ -665,9 +667,9 @@
         -->
 
         <!-- Section 1: Smoke Tests & Infrastructure Verification -->
-        <div class="test-section" data-section-anchor id="section-1">
+        <section class="docs-section" data-section-anchor id="section-1">
           <h2><i class="material-icons">build</i> Section 1: Smoke Tests & Infrastructure Verification</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests validate the setup, infrastructure, and critical functionality before and during development. These should be executed early and re-verified after major changes.</p>
+          <p>These tests validate the setup, infrastructure, and critical functionality before and during development. These should be executed early and re-verified after major changes.</p>
         
         <div class="test-item">
           <h4>Smoke Test 1.1: Local Development Setup</h4>
@@ -1207,13 +1209,12 @@
             <li><strong>After Phase 6:</strong> Tests 9.13-9.16 (Performance, Error Handling, Cross-Tab, Visibility Gating)</li>
             <li><strong>Before Ship:</strong> Re-execute all smoke tests to verify no regressions</li>
           </ul>
-        </div>
-      </div>
+        </section>
 
         <!-- Section 2: Google Drive Integration & Sync -->
-        <div class="test-section" data-section-anchor id="section-2">
+        <section class="docs-section" data-section-anchor id="section-2">
           <h2><i class="material-icons">cloud</i> Section 2: Google Drive Integration & Sync</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Google Drive integration is foundational - most other features depend on it working correctly.</p>
+          <p>Google Drive integration is foundational - most other features depend on it working correctly.</p>
         
         <div class="test-item">
           <h4>Test 2.1: Files Created in Google Drive</h4>

@@ -135,7 +135,7 @@
       if (window.innerWidth > 900) return;
       if (!sidebar.classList.contains("open")) return;
       const target = event.target;
-      if (target instanceof Element) {
+        if (target instanceof Element) {
         if (!sidebar.contains(target) && !target.classList.contains("mobile-menu-toggle") && !target.classList.contains("mobile-menu-btn") && !target.closest(".mobile-menu-btn")) {
           sidebar.classList.remove("open");
           if (backdrop) backdrop.classList.remove("active");
@@ -156,7 +156,8 @@
 
     function updateActiveNav() {
       let current = "";
-      const scrollPos = window.scrollY + 100;
+      // Account for header bar (88px) + some offset
+      const scrollPos = window.scrollY + 88 + 100;
 
       sections.forEach((section) => {
         const top = section.offsetTop;

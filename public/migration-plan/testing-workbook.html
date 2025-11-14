@@ -12,23 +12,26 @@
   <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
 <body data-storage-key="testingWorkbookOverview">
-  <header class="docs-header-bar">
-    <div class="header-left">
-      <button class="mobile-menu-btn" aria-label="Open navigation menu">
-        <i class="material-icons">menu</i>
-      </button>
-      <h1 class="header-title">Testing Workbook</h1>
-    </div>
-    <nav class="header-nav">
-      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
-        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
-        Back to Stories
-      </a>
-      <a href="/docs.html" class="btn-outlined">Docs</a>
-      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
-    </nav>
-  </header>
   <div class="docs-container">
+    <header class="docs-appbar">
+      <div class="appbar-content">
+        <div class="appbar-left">
+          <button class="mobile-menu-btn" aria-label="Open navigation menu" style="display: none;">
+            <i class="material-icons">menu</i>
+          </button>
+          <h1 class="appbar-title">Testing Workbook</h1>
+        </div>
+        <nav class="appbar-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+            <i class="material-icons" style="font-size: 1.2rem; margin-right: 0.5rem;">auto_stories</i>
+            Back to Stories
+          </a>
+          <a href="/docs.html" class="btn-outlined">Docs</a>
+          <a href="/migration-plan" class="btn-outlined">Migration Plan</a>
+          <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+        </nav>
+      </div>
+    </header>
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
@@ -54,13 +57,13 @@
       </aside>
 
       <div class="docs-content">
-        <div class="workbook-intro" id="intro" data-section-anchor>
-          <h1>Yarny React Migration · Manual Testing Workbook</h1>
+        <section class="docs-section" id="intro" data-section-anchor>
+          <h2>Yarny React Migration · Manual Testing Workbook</h2>
           <p>This workbook captures the <strong>manual validation</strong> required as we finalize the React migration. These pages focus on scenarios that require human judgment, visual inspection, and UX feedback.</p>
           <p>Work through the phases in order. Each page clusters related sections so you can stay focused on a single theme without scrolling through thousands of lines.</p>
-          <div class="note-box" style="margin-top: var(--space-lg); background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E;">
+          <div class="note-box note-box-success" style="margin-top: var(--space-lg);">
             <p><strong>JSON Primary Architecture (✅ Complete):</strong></p>
-            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
               <li>✅ <strong>Fast saves:</strong> Snippet content saves to JSON files first (<50ms), then syncs to Google Docs in the background.</li>
               <li>✅ <strong>Background sync:</strong> Service Worker + Background Sync API ensures changes persist even if the page is closed.</li>
               <li>✅ <strong>Conflict detection:</strong> Automatically detects when Google Docs are modified externally and prompts for resolution.</li>
@@ -72,11 +75,11 @@
           <div class="note-box" style="margin-top: var(--space-lg);">
             <p><strong>Shared Test Corpus:</strong> Use the Yarny Test Corpus (small / medium / large) on Google Drive. Start with <em>test-small</em> for sanity checks, then expand to medium and large when validating performance and sync behavior.</p>
           </div>
-        </div>
+        </section>
 
-        <section class="phase-summary" id="phase-1" data-section-anchor>
-          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 1 · Setup &amp; Foundations</h2>
-          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Prepare the shared test corpus, confirm the environment, and make sure Google Drive sync is ready. Complete this before touching any functional phases.</p>
+        <section class="docs-section" id="phase-1" data-section-anchor>
+          <h2>Phase 1 · Setup &amp; Foundations</h2>
+          <p>Prepare the shared test corpus, confirm the environment, and make sure Google Drive sync is ready. Complete this before touching any functional phases.</p>
           <div class="phase-grid">
             <article class="phase-card">
               <h3><i class="material-icons">folder</i> Sections Covered</h3>
@@ -95,9 +98,9 @@
           </div>
         </section>
 
-        <section class="phase-summary" id="phase-2" data-section-anchor>
-          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 2 · Core Editor Experience</h2>
-          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Validate the editor experience end-to-end: rich text behavior, drag-and-drop for snippets, and parity with classic anchors.</p>
+        <section class="docs-section" id="phase-2" data-section-anchor>
+          <h2>Phase 2 · Core Editor Experience</h2>
+          <p>Validate the editor experience end-to-end: rich text behavior, drag-and-drop for snippets, and parity with classic anchors.</p>
           <div class="phase-grid">
             <article class="phase-card">
               <h3><i class="material-icons">edit</i> Sections Covered</h3>
@@ -117,9 +120,9 @@
           </div>
         </section>
 
-        <section class="phase-summary" id="phase-3" data-section-anchor>
-          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 3 · UI Polish &amp; Performance</h2>
-          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Cover the shared UI surface—accessibility, export pipelines, and stress/performance flows that depend on the earlier setup work.</p>
+        <section class="docs-section" id="phase-3" data-section-anchor>
+          <h2>Phase 3 · UI Polish &amp; Performance</h2>
+          <p>Cover the shared UI surface—accessibility, export pipelines, and stress/performance flows that depend on the earlier setup work.</p>
           <div class="phase-grid">
             <article class="phase-card">
               <h3><i class="material-icons">speed</i> Sections Covered</h3>
@@ -138,9 +141,9 @@
           </div>
         </section>
 
-        <section class="phase-summary" id="phase-4" data-section-anchor>
-          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 4 · Feature Validation</h2>
-          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Run the deep feature sweeps—round-trip validation, conflict resolution, color coding, search, and goal tracking.</p>
+        <section class="docs-section" id="phase-4" data-section-anchor>
+          <h2>Phase 4 · Feature Validation</h2>
+          <p>Run the deep feature sweeps—round-trip validation, conflict resolution, color coding, search, and goal tracking.</p>
           <div class="phase-grid">
             <article class="phase-card">
               <h3><i class="material-icons">sync</i> Sections Covered</h3>
@@ -161,9 +164,9 @@
           </div>
         </section>
 
-        <section class="phase-summary" id="phase-5" data-section-anchor>
-          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 5 · Reliability &amp; Visual QA</h2>
-          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Complete the hardening pass: CRUD for notes, visibility gating, rate limiting, and full visual regression coverage.</p>
+        <section class="docs-section" id="phase-5" data-section-anchor>
+          <h2>Phase 5 · Reliability &amp; Visual QA</h2>
+          <p>Complete the hardening pass: CRUD for notes, visibility gating, rate limiting, and full visual regression coverage.</p>
           <div class="phase-grid">
             <article class="phase-card">
               <h3><i class="material-icons">visibility</i> Sections Covered</h3>
@@ -184,9 +187,10 @@
           </div>
         </section>
 
-        <div class="phase-footer-note" data-section-anchor>
-          <p><strong>How to work the phases:</strong> Finish each page before moving on so context stays fresh. Capture bugs, UX feedback, or data discrepancies directly in the phase you are testing. Wrap up with Phase 5 to ensure we meet the visual parity bar before launch.</p>
-        </div>
+        <section class="docs-section" data-section-anchor>
+          <h2>How to Work the Phases</h2>
+          <p>Finish each page before moving on so context stays fresh. Capture bugs, UX feedback, or data discrepancies directly in the phase you are testing. Wrap up with Phase 5 to ensure we meet the visual parity bar before launch.</p>
+        </section>
       </div>
     </main>
 

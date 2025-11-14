@@ -48,3 +48,4 @@ export function isBackgroundSyncSupported(): boolean {
 }
 
 
+

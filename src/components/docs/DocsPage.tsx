@@ -33,7 +33,7 @@ import {
   useTheme
 } from "@mui/material";
 import type { JSX, MouseEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
@@ -790,14 +790,15 @@ export function DocsPage(): JSX.Element {
   );
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
-      }}
-    >
+    <Fragment>
+      <Box
+        sx={{
+          display: "flex",
+          minHeight: "100vh",
+          background:
+            "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
+        }}
+      >
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -946,35 +947,41 @@ export function DocsPage(): JSX.Element {
             severity="warning"
             variant="filled"
             sx={{
-              backgroundColor: "#F59E0B",
+              backgroundColor: "rgba(17, 24, 39, 0.88)",
               color: "#FFFFFF",
               fontWeight: 500,
               fontSize: "1rem",
-              lineHeight: 1.6,
+              lineHeight: 1.625,
               borderRadius: 3,
-              boxShadow: "0 8px 24px rgba(245, 158, 11, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15)",
-              border: "2px solid rgba(255, 255, 255, 0.2)",
-              py: 2.5,
-              px: 3,
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.36), 0 10px 10px -5px rgba(0, 0, 0, 0.26)",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              borderLeft: "4px solid #F59E0B",
+              backdropFilter: "blur(14px)",
+              py: 5,
+              px: 5,
+              maxWidth: "1000px",
+              mx: "auto",
               "& .MuiAlert-icon": {
-                color: "#FFFFFF",
+                color: "#F59E0B",
                 fontSize: "1.5rem",
                 alignItems: "flex-start",
                 mt: 0.5
               },
               "& .MuiAlert-message": {
                 width: "100%",
-                fontWeight: 500
+                fontWeight: 500,
+                color: "rgba(255, 255, 255, 0.88)"
               }
             }}
           >
             <Typography
               component="span"
               sx={{
-                color: "#FFFFFF",
-                fontWeight: 600,
+                color: "rgba(255, 255, 255, 0.9)",
+                fontWeight: 500,
                 fontSize: "1rem",
-                lineHeight: 1.6,
+                lineHeight: 1.625,
                 display: "block"
               }}
             >
@@ -1035,75 +1042,58 @@ export function DocsPage(): JSX.Element {
         </Box>
       </Box>
 
-      {/* Footer matching legacy docs footer - spans full page width */}
+      {/* Footer matching legacy docs footer - spans full page width including sidebar */}
+    <Box
+      component="footer"
+      sx={{
+        position: { md: "fixed" },
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: "100%",
+        backgroundColor: "rgba(15, 23, 42, 0.9)",
+        backdropFilter: "blur(10px)",
+        borderTop: "1px solid rgba(148, 163, 184, 0.2)",
+        py: { xs: 3, md: 4 },
+        px: { xs: 3, md: 3 },
+        mt: { xs: 6, md: 0 },
+        zIndex: (theme) => theme.zIndex.drawer + 1
+      }}
+    >
       <Box
-        component="footer"
         sx={{
-          position: { md: "fixed" },
-          bottom: 0,
-          left: { md: 0 },
-          right: 0,
-          width: "100%",
-          backgroundColor: "rgba(15, 23, 42, 0.9)",
-          backdropFilter: "blur(10px)",
-          borderTop: "1px solid rgba(148, 163, 184, 0.2)",
-          py: { xs: 4, md: 6 },
-          px: { xs: 3, md: 4 },
-          mt: { xs: 6, md: 0 },
-          zIndex: (theme) => theme.zIndex.drawer - 1
+          maxWidth: 960,
+          mx: "auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 1.5,
+          textAlign: "center"
         }}
       >
-        <Box
+        <Typography
+          variant="body2"
           sx={{
-            maxWidth: 960,
-            mx: "auto",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-            textAlign: "center"
+            color: "rgba(226, 232, 240, 0.78)",
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            m: 0
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(226, 232, 240, 0.78)",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              m: 0
-            }}
-          >
-            © {new Date().getFullYear()} Yarny. Your personal writing tool.
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={3}
-            flexWrap="wrap"
-            justifyContent="center"
-            component="nav"
-            aria-label="Footer navigation"
-          >
-            {user && (
-              <Link
-                component={RouterLink}
-                to="/stories"
-                sx={{
-                  color: "rgba(34, 211, 238, 0.9)",
-                  textDecoration: "none",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                  "&:hover": {
-                    color: "rgba(165, 243, 252, 0.95)"
-                  }
-                }}
-              >
-                My Stories
-              </Link>
-            )}
+          © {new Date().getFullYear()} Yarny. Your personal writing tool.
+        </Typography>
+        <Stack
+          direction="row"
+          spacing={{ xs: 2, md: 3 }}
+          flexWrap="wrap"
+          justifyContent="center"
+          component="nav"
+          aria-label="Footer navigation"
+        >
+          {user && (
             <Link
               component={RouterLink}
-              to="/docs"
+              to="/stories"
               sx={{
                 color: "rgba(34, 211, 238, 0.9)",
                 textDecoration: "none",
@@ -1115,86 +1105,78 @@ export function DocsPage(): JSX.Element {
                 }
               }}
             >
-              User Guide
+              My Stories
             </Link>
-            <Link
-              component="a"
-              href="/migration-plan"
-              sx={{
-                color: "rgba(34, 211, 238, 0.9)",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                transition: "color 0.2s ease",
-                "&:hover": {
-                  color: "rgba(165, 243, 252, 0.95)"
-                }
-              }}
-            >
-              Migration Plan
-            </Link>
-            <Link
-              component="a"
-              href="/migration-plan/testing-workbook.html"
-              sx={{
-                color: "rgba(34, 211, 238, 0.9)",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                transition: "color 0.2s ease",
-                "&:hover": {
-                  color: "rgba(165, 243, 252, 0.95)"
-                }
-              }}
-            >
-              Testing Workbook
-            </Link>
-            {!user && (
-              <Link
-                component={RouterLink}
-                to="/login"
-                sx={{
-                  color: "rgba(34, 211, 238, 0.9)",
-                  textDecoration: "none",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                  "&:hover": {
-                    color: "rgba(165, 243, 252, 0.95)"
-                  }
-                }}
-              >
-                Back to Login
-              </Link>
-            )}
-          </Stack>
-          <Typography
-            variant="body2"
+          )}
+          <Link
+            component={RouterLink}
+            to="/docs"
             sx={{
-              color: "rgba(226, 232, 240, 0.65)",
+              color: "rgba(34, 211, 238, 0.9)",
+              textDecoration: "none",
               fontSize: "0.875rem",
-              mt: 1
+              fontWeight: 600,
+              transition: "color 0.2s ease",
+              "&:hover": {
+                color: "rgba(165, 243, 252, 0.95)"
+              }
             }}
           >
-            Need more help? Email{" "}
+            User Guide
+          </Link>
+          <Link
+            component="a"
+            href="/migration-plan"
+            sx={{
+              color: "rgba(34, 211, 238, 0.9)",
+              textDecoration: "none",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              transition: "color 0.2s ease",
+              "&:hover": {
+                color: "rgba(165, 243, 252, 0.95)"
+              }
+            }}
+          >
+            Migration Plan
+          </Link>
+          <Link
+            component="a"
+            href="/migration-plan/testing-workbook.html"
+            sx={{
+              color: "rgba(34, 211, 238, 0.9)",
+              textDecoration: "none",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              transition: "color 0.2s ease",
+              "&:hover": {
+                color: "rgba(165, 243, 252, 0.95)"
+              }
+            }}
+          >
+            Testing Workbook
+          </Link>
+          {!user && (
             <Link
-              component="a"
-              href="mailto:lb@lindsaybrunner.com"
+              component={RouterLink}
+              to="/login"
               sx={{
                 color: "rgba(34, 211, 238, 0.9)",
                 textDecoration: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                transition: "color 0.2s ease",
                 "&:hover": {
-                  color: "rgba(165, 243, 252, 0.95)",
-                  textDecoration: "underline"
+                  color: "rgba(165, 243, 252, 0.95)"
                 }
               }}
             >
-              lb@lindsaybrunner.com
+              Back to Login
             </Link>
-          </Typography>
-        </Box>
+          )}
+        </Stack>
       </Box>
-    </Box>
+    </Fragment>
   );
 }
 

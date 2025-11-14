@@ -12,23 +12,27 @@
   <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
 <body data-storage-key="testingWorkbookPhase3">
-  <header class="docs-header-bar">
-    <div class="header-left">
-      <button class="mobile-menu-btn" aria-label="Open navigation menu">
-        <i class="material-icons">menu</i>
-      </button>
-      <h1 class="header-title">Phase 3 · Testing Workbook</h1>
-    </div>
-    <nav class="header-nav">
-      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
-        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
-        Back to Stories
-      </a>
-      <a href="/docs.html" class="btn-outlined">Docs</a>
-      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
-    </nav>
-  </header>
   <div class="docs-container">
+    <header class="docs-appbar">
+      <div class="appbar-content">
+        <div class="appbar-left">
+          <button class="mobile-menu-btn" aria-label="Open navigation menu" style="display: none;">
+            <i class="material-icons">menu</i>
+          </button>
+          <h1 class="appbar-title">Phase 3 · Testing Workbook</h1>
+        </div>
+        <nav class="appbar-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+            <i class="material-icons" style="font-size: 1.2rem; margin-right: 0.5rem;">auto_stories</i>
+            Back to Stories
+          </a>
+          <a href="/docs.html" class="btn-outlined">Docs</a>
+          <a href="/migration-plan" class="btn-outlined">Migration Plan</a>
+          <a href="/migration-plan/testing-workbook" class="btn-outlined">Workbook Overview</a>
+          <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+        </nav>
+      </div>
+    </header>
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
       <aside class="docs-sidebar">
@@ -54,16 +58,15 @@
       </aside>
 
       <div class="docs-content">
-        <div class="phase-breadcrumbs">
-          <a href="/migration-plan/testing-workbook">Testing Workbook</a>
-          <span>/</span>
-          <span>Phase 3 · UI Polish &amp; Performance</span>
-        </div>
-
-        <div class="workbook-intro" id="phase-intro" data-section-anchor>
-          <h1>Phase 3 · UI Polish &amp; Performance</h1>
+        <section class="docs-section" id="phase-intro" data-section-anchor>
+          <div class="phase-breadcrumbs">
+            <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+            <span>/</span>
+            <span>Phase 3 · UI Polish &amp; Performance</span>
+          </div>
+          <h2>Phase 3 · UI Polish &amp; Performance</h2>
           <p>Ensure the React experience feels refined: visual polish, accessibility coverage, export flows, and performance behaviors.</p>
-          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.78);">
+          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl);">
             <li>Audit UI components for accessibility parity and visual alignment.</li>
             <li>Exercise export flows across test corpus sizes and confirm integrity.</li>
             <li>Stress-test performance and edge cases using medium and large corpora.</li>
@@ -74,12 +77,12 @@
             <a href="/migration-plan/testing-workbook-phase-4.html">Next: Phase 4</a>
             <a href="/migration-plan/testing-workbook-phase-5.html">Phase 5</a>
           </div>
-        </div>
+        </section>
 
         <!-- Section 7: UI/UX Elements & Accessibility -->
-        <div class="test-section" data-section-anchor id="section-7">
+        <section class="docs-section" data-section-anchor id="section-7">
           <h2><i class="material-icons">design_services</i> Section 7: UI/UX Elements & Accessibility</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests verify UI/UX elements and accessibility features. Keyboard-only flows, screen reader testing, and contrast verification are <strong>REQUIRED</strong> before production release.</p>
+          <p>These tests verify UI/UX elements and accessibility features. Keyboard-only flows, screen reader testing, and contrast verification are <strong>REQUIRED</strong> before production release.</p>
         
         <div class="test-item">
           <h4>Test 7.1: Classic UX Anchors - Goal Meter</h4>
@@ -864,7 +867,7 @@
           </div>
 
           <div class="test-steps" style="margin-top: var(--space-lg);">
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-bottom: var(--space-md);">1. Keyboard Navigation & Focus Management</h5>
+            <h5 style=" margin-bottom: var(--space-md);">1. Keyboard Navigation & Focus Management</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>All interactive elements are keyboard accessible</strong> - Buttons, links, form controls, modals can be activated with keyboard</li>
               <li>[ ] <strong>Focus is visible at all times</strong> - Focus rings are clearly visible (especially on dark backgrounds)</li>
@@ -875,7 +878,7 @@
               <li>[ ] <strong>Focus visible on all states</strong> - Focus rings visible on hover, active, and focus states</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">2. Keyboard-Only Task Completion</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">2. Keyboard-Only Task Completion</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Create operations</strong> - All create operations (story, chapter, snippet, note) can be completed with keyboard only</li>
               <li>[ ] <strong>Rename operations</strong> - All rename operations can be completed with keyboard only</li>
@@ -889,7 +892,7 @@
               <li>[ ] <strong>Context menu access</strong> - Context menus can be accessed and used with keyboard (if applicable)</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">3. Screen Reader Compatibility</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">3. Screen Reader Compatibility</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>All images have alt text</strong> - Decorative images have empty alt, informative images have descriptive alt</li>
               <li>[ ] <strong>All buttons have accessible labels</strong> - Icon-only buttons have aria-label or aria-labelledby</li>
@@ -904,7 +907,7 @@
               <li>[ ] <strong>Status messages are announced</strong> - Save status, error messages, success messages are announced</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">4. Color Contrast & Visual Accessibility</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">4. Color Contrast & Visual Accessibility</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Normal text contrast</strong> - All normal text meets 4.5:1 contrast ratio (WCAG AA)</li>
               <li>[ ] <strong>Large text contrast</strong> - All large text (18pt+ or 14pt+ bold) meets 3:1 contrast ratio (WCAG AA)</li>
@@ -916,7 +919,7 @@
               <li>[ ] <strong>Color is not the only indicator</strong> - Information is not conveyed by color alone (icons, text, patterns also used)</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">5. ARIA Labels & Semantic HTML</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">5. ARIA Labels & Semantic HTML</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Icon-only buttons have labels</strong> - All icon buttons have aria-label or aria-labelledby</li>
               <li>[ ] <strong>Form inputs have labels</strong> - All inputs have associated labels (for/id or aria-label)</li>
@@ -929,7 +932,7 @@
               <li>[ ] <strong>Complementary content marked</strong> - Sidebars use aside element or role="complementary"</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">6. Error Handling & Feedback</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">6. Error Handling & Feedback</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Error messages are clear</strong> - Error messages explain what went wrong and how to fix it</li>
               <li>[ ] <strong>Errors are associated with inputs</strong> - Form errors use aria-describedby to link to inputs</li>
@@ -939,7 +942,7 @@
               <li>[ ] <strong>Loading states are announced</strong> - Loading indicators are announced (or use aria-busy)</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">7. Responsive Design & Zoom</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">7. Responsive Design & Zoom</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Content is readable at 200% zoom</strong> - All content remains readable and functional at 200% browser zoom</li>
               <li>[ ] <strong>No horizontal scrolling at 200% zoom</strong> - No horizontal scrolling required at 200% zoom</li>
@@ -947,7 +950,7 @@
               <li>[ ] <strong>Text can be resized</strong> - Text can be resized up to 200% without loss of functionality</li>
             </ul>
 
-            <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">8. Testing Tools & Validation</h5>
+            <h5 style=" margin-top: var(--space-xl); margin-bottom: var(--space-md);">8. Testing Tools & Validation</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>[ ] <strong>Accessibility testing tools run</strong> - axe DevTools, WAVE, or similar tools run with no critical issues</li>
               <li>[ ] <strong>Manual keyboard testing completed</strong> - Full workflow tested with keyboard only (no mouse)</li>
@@ -1002,9 +1005,9 @@
       </div>
 
         <!-- Section 8: Export Functionality -->
-        <div class="test-section" data-section-anchor id="section-8">
+        <section class="docs-section" data-section-anchor id="section-8">
           <h2><i class="material-icons">file_download</i> Section 8: Export Functionality</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Export functionality depends on having content created and edited. Complete this section after basic editing and content creation tests.</p>
+          <p>Export functionality depends on having content created and edited. Complete this section after basic editing and content creation tests.</p>
         
         <div class="test-item">
           <h4>Test 8.1: Export All Chapters</h4>
@@ -1245,9 +1248,9 @@
       </div>
 
         <!-- Section 9: Performance & Edge Cases -->
-        <div class="test-section" data-section-anchor id="section-9">
+        <section class="docs-section" data-section-anchor id="section-9">
           <h2><i class="material-icons">speed</i> Section 9: Performance & Edge Cases</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">Performance and edge case testing should come after basic functionality is validated.</p>
+          <p>Performance and edge case testing should come after basic functionality is validated.</p>
         
         <div class="test-item">
           <h4>Test 9.1: Large Story Performance</h4>
