@@ -61,18 +61,28 @@ export function StoryTabs({
         <Tabs
           value={activeTab}
           onChange={handleChange}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             flex: 1,
+            minWidth: 0, // Allow tabs to shrink
             borderBottom: 1,
             borderColor: "divider",
             "& .MuiTab-root": {
               color: "rgba(255, 255, 255, 0.7)",
+              minWidth: 0,
+              padding: "12px 16px",
+              fontSize: "0.875rem",
+              textTransform: "none",
               "&.Mui-selected": {
                 color: "primary.main"
               }
             },
             "& .MuiTabs-indicator": {
               bgcolor: "primary.main"
+            },
+            "& .MuiTabs-scrollButtons": {
+              width: 32
             }
           }}
         >

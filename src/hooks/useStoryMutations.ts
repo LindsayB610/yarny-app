@@ -281,21 +281,11 @@ export function useCreateStory() {
       }
 
       // Invalidate stories query to refresh the list
-      console.log("[useCreateStory] Invalidating queries after story creation:", data.id);
       queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
       queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
 
-      // Navigate to editor with the new story
-      // Store story info for editor to use
-      localStorage.setItem(
-        "yarny_current_story",
-        JSON.stringify({
-          id: data.id,
-          name: variables.storyName
-        })
-      );
-      localStorage.setItem("yarny_newly_created_story", "true");
-      navigate("/editor");
+      // Navigate to story editor - loader will redirect to first snippet
+      navigate(`/stories/${data.id}/snippets`);
     }
   });
 }
@@ -777,6 +767,25 @@ export function useCreateSnippetMutation() {
 
       let driveFileId: string | undefined;
       let driveModifiedTime: string | undefined;
+      
+      // Create JSON file first (JSON-primary storage)
+      let jsonFileId: string | undefined;
+      try {
+        if (chapter.driveFolderId) {
+          const { writeSnippetJson } = await import("../services/jsonStorage");
+          const jsonResult = await writeSnippetJson(
+            snippetId,
+            "", // Empty content for new snippet
+            chapter.driveFolderId,
+            undefined // No Google Doc fileId yet - will be updated after Google Doc creation
+          );
+          jsonFileId = jsonResult.fileId;
+        }
+      } catch (error) {
+        console.warn("Failed to create JSON file for snippet (non-fatal):", error);
+      }
+      
+      // Optionally create Google Doc (non-blocking, can be created later via sync)
       try {
         if (chapter.driveFolderId) {
           const driveFile = await apiClient.writeDriveFile({
@@ -787,6 +796,22 @@ export function useCreateSnippetMutation() {
           });
           driveFileId = driveFile.id;
           driveModifiedTime = driveFile.modifiedTime;
+          
+          // Update JSON file with Google Doc fileId if both were created
+          if (jsonFileId && driveFileId && chapter.driveFolderId) {
+            try {
+              const { writeSnippetJson } = await import("../services/jsonStorage");
+              await writeSnippetJson(
+                snippetId,
+                "", // Still empty content
+                chapter.driveFolderId,
+                driveFileId, // Now we have the Google Doc fileId
+                driveModifiedTime
+              );
+            } catch (error) {
+              console.warn("Failed to update JSON file with Google Doc fileId (non-fatal):", error);
+            }
+          }
         }
       } catch (error) {
         console.warn("Failed to create Drive document for snippet (non-fatal):", error);

@@ -210,10 +210,8 @@ export function useStoryProgress(storyFolderId: string | undefined) {
       }
 
       try {
-        console.log("[useStoryProgress] Fetching progress for story:", storyFolderId);
         // List files in the story folder
         const files = await listAllDriveFiles(storyFolderId);
-        console.log("[useStoryProgress] Listed", files.length, "files for progress");
         const fileMap: Record<string, string> = {};
         files.forEach((file) => {
           fileMap[file.name] = file.id;

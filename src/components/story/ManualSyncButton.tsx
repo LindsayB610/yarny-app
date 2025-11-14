@@ -2,11 +2,17 @@ import { Sync } from "@mui/icons-material";
 import { Button } from "@mui/material";
 
 import { useManualSync } from "../../hooks/useManualSync";
+import { useActiveStory } from "../../hooks/useActiveStory";
 
 export function ManualSyncButton() {
+  const story = useActiveStory();
   const { sync, isSyncing } = useManualSync();
 
   const handleSync = async () => {
+    if (!story) {
+      console.warn("Manual sync skipped: No active story");
+      return;
+    }
     try {
       await sync();
     } catch (error) {
@@ -21,7 +27,7 @@ export function ManualSyncButton() {
       color="primary"
       size="small"
       startIcon={<Sync />}
-      disabled={isSyncing}
+      disabled={isSyncing || !story}
     >
       {isSyncing ? "Syncing..." : "Sync Story"}
     </Button>

@@ -68,13 +68,43 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />
   },
   {
-    path: "/editor",
+    path: "/stories/:storyId/snippets/:snippetId?",
     element: (
       <ProtectedRoute>
         <AppLayout />
       </ProtectedRoute>
     ),
-    loader: () => editorLoader(queryClient),
+    loader: ({ params }) => editorLoader(queryClient, params),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/stories/:storyId/people/:noteId?",
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
+    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "people" }),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/stories/:storyId/places/:noteId?",
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
+    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "places" }),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/stories/:storyId/things/:noteId?",
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
+    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "things" }),
     errorElement: <RouteErrorBoundary />
   },
   {

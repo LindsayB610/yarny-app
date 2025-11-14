@@ -2,38 +2,71 @@ import type { Editor } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 
 import { extractPlainTextFromDocument } from "../../../editor/textExtraction";
-import type { useYarnyStore } from "../../../store/provider";
-import type { selectActiveSnippet } from "../../../store/selectors";
+import type { Content, NormalizedPayload, Note, Snippet } from "../../../store/types";
 
-type UpsertEntitiesFn = (payload: { snippets: Array<{ id: string; content: string; updatedAt: string }> }) => void;
+type UpsertEntitiesFn = (payload: NormalizedPayload) => void;
 
 export function useEditorSync(
   editor: Editor | null,
-  activeSnippet: ReturnType<typeof useYarnyStore<typeof selectActiveSnippet>>,
+  activeContent: Content | undefined,
   upsertEntities: UpsertEntitiesFn
 ) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const isSettingContentRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!editor) return;
 
     const handleUpdate = () => {
-      if (!activeSnippet) return;
-      if (isSettingContentRef.current) return;
+      if (!activeContent) {
+        return;
+      }
+      if (isSettingContentRef.current) {
+        return;
+      }
 
-      const plainText = extractPlainTextFromDocument(editor.getJSON());
-      if (plainText === activeSnippet.content) return;
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
 
-      upsertEntities({
-        snippets: [
-          {
-            ...activeSnippet,
-            content: plainText,
-            updatedAt: new Date().toISOString()
-          }
-        ]
-      });
+      // Debounce store updates (300ms)
+      debounceTimerRef.current = setTimeout(() => {
+        if (!editor || !activeContent || isSettingContentRef.current) {
+          return;
+        }
+
+        const plainText = extractPlainTextFromDocument(editor.getJSON());
+        if (plainText === activeContent.content) {
+          return;
+        }
+
+        const isSnippet = "chapterId" in activeContent;
+        const isNote = "kind" in activeContent;
+
+        if (isSnippet) {
+          upsertEntities({
+            snippets: [
+              {
+                ...(activeContent as Snippet),
+                content: plainText,
+                updatedAt: new Date().toISOString()
+              }
+            ]
+          });
+        } else if (isNote) {
+          upsertEntities({
+            notes: [
+              {
+                ...(activeContent as Note),
+                content: plainText,
+                updatedAt: new Date().toISOString()
+              }
+            ]
+          });
+        }
+      }, 300);
     };
 
     const handleFocus = () => setIsEditorOpen(true);
@@ -49,8 +82,11 @@ export function useEditorSync(
       editor.off("update", handleUpdate);
       editor.off("focus", handleFocus);
       editor.off("blur", handleBlur);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
-  }, [editor, activeSnippet, upsertEntities]);
+  }, [editor, activeContent, upsertEntities]);
 
   return { isEditorOpen, isSettingContentRef };
 }

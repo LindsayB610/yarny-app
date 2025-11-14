@@ -21,31 +21,6 @@ export function getQueryClient(): QueryClient {
       }
     });
 
-    // Wrap invalidateQueries to log invalidations
-    const originalInvalidate = queryClientInstance.invalidateQueries.bind(queryClientInstance);
-    queryClientInstance.invalidateQueries = function(options) {
-      const queryKey = options?.queryKey;
-      console.log("[QueryClient] Invalidating queries:", queryKey ? JSON.stringify(queryKey) : "ALL QUERIES", new Error().stack?.split("\n")[2]?.trim());
-      return originalInvalidate(options);
-    };
-
-    // Wrap refetchQueries to log refetches
-    const originalRefetch = queryClientInstance.refetchQueries.bind(queryClientInstance);
-    queryClientInstance.refetchQueries = function(options) {
-      const queryKey = options?.queryKey;
-      const stack = new Error().stack;
-      const caller = stack?.split("\n")[2]?.trim() || "unknown";
-      console.log("[QueryClient] Refetching queries:", queryKey ? JSON.stringify(queryKey) : "ALL QUERIES", "from:", caller);
-      return originalRefetch(options);
-    };
-
-    // Wrap fetchQuery to log fetches
-    const originalFetch = queryClientInstance.fetchQuery.bind(queryClientInstance);
-    queryClientInstance.fetchQuery = function(options) {
-      const queryKey = options?.queryKey;
-      console.log("[QueryClient] Fetching query:", JSON.stringify(queryKey));
-      return originalFetch(options);
-    };
   }
   return queryClientInstance;
 }

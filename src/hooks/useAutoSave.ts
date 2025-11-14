@@ -10,7 +10,7 @@ import {
 } from "../services/localFs/localBackupMirror";
 
 interface QueuedSave {
-  fileId: string;
+  fileId: string; // Empty string for JSON-only saves (snippets without Google Doc)
   content: string;
   timestamp: string;
   storyId?: string;
@@ -39,7 +39,7 @@ const readQueuedSaves = (): QueuedSave[] => {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return parsed
+    const allSaves = parsed
       .map((entry) => {
         if (
           entry &&
@@ -79,6 +79,33 @@ const readQueuedSaves = (): QueuedSave[] => {
         return null;
       })
       .filter((entry): entry is QueuedSave => entry !== null);
+    
+    // Deduplicate: for snippet saves, keep only the most recent one
+    const deduplicated: QueuedSave[] = [];
+    const snippetSaves = new Map<string, QueuedSave>();
+    
+    for (const save of allSaves) {
+      if (save.snippetId && save.storyId) {
+        const key = `${save.storyId}:${save.snippetId}`;
+        const existing = snippetSaves.get(key);
+        if (!existing || save.timestamp > existing.timestamp) {
+          snippetSaves.set(key, save);
+        }
+      } else {
+        // Non-snippet saves: keep all (less common, don't deduplicate)
+        deduplicated.push(save);
+      }
+    }
+    
+    // Add deduplicated snippet saves
+    deduplicated.push(...Array.from(snippetSaves.values()));
+    
+    // Clean up localStorage if we removed duplicates
+    if (deduplicated.length < allSaves.length) {
+      localStorage.setItem("yarny_queued_saves", JSON.stringify(deduplicated));
+    }
+    
+    return deduplicated;
   } catch (error) {
     console.error("Failed to parse queued saves:", error);
     return [];
@@ -129,6 +156,7 @@ export function useAutoSave(
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContentRef = useRef<string>("");
   const queuedSaveRef = useRef<QueuedSave | null>(null);
+  const pendingContentRef = useRef<string | null>(null);
 
   const resolvedFileName = providedFileName ?? "Yarny Auto Save";
   const writeLocalBackup = useCallback(
@@ -145,7 +173,7 @@ export function useAutoSave(
   );
 
   type SavePayload = {
-    fileId: string;
+    fileId: string; // Empty string for JSON-only saves (snippets without Google Doc)
     content: string;
     storyId?: string;
     snippetId?: string;
@@ -157,11 +185,15 @@ export function useAutoSave(
   const buildPayload = useCallback(
     (contentValue: string, explicitFileId?: string): SavePayload | null => {
       const effectiveFileId = explicitFileId ?? fileId;
-      if (!effectiveFileId) {
+      
+      // For JSON-primary storage: allow saving if we have snippetId and parentFolderId, even without fileId
+      // For non-snippet saves: still require fileId
+      if (!effectiveFileId && !(localBackupSnippetId && parentFolderId)) {
         return null;
       }
+      
       return {
-        fileId: effectiveFileId,
+        fileId: effectiveFileId ?? "", // Empty string if no fileId (for JSON-only saves)
         content: contentValue,
         storyId: localBackupStoryId,
         snippetId: localBackupSnippetId,
@@ -179,7 +211,7 @@ export function useAutoSave(
       if (!raw) return [];
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter((entry): entry is QueuedSync => {
+      const valid = parsed.filter((entry): entry is QueuedSync => {
         return (
           entry &&
           typeof entry === "object" &&
@@ -190,9 +222,17 @@ export function useAutoSave(
           typeof entry.snippetId === "string" &&
           typeof entry.content === "string" &&
           typeof entry.gdocFileId === "string" &&
-          typeof entry.parentFolderId === "string"
+          typeof entry.parentFolderId === "string" &&
+          entry.gdocFileId !== "" // Filter out syncs with empty gdocFileId
         );
       });
+      
+      // Clean up invalid entries if we filtered any out
+      if (valid.length < parsed.length) {
+        localStorage.setItem("yarny_queued_syncs", JSON.stringify(valid));
+      }
+      
+      return valid;
     } catch (error) {
       console.error("Failed to parse queued syncs:", error);
       return [];
@@ -204,7 +244,25 @@ export function useAutoSave(
     (sync: QueuedSync) => {
       try {
         const queued = readQueuedSyncs();
+        
+        // Deduplicate: check if we already have a sync for this snippet
+        // Keep only the most recent one (by timestamp)
+        const existingIndex = queued.findIndex(
+          (q) => q.snippetId === sync.snippetId && q.gdocFileId === sync.gdocFileId
+        );
+        
+        if (existingIndex >= 0) {
+          // Replace existing sync with newer one if this one is newer
+          const existing = queued[existingIndex];
+          if (sync.timestamp > existing.timestamp) {
+            queued[existingIndex] = sync;
+          } else {
+            return; // Don't add duplicate
+          }
+        } else {
         queued.push(sync);
+        }
+        
         localStorage.setItem("yarny_queued_syncs", JSON.stringify(queued));
         
         // Register background sync if Service Worker is available
@@ -222,54 +280,8 @@ export function useAutoSave(
     []
   );
 
-  // Mutation for processing queued saves - now saves to JSON files
-  const processQueuedSavesMutation = useMutation({
-    mutationFn: async (save: QueuedSave) => {
-      // Save to JSON file (fast, primary storage)
-      if (save.snippetId && save.parentFolderId) {
-        const result = await writeSnippetJson(
-          save.snippetId,
-          save.content,
-          save.parentFolderId,
-          save.fileId, // gdocFileId
-          undefined // gdocModifiedTime - will be updated after sync
-        );
-        
-        // Queue Google Doc sync for background processing
-        queueGoogleDocSync({
-          snippetId: save.snippetId,
-          content: save.content,
-          gdocFileId: save.fileId,
-          parentFolderId: save.parentFolderId,
-          timestamp: new Date().toISOString()
-        });
-        
-        return {
-          id: result.fileId,
-          name: save.fileName ?? resolvedFileName,
-          modifiedTime: result.modifiedTime
-        };
-      }
-      
-      // Fallback for non-snippet saves (story documents, etc.)
-      return apiClient.writeDriveFile({
-        fileId: save.fileId,
-        fileName: save.fileName ?? resolvedFileName,
-        content: save.content,
-        parentFolderId: save.parentFolderId ?? parentFolderId,
-        mimeType: save.mimeType ?? mimeType
-      });
-    },
-    onSuccess: async (_result, save) => {
-      // Invalidate relevant queries after successful save
-      if (save.snippetId) {
-        queryClient.invalidateQueries({ queryKey: ["snippet", save.snippetId] });
-        queryClient.invalidateQueries({ queryKey: ["snippet-json", save.snippetId] });
-      }
-      queryClient.invalidateQueries({ queryKey: ["drive", "file", save.fileId] });
-      await writeLocalBackup(save.content, save.storyId, save.snippetId);
-    }
-  });
+  // Note: Queued saves are now processed by queuedSaveProcessor.ts
+  // which bypasses all hooks to prevent side effects and loops
 
   // Queue save for later when offline
   const queueSave = useCallback(
@@ -280,7 +292,24 @@ export function useAutoSave(
           ...payload,
           timestamp: new Date().toISOString()
         };
+        
+        // Deduplicate: for snippet saves, keep only the most recent one
+        if (payload.snippetId) {
+          const existingIndex = queued.findIndex(
+            (q) => q.snippetId === payload.snippetId && q.storyId === payload.storyId
+          );
+          
+          if (existingIndex >= 0) {
+            // Replace existing save with newer one
+            queued[existingIndex] = queuedEntry;
+          } else {
+            queued.push(queuedEntry);
+          }
+        } else {
+          // For non-snippet saves, just add (less common)
         queued.push(queuedEntry);
+        }
+        
         localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
         queuedSaveRef.current = queuedEntry;
         if (payload.storyId || localBackupStoryId) {
@@ -297,40 +326,19 @@ export function useAutoSave(
     [localBackupStoryId, localBackupSnippetId, writeLocalBackup]
   );
 
-  // Process queued saves when coming back online
+  // Process queued saves when coming back online (using direct processor to bypass hooks)
   useEffect(() => {
     if (!isOnline) {
       return;
     }
 
+    // Use the direct processor to avoid hook side effects
     const processQueuedSaves = async () => {
       try {
-        const queued = readQueuedSaves();
-        if (queued.length === 0) {
-          return;
-        }
-
-        // Process saves one at a time using React Query mutation
-        for (const save of queued) {
-          try {
-            await processQueuedSavesMutation.mutateAsync(save);
-            await writeLocalBackup(
-              save.content,
-              save.storyId ?? localBackupStoryId,
-              save.snippetId ?? localBackupSnippetId
-            );
-          } catch (error) {
-            console.error("Failed to process queued save:", error);
-            // Keep the save in queue if it fails
-            continue;
-          }
-        }
-
-        // Clear queue after successful processing
-        localStorage.removeItem("yarny_queued_saves");
-        queuedSaveRef.current = null;
+        const { processQueuedSavesDirectly } = await import("../services/queuedSaveProcessor");
+        await processQueuedSavesDirectly();
       } catch (error) {
-        console.error("Failed to process queued saves:", error);
+        console.error("[useAutoSave] Failed to process queued saves:", error);
       }
     };
 
@@ -338,34 +346,37 @@ export function useAutoSave(
 
     // Listen for manual retry event
     const handleRetry = () => {
-      processQueuedSaves();
+      void processQueuedSaves();
     };
     window.addEventListener("yarny:retry-queued-saves", handleRetry);
 
     return () => {
       window.removeEventListener("yarny:retry-queued-saves", handleRetry);
     };
-  }, [
-    isOnline,
-    processQueuedSavesMutation,
-    writeLocalBackup,
-    localBackupStoryId,
-    localBackupSnippetId
-  ]);
+  }, [isOnline]);
 
   const saveMutation = useMutation({
     mutationFn: async (payload: SavePayload) => {
+      // Guard: Don't save if content matches what we last saved
+      // This prevents duplicate saves from multiple timers or race conditions
+      if (payload.content === lastSavedContentRef.current) {
+        // Throw a special error to indicate we skipped (onError won't be called for this)
+        // We'll handle this in onSuccess by checking if content matches
+        throw new Error("SKIP_SAVE_CONTENT_UNCHANGED");
+      }
+      
       // If this is a snippet save, save to JSON file (fast, primary storage)
       if (payload.snippetId && payload.parentFolderId) {
         const result = await writeSnippetJson(
           payload.snippetId,
           payload.content,
           payload.parentFolderId,
-          payload.fileId, // gdocFileId
+          payload.fileId || undefined, // gdocFileId (optional - can be empty string)
           undefined // gdocModifiedTime - will be updated after sync
         );
         
-        // Queue Google Doc sync for background processing
+        // Queue Google Doc sync for background processing (only if we have a fileId)
+        if (payload.fileId) {
         queueGoogleDocSync({
           snippetId: payload.snippetId,
           content: payload.content,
@@ -373,6 +384,7 @@ export function useAutoSave(
           parentFolderId: payload.parentFolderId,
           timestamp: new Date().toISOString()
         });
+        }
         
         return {
           id: result.fileId,
@@ -381,7 +393,11 @@ export function useAutoSave(
         };
       }
       
-      // Fallback for non-snippet saves (story documents, etc.) - keep existing behavior
+      // Fallback for non-snippet saves (story documents, etc.) - requires fileId
+      if (!payload.fileId) {
+        throw new Error("fileId is required for non-snippet saves");
+      }
+      
       return apiClient.writeDriveFile({
         fileId: payload.fileId,
         fileName: payload.fileName ?? resolvedFileName,
@@ -391,19 +407,35 @@ export function useAutoSave(
       });
     },
     onMutate: () => {
+      // Cancel any pending debounced saves - we're saving now
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      pendingContentRef.current = null;
       onSaveStart?.();
     },
     onSuccess: async (_result, variables) => {
       lastSavedContentRef.current = variables.content;
+      pendingContentRef.current = null;
       onSaveSuccess?.();
-      if (variables.snippetId) {
-        queryClient.invalidateQueries({ queryKey: ["snippet", variables.snippetId] });
-        queryClient.invalidateQueries({ queryKey: ["snippet-json", variables.snippetId] });
-      }
-      queryClient.invalidateQueries({ queryKey: ["drive", "file", variables.fileId] });
+      
+      // Don't invalidate any queries - we just wrote the data, so we know what's in it
+      // Invalidating queries causes unnecessary refetches which can trigger save loops
+      // The JSON file cache is already updated via setQueryData in writeSnippetJson
+      // For non-snippet saves, we also don't need to invalidate since we just wrote it
+      
       await writeLocalBackup(variables.content, variables.storyId, variables.snippetId);
     },
     onError: (error: Error, variables) => {
+      // Skip handling if this was a "skip save" error (content unchanged)
+      if (error.message === "SKIP_SAVE_CONTENT_UNCHANGED") {
+        return;
+      }
+      
+      // Don't update lastSavedContentRef on error - the save failed
+      // This allows retry logic to work correctly
+      pendingContentRef.current = null;
       onSaveError?.(error);
       // Queue save if offline
       if (!isOnline && variables) {
@@ -414,7 +446,22 @@ export function useAutoSave(
 
   // Auto-save when content changes (debounced)
   useEffect(() => {
-    if (!enabled || content === lastSavedContentRef.current) {
+    if (!enabled) {
+      return;
+    }
+
+    // Don't schedule a new save if one is already in progress
+    if (saveMutation.isPending) {
+      // Store the latest content to save after current save completes
+      if (content !== lastSavedContentRef.current) {
+        pendingContentRef.current = content;
+      }
+      return;
+    }
+
+    // If content matches what we last saved, no need to save
+    if (content === lastSavedContentRef.current) {
+      pendingContentRef.current = null;
       return;
     }
 
@@ -423,26 +470,68 @@ export function useAutoSave(
       return;
     }
 
-    // Clear existing timer
+    // For JSON-primary storage, we can save even without fileId if we have snippetId and parentFolderId
+    if (!payload.fileId && !payload.snippetId && !payload.parentFolderId) {
+      return;
+    }
+
+    // Clear existing timer - collapse multiple pending saves into one
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
     }
+
+    // Capture current content in closure for the timer
+    const contentToSave = content;
+    const timestampWhenScheduled = Date.now();
 
     // Set new timer
     debounceTimerRef.current = setTimeout(() => {
+      // Double-check that save is not in progress
+      if (saveMutation.isPending) {
+        debounceTimerRef.current = null;
+        return;
+      }
+      
+      // Check if content still differs (might have been saved by another mechanism)
+      // Use strict comparison to ensure we're not saving the same content
+      if (contentToSave === lastSavedContentRef.current) {
+        debounceTimerRef.current = null;
+        return;
+      }
+      
+      // Additional check: if current content prop differs from what we're about to save,
+      // it means content changed during debounce - don't save stale content
+      if (content !== contentToSave) {
+        debounceTimerRef.current = null;
+        return;
+      }
+      
+      const finalPayload = buildPayload(contentToSave);
+      if (!finalPayload) {
+        debounceTimerRef.current = null;
+        return;
+      }
+      
+      debounceTimerRef.current = null;
+      
       if (isOnline) {
-        saveMutation.mutate(payload);
+        saveMutation.mutate(finalPayload);
       } else {
-        queueSave(payload);
+        queueSave(finalPayload);
       }
     }, debounceMs);
 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
       }
     };
-  }, [enabled, content, debounceMs, isOnline, saveMutation, queueSave, buildPayload]);
+  }, [enabled, content, debounceMs, isOnline, queueSave, buildPayload]);
+
+  // Note: Removed the useEffect that checked for pending content after save
+  // This was causing save loops. The main useEffect will handle content changes naturally.
 
   // Save when tab becomes hidden (visibility change)
   useEffect(() => {

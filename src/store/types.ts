@@ -28,16 +28,28 @@ export interface Chapter {
   updatedAt: string;
 }
 
-export interface Snippet {
+export interface BaseContent {
   id: EntityId;
   storyId: EntityId;
-  chapterId: EntityId; // Snippet belongs to a chapter
-  order: number;
   content: string;
-  driveRevisionId?: string;
   driveFileId?: string;
   updatedAt: string;
 }
+
+export interface Snippet extends BaseContent {
+  chapterId: EntityId; // Snippet belongs to a chapter
+  order: number;
+  driveRevisionId?: string;
+}
+
+export type NoteKind = "person" | "place" | "thing";
+
+export interface Note extends BaseContent {
+  kind: NoteKind;
+  order: number; // For ordering within kind
+}
+
+export type Content = Snippet | Note;
 
 export type EntityMap<T extends { id: EntityId }> = Record<EntityId, T>;
 
@@ -48,11 +60,15 @@ export interface YarnyEntities {
   storyOrder: EntityId[];
   chapters: EntityMap<Chapter>;
   snippets: EntityMap<Snippet>;
+  notes: EntityMap<Note>;
 }
 
 export interface YarnyUIState {
   selectedProjectId?: EntityId;
   activeStoryId?: EntityId;
+  activeContentId?: EntityId;
+  activeContentType?: "snippet" | "note";
+  // Legacy fields for backward compatibility during migration
   activeSnippetId?: EntityId;
   activeNote?: {
     id: EntityId;
@@ -72,11 +88,14 @@ export interface NormalizedPayload {
   stories?: Story[];
   chapters?: Chapter[];
   snippets?: Snippet[];
+  notes?: Note[];
 }
 
 export interface YarnyActions {
   selectProject: (projectId: EntityId | undefined) => void;
   selectStory: (storyId: EntityId | undefined) => void;
+  selectContent: (contentId: EntityId | undefined, contentType: "snippet" | "note") => void;
+  // Legacy actions for backward compatibility during migration
   selectSnippet: (snippetId: EntityId | undefined) => void;
   selectNote: (
     selection:
@@ -91,6 +110,7 @@ export interface YarnyActions {
   upsertEntities: (payload: NormalizedPayload) => void;
   removeChapter: (chapterId: EntityId) => void;
   removeSnippet: (snippetId: EntityId) => void;
+  removeNote: (noteId: EntityId) => void;
   clear: () => void;
 }
 

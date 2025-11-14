@@ -13,14 +13,13 @@ import { GoalMeter } from "./GoalMeter";
 import { GoalsPanelModal, type Goal } from "./GoalsPanelModal";
 import { StoryInfoModal } from "./StoryInfoModal";
 import { TodayChip } from "./TodayChip";
+import { useActiveStory } from "../../hooks/useActiveStory";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import {
   useUpdateStoryGoalsMutation,
   useUpdateStoryMetadataMutation
 } from "../../hooks/useStoryMutations";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
-import { useYarnyStore } from "../../store/provider";
-import { selectActiveStory } from "../../store/selectors";
 
 interface StorySidebarHeaderProps {
   searchTerm: string;
@@ -31,7 +30,7 @@ export function StorySidebarHeader({
   searchTerm,
   onSearchChange
 }: StorySidebarHeaderProps): JSX.Element {
-  const story = useYarnyStore(selectActiveStory);
+  const story = useActiveStory();
   const [goalsModalOpen, setGoalsModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 

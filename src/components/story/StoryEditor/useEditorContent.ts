@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
-import type { useYarnyStore } from "../../../store/provider";
-import type { selectActiveSnippet } from "../../../store/selectors";
+import type { Snippet } from "../../../store/types";
 
-export function useEditorContent(activeSnippet: ReturnType<typeof useYarnyStore<typeof selectActiveSnippet>>) {
+export function useEditorContent(activeSnippet: Snippet | undefined) {
   const [editorContent, setEditorContent] = useState(activeSnippet?.content ?? "");
 
   useEffect(() => {

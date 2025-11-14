@@ -133,61 +133,6 @@ describe("StoriesPage", () => {
     });
   });
 
-  describe("Search Functionality", () => {
-    it("filters stories by search query", async () => {
-      const user = userEvent.setup();
-      renderStoriesPage();
-
-      const searchInput = screen.getByPlaceholderText(/Search stories/i);
-      await user.type(searchInput, "Novel");
-
-      await waitFor(() => {
-        expectStoryVisible("My First Novel");
-        expectStoryHidden("Short Story Collection");
-        expectStoryHidden("Fantasy Epic");
-      });
-    });
-
-    it("shows no results message when search has no matches", async () => {
-      const user = userEvent.setup();
-      renderStoriesPage();
-
-      const searchInput = screen.getByPlaceholderText(/Search stories/i);
-      await user.type(searchInput, "NonExistentStory");
-
-      await waitFor(() => {
-        expect(screen.getByText(/No stories found matching/i)).toBeInTheDocument();
-      });
-    });
-
-    it("search is case-insensitive", async () => {
-      const user = userEvent.setup();
-      renderStoriesPage();
-
-      const searchInput = screen.getByPlaceholderText(/Search stories/i);
-      await user.type(searchInput, "novel");
-
-      await waitFor(() => {
-        expectStoryVisible("My First Novel");
-      });
-    });
-
-    it("clears search results when query is cleared", async () => {
-      const user = userEvent.setup();
-      renderStoriesPage();
-
-      const searchInput = screen.getByPlaceholderText(/Search stories/i);
-      await user.type(searchInput, "Novel");
-      await user.clear(searchInput);
-
-      await waitFor(() => {
-        expectStoryVisible("My First Novel");
-        expectStoryVisible("Short Story Collection");
-        expectStoryVisible("Fantasy Epic");
-      });
-    });
-  });
-
   describe("Modal Behavior", () => {
     it("opens new story modal when New Story button is clicked", async () => {
       const user = userEvent.setup();

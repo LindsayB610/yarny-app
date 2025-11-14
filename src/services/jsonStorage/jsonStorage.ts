@@ -40,7 +40,6 @@ export async function findSnippetJsonFile(
   const fileId = await queryClient.fetchQuery({
     queryKey,
     queryFn: async () => {
-      console.log(`[findSnippetJsonFile] Fetching file list for ${snippetId} in folder ${parentFolderId.substring(0, 10)}...`);
       const files = await apiClient.listDriveFiles({ folderId: parentFolderId });
       
       const jsonFile = files.files?.find(

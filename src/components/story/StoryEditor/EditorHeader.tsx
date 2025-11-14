@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import type { JSX } from "react";
 
 import { ManualSyncButton } from "../ManualSyncButton";
@@ -19,6 +19,7 @@ export function EditorHeader({
   onSave,
   isSaving,
   isSyncing,
+  hasUnsavedChanges,
   canSave
 }: EditorHeaderProps): JSX.Element {
   return (
@@ -39,7 +40,8 @@ export function EditorHeader({
         <Button
           onClick={onSave}
           variant="contained"
-          disabled={isSaving || isSyncing || !canSave}
+          disabled={isSaving || isSyncing || !canSave || !hasUnsavedChanges}
+          startIcon={isSaving || isSyncing ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           {isSyncing || isSaving ? "Saving..." : "Save to Drive"}
         </Button>

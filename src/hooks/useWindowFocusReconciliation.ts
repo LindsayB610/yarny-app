@@ -22,7 +22,6 @@ export function useWindowFocusReconciliation(): void {
 
       // If tokens don't match, invalidate all queries to trigger re-fetch
       if (currentToken !== storedToken) {
-        console.log("[Reconciliation] Auth state changed, invalidating queries");
         queryClient.invalidateQueries();
 
         // If user logged out in another tab, clear all data

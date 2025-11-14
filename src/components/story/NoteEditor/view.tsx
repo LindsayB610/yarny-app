@@ -8,12 +8,13 @@ import { useNoteAutoSave } from "./useNoteAutoSave";
 import { useNoteSave } from "./useNoteSave";
 import { usePlainTextEditor } from "../../../editor/plainTextEditor";
 import { buildPlainTextDocument, extractPlainTextFromDocument } from "../../../editor/textExtraction";
+import { useActiveStory } from "../../../hooks/useActiveStory";
 import { useNotesQuery } from "../../../hooks/useNotesQuery";
 import { useYarnyStore } from "../../../store/provider";
-import { selectActiveNote, selectActiveStory } from "../../../store/selectors";
+import { selectActiveNote } from "../../../store/selectors";
 
 export function NoteEditorView(): JSX.Element {
-  const story = useYarnyStore(selectActiveStory);
+  const story = useActiveStory();
   const activeNote = useYarnyStore(selectActiveNote);
 
   const noteType = activeNote?.type ?? "people";

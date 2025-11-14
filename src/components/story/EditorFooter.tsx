@@ -4,9 +4,10 @@ import { memo, useMemo, type JSX, type MouseEvent } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { SyncStatusIndicator } from "./SyncStatusIndicator";
+import { useActiveStory } from "../../hooks/useActiveStory";
 import { useSyncStatus } from "../../hooks/useSyncStatus";
 import { useYarnyStore } from "../../store/provider";
-import { selectActiveStorySnippets } from "../../store/selectors";
+import { selectStorySnippets } from "../../store/selectors";
 import { countCharacters, countWords } from "../../utils/wordCount";
 
 type EditorFooterProps = {
@@ -26,7 +27,10 @@ export const EditorFooter = memo(function EditorFooter({
   onLogout,
   isLogoutDisabled = false
 }: EditorFooterProps): JSX.Element {
-  const snippets = useYarnyStore(selectActiveStorySnippets);
+  const story = useActiveStory();
+  const snippets = useYarnyStore((state) => 
+    story ? selectStorySnippets(state, story.id) : []
+  );
   const { status, lastSyncedAt, errorMessage, retry } = useSyncStatus();
 
   const { totalWords, totalCharacters, lastModified } = useMemo(() => {

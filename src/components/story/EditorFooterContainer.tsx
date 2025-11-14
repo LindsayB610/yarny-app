@@ -4,20 +4,20 @@ import { useState, type MouseEvent, type JSX } from "react";
 
 import { EditorFooter } from "./EditorFooter";
 import { ExportProgressDialog } from "./ExportProgressDialog";
+import { useActiveStory } from "../../hooks/useActiveStory";
 import { useAuth } from "../../hooks/useAuth";
 import { useExport } from "../../hooks/useExport";
 import { useLocalBackups } from "../../hooks/useLocalBackups";
 import { useYarnyStore } from "../../store/provider";
-import {
-  selectActiveStory,
-  selectActiveStorySnippets
-} from "../../store/selectors";
+import { selectStorySnippets } from "../../store/selectors";
 
 type ExportDestination = "drive" | "local";
 
 export function EditorFooterContainer(): JSX.Element {
-  const story = useYarnyStore(selectActiveStory);
-  const snippets = useYarnyStore(selectActiveStorySnippets);
+  const story = useActiveStory();
+  const snippets = useYarnyStore((state) => 
+    story ? selectStorySnippets(state, story.id) : []
+  );
   const { logout, isLoading: isAuthLoading } = useAuth();
 
   const [exportMenuAnchor, setExportMenuAnchor] =

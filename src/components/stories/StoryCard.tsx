@@ -37,16 +37,9 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
   );
 
   const handleClick = useCallback(() => {
-    // Navigate to editor with story
-    localStorage.setItem(
-      "yarny_current_story",
-      JSON.stringify({
-        id: story.id,
-        name: story.name
-      })
-    );
-    navigate("/editor");
-  }, [story.id, story.name, navigate]);
+    // Navigate to story editor - loader will redirect to first snippet
+    navigate(`/stories/${story.id}/snippets`);
+  }, [story.id, navigate]);
 
   const handleDelete = useCallback((e: MouseEvent) => {
     e.stopPropagation();

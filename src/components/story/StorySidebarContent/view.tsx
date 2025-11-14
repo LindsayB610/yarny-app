@@ -17,11 +17,11 @@ import { useSidebarHandlers } from "./useSidebarHandlers";
 import { useSidebarState } from "./useSidebarState";
 import { normalizePlainText } from "@/editor/textExtraction";
 import { useVisibilityGatedSnippetQueries } from "@/hooks/useVisibilityGatedQueries";
+import { useActiveStory } from "@/hooks/useActiveStory";
 import { useYarnyStore } from "@/store/provider";
 import {
-  selectActiveStory,
-  selectActiveStoryChapters,
-  selectActiveStorySnippets
+  selectStoryChapters,
+  selectStorySnippets
 } from "@/store/selectors";
 
 export function StorySidebarContentView({
@@ -29,9 +29,13 @@ export function StorySidebarContentView({
   onSnippetClick,
   activeSnippetId
 }: StorySidebarContentProps): JSX.Element {
-  const story = useYarnyStore(selectActiveStory);
-  const chapters = useYarnyStore(selectActiveStoryChapters);
-  const allSnippets = useYarnyStore(selectActiveStorySnippets);
+  const story = useActiveStory();
+  const chapters = useYarnyStore((state) => 
+    story ? selectStoryChapters(state, story.id) : []
+  );
+  const allSnippets = useYarnyStore((state) => 
+    story ? selectStorySnippets(state, story.id) : []
+  );
   const snippetsById = useYarnyStore((state) => state.entities.snippets);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const { collapsedChapters, setCollapsedChapters, toggleChapterCollapse } = useCollapsedState(story?.id);

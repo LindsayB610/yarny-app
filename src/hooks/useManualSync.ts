@@ -5,7 +5,8 @@ import { apiClient } from "../api/client";
 import { listAllDriveFiles } from "../api/listAllDriveFiles";
 import { readSnippetJson, writeSnippetJson } from "../services/jsonStorage";
 import { useYarnyStore } from "../store/provider";
-import { selectActiveStory, selectActiveStorySnippets } from "../store/selectors";
+import { selectStorySnippets } from "../store/selectors";
+import { useActiveStory } from "./useActiveStory";
 
 /**
  * Hook for manual story-level sync
@@ -13,16 +14,18 @@ import { selectActiveStory, selectActiveStorySnippets } from "../store/selectors
  */
 export function useManualSync() {
   const queryClient = useQueryClient();
-  const activeStory = useYarnyStore(selectActiveStory);
-  const snippets = useYarnyStore(selectActiveStorySnippets);
+  const story = useActiveStory();
+  const snippets = useYarnyStore((state) => 
+    story ? selectStorySnippets(state, story.id) : []
+  );
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      if (!activeStory) {
+      if (!story) {
         throw new Error("No active story");
       }
 
-      const storyId = activeStory.id;
+      const storyId = story.id;
       const files = await listAllDriveFiles(storyId);
       const fileMap = new Map<string, (typeof files)[number]>();
       for (const file of files) {

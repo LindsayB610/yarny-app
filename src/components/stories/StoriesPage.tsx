@@ -4,9 +4,9 @@ import { useLoaderData, useNavigate, useSearchParams } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
 import { EmptyState } from "./EmptyState";
-import { LoadingState } from "./LoadingState";
 import { NewStoryModal } from "./NewStoryModal";
 import { StoriesHeader } from "./StoriesHeader";
+import { StoriesPageSkeleton } from "./StoriesPageSkeleton";
 import { VirtualizedStoryList } from "./VirtualizedStoryList";
 import type { StoriesLoaderData } from "../../app/loaders";
 import { useAuth } from "../../hooks/useAuth";
@@ -213,7 +213,7 @@ export function StoriesPage(): JSX.Element {
               // This appears whether or not there's an error (error alert is shown above)
               <DriveAuthPrompt />
             ) : isLoading ? (
-              <LoadingState />
+              <StoriesPageSkeleton />
             ) : filteredStories.length === 0 && searchQuery ? (
               <Box sx={{ textAlign: "center", py: 6 }}>
                 <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>

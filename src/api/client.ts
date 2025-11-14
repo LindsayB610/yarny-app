@@ -107,24 +107,8 @@ export class ApiClient {
   // ============================================================================
 
   async listDriveFiles(params?: DriveListQueryParams): Promise<DriveListResponse> {
-    const folderId = params?.folderId;
-    const pageToken = params?.pageToken;
-    const stack = new Error().stack;
-    const caller = stack?.split("\n")[3]?.trim() || "unknown";
-    console.log(
-      `[ApiClient.listDriveFiles] Called for folder: ${folderId || "root"}`,
-      pageToken ? `page: ${pageToken.substring(0, 10)}...` : "first page",
-      "from:",
-      caller,
-    );
-
     return this.queuedRequest(async () => {
-      const startTime = Date.now();
       const response = await this.http.get("/drive-list", { params });
-      const duration = Date.now() - startTime;
-      console.log(
-        `[ApiClient.listDriveFiles] Completed for folder: ${folderId || "root"} in ${duration}ms, files: ${response.data?.files?.length || 0}`,
-      );
       return parseApiResponse(DriveListResponseSchema, response.data);
     });
   }

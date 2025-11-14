@@ -3,16 +3,14 @@ import { useMemo } from "react";
 import { getSnippetFileName } from "./utils";
 import { useAutoSave } from "../../../hooks/useAutoSave";
 import { useYarnyStore } from "../../../store/provider";
-import type { selectActiveSnippet, selectActiveStory } from "../../../store/selectors";
+import type { Snippet, Story } from "../../../store/types";
 
-type SnippetType = ReturnType<typeof useYarnyStore<typeof selectActiveSnippet>>;
-type StoryType = ReturnType<typeof useYarnyStore<typeof selectActiveStory>>;
-type ChapterType = { driveFolderId?: string };
+type ChapterType = { driveFolderId?: string } | undefined;
 
 export function useAutoSaveConfig(
-  activeSnippet: SnippetType,
+  activeSnippet: Snippet | undefined,
   editorContent: string,
-  story: StoryType,
+  story: Story | undefined,
   activeChapter: ChapterType
 ) {
   const setSyncing = useYarnyStore((state) => state.setSyncing);
@@ -22,19 +20,25 @@ export function useAutoSaveConfig(
     [activeSnippet, editorContent]
   );
 
+  // Enable auto-save if we have snippetId and parentFolderId (JSON-primary storage)
+  // driveFileId is optional - we can save to JSON even without a Google Doc
+  const enabled = Boolean(activeSnippet?.id && activeChapter?.driveFolderId);
+
   return useAutoSave(
-    activeSnippet?.driveFileId,
+    activeSnippet?.driveFileId, // Optional - can be undefined for JSON-only saves
     editorContent,
     {
-      enabled: Boolean(activeSnippet?.driveFileId),
+      enabled,
       debounceMs: 2000,
-      onSaveStart: () => setSyncing(true),
+      onSaveStart: () => {
+        setSyncing(true);
+      },
       onSaveSuccess: () => {
         setSyncing(false);
         setLastSyncedAtAction(new Date().toISOString());
       },
       onSaveError: (error) => {
-        console.error("Auto-save failed:", error);
+        console.error("[AutoSaveConfig] Auto-save failed:", error);
         setSyncing(false);
       },
       localBackupStoryId: story?.id,

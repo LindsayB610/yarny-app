@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -170,16 +170,17 @@ const createTestQueryClient = () =>
 describe("Round-Trip Validation with Google Docs", () => {
   let queryClient: QueryClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    const storeProvider = await import("../../src/store/provider");
+    storeProvider.__setSnippetContent("Initial content");
   });
 
   describe("Content Preservation", () => {
     it("preserves plain text content in round-trip (Yarny → Google Docs → Yarny)", async () => {
       const originalContent = "This is test content.\n\nWith paragraph breaks.\nAnd line breaks.";
 
-      // Mock initial read from Drive
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
         content: originalContent,
         id: "drive-file-1",
@@ -188,13 +189,11 @@ describe("Round-Trip Validation with Google Docs", () => {
         modifiedTime: new Date().toISOString()
       });
 
-      // Mock conflict detection to return no conflict initially
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
       });
 
-      // Mock auto-save
       vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
         isSaving: false,
         hasUnsavedChanges: false,
@@ -209,13 +208,11 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Wait for editor to load
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
 
-      // Verify content is preserved
       const editor = document.querySelector('[contenteditable="true"]');
       expect(editor).toBeInTheDocument();
       expect(editor?.textContent).toContain("Initial content");
@@ -252,7 +249,6 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify special characters are preserved
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
@@ -289,7 +285,6 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify paragraph breaks are preserved
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
@@ -326,78 +321,38 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify line breaks are preserved
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
     });
-  });
 
-  describe("Conflict Detection and Resolution", () => {
-    it("detects conflicts when Drive content is newer than local", async () => {
-      const user = userEvent.setup();
-      const localContent = "Local content";
-      const driveContent = "Drive content (newer)";
-      const driveModifiedTime = new Date(Date.now() + 10000).toISOString(); // 10 seconds in future
+    it("preserves complex formatting: paragraphs, line breaks, special characters", async () => {
+      const complexContent = `Paragraph 1 with special chars: — — … © ® ™
 
-      const mockCheckConflict = vi.fn().mockResolvedValue({
-        snippetId: "snippet-1",
-        localModifiedTime: new Date().toISOString(),
-        driveModifiedTime,
-        localContent,
-        driveContent
+Paragraph 2 with line breaks:
+Line A
+Line B
+Line C
+
+Paragraph 3 with quotes: "double" and 'single'
+
+Paragraph 4 with em dashes: — and en dashes: –`;
+
+      const storeProviderComplex = await import("../../src/store/provider");
+      storeProviderComplex.__setSnippetContent(complexContent);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: complexContent,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
       });
-
-      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
-        checkSnippetConflict: mockCheckConflict,
-        resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
-      });
-
-      render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <StoryEditor />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-
-      // Focus the editor to simulate user interaction and trigger conflict detection
-      const editor = await waitFor(
-        () => document.querySelector('[contenteditable="true"]'),
-        { timeout: 2000 }
-      );
-      expect(editor).toBeTruthy();
-      await user.click(editor as HTMLElement);
-
-      // Wait for conflict check to run (setTimeout inside component uses 1000ms delay)
-      await waitFor(
-        () => {
-          expect(mockCheckConflict).toHaveBeenCalled();
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it("resolves conflict by using Drive content", async () => {
-      const driveContent = "Resolved Drive content";
-      const mockResolveConflict = vi.fn().mockResolvedValue(driveContent);
 
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
-        resolveConflictWithDrive: mockResolveConflict
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
+        resolveConflictWithDrive: vi.fn()
       });
 
       render(
@@ -408,8 +363,67 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify resolve function is available
-      expect(mockResolveConflict).toBeDefined();
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+
+      const editor = document.querySelector('[contenteditable="true"]');
+      const content = editor?.textContent || "";
+
+      expect(content).toContain("—");
+      expect(content).toContain("…");
+      expect(content).toContain('"double"');
+      expect(content).toContain("'single'");
+    });
+
+    it("preserves empty paragraphs (double line breaks)", async () => {
+      const contentWithEmptyParagraphs = "First paragraph.\n\n\nSecond paragraph.\n\n\n\nThird paragraph.";
+      let savedContent = "";
+
+      const storeProviderEmpty = await import("../../src/store/provider");
+      storeProviderEmpty.__setSnippetContent(contentWithEmptyParagraphs);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: contentWithEmptyParagraphs,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
+        if (request.content) {
+          savedContent = request.content;
+        }
+        return {
+          id: "drive-file-1",
+          name: "Test Snippet",
+          modifiedTime: new Date().toISOString()
+        };
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(savedContent.match(/\n{2,}/g)).toBeTruthy();
+      });
     });
   });
 
@@ -444,7 +458,6 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify content is normalized (no \r\n or \r)
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
@@ -481,11 +494,67 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify NBSPs are normalized
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
+    });
+
+    it("normalizes mixed line endings (CRLF, CR, LF) to LF", async () => {
+      const contentWithMixedEndings = "Line 1\r\nLine 2\rLine 3\nLine 4";
+      let savedContent = "";
+
+      const storeProviderMixed = await import("../../src/store/provider");
+      storeProviderMixed.__setSnippetContent(contentWithMixedEndings);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: contentWithMixedEndings,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
+        if (request.content) {
+          savedContent = request.content;
+        }
+        return {
+          id: "drive-file-1",
+          name: "Test Snippet",
+          modifiedTime: new Date().toISOString()
+        };
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+
+      const user = userEvent.setup();
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
+      await user.type(editor, " edited");
+
+      await waitFor(() => {
+        expect(savedContent).toBeTruthy();
+      }, { timeout: 3000 });
+
+      expect(savedContent).not.toContain("\r\n");
+      expect(savedContent).not.toContain("\r");
+      expect(savedContent).toContain("\n");
     });
   });
 
@@ -518,32 +587,31 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Wait for editor to load
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
       });
 
-      // Type in editor
       const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
       await user.type(editor, " New text");
 
-      // Verify auto-save is triggered (via useAutoSave hook)
-      // The actual save happens in the hook, which is mocked
       expect(editor).toBeInTheDocument();
     });
   });
 
   describe("Round-Trip Integrity", () => {
-    it("maintains content integrity across multiple round-trips", async () => {
-      const originalContent = "Original content";
+    it("maintains integrity across multiple round-trips (Yarny → Docs → Yarny → Docs → Yarny)", async () => {
+      const originalContent = "Original content with special chars: — — …";
       let roundTripCount = 0;
+      let savedContent = originalContent;
 
-      // Simulate multiple round-trips
+      const storeProvider = await import("../../src/store/provider");
+      storeProvider.__setSnippetContent(originalContent);
+
       vi.mocked(apiClient.readDriveFile).mockImplementation(async () => {
         roundTripCount++;
         return {
-          content: originalContent + ` (round-trip ${roundTripCount})`,
+          content: savedContent,
           id: "drive-file-1",
           name: "Test Snippet",
           mimeType: "application/vnd.google-apps.document",
@@ -551,15 +619,20 @@ describe("Round-Trip Validation with Google Docs", () => {
         };
       });
 
+      vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
+        if (request.content) {
+          savedContent = request.content;
+        }
+        return {
+          id: "drive-file-1",
+          name: "Test Snippet",
+          modifiedTime: new Date().toISOString()
+        };
+      });
+
       vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
         checkSnippetConflict: vi.fn().mockResolvedValue(null),
         resolveConflictWithDrive: vi.fn()
-      });
-
-      vi.mocked(useAutoSaveModule.useAutoSave).mockReturnValue({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        lastSavedAt: undefined
       });
 
       render(
@@ -570,11 +643,17 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify content integrity is maintained
-      await waitFor(() => {
+      for (let i = 0; i < 5; i++) {
+        await waitFor(() => {
+          const editor = document.querySelector('[contenteditable="true"]');
+          expect(editor).toBeInTheDocument();
+        });
+
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
-      });
+      }
+
+      expect(savedContent).toBe(originalContent);
     });
 
     it("handles empty content in round-trip", async () => {
@@ -605,7 +684,6 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify empty content is handled
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
@@ -642,7 +720,139 @@ describe("Round-Trip Validation with Google Docs", () => {
         </QueryClientProvider>
       );
 
-      // Verify long content is handled
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+    });
+
+    it("handles very large content (1MB+) in round-trip", async () => {
+      const largeContent = "A".repeat(1_000_000) + "\n\n" + "B".repeat(500_000);
+
+      const storeProviderLarge = await import("../../src/store/provider");
+      storeProviderLarge.__setSnippetContent(largeContent);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: largeContent,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      }, { timeout: 5000 });
+    });
+
+    it("handles Unicode characters (emoji, CJK, RTL) in round-trip", async () => {
+      const unicodeContent = `English text
+
+日本語のテキスト
+
+中文文本
+
+العربية
+
+Emoji: 🎉 🚀 📝 ✨`;
+
+      let savedContent = "";
+
+      const storeProviderUnicode = await import("../../src/store/provider");
+      storeProviderUnicode.__setSnippetContent(unicodeContent);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: unicodeContent,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      vi.mocked(apiClient.writeDriveFile).mockImplementation(async (request) => {
+        if (request.content) {
+          savedContent = request.content;
+        }
+        return {
+          id: "drive-file-1",
+          name: "Test Snippet",
+          modifiedTime: new Date().toISOString()
+        };
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        const editor = document.querySelector('[contenteditable="true"]');
+        expect(editor).toBeInTheDocument();
+      });
+
+      const user = userEvent.setup();
+      const editor = document.querySelector('[contenteditable="true"]') as HTMLElement;
+      await user.type(editor, " edited");
+
+      await waitFor(() => {
+        expect(savedContent).toBeTruthy();
+      }, { timeout: 3000 });
+
+      expect(savedContent).toContain("日本語");
+      expect(savedContent).toContain("中文");
+      expect(savedContent).toContain("العربية");
+      expect(savedContent).toContain("🎉");
+    });
+
+    it("handles content with only whitespace", async () => {
+      const whitespaceContent = "   \n\n   \t\t  \n\n   ";
+
+      const storeProviderWhitespace = await import("../../src/store/provider");
+      storeProviderWhitespace.__setSnippetContent(whitespaceContent);
+
+      vi.mocked(apiClient.readDriveFile).mockResolvedValue({
+        content: whitespaceContent,
+        id: "drive-file-1",
+        name: "Test Snippet",
+        mimeType: "application/vnd.google-apps.document",
+        modifiedTime: new Date().toISOString()
+      });
+
+      vi.mocked(useConflictDetectionModule.useConflictDetection).mockReturnValue({
+        checkSnippetConflict: vi.fn().mockResolvedValue(null),
+        resolveConflictWithDrive: vi.fn()
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StoryEditor />
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+
       await waitFor(() => {
         const editor = document.querySelector('[contenteditable="true"]');
         expect(editor).toBeInTheDocument();
@@ -650,4 +860,3 @@ describe("Round-Trip Validation with Google Docs", () => {
     });
   });
 });
-

@@ -13,7 +13,6 @@ export async function listAllDriveFiles(folderId: string | undefined): Promise<D
   let pagesFetched = 0;
 
   do {
-    console.log(`[listAllDriveFiles] Fetching page ${pagesFetched + 1} for folder:`, folderId, pageToken ? `(token: ${pageToken.substring(0, 10)}...)` : "(no token)");
     const response = await apiClient.listDriveFiles({
       folderId,
       pageToken
@@ -21,14 +20,11 @@ export async function listAllDriveFiles(folderId: string | undefined): Promise<D
 
     if (response.files?.length) {
       allFiles.push(...response.files);
-      console.log(`[listAllDriveFiles] Page ${pagesFetched + 1} returned ${response.files.length} files, total: ${allFiles.length}`);
     }
 
     pageToken = response.nextPageToken ?? undefined;
     pagesFetched += 1;
   } while (pageToken && pagesFetched < MAX_PAGES);
-  
-  console.log(`[listAllDriveFiles] Completed listing folder ${folderId}: ${allFiles.length} total files across ${pagesFetched} pages`);
 
   if (pageToken) {
     console.warn(

@@ -2,12 +2,11 @@ import type { Editor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 
 import { buildPlainTextDocument, extractPlainTextFromDocument } from "../../../editor/textExtraction";
-import type { useYarnyStore } from "../../../store/provider";
-import type { selectActiveSnippet } from "../../../store/selectors";
+import type { Snippet } from "../../../store/types";
 
 export function useEditorContentSync(
   editor: Editor | null,
-  activeSnippet: ReturnType<typeof useYarnyStore<typeof selectActiveSnippet>>,
+  activeSnippet: Snippet | undefined,
   activeSnippetId: string | undefined,
   isEditorOpen: boolean,
   hasUnsavedChanges: boolean,

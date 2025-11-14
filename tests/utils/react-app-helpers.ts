@@ -202,21 +202,10 @@ export async function navigateToReactEditor(
   storyId: string,
   storyName: string
 ): Promise<void> {
-  // Set story in localStorage (how StoryCard does it)
-  await page.addInitScript((storyId, storyName) => {
-    localStorage.setItem(
-      "yarny_current_story",
-      JSON.stringify({
-        id: storyId,
-        name: storyName
-      })
-    );
-  }, storyId, storyName);
-
-  // Navigate to editor
-  await page.goto("/editor");
+  // Navigate to story editor - loader will redirect to first snippet
+  await page.goto(`/stories/${storyId}/snippets`);
   
-  // Wait for React app to load
+  // Wait for React app to load and redirect to first snippet
   await page.waitForLoadState("networkidle");
   
   // Wait for story to be selected (look for story title or editor content)
@@ -254,7 +243,7 @@ export async function clickStoryCard(page: Page, storyTitle: string): Promise<vo
   const storyCard = page.getByText(storyTitle).first();
   await storyCard.click();
   
-  // Wait for navigation to editor
-  await page.waitForURL("**/editor", { timeout: 10000 });
+  // Wait for navigation to story editor (will redirect to first snippet)
+  await page.waitForURL("**/stories/*/snippets/*", { timeout: 10000 });
 }
 

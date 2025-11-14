@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/react";
 import type { JSX } from "react";
@@ -8,19 +8,25 @@ interface EditorContentAreaProps {
 }
 
 export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Element {
-  if (!editor) return <></>;
+  if (!editor) {
+    console.log('OOOOOOO')
+    return <></>}
 
   return (
-    <Box
+    <Paper
       sx={{
         flex: 1,
-        borderRadius: 3,
-        backgroundColor: "#E9E9EB",
+        // top rounded corners
+        borderTopLeftRadius: 3,
+        borderTopRightRadius: 3,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        backgroundColor: "#fff",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.04)"
+        boxShadow: "0 2px 6px rgba(15, 23, 42, 0.4)"
       }}
       onClick={() => {
         if (editor && !editor.isDestroyed && editor.isEditable && !editor.isFocused) {
@@ -36,12 +42,24 @@ export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Eleme
           justifyContent: "center",
           alignItems: "flex-start",
           pt: { xs: 3, md: 6 },
-          pb: { xs: 3, md: 6 }
+          pb: { xs: 3, md: 6 },
+          "& .plain-text-editor": {
+            maxWidth: "100%",
+            width: "100%"
+          }
         }}
       >
-        <EditorContent editor={editor} />
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "800px", // Constrain editor width for readability
+            px: { xs: 2, md: 4 }
+          }}
+        >
+          <EditorContent editor={editor} />
+        </Box>
       </Box>
-    </Box>
+    </Paper>
   );
 }
 

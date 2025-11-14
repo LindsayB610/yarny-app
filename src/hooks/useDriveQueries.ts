@@ -40,9 +40,7 @@ export const useDriveStoryQuery = (storyId: string | undefined) => {
       if (!storyId) {
         return null;
       }
-      console.log("[useDriveStoryQuery] Fetching story:", storyId);
       const normalized = await driveClient.getStory(storyId);
-      console.log("[useDriveStoryQuery] Story fetched:", storyId, "chapters:", normalized.chapters.length, "snippets:", normalized.snippets.length);
       upsert(normalized);
       return normalized;
     }

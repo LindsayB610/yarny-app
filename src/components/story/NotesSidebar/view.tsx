@@ -1,11 +1,13 @@
-import { Add, ChevronLeft, ChevronRight, Notes } from "@mui/icons-material";
+import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { useMemo, useState, useCallback, type JSX } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
+import { useActiveStory } from "../../../hooks/useActiveStory";
 import { useCreateNoteMutation, useReorderNotesMutation } from "../../../hooks/useNotesMutations";
 import { useNotesQuery, type NoteType } from "../../../hooks/useNotesQuery";
 import { useYarnyStore } from "../../../store/provider";
-import { selectActiveNote, selectActiveStory } from "../../../store/selectors";
+import { selectNotesByKind } from "../../../store/selectors";
 import { StoryTabs, type TabItem } from "../StoryTabs";
 import { NotesList } from "./NotesList";
 import { NOTE_TYPE_LABELS } from "./types";
@@ -17,15 +19,34 @@ interface NotesSidebarViewProps {
 }
 
 export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: NotesSidebarViewProps): JSX.Element {
-  const story = useYarnyStore(selectActiveStory);
-  const activeNote = useYarnyStore(selectActiveNote);
-  const selectNote = useYarnyStore((state) => state.selectNote);
+  const story = useActiveStory();
+  const { storyId, noteId } = useParams<{
+    storyId?: string;
+    noteId?: string;
+  }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Detect note type from route pathname
+  const noteTypeFromPath = useMemo(() => {
+    const pathname = location.pathname;
+    if (pathname.includes("/people/")) return "people";
+    if (pathname.includes("/places/")) return "places";
+    if (pathname.includes("/things/")) return "things";
+    return undefined;
+  }, [location.pathname]);
+  
+  // Use store notes if available, otherwise fall back to query
+  const storeNotes = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "person") : []
+  );
+  const hasStoreNotes = storeNotes.length > 0;
 
   const storyFolderId = story?.id;
 
-  const peopleQuery = useNotesQuery(storyFolderId, "people", Boolean(story));
-  const placesQuery = useNotesQuery(storyFolderId, "places", Boolean(story));
-  const thingsQuery = useNotesQuery(storyFolderId, "things", Boolean(story));
+  const peopleQuery = useNotesQuery(storyFolderId, "people", Boolean(story) && !hasStoreNotes);
+  const placesQuery = useNotesQuery(storyFolderId, "places", Boolean(story) && !hasStoreNotes);
+  const thingsQuery = useNotesQuery(storyFolderId, "things", Boolean(story) && !hasStoreNotes);
 
   const [activeTab, setActiveTab] = useState<NoteType>("people");
 
@@ -40,23 +61,20 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
 
   const handleCreateNote = useCallback(
     async (noteType: NoteType) => {
-      if (!storyFolderId) {
+      if (!storyFolderId || !storyId) {
         return;
       }
 
       try {
         const result = await createNoteMutation.mutateAsync({ noteType });
         if (result?.id) {
-          selectNote({
-            id: result.id,
-            type: noteType
-          });
+          navigate(`/stories/${storyId}/${noteType}/${result.id}`);
         }
       } catch (error) {
         console.error("Failed to create note:", error);
       }
     },
-    [createNoteMutation, selectNote, storyFolderId]
+    [createNoteMutation, navigate, storyFolderId, storyId]
   );
 
   const handleReorderNotes = useCallback(
@@ -70,13 +88,23 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
   );
 
   const handleNoteClick = useCallback(
-    (noteType: NoteType, noteId: string) => {
-      selectNote({
-        id: noteId,
-        type: noteType
-      });
+    (clickedNoteType: NoteType, clickedNoteId: string) => {
+      if (storyId && clickedNoteId !== noteId) {
+        navigate(`/stories/${storyId}/${clickedNoteType}/${clickedNoteId}`);
+      }
     },
-    [selectNote]
+    [navigate, storyId, noteId]
+  );
+
+  // Get notes from store
+  const peopleNotesFromStore = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "person") : []
+  );
+  const placesNotesFromStore = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "place") : []
+  );
+  const thingsNotesFromStore = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "thing") : []
   );
 
   const tabs: TabItem[] = useMemo(
@@ -86,12 +114,22 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         label: "People",
         content: (
           <NotesList
-            notes={peopleQuery.data || []}
+            notes={hasStoreNotes && story 
+              ? peopleNotesFromStore.map(note => {
+                  const firstLine = note.content.split("\n")[0]?.trim();
+                  return {
+                    id: note.id,
+                    name: firstLine || "New Person",
+                    content: note.content,
+                    modifiedTime: note.updatedAt
+                  };
+                })
+              : (peopleQuery.data || [])}
             isLoading={peopleQuery.isLoading}
             noteType="people"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
-            activeNoteId={activeNote?.type === "people" ? activeNote.id : undefined}
+            activeNoteId={noteTypeFromPath === "people" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
           />
         )
@@ -101,12 +139,22 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         label: "Places",
         content: (
           <NotesList
-            notes={placesQuery.data || []}
+            notes={hasStoreNotes && story
+              ? placesNotesFromStore.map(note => {
+                  const firstLine = note.content.split("\n")[0]?.trim();
+                  return {
+                    id: note.id,
+                    name: firstLine || "New Place",
+                    content: note.content,
+                    modifiedTime: note.updatedAt
+                  };
+                })
+              : (placesQuery.data || [])}
             isLoading={placesQuery.isLoading}
             noteType="places"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
-            activeNoteId={activeNote?.type === "places" ? activeNote.id : undefined}
+            activeNoteId={noteTypeFromPath === "places" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
           />
         )
@@ -116,28 +164,44 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         label: "Things",
         content: (
           <NotesList
-            notes={thingsQuery.data || []}
+            notes={hasStoreNotes && story
+              ? thingsNotesFromStore.map(note => {
+                  const firstLine = note.content.split("\n")[0]?.trim();
+                  return {
+                    id: note.id,
+                    name: firstLine || "New Thing",
+                    content: note.content,
+                    modifiedTime: note.updatedAt
+                  };
+                })
+              : (thingsQuery.data || [])}
             isLoading={thingsQuery.isLoading}
             noteType="things"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
-            activeNoteId={activeNote?.type === "things" ? activeNote.id : undefined}
+            activeNoteId={noteTypeFromPath === "things" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
           />
         )
       }
     ],
     [
-      activeNote,
+      hasStoreNotes,
+      story,
+      peopleNotesFromStore,
       peopleQuery.data,
       peopleQuery.isLoading,
+      placesNotesFromStore,
       placesQuery.data,
       placesQuery.isLoading,
+      thingsNotesFromStore,
       thingsQuery.data,
       thingsQuery.isLoading,
       handleReorderNotes,
       reorderNotesMutation.isPending,
-      handleNoteClick
+      handleNoteClick,
+      noteTypeFromPath,
+      noteId
     ]
   );
 

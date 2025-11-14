@@ -31,9 +31,7 @@ function handleAuthError(error: unknown): never {
  * Route loader for stories page - prefetches Yarny Stories folder and stories list
  */
 export interface StoriesLoaderData {
-  yarnyStoriesFolder: Awaited<
-    ReturnType<typeof apiClient.getOrCreateYarnyStories>
-  > | null;
+  yarnyStoriesFolder: Awaited<ReturnType<typeof apiClient.getOrCreateYarnyStories>> | null;
   driveAuthorized: boolean;
 }
 
@@ -59,12 +57,12 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
   try {
     const yarnyStoriesFolder = await queryClient.ensureQueryData({
       queryKey: ["drive", "yarny-stories-folder"],
-      queryFn: () => apiClient.getOrCreateYarnyStories()
+      queryFn: () => apiClient.getOrCreateYarnyStories(),
     });
 
     await queryClient.ensureQueryData({
       queryKey: STORIES_QUERY_KEY,
-      queryFn: () => fetchStories(queryClient)
+      queryFn: () => fetchStories(queryClient),
     });
 
     return { yarnyStoriesFolder, driveAuthorized: true };
@@ -73,12 +71,12 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
       if (import.meta.env.DEV) {
         console.warn(
           "[Loader] Drive authorization error encountered. Allowing Stories page to render with Drive auth prompt.",
-          error
+          error,
         );
       }
       return {
         yarnyStoriesFolder: null,
-        driveAuthorized: false
+        driveAuthorized: false,
       };
     }
 
@@ -88,24 +86,34 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
 
 /**
  * Route loader for editor page - prefetches Yarny Stories folder and project data
+ * Validates story and content (snippet or note) exist in route params
  */
-export async function editorLoader(queryClient: QueryClient) {
+export async function editorLoader(
+  queryClient: QueryClient,
+  params: { storyId?: string; snippetId?: string; noteId?: string; noteType?: string },
+) {
   ensureAuthenticated();
+
+  const { storyId, snippetId, noteId, noteType } = params;
+
+  if (!storyId) {
+    throw redirect("/stories");
+  }
+
   try {
-    let yarnyStoriesFolder: Awaited<
-      ReturnType<typeof apiClient.getOrCreateYarnyStories>
-    > | null = null;
+    let yarnyStoriesFolder: Awaited<ReturnType<typeof apiClient.getOrCreateYarnyStories>> | null =
+      null;
 
     try {
       yarnyStoriesFolder = await queryClient.fetchQuery({
         queryKey: ["drive", "yarny-stories-folder"],
-        queryFn: () => apiClient.getOrCreateYarnyStories()
+        queryFn: () => apiClient.getOrCreateYarnyStories(),
       });
     } catch (error) {
       if (import.meta.env.DEV) {
         console.warn(
           "[Loader] Yarny stories folder fetch failed in development; continuing with fallback data.",
-          error
+          error,
         );
       } else {
         throw error;
@@ -119,15 +127,82 @@ export async function editorLoader(queryClient: QueryClient) {
       queryFn: async () => {
         const normalized = await driveClient.listProjects();
         return normalized;
-      }
+      },
     });
+
+    // Validate story exists
+    const storyExists = projects.stories?.some((s) => s.id === storyId);
+    if (!storyExists) {
+      throw redirect("/stories");
+    }
+
+    // Prefetch story data to validate content
+    const storyData = await queryClient.fetchQuery({
+      queryKey: ["drive", "story", storyId],
+      queryFn: () => driveClient.getStory(storyId),
+    });
+
+    if (noteId && noteType) {
+      // Validate note exists in story
+      const noteKindMap: Record<string, "person" | "place" | "thing"> = {
+        people: "person",
+        places: "place",
+        things: "thing",
+      };
+      const kind = noteKindMap[noteType] ?? "person";
+      const noteExists = storyData.notes?.some((n) => n.id === noteId && n.kind === kind);
+      if (!noteExists) {
+        // Redirect to first note of that type if note doesn't exist
+        const firstNote = storyData.notes?.find((n) => n.kind === kind);
+        if (firstNote) {
+          const noteTypeMap: Record<string, string> = {
+            person: "people",
+            place: "places",
+            thing: "things",
+          };
+          const routeNoteType = noteTypeMap[kind] ?? "people";
+          throw redirect(`/stories/${storyId}/${routeNoteType}/${firstNote.id}`);
+        } else {
+          // No notes of this type, redirect to first snippet
+          const firstSnippet = storyData.snippets?.[0];
+          if (firstSnippet) {
+            throw redirect(`/stories/${storyId}/snippets/${firstSnippet.id}`);
+          } else {
+            throw redirect("/stories");
+          }
+        }
+      }
+    } else if (snippetId) {
+      // Validate snippet exists in story
+      const snippetExists = storyData.snippets?.some((s) => s.id === snippetId);
+      if (!snippetExists) {
+        // Redirect to first snippet if snippet doesn't exist
+        const firstSnippet = storyData.snippets?.[0];
+        if (firstSnippet) {
+          throw redirect(`/stories/${storyId}/snippets/${firstSnippet.id}`);
+        } else {
+          throw redirect("/stories");
+        }
+      }
+    } else {
+      // No contentId provided, redirect to first snippet
+      const firstSnippet = storyData.snippets?.[0];
+      if (firstSnippet) {
+        throw redirect(`/stories/${storyId}/snippets/${firstSnippet.id}`);
+      } else {
+        // Story has no snippets, redirect to stories page
+        throw redirect("/stories");
+      }
+    }
 
     return {
       yarnyStoriesFolder,
-      projects
+      projects,
     };
   } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
     return handleAuthError(error);
   }
 }
-

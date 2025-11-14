@@ -6,7 +6,7 @@ import { listAllDriveFiles } from "./listAllDriveFiles";
 import { env } from "../config/env";
 import { normalizePlainText } from "../editor/textExtraction";
 import { readSnippetJson } from "../services/jsonStorage";
-import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../store/types";
+import type { Chapter, NormalizedPayload, Note, NoteKind, Project, Snippet, Story } from "../store/types";
 import { extractGroupOrderFromMetadata, extractStoryTitleFromMetadata } from "../utils/storyMetadata";
 
 const SaveStoryInputSchema = z.object({
@@ -115,9 +115,7 @@ export const createDriveClient = (): DriveClient => ({
   },
   async getStory(storyId: string) {
     try {
-      console.log("[DriveClient.getStory] Starting fetch for story:", storyId);
       const files = await listAllDriveFiles(storyId);
-      console.log("[DriveClient.getStory] Listed", files.length, "files for story:", storyId);
       const fileMap = new Map<string, (typeof files)[number]>();
       for (const file of files) {
         if (file.name) {
@@ -255,11 +253,14 @@ export const createDriveClient = (): DriveClient => ({
             ? snippet.updatedAt
             : chapter?.updatedAt ?? nowIso;
 
+        let jsonGdocFileId: string | undefined = undefined;
         try {
           const jsonData = await readSnippetJson(snippetId, parentFolderId);
           if (jsonData) {
             snippetContent = jsonData.content;
             snippetUpdatedAt = jsonData.modifiedTime;
+            // Use gdocFileId from JSON file if available (JSON is source of truth)
+            jsonGdocFileId = jsonData.gdocFileId;
           } else {
             // Fallback to data.json content if JSON file doesn't exist
             snippetContent =
@@ -280,6 +281,10 @@ export const createDriveClient = (): DriveClient => ({
                 : "";
         }
 
+        // Use gdocFileId from JSON file if available, otherwise fall back to data.json
+        const effectiveDriveFileId = jsonGdocFileId || 
+          (typeof snippet.driveFileId === "string" ? snippet.driveFileId : undefined);
+
         snippets.push({
           id: snippetId,
           storyId,
@@ -287,7 +292,7 @@ export const createDriveClient = (): DriveClient => ({
           order: snippetOrder,
           content: snippetContent,
           driveRevisionId: typeof snippet.driveRevisionId === "string" ? snippet.driveRevisionId : undefined,
-          driveFileId: typeof snippet.driveFileId === "string" ? snippet.driveFileId : undefined,
+          driveFileId: effectiveDriveFileId,
           updatedAt: snippetUpdatedAt
         });
       }
@@ -313,10 +318,104 @@ export const createDriveClient = (): DriveClient => ({
       // Ensure snippets sorted within chapters
       const snippetsSorted = snippets.sort((a, b) => a.order - b.order);
 
+      // Load notes from People/Places/Things folders
+      const notes: Note[] = [];
+      const noteFolders = ["People", "Places", "Things"];
+      const noteKindMap: Record<string, NoteKind> = {
+        People: "person",
+        Places: "place",
+        Things: "thing"
+      };
+
+      for (const folderName of noteFolders) {
+        const notesFolder = fileMap.get(folderName);
+        if (!notesFolder?.id || notesFolder.mimeType !== "application/vnd.google-apps.folder") {
+          continue;
+        }
+
+        try {
+          const notesFiles = await listAllDriveFiles(notesFolder.id);
+          const noteFiles = notesFiles.filter(
+            (f) => (f.mimeType === "text/plain" || f.mimeType === "text/markdown") && !f.trashed
+          );
+
+          // Load ordering metadata
+          let noteOrder: string[] = [];
+          const orderFile = notesFiles.find((f) => f.name === "_order.json" && f.id);
+          if (orderFile?.id) {
+            try {
+              const orderResponse = await apiClient.readDriveFile({ fileId: orderFile.id });
+              const parsed = JSON.parse(orderResponse.content || "{}") as { order?: unknown };
+              if (Array.isArray(parsed.order)) {
+                noteOrder = parsed.order.filter((id): id is string => typeof id === "string");
+              }
+            } catch (error) {
+              console.warn(`Failed to read notes order for ${folderName}:`, error);
+            }
+          }
+
+          // Load note content for this folder
+          const folderNotes: Note[] = [];
+          for (const file of noteFiles) {
+            if (!file.id || !file.name) continue;
+
+            try {
+              const contentResponse = await apiClient.readDriveFile({ fileId: file.id });
+              const noteName = file.name.replace(/\.txt$/, "").replace(/\.md$/, "");
+              const kind = noteKindMap[folderName] ?? "person";
+
+              // Determine order
+              const orderIndex = noteOrder.indexOf(file.id);
+              const noteOrderValue = orderIndex !== -1 ? orderIndex : folderNotes.length;
+
+              folderNotes.push({
+                id: file.id,
+                storyId,
+                kind,
+                order: noteOrderValue,
+                content: contentResponse.content || "",
+                driveFileId: file.id,
+                updatedAt: file.modifiedTime || nowIso
+              });
+            } catch (error) {
+              console.error(`Error reading note file ${file.id}:`, error);
+            }
+          }
+
+          // Sort notes by order within this folder
+          if (noteOrder.length > 0) {
+            const orderMap = new Map<string, number>();
+            noteOrder.forEach((id, index) => {
+              orderMap.set(id, index);
+            });
+            folderNotes.sort((a, b) => {
+              const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : Number.MAX_SAFE_INTEGER;
+              const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : Number.MAX_SAFE_INTEGER;
+              if (indexA !== indexB) {
+                return indexA - indexB;
+              }
+              return a.order - b.order;
+            });
+          } else {
+            // Sort by name if no order file
+            folderNotes.sort((a, b) => {
+              const nameA = a.content.split("\n")[0] || a.id;
+              const nameB = b.content.split("\n")[0] || b.id;
+              return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+            });
+          }
+
+          notes.push(...folderNotes);
+        } catch (error) {
+          console.warn(`Failed to load notes from ${folderName} folder:`, error);
+        }
+      }
+
       return {
         stories: [story],
         chapters,
-        snippets: snippetsSorted
+        snippets: snippetsSorted,
+        notes
       };
     } catch (error) {
       console.warn(`[DriveClient] Falling back to local sample story for ${storyId}.`, error);

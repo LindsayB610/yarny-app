@@ -3,18 +3,15 @@ import { useEffect, useState } from "react";
 
 import type { ConflictModalState } from "./types";
 import { useConflictDetection } from "../../../hooks/useConflictDetection";
-import type { useYarnyStore } from "../../../store/provider";
-import type { selectActiveSnippet, selectActiveStory } from "../../../store/selectors";
+import type { Snippet, Story } from "../../../store/types";
 
-type StoryType = ReturnType<typeof useYarnyStore<typeof selectActiveStory>>;
-type SnippetType = ReturnType<typeof useYarnyStore<typeof selectActiveSnippet>>;
-type ChapterType = { driveFolderId?: string };
+type ChapterType = { driveFolderId?: string } | undefined;
 
 export function useConflictDetectionHook(
-  story: StoryType,
+  story: Story | undefined,
   editor: Editor | null,
   isEditorOpen: boolean,
-  activeSnippet: SnippetType,
+  activeSnippet: Snippet | undefined,
   activeChapter: ChapterType,
   editorContent: string
 ) {

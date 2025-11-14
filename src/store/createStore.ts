@@ -1,7 +1,7 @@
 import { immer } from "zustand/middleware/immer";
 import { createStore } from "zustand/vanilla";
 
-import type { Chapter, EntityId, NormalizedPayload, YarnyStore } from "./types";
+import type { Chapter, EntityId, NormalizedPayload, Note, YarnyStore } from "./types";
 import type { YarnyState } from "./types";
 
 const createDefaultState = (): YarnyState => ({
@@ -11,11 +11,14 @@ const createDefaultState = (): YarnyState => ({
     stories: {},
     storyOrder: [],
     chapters: {},
-    snippets: {}
+    snippets: {},
+    notes: {}
   },
   ui: {
     selectedProjectId: undefined,
     activeStoryId: undefined,
+    activeContentId: undefined,
+    activeContentType: undefined,
     activeSnippetId: undefined,
     activeNote: undefined,
     isSyncing: false,
@@ -94,16 +97,44 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
         });
       },
       selectStory(storyId) {
-        console.log("[Store] selectStory called:", storyId, "current:", baseState.ui.activeStoryId, new Error().stack?.split("\n")[2]?.trim());
         set((draft) => {
           draft.ui.activeStoryId = storyId;
+          draft.ui.activeContentId = undefined;
+          draft.ui.activeContentType = undefined;
           draft.ui.activeSnippetId = undefined;
           draft.ui.activeNote = undefined;
+        });
+      },
+      selectContent(contentId, contentType) {
+        set((draft) => {
+          draft.ui.activeContentId = contentId;
+          draft.ui.activeContentType = contentType;
+          if (contentType === "snippet") {
+            draft.ui.activeSnippetId = contentId;
+            draft.ui.activeNote = undefined;
+          } else if (contentType === "note") {
+            draft.ui.activeSnippetId = undefined;
+            // Note: activeNote structure will be deprecated, but keeping for compatibility
+            const note = draft.entities.notes[contentId ?? ""];
+            if (note) {
+              const noteTypeMap: Record<string, "people" | "places" | "things"> = {
+                person: "people",
+                place: "places",
+                thing: "things"
+              };
+              draft.ui.activeNote = {
+                id: contentId ?? "",
+                type: noteTypeMap[note.kind] ?? "people"
+              };
+            }
+          }
         });
       },
       selectSnippet(snippetId) {
         set((draft) => {
           draft.ui.activeSnippetId = snippetId;
+          draft.ui.activeContentId = snippetId;
+          draft.ui.activeContentType = "snippet";
           if (snippetId) {
             draft.ui.activeNote = undefined;
           }
@@ -113,7 +144,12 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
         set((draft) => {
           draft.ui.activeNote = selection;
           if (selection) {
+            draft.ui.activeContentId = selection.id;
+            draft.ui.activeContentType = "note";
             draft.ui.activeSnippetId = undefined;
+          } else {
+            draft.ui.activeContentId = undefined;
+            draft.ui.activeContentType = undefined;
           }
         });
       },
@@ -194,6 +230,13 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
               );
             }
           });
+
+          payload.notes?.forEach((note) => {
+            const existing = draft.entities.notes[note.id];
+            if (!existing || isIncomingNewerOrEqual(existing.updatedAt, note.updatedAt)) {
+              draft.entities.notes[note.id] = note;
+            }
+          });
         });
       },
       removeChapter(chapterId) {
@@ -236,6 +279,22 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
           delete draft.entities.snippets[snippetId];
           if (draft.ui.activeSnippetId === snippetId) {
             draft.ui.activeSnippetId = undefined;
+          }
+          if (draft.ui.activeContentId === snippetId && draft.ui.activeContentType === "snippet") {
+            draft.ui.activeContentId = undefined;
+            draft.ui.activeContentType = undefined;
+          }
+        });
+      },
+      removeNote(noteId) {
+        set((draft) => {
+          delete draft.entities.notes[noteId];
+          if (draft.ui.activeNote?.id === noteId) {
+            draft.ui.activeNote = undefined;
+          }
+          if (draft.ui.activeContentId === noteId && draft.ui.activeContentType === "note") {
+            draft.ui.activeContentId = undefined;
+            draft.ui.activeContentType = undefined;
           }
         });
       },
