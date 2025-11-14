@@ -162,7 +162,7 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />);
     
     await waitFor(() => {
-      expect(screen.getByText(/continue as local dev user/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /continue as local dev user/i })).toBeInTheDocument();
     });
     
     expect(screen.getByText(/local bypass active/i)).toBeInTheDocument();
@@ -199,10 +199,10 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />);
     
     await waitFor(() => {
-      expect(screen.getByText(/continue as local dev user/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /continue as local dev user/i })).toBeInTheDocument();
     });
     
-    const button = screen.getByText(/continue as local dev user/i);
+    const button = screen.getByRole('button', { name: /continue as local dev user/i });
     await userEvent.click(button);
     
     await waitFor(() => {
@@ -238,10 +238,10 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />);
     
     await waitFor(() => {
-      expect(screen.getByText(/continue as local dev user/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /continue as local dev user/i })).toBeInTheDocument();
     });
     
-    const button = screen.getByText(/continue as local dev user/i);
+    const button = screen.getByRole('button', { name: /continue as local dev user/i });
     await userEvent.click(button);
     
     await waitFor(() => {
