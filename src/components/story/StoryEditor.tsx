@@ -197,6 +197,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   const previousActiveSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastLoadedSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastAppliedContentRef = useRef<string>("");
+  const isSettingContentRef = useRef(false);
 
   // Track story/snippet switches for performance metrics
   useEffect(() => {
@@ -240,6 +241,8 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     }
 
     // Set content from the snippet
+    // Use ref to prevent update handler from triggering store updates during programmatic setContent
+    isSettingContentRef.current = true;
     const newDocument = buildPlainTextDocument(activeSnippet?.content ?? "");
     editor.commands.setContent(newDocument, false, {
       preserveWhitespace: true
@@ -248,6 +251,11 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     // Update tracking refs
     lastAppliedContentRef.current = activeSnippet?.content ?? "";
     lastLoadedSnippetIdRef.current = activeSnippetId;
+    
+    // Reset flag after a microtask to allow any synchronous update events to be ignored
+    Promise.resolve().then(() => {
+      isSettingContentRef.current = false;
+    });
 
     // Focus the editor after content is set
     // Use requestAnimationFrame to ensure DOM is updated, then focus
@@ -341,6 +349,11 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
     const handleUpdate = () => {
       if (!activeSnippet) {
+        return;
+      }
+
+      // Ignore update events when we're programmatically setting content
+      if (isSettingContentRef.current) {
         return;
       }
 
@@ -557,8 +570,13 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
             // Use Drive content - it's already in the conflict object
             const driveContent = conflictModal.conflict.driveContent;
             if (editor && driveContent && activeSnippet) {
+              // Prevent update handler from triggering during programmatic setContent
+              isSettingContentRef.current = true;
               const driveDocument = buildPlainTextDocument(driveContent);
               editor.commands.setContent(driveDocument);
+              Promise.resolve().then(() => {
+                isSettingContentRef.current = false;
+              });
               const now = new Date().toISOString();
               upsertEntities({
                 snippets: [
