@@ -1041,11 +1041,12 @@ export function DocsPage(): JSX.Element {
         </Stack>
         </Box>
       </Box>
+      </Box>
 
       {/* Footer matching legacy docs footer - spans full page width including sidebar */}
-    <Box
-      component="footer"
-      sx={{
+      <Box
+        component="footer"
+        sx={{
         position: { md: "fixed" },
         bottom: 0,
         left: 0,
@@ -1175,6 +1176,7 @@ export function DocsPage(): JSX.Element {
             </Link>
           )}
         </Stack>
+      </Box>
       </Box>
     </Fragment>
   );
