@@ -14,7 +14,6 @@ import type { Note, Snippet } from "../../../store/types";
 import { ConflictResolutionModal } from "../ConflictResolutionModal";
 import { EditorContentArea } from "./EditorContentArea";
 import { EditorHeader } from "./EditorHeader";
-import { EditorSkeleton } from "./EditorSkeleton";
 import { EmptyState } from "./EmptyState";
 import type { StoryEditorProps } from "./types";
 import { useAutoSaveConfig } from "./useAutoSaveConfig";
@@ -153,7 +152,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   );
 
   if (isLoading) {
-    return <EditorSkeleton />;
+    return <EmptyState variant="loading" />;
   }
 
   if (!story) {
