@@ -57,10 +57,15 @@ export function setupSyncMessageHandler() {
   navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data?.type === "GET_QUEUED_SYNCS") {
       const syncs = readQueuedSyncs();
-      event.ports[0]?.postMessage({
-        type: "QUEUED_SYNCS_RESPONSE",
-        syncs
-      });
+      const requestId = event.data.requestId;
+      // Respond via postMessage to the service worker
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "QUEUED_SYNCS_RESPONSE",
+          requestId,
+          syncs
+        });
+      }
     } else if (event.data?.type === "CLEAR_QUEUED_SYNCS") {
       clearQueuedSyncs(event.data.ids || []);
     }

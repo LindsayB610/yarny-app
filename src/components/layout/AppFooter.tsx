@@ -16,7 +16,6 @@ type FooterLink =
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: "User Guide", to: "/docs" },
-  { label: "Testing Workbook", href: "/migration-plan/testing-workbook.html" }
 ];
 
 export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JSX.Element {

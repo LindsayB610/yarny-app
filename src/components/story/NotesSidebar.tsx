@@ -264,13 +264,14 @@ function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteIte
       </ListItemIcon>
       <ListItemText
         primary={
-          <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+          <Typography component="span" variant="subtitle2" sx={{ fontWeight: 500 }}>
             {note.name}
           </Typography>
         }
         secondary={
-          <Box>
+          <>
             <Typography
+              component="span"
               variant="body2"
               color="text.secondary"
               sx={{
@@ -284,10 +285,10 @@ function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteIte
             >
               {note.content || "(empty)"}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
               {new Date(note.modifiedTime).toLocaleDateString()}
             </Typography>
-          </Box>
+          </>
         }
       />
     </ListItem>

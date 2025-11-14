@@ -29,73 +29,71 @@ function RedirectToStories(): JSX.Element {
   return <Navigate to={cleanPath} replace />;
 }
 
-export const router = createBrowserRouter(
-  [
-    {
-      path: "/login",
-      element: <LoginPage />,
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/docs",
-      element: <DocsPage />,
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/docs.html",
-      element: <DocsPage />,
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/",
-      element: (
-        <ProtectedRoute>
-          <RedirectToStories />
-        </ProtectedRoute>
-      ),
-      errorElement: <RouteErrorBoundary />,
-      // Note: React Router v6.4+ handles loading states via Suspense
-      // We'll wrap routes in Suspense in App.tsx
-      // RedirectToStories explicitly strips drive_auth_error/success params
-    },
-    {
-      path: "/stories",
-      element: (
-        <ProtectedRoute>
-          <StoriesPage />
-        </ProtectedRoute>
-      ),
-      loader: () => storiesLoader(queryClient),
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/editor",
-      element: (
-        <ProtectedRoute>
-          <AppLayout />
-        </ProtectedRoute>
-      ),
-      loader: () => editorLoader(queryClient),
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/settings",
-      element: (
-        <ProtectedRoute>
-          <Navigate to="/settings/storage" replace />
-        </ProtectedRoute>
-      ),
-      errorElement: <RouteErrorBoundary />
-    },
-    {
-      path: "/settings/storage",
-      element: (
-        <ProtectedRoute>
-          <SettingsPage />
-        </ProtectedRoute>
-      ),
-      errorElement: <RouteErrorBoundary />
-    }
-  ]
-);
+export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginPage />,
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/docs",
+    element: <DocsPage />,
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/docs.html",
+    element: <DocsPage />,
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/",
+    element: (
+      <ProtectedRoute>
+        <RedirectToStories />
+      </ProtectedRoute>
+    ),
+    errorElement: <RouteErrorBoundary />,
+    // Note: React Router v6.4+ handles loading states via Suspense
+    // We'll wrap routes in Suspense in App.tsx
+    // RedirectToStories explicitly strips drive_auth_error/success params
+  },
+  {
+    path: "/stories",
+    element: (
+      <ProtectedRoute>
+        <StoriesPage />
+      </ProtectedRoute>
+    ),
+    loader: () => storiesLoader(queryClient),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/editor",
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
+    loader: () => editorLoader(queryClient),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <Navigate to="/settings/storage" replace />
+      </ProtectedRoute>
+    ),
+    errorElement: <RouteErrorBoundary />
+  },
+  {
+    path: "/settings/storage",
+    element: (
+      <ProtectedRoute>
+        <SettingsPage />
+      </ProtectedRoute>
+    ),
+    errorElement: <RouteErrorBoundary />
+  }
+]);
 

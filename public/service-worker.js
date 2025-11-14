@@ -25,6 +25,22 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Message handler map for pending requests
+const pendingRequests = new Map();
+
+// Handle messages from main thread (registered at top level - required by service worker spec)
+self.addEventListener("message", (event) => {
+  const { type, requestId, syncs } = event.data || {};
+  
+  if (type === "QUEUED_SYNCS_RESPONSE" && requestId) {
+    const resolve = pendingRequests.get(requestId);
+    if (resolve) {
+      pendingRequests.delete(requestId);
+      resolve(syncs || []);
+    }
+  }
+});
+
 // Background sync event - sync JSON to Google Docs
 self.addEventListener("sync", (event) => {
   if (event.tag === SYNC_TAG) {
@@ -42,23 +58,21 @@ async function getQueuedSyncs() {
         return;
       }
 
+      // Generate unique request ID
+      const requestId = `req_${Date.now()}_${Math.random()}`;
+      
+      // Store resolver for this request
+      pendingRequests.set(requestId, resolve);
+
       // Send request to main thread
-      clients[0].postMessage({ type: "GET_QUEUED_SYNCS" });
-
-      // Wait for response
-      const handler = (event) => {
-        if (event.data?.type === "QUEUED_SYNCS_RESPONSE") {
-          self.removeEventListener("message", handler);
-          resolve(event.data.syncs || []);
-        }
-      };
-
-      self.addEventListener("message", handler);
+      clients[0].postMessage({ type: "GET_QUEUED_SYNCS", requestId });
 
       // Timeout after 5 seconds
       setTimeout(() => {
-        self.removeEventListener("message", handler);
-        resolve([]);
+        if (pendingRequests.has(requestId)) {
+          pendingRequests.delete(requestId);
+          resolve([]);
+        }
       }, 5000);
     });
   });
@@ -175,10 +189,29 @@ async function syncSingleJsonToGdoc(sync) {
     });
 
     if (!response.ok) {
-      throw new Error(`Sync failed: ${response.statusText}`);
+      const errorText = await response.text().catch(() => response.statusText);
+      throw new Error(`Sync failed: ${response.status} ${errorText}`);
     }
 
-    const result = await response.json();
+    // Check if response has content before parsing JSON
+    const contentType = response.headers.get("content-type");
+    const text = await response.text();
+    
+    let result;
+    if (!text || text.trim().length === 0) {
+      // Empty response - treat as success (some functions might return empty body)
+      result = { success: true };
+    } else if (contentType && contentType.includes("application/json")) {
+      // Parse JSON only if content-type indicates JSON
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON response: ${parseError.message}`);
+      }
+    } else {
+      // If not JSON, return as text wrapped in an object
+      result = { success: true, message: text };
+    }
 
     // Notify main thread that sync succeeded
     self.clients.matchAll().then((clients) => {
@@ -221,11 +254,4 @@ async function clearQueuedSyncs(ids) {
   });
 }
 
-// Handle messages from main thread
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "GET_QUEUED_SYNCS") {
-    // Request will be handled by main thread via postMessage
-    // Service Worker can't access localStorage directly
-  }
-});
 
