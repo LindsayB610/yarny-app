@@ -63,7 +63,7 @@ During the migration phase these assets are published alongside the React app so
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_ORG/yarny-app.git
+# Clone the repository (replace with your repository URL)
 cd yarny-app
 npm install
 ```

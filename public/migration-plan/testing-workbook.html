@@ -46,20 +46,18 @@
 
         <div class="workbook-intro" id="intro" data-section-anchor>
           <h1>Yarny React Migration · Manual Testing Workbook</h1>
-          <p>This workbook captures the <strong>manual validation</strong> required as we finalize the React migration. Automated suites cover core functionality—these pages focus on scenarios where human judgment, visual inspection, and UX feedback are essential.</p>
+          <p>This workbook captures the <strong>manual validation</strong> required as we finalize the React migration. These pages focus on scenarios that require human judgment, visual inspection, and UX feedback.</p>
           <p>Work through the phases in order. Each page clusters related sections so you can stay focused on a single theme without scrolling through thousands of lines.</p>
-          <div class="note-box" style="margin-top: var(--space-lg);">
-            <p><strong>Automated Coverage:</strong> Playwright and React Testing Library handle authentication, CRUD flows, search, export, conflict resolution, and regression checks in CI/CD. Use this workbook to capture qualitative or edge-case findings.</p>
-            <p><strong>React E2E Updates:</strong> Helpers in <code>tests/utils/react-app-helpers.ts</code> support updated specs (see <code>tests/e2e/conflict-resolution-react.spec.ts</code>). Some suites are still being ported—follow the manual instructions called out in later phases.</p>
-          </div>
           <div class="note-box" style="margin-top: var(--space-lg); background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E;">
-            <p><strong>Phase 5 Infrastructure Snapshot:</strong></p>
+            <p><strong>JSON Primary Architecture (✅ Complete):</strong></p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li>✅ <strong>React helpers:</strong> Normalized payload mocks, navigation helpers, story selection utilities.</li>
-              <li>✅ <strong>Drive sync parity:</strong> Snippet auto-save, conflict resolution, and cross-chapter moves now persist to Google Docs.</li>
-              <li>⏳ <strong>Remaining work:</strong> Update color-coding and goals specs; track progress on the phase-specific pages.</li>
+              <li>✅ <strong>Fast saves:</strong> Snippet content saves to JSON files first (<50ms), then syncs to Google Docs in the background.</li>
+              <li>✅ <strong>Background sync:</strong> Service Worker + Background Sync API ensures changes persist even if the page is closed.</li>
+              <li>✅ <strong>Conflict detection:</strong> Automatically detects when Google Docs are modified externally and prompts for resolution.</li>
+              <li>✅ <strong>Sync status:</strong> Editor footer shows sync status indicator (Synced/Syncing/Pending/Failed).</li>
+              <li>✅ <strong>Migration system:</strong> One-time migration of existing stories from Google Docs to JSON files.</li>
             </ul>
-            <p style="margin-top: var(--space-md);"><strong>Manual checkpoint:</strong> With Drive-backed flows restored, use Phase 4 and Phase 5 to run the full smoke steps in the React app at <code>/editor</code>.</p>
+            <p style="margin-top: var(--space-md);"><strong>Testing note:</strong> When testing save operations, verify that saves complete quickly (<50ms) and check the sync status indicator to confirm background sync to Google Docs is working.</p>
           </div>
           <div class="note-box" style="margin-top: var(--space-lg);">
             <p><strong>Shared Test Corpus:</strong> Use the Yarny Test Corpus (small / medium / large) on Google Drive. Start with <em>test-small</em> for sanity checks, then expand to medium and large when validating performance and sync behavior.</p>

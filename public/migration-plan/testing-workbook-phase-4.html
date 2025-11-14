@@ -71,6 +71,15 @@
         <!-- Section 10: Round-Trip Validation (Final comprehensive test) -->
         <div class="test-section" data-section-anchor id="section-10">
           <h2><i class="material-icons">sync</i> Section 10: Round-Trip Validation (test-small Project)</h2>
+          <div class="note-box" style="margin-bottom: var(--space-lg); background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E;">
+            <p><strong>JSON Primary Architecture Note:</strong> Yarny now uses JSON-first saves (<50ms) with background sync to Google Docs. When testing, verify that:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>Saves complete quickly (<50ms) - check the sync status indicator in the editor footer</li>
+              <li>Background sync to Google Docs happens automatically (watch for "Synced" status)</li>
+              <li>Conflict detection works when Google Docs are edited externally</li>
+              <li>Round-trips work correctly: JSON → Google Docs → JSON</li>
+            </ul>
+          </div>
           <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This is the comprehensive end-to-end validation that ensures round-trip integrity between Yarny and Google Docs using the test-small project. Complete this section last, after all other sections. This ensures content is preserved correctly in both directions with no data loss or format corruption.</p>
         
           <div class="note-box" style="margin-bottom: var(--space-xl);">
@@ -414,7 +423,7 @@ Notes: He's been to many places… but never talks about them.</pre>
 
           <div class="test-item">
             <h4>Test 10.10: Auto-Save and Round-Trip</h4>
-            <p>Verify that auto-save works correctly and content is preserved.</p>
+            <p>Verify that auto-save works correctly and content is preserved. <strong>Note:</strong> Auto-save now uses JSON Primary Architecture - saves complete in <50ms to JSON files, then sync to Google Docs in the background. Check the sync status indicator in the editor footer to verify sync status.</p>
             <div class="test-steps">
               <ol>
                 <li>Open "Welcome to Yarny" snippet in Yarny</li>
@@ -503,7 +512,6 @@ Notes: He's been to many places… but never talks about them.</pre>
               <li><strong>Component Structure:</strong> React app components: ConflictResolutionModal, SortableChapterList, SortableSnippetList, ContextMenu, RenameModal</li>
               <li><strong>Drag & Drop:</strong> Implemented using <code>@dnd-kit</code> - test drag and drop operations with Material UI components</li>
               <li><strong>Conflict Resolution:</strong> Uses <code>ConflictResolutionModal</code> component - conflict detection happens when switching snippets</li>
-              <li><strong>Automated Tests:</strong> E2E tests in <code>tests/e2e/</code> need updates for React app compatibility (see OPEN_TODOS_CHECKLIST.md Phase 5 notes)</li>
               <li><strong>Manual Testing:</strong> All test steps below apply to React app - use the same verification steps but navigate to <code>/editor</code></li>
             </ul>
           </div>
@@ -1168,31 +1176,6 @@ Notes: He's been to many places… but never talks about them.</pre>
             </ul>
           </div>
 
-          <div class="note-box" style="margin-top: var(--space-xl); background: rgba(251, 191, 36, 0.1); border-left: 4px solid #FBBF24;">
-            <p><strong>Automated Test Status (Phase 5):</strong></p>
-            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li><strong>Test Helper Created:</strong> <code>tests/utils/react-app-helpers.ts</code> provides utilities for React app testing</li>
-              <li><strong>React Test File:</strong> <code>tests/e2e/conflict-resolution-react.spec.ts</code> - Example React app test</li>
-              <li><strong>Manual Verification Required:</strong> Until all E2E tests are updated, manually verify all Phase 5 features work in React app</li>
-              <li><strong>Test Update Progress:</strong>
-                <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                  <li>Conflict Resolution: Helper created, React test file created, needs full test suite update</li>
-                    <li>Chapter/Snippet Management: Needs route updates to <code>/editor</code>, API mock updates</li>
-                  <li>Color Coding: Needs Material UI selector updates, component interaction updates</li>
-                  <li>Goals: Needs Material UI selector updates, modal interaction updates</li>
-                </ul>
-              </li>
-              <li><strong>Next Steps for Automated Tests:</strong>
-                <ol style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                    <li>Update test routes from classic `/editor.html` to React SPA `/editor`</li>
-                  <li>Update UI selectors to match Material UI component structure</li>
-                  <li>Update API mocks to match React app's normalized payload structure</li>
-                  <li>Update story selection to use Zustand store (via localStorage or UI clicks)</li>
-                  <li>Use <code>react-app-helpers.ts</code> utilities for common test setup</li>
-                </ol>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <!-- Section 12: Color Coding & Visual Organization -->

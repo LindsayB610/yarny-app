@@ -638,7 +638,6 @@
         </div>
       </div>
 
-        <!-- Note: Authentication and Story Management tests are fully automated -->
         <!-- 
           Logical Testing Order (sections are now numbered in this order):
           1. Section 0: Test Corpus Setup (prerequisite)
@@ -694,7 +693,6 @@
               <li>Verify linting executes without fatal errors</li>
               <li>Fix any critical linting errors (warnings are acceptable)</li>
               <li>Run <code>npm run test</code></li>
-              <li>Verify the default Vitest suite passes</li>
               <li>Note any test failures that need to be addressed</li>
             </ol>
           </div>
@@ -721,7 +719,6 @@
                   <li>Verify <code>VITE_TEST_CORPUS_FOLDER_ID</code> is set (if using test corpus)</li>
                 </ul>
               </li>
-              <li>Run <code>netlify deploy --build</code> (or verify CI/CD deployment)</li>
               <li>Verify deployment completes successfully</li>
               <li>Verify the deployed site loads correctly</li>
             </ol>

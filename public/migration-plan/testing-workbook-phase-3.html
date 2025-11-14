@@ -738,7 +738,7 @@
             <textarea style="width: 100%; min-height: 120px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record contrast ratios for all 12 colors. Format: Color | Background | Contrast Ratio | Pass/Fail&#10;Example:&#10;Red | Dark Sidebar | 4.8:1 | PASS&#10;Yellow | Dark Sidebar | 2.1:1 | FAIL"></textarea>
           </div>
           <div class="note-box" style="margin-top: var(--space-md);">
-            <p><strong>Automated Contrast Checker Utility:</strong> You can also run the contrast checker utility programmatically:</p>
+            <p><strong>Contrast Checker Utility:</strong> You can use the contrast checker utility to help verify contrast ratios:</p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
               <li>Open browser DevTools console on the Yarny editor page</li>
               <li>Get actual background colors from the UI using DevTools inspector</li>
@@ -939,7 +939,7 @@
 
             <h5 style="color: rgba(255, 255, 255, 0.95); margin-top: var(--space-xl); margin-bottom: var(--space-md);">8. Testing Tools & Validation</h5>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li>[ ] <strong>Automated testing tools run</strong> - axe DevTools, WAVE, or similar tools run with no critical issues</li>
+              <li>[ ] <strong>Accessibility testing tools run</strong> - axe DevTools, WAVE, or similar tools run with no critical issues</li>
               <li>[ ] <strong>Manual keyboard testing completed</strong> - Full workflow tested with keyboard only (no mouse)</li>
               <li>[ ] <strong>Screen reader testing completed</strong> - Tested with VoiceOver (macOS) or NVDA/JAWS (Windows)</li>
               <li>[ ] <strong>Contrast checker run</strong> - All colors checked with contrast checker tool against actual backgrounds</li>
@@ -961,7 +961,7 @@
               <li><strong>ARIA Labels & Semantic HTML:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
               <li><strong>Error Handling & Feedback:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
               <li><strong>Responsive Design & Zoom:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
-              <li><strong>Automated Testing Tools:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Accessibility Testing Tools:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
             </ul>
             <p style="margin-top: var(--space-md);"><strong>Overall Accessibility Status:</strong> [ ] ✅ PASS (All items pass) / [ ] ❌ FAIL (Blocking issues found)</p>
             <p style="margin-top: var(--space-sm);"><strong>Note:</strong> All accessibility tests must pass before production release. Keyboard-only completion of core tasks is a critical success criteria. This checklist is based on WCAG 2.1 Level AA standards.</p>

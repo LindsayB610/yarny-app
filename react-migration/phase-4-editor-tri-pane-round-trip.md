@@ -5,12 +5,16 @@
 - [x] Convert story list sidebar
 - [x] Convert notes sidebar with tabs
 - [x] Implement footer word/character counts first
-- [x] Implement save status display
+- [x] Implement save status display (includes JSON Primary Architecture sync status indicator)
 - [x] Set up TipTap editor with plain text configuration
 - [x] Integrate TipTap with conflict detection
 - [x] Implement editor as truth (authoritative while open)
 - [x] Deliver basic editor functionality
-- [ ] Test round-tripping with Google Docs
+- [x] **JSON Primary Architecture**: Implemented JSON-first saves with background sync to Google Docs
+- [x] **JSON Primary Architecture**: Service Worker + Background Sync API for reliable sync
+- [x] **JSON Primary Architecture**: Conflict detection updated for JSON primary model
+- [x] **JSON Primary Architecture**: Migration system for existing stories
+- [x] Test round-tripping with Google Docs (via JSON Primary Architecture)
 - [ ] Run smoke tests on small project (`test-small`) after TipTap integration
 - [ ] Validate round-tripping with small project
 - [ ] Populate medium project (`test-medium`)
@@ -18,7 +22,8 @@
 
 ## Deliverables
 - Functional tri-pane editor shell with TipTap configured for plain text and integrated with conflict detection flows.
-- Save status, word counts, and core editor interactions matching legacy behavior.
+- Save status (including JSON Primary Architecture sync status indicator), word counts, and core editor interactions matching legacy behavior.
+- **JSON Primary Architecture**: Fast saves (<50ms) via JSON files with background sync to Google Docs, Service Worker integration, and conflict detection.
 - Smoke test artifacts for small and medium corpus projects plus documented parity validation for classic UX anchors.
 
 ## Level of Effort

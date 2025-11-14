@@ -653,140 +653,21 @@
         <!-- Section 18: Visual Regression Testing -->
         <div class="test-section" data-section-anchor id="section-18">
           <h2><i class="material-icons">compare</i> Section 18: Visual Regression Testing</h2>
-          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This section covers automated visual regression tests that compare the React app against the legacy app using pixel-diff comparison. These tests ensure visual parity between the two implementations.</p>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This section covers manual visual comparison between the React app and the legacy app to ensure visual parity. Perform side-by-side comparisons of key UI elements and document any differences.</p>
 
           <div class="note-box" style="margin-bottom: var(--space-xl);">
             <p><strong>Prerequisites:</strong></p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li>React app must be deployed to <code>/react</code> path</li>
-              <li>Legacy app must be accessible at root path</li>
-              <li>Both apps must have the same test data loaded</li>
-              <li>Development server running (<code>npm run dev</code>)</li>
+              <li>React app accessible at <code>/editor</code> and <code>/stories</code></li>
+              <li>Legacy app accessible at <code>/editor.html</code> and <code>/stories.html</code> (if still available)</li>
+              <li>Both apps have the same test data loaded</li>
+              <li>Browser windows side-by-side for comparison</li>
             </ul>
           </div>
 
           <div class="test-item">
-            <h4>Test 18.1: Run Automated Visual Regression Tests</h4>
-            <p>Execute the automated visual regression test suite that compares React and legacy apps using pixel-diff comparison.</p>
-            <div class="test-steps">
-              <ol>
-                <li>Open terminal in the project root directory</li>
-                <li>Ensure development server is running: <code>npm run dev</code></li>
-                <li>Run the visual regression tests: <code>npm run test:e2e -- tests/e2e/visual-regression.spec.ts</code></li>
-                <li><strong>Verify:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Tests execute successfully</li>
-                    <li>Screenshots are captured for both React and legacy apps</li>
-                    <li>Diff images are generated in <code>test-results/visual-regression/</code></li>
-                    <li>Test results show pixel difference percentages</li>
-                  </ul>
-                </li>
-                <li>Review test output for any failures or warnings</li>
-              </ol>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="test-18-1" name="test-18-1">
-              <label for="test-18-1">Automated visual regression tests executed successfully</label>
-            </div>
-            <div class="note-box" style="margin-top: var(--space-md);">
-              <p><strong>Expected Test Results:</strong></p>
-              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-                <li><strong>Goal Meter:</strong> Diff percentage ≤ 5%</li>
-                <li><strong>Today Chip:</strong> Diff percentage ≤ 5%</li>
-                <li><strong>Footer Counts:</strong> Diff percentage ≤ 5%</li>
-                <li><strong>Stories Page:</strong> Diff percentage ≤ 10% (full page)</li>
-                <li><strong>Editor Layout:</strong> Diff percentage ≤ 10% (full page)</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="test-item">
-            <h4>Test 18.2: Review Screenshots and Diff Images</h4>
-            <p>Manually review the captured screenshots and generated diff images to verify visual parity and identify any visual differences.</p>
-            <div class="test-steps">
-              <ol>
-                <li>Navigate to <code>test-results/visual-regression/</code> directory</li>
-                <li>Review React app screenshots:
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li><code>react-goal-meter.png</code></li>
-                    <li><code>react-today-chip.png</code></li>
-                    <li><code>react-footer.png</code></li>
-                    <li><code>react-stories-page.png</code></li>
-                    <li><code>react-editor.png</code></li>
-                  </ul>
-                </li>
-                <li>Review legacy app screenshots:
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li><code>legacy-goal-meter.png</code></li>
-                    <li><code>legacy-today-chip.png</code></li>
-                    <li><code>legacy-footer.png</code></li>
-                    <li><code>legacy-stories-page.png</code></li>
-                    <li><code>legacy-editor.png</code></li>
-                  </ul>
-                </li>
-                <li>Review diff images (red/blue pixels indicate differences):
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li><code>diff-goal-meter.png</code></li>
-                    <li><code>diff-today-chip.png</code></li>
-                    <li><code>diff-footer.png</code></li>
-                    <li><code>diff-stories-page.png</code></li>
-                    <li><code>diff-editor.png</code></li>
-                  </ul>
-                </li>
-                <li><strong>Verify:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Diff images show minimal differences (mostly red/blue pixels in non-critical areas)</li>
-                    <li>No major layout shifts or missing elements</li>
-                    <li>Colors, fonts, and spacing match between React and legacy apps</li>
-                    <li>Any differences are acceptable (document if not)</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="test-18-2" name="test-18-2">
-              <label for="test-18-2">Screenshots and diff images reviewed, visual parity verified</label>
-            </div>
-            <div class="note-box" style="margin-top: var(--space-md);">
-              <p><strong>Notes:</strong> Document any significant visual differences found. Red/blue pixels in diff images indicate where React and legacy apps differ. Minor differences in anti-aliasing or sub-pixel rendering are acceptable.</p>
-              <textarea style="width: 100%; min-height: 80px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: var(--space-sm);" placeholder="Document any visual differences found..."></textarea>
-            </div>
-          </div>
-
-          <div class="test-item">
-            <h4>Test 18.3: Verify Pixel-Diff Comparison Accuracy</h4>
-            <p>Verify that the pixel-diff comparison is working correctly and accurately detecting visual differences.</p>
-            <div class="test-steps">
-              <ol>
-                <li>Run visual regression tests: <code>npm run test:e2e -- tests/e2e/visual-regression.spec.ts</code></li>
-                <li>Check test output for pixel difference statistics:
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Diff pixels count</li>
-                    <li>Diff percentage</li>
-                    <li>Test pass/fail status</li>
-                  </ul>
-                </li>
-                <li><strong>Verify:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Tests report accurate pixel difference counts</li>
-                    <li>Diff percentages are calculated correctly</li>
-                    <li>Tests fail when differences exceed threshold (5% for components, 10% for full pages)</li>
-                    <li>Diff images are generated for all comparisons</li>
-                  </ul>
-                </li>
-                <li>If tests fail, review diff images to understand why</li>
-                <li>If differences are acceptable, adjust thresholds or fix visual issues</li>
-              </ol>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="test-18-3" name="test-18-3">
-              <label for="test-18-3">Pixel-diff comparison verified to be working correctly</label>
-            </div>
-          </div>
-
-          <div class="test-item">
-            <h4>Test 18.4: Side-by-Side Manual Comparison</h4>
-            <p>Perform manual side-by-side comparison of React and legacy apps in the browser to verify visual parity beyond automated tests.</p>
+            <h4>Test 18.1: Side-by-Side Visual Comparison</h4>
+            <p>Perform manual side-by-side comparison of React and legacy apps in the browser to verify visual parity.</p>
             <div class="test-steps">
               <ol>
                 <li>Open two browser windows side-by-side</li>
@@ -803,12 +684,12 @@
                   </ul>
                 </li>
                 <li>Take side-by-side screenshots if differences are found</li>
-                <li>Document any visual differences that automated tests might have missed</li>
+                <li>Document any visual differences found</li>
               </ol>
             </div>
             <div class="checkbox-container">
-              <input type="checkbox" id="test-18-4" name="test-18-4">
-              <label for="test-18-4">Side-by-side manual comparison completed, visual parity verified</label>
+              <input type="checkbox" id="test-18-1" name="test-18-1">
+              <label for="test-18-1">Side-by-side visual comparison completed, differences documented</label>
             </div>
             <div class="note-box" style="margin-top: var(--space-md);">
               <p><strong>Notes:</strong> Document any visual differences found during manual comparison. Include screenshots if significant differences are observed.</p>
@@ -816,156 +697,14 @@
             </div>
           </div>
 
-          <div class="test-item">
-            <h4>Test 18.5: Fix Visual Differences</h4>
-            <p>If visual regression tests reveal differences exceeding the 5% threshold, fix the visual issues in the React app to match the legacy app.</p>
-            <div class="test-steps">
-              <ol>
-                <li><strong>Review diff images:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Open diff images in <code>test-results/visual-regression/</code></li>
-                    <li>Red/blue pixels indicate where React and legacy apps differ</li>
-                    <li>Identify which components have differences (goal meter, footer, etc.)</li>
-                    <li>Note the type of differences (spacing, colors, fonts, layout)</li>
-                  </ul>
-                </li>
-                <li><strong>Compare side-by-side screenshots:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Open React app screenshot (e.g., <code>react-goal-meter.png</code>)</li>
-                    <li>Open legacy app screenshot (e.g., <code>legacy-goal-meter.png</code>)</li>
-                    <li>Use image viewer to compare side-by-side</li>
-                    <li>Identify specific visual differences (font size, spacing, colors, etc.)</li>
-                  </ul>
-                </li>
-                <li><strong>Inspect React app component styles:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Open React app in browser: <code>http://localhost:5173/editor</code></li>
-                    <li>Use browser dev tools to inspect the component with differences</li>
-                    <li>Check computed styles (font-size, color, margin, padding, etc.)</li>
-                    <li>Compare with legacy app styles (open <code>http://localhost:5173/editor.html</code>)</li>
-                    <li>Note which CSS properties differ</li>
-                  </ul>
-                </li>
-                <li><strong>Fix React component styles:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Locate the React component file (e.g., <code>src/components/story/GoalMeter.tsx</code>)</li>
-                    <li>Update CSS/styling to match legacy app</li>
-                    <li>Common fixes:
-                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
-                        <li>Font sizes: Match exact pixel values (e.g., <code>fontSize: '13px'</code>)</li>
-                        <li>Colors: Match hex values (e.g., <code>color: '#6B7280'</code>)</li>
-                        <li>Spacing: Match margin/padding values (e.g., <code>marginBottom: '12px'</code>)</li>
-                        <li>Layout: Match flexbox/grid properties</li>
-                        <li>Typography: Match font-family, font-weight, line-height</li>
-                      </ul>
-                    </li>
-                    <li>Save changes and verify in browser</li>
-                  </ul>
-                </li>
-                <li><strong>Re-run visual regression tests:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Run: <code>npm run test:e2e -- tests/e2e/visual-regression.spec.ts</code></li>
-                    <li>Check if diff percentage decreased</li>
-                    <li>Verify diff percentage is now ≤ 5% (for components) or ≤ 10% (for full pages)</li>
-                    <li>If still above threshold, repeat steps 3-5</li>
-                  </ul>
-                </li>
-                <li><strong>Document fixes:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Record which components were fixed</li>
-                    <li>Note what changes were made (CSS properties updated)</li>
-                    <li>Document final diff percentages after fixes</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="test-18-5" name="test-18-5">
-              <label for="test-18-5">Visual differences fixed, all tests pass with diff percentage ≤ 5%</label>
-            </div>
-            <div class="note-box" style="margin-top: var(--space-md);">
-              <p><strong>Notes:</strong> Document which components were fixed and what changes were made.</p>
-              <textarea style="width: 100%; min-height: 80px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: var(--space-sm);" placeholder="Document fixes made: component name, CSS properties updated, final diff percentage..."></textarea>
-            </div>
-          </div>
-
-          <div class="test-item">
-            <h4>Test 18.6: Update Visual Regression Baselines</h4>
-            <p>If visual differences are intentional (e.g., design improvements), update the visual regression baselines to reflect the new expected appearance.</p>
-            <div class="test-steps">
-              <ol>
-                <li><strong>Verify differences are intentional:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Review diff images to confirm differences are intentional design changes</li>
-                    <li>Document why the change was made (design improvement, accessibility, etc.)</li>
-                    <li>Get approval if needed (for significant visual changes)</li>
-                    <li>Ensure changes don't break accessibility or usability</li>
-                  </ul>
-                </li>
-                <li><strong>Update Playwright screenshot baselines:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Playwright uses <code>toHaveScreenshot()</code> which automatically updates baselines</li>
-                    <li>To update baselines, run: <code>npm run test:e2e -- tests/e2e/visual-regression.spec.ts -- --update-snapshots</code> (Note: double dashes are required to pass flags to Playwright)</li>
-                    <li>This updates the baseline screenshots in <code>tests/e2e/visual-regression.spec.ts-snapshots/</code></li>
-                    <li>Verify new baseline screenshots match current React app appearance</li>
-                  </ul>
-                </li>
-                <li><strong>Update pixel-diff comparison thresholds (if needed):</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>If intentional changes cause higher diff percentages, adjust thresholds in test file</li>
-                    <li>Open <code>tests/e2e/visual-regression.spec.ts</code></li>
-                    <li>Find <code>maxDiffPercentage</code> constant (line ~174)</li>
-                    <li>Update threshold if needed (default is 5% for components, 10% for full pages)</li>
-                    <li>Document why threshold was changed</li>
-                  </ul>
-                </li>
-                <li><strong>Update legacy app screenshots (if legacy app changed):</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>If legacy app was updated to match React app, update legacy screenshots</li>
-                    <li>Re-run tests to capture new legacy app appearance</li>
-                    <li>Verify both React and legacy screenshots are up to date</li>
-                  </ul>
-                </li>
-                <li><strong>Re-run visual regression tests:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Run: <code>npm run test:e2e -- tests/e2e/visual-regression.spec.ts</code></li>
-                    <li>Verify all tests pass with updated baselines</li>
-                    <li>Check that diff percentages are within acceptable thresholds</li>
-                  </ul>
-                </li>
-                <li><strong>Commit baseline updates:</strong>
-                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
-                    <li>Commit updated baseline screenshots to version control</li>
-                    <li>Include commit message explaining why baselines were updated</li>
-                    <li>Example: <code>git commit -m "Update visual regression baselines for intentional design changes"</code></li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-            <div class="checkbox-container">
-              <input type="checkbox" id="test-18-6" name="test-18-6">
-              <label for="test-18-6">Visual regression baselines updated for intentional changes, all tests pass</label>
-            </div>
-            <div class="note-box" style="margin-top: var(--space-md);">
-              <p><strong>Important:</strong> Only update baselines for intentional design changes. If differences are bugs, fix them instead of updating baselines.</p>
-              <p style="margin-top: var(--space-sm);"><strong>Notes:</strong> Document which baselines were updated and why.</p>
-              <textarea style="width: 100%; min-height: 80px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: var(--space-sm);" placeholder="Document baseline updates: which components changed, why (design improvement, accessibility, etc.), threshold adjustments..."></textarea>
-            </div>
-          </div>
-
           <div class="note-box" style="margin-top: var(--space-2xl);">
             <p><strong>Visual Regression Testing Summary:</strong></p>
             <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
-              <li><strong>Automated Tests Executed:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
-              <li><strong>Screenshots Reviewed:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
-              <li><strong>Diff Images Generated:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
-              <li><strong>Pixel-Diff Comparison Verified:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
               <li><strong>Manual Side-by-Side Comparison:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
-              <li><strong>Visual Differences Fixed:</strong> [ ] ✅ PASS / [ ] ❌ FAIL / [ ] N/A (no differences)</li>
-              <li><strong>Baselines Updated:</strong> [ ] ✅ PASS / [ ] ❌ FAIL / [ ] N/A (no intentional changes)</li>
+              <li><strong>Visual Differences Documented:</strong> [ ] ✅ PASS / [ ] ❌ FAIL / [ ] N/A (no differences)</li>
               <li><strong>Overall Visual Parity:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
             </ul>
-            <p style="margin-top: var(--space-md);"><strong>Note:</strong> Visual regression tests ensure that the React app maintains visual parity with the legacy app. All tests should pass before considering the migration complete.</p>
+            <p style="margin-top: var(--space-md);"><strong>Note:</strong> Visual comparison ensures that the React app maintains visual parity with the legacy app. Document any differences and determine if they are acceptable (e.g., Material UI styling differences are expected).</p>
           </div>
         </div>
 

@@ -323,6 +323,15 @@ export const handlers = [
       name: newName,
       modifiedTime: new Date().toISOString()
     });
+  }),
+
+  // Uptime status endpoint
+  http.get("/.netlify/functions/uptime-status", () => {
+    return HttpResponse.json({
+      status: "up",
+      label: "All Systems Operational",
+      color: "green"
+    });
   })
 ];
 

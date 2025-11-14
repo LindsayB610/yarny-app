@@ -11,7 +11,8 @@
 - [x] Wire word count updates (useWordCount hook and wordCount utilities created)
 - [x] Create conflict detection hooks (`src/hooks/useConflictDetection.ts`)
 - [x] Deliver conflict resolution UI and modal (ConflictResolutionModal component created)
-- [ ] Test cross-edits: edit in Google Docs while Yarny is idle, return and verify conflict detection works
+- [x] **JSON Primary Architecture**: Conflict detection updated for JSON primary model (checks Google Doc modifiedTime, compares content if newer)
+- [ ] Test cross-edits: edit in Google Docs while Yarny is idle, return and verify conflict detection works (with JSON Primary Architecture)
 
 ## Deliverables
 - Library feature parity (drag & drop, context menus, color picker, modal flows) aligned with Material UI customization from Phase 1.
@@ -52,7 +53,7 @@
    - `RenameModal.tsx` - Rename modal for chapters/snippets/stories
 
 ### Hooks Created
-1. **useConflictDetection.ts** - Conflict detection and resolution utilities
+1. **useConflictDetection.ts** - Conflict detection and resolution utilities (updated for JSON Primary Architecture)
 2. **useWordCount.ts** - Word count calculation and update utilities
 
 ### Utilities Created

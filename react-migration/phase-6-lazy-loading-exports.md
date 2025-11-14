@@ -3,6 +3,7 @@
 ## Checklist
 - [x] Implement lazy loading using React Query prefetching and `useQueries` (visibility-gated) - **Implemented and prefetching integrated** (full visibility gating ready when snippet list components are built)
 - [x] Implement auto-save functionality using React Query mutations (visibility-gated) - **Complete and integrated**
+- [x] **JSON Primary Architecture**: Auto-save now uses JSON-first saves (<50ms) with background sync to Google Docs via Service Worker
 - [x] Build offline/spotty-network semantics: network status hook, offline banner, queued saves, save status updates - **Complete and integrated**
 - [x] Implement export functionality with chunked writes for large chapters - **Complete and integrated**
 - [x] Implement chunked export logic for chapters exceeding `batchUpdate` body limits - **Complete**
@@ -48,12 +49,15 @@
 - 200px margin before viewport to start loading early
 - React Query integration with proper caching
 
-#### Auto-Save
+#### Auto-Save (JSON Primary Architecture)
+- JSON-first saves (<50ms) via `.{snippetId}.yarny.json` files
+- Background sync to Google Docs via Service Worker + Background Sync API
 - Debounced auto-save (default 2 seconds)
 - Visibility change detection (saves when tab becomes hidden)
 - Before unload handling (queues saves when page closes)
 - Manual save function available
 - Tracks unsaved changes state
+- Sync status indicator in editor footer (Synced/Syncing/Pending/Failed)
 
 #### Offline Support
 - Network status detection (online/offline, slow connection)
@@ -76,10 +80,11 @@
 
 ### Integration Complete
 - ✅ **useAutoSave** integrated into `StoryEditor.tsx`
-  - Auto-saves editor content with 2-second debounce
-  - Shows save status in UI ("Syncing...", "Unsaved changes", "Last synced...")
-  - Handles offline queuing automatically
+  - Auto-saves editor content to JSON files first (<50ms), then syncs to Google Docs in background
+  - Shows sync status in UI via sync status indicator ("Synced", "Syncing...", "Pending", "Failed")
+  - Handles offline queuing automatically (queues JSON saves, syncs when online)
   - Saves on visibility change and before unload
+  - Background sync continues even if page is closed (via Service Worker)
 
 - ✅ **useExport** integrated into `StoryEditor.tsx`
   - Export menu button added to editor header

@@ -36,6 +36,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
+import { useUptimeStatus } from "../../hooks/useUptimeStatus";
 
 const DRAWER_WIDTH = 288;
 
@@ -164,27 +165,13 @@ function SectionPaper({
       id={id}
       elevation={8}
       sx={{
-        backgroundColor:
-          theme.palette.mode === "dark"
-            ? "rgba(15, 23, 42, 0.94)"
-            : "rgba(255, 255, 255, 0.96)",
+        backgroundColor: "rgba(255, 255, 255, 0.96)",
         backgroundImage:
-          theme.palette.mode === "dark"
-            ? "linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%)"
-            : "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%)",
-        color:
-          theme.palette.mode === "dark"
-            ? "rgba(241, 245, 249, 0.95)"
-            : theme.palette.text.primary,
+          "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%)",
+        color: theme.palette.text.primary,
         borderRadius: 4,
-        border:
-          theme.palette.mode === "dark"
-            ? "1px solid rgba(148, 163, 184, 0.18)"
-            : "1px solid rgba(148, 163, 184, 0.22)",
-        boxShadow:
-          theme.palette.mode === "dark"
-            ? "0 25px 60px rgba(15, 23, 42, 0.45)"
-            : "0 16px 40px rgba(15, 23, 42, 0.12)",
+        border: "1px solid rgba(148, 163, 184, 0.22)",
+        boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12)",
         p: { xs: 3, md: 4 },
         mb: { xs: 4, md: 6 },
         scrollMarginTop: { xs: 96, md: 120 }
@@ -222,10 +209,7 @@ function BulletList({
     <List
       dense
       sx={{
-        color:
-          theme.palette.mode === "dark"
-            ? "rgba(226, 232, 240, 0.85)"
-            : theme.palette.text.secondary,
+        color: theme.palette.text.secondary,
         "& .MuiListItemButton-root": {
           borderRadius: 2
         }
@@ -245,10 +229,7 @@ function BulletList({
             sx={{
               minWidth: 32,
               mt: "4px",
-              color:
-                theme.palette.mode === "dark"
-                  ? "primary.light"
-                  : theme.palette.primary.main
+              color: theme.palette.primary.main
             }}
           >
             <CheckCircleOutlineIcon fontSize="small" />
@@ -271,6 +252,7 @@ export function DocsPage(): JSX.Element {
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { user } = useAuth();
+  const uptimeStatus = useUptimeStatus();
 
   const sections: SectionDefinition[] = useMemo(
     () => [
@@ -292,7 +274,7 @@ export function DocsPage(): JSX.Element {
                   <Typography
                     component="a"
                     href="mailto:lb@lindsaybrunner.com"
-                    sx={{ color: "primary.light" }}
+                    sx={{ color: "primary.main" }}
                   >
                     lb@lindsaybrunner.com
                   </Typography>{" "}
@@ -377,7 +359,8 @@ export function DocsPage(): JSX.Element {
                 "Add snippets within a chapter or right from the canvas header. New snippets appear immediately—the Drive file is created in the background.",
                 "Drag and drop chapters or snippets to reorder. Moves persist to Google Drive so collaborators see the updated structure.",
                 "Collapse chapters to reduce visual noise. Yarny remembers what you collapsed per story.",
-                "Switch between snippets without losing work. Autosave runs after short pauses, on tab switches, when the window hides, and before you close the tab."
+                "Switch between snippets without losing work. Autosave runs after short pauses, on tab switches, when the window hides, and before you close the tab.",
+                "Fast, reliable saves: Yarny saves your writing to JSON files first (completing in under 50ms), then syncs to Google Docs in the background. You'll see a sync status indicator in the editor footer showing when changes are synced to Google Docs."
               ]}
             />
             <Typography variant="body1">
@@ -467,11 +450,14 @@ export function DocsPage(): JSX.Element {
             <Typography variant="body1">
               Each Yarny story is represented as a Drive folder with subfolders for chapters,
               people, places, things, assets, and metadata files like <code>goal.json</code>.
+              Snippet content is stored in hidden JSON files (<code>.{"{snippetId}"}.yarny.json</code>) for fast saves,
+              then synced to Google Docs in the background for compatibility and collaboration.
             </Typography>
             <BulletList
               items={[
                 "Look for the “Yarny Stories” folder in Drive. Inside you will find one folder per story plus combined exports you generate.",
                 "Yarny only requests the drive.file scope. That means it can see files it created or files explicitly shared back with the app.",
+                "Snippet content is saved to JSON files first (fast, reliable), then synced to Google Docs automatically. You can see sync status in the editor footer.",
                 "If you edit a snippet directly in Google Docs and leave unresolved comments or suggestions, Yarny will warn you before overwriting them from the editor."
               ]}
             />
@@ -561,7 +547,7 @@ export function DocsPage(): JSX.Element {
                   <Typography
                     component="a"
                     href="mailto:lb@lindsaybrunner.com"
-                    sx={{ color: "primary.light" }}
+                    sx={{ color: "primary.main" }}
                   >
                     lb@lindsaybrunner.com
                   </Typography>{" "}
@@ -637,18 +623,8 @@ export function DocsPage(): JSX.Element {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor:
-          theme.palette.mode === "dark"
-            ? "rgba(15, 23, 42, 0.97)"
-            : "rgba(255, 255, 255, 0.95)",
-        backgroundImage:
-          theme.palette.mode === "dark"
-            ? "linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 118, 110, 0.85) 100%)"
-            : "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
-        color:
-          theme.palette.mode === "dark"
-            ? "rgba(226, 232, 240, 0.92)"
-            : theme.palette.text.primary
+        backgroundColor: "rgba(31, 41, 55, 0.98)",
+        color: "rgba(255, 255, 255, 0.9)"
       }}
     >
       <Toolbar sx={{ minHeight: 88 }}>
@@ -656,20 +632,62 @@ export function DocsPage(): JSX.Element {
           Yarny Guide
         </Typography>
       </Toolbar>
+      <Box sx={{ px: 2, pb: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            color: "rgba(255, 255, 255, 0.9)",
+            fontSize: "0.875rem",
+            fontWeight: 500
+          }}
+        >
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              flexShrink: 0,
+              backgroundColor:
+                uptimeStatus.status === "up"
+                  ? "#10B981"
+                  : uptimeStatus.status === "warning"
+                    ? "#F59E0B"
+                    : uptimeStatus.status === "down"
+                      ? "#EF4444"
+                      : "#6B7280",
+              boxShadow:
+                uptimeStatus.status === "up"
+                  ? "0 0 8px rgba(16, 185, 129, 0.5)"
+                  : uptimeStatus.status === "warning"
+                    ? "0 0 8px rgba(245, 158, 11, 0.5)"
+                    : uptimeStatus.status === "down"
+                      ? "0 0 8px rgba(239, 68, 68, 0.5)"
+                      : "none",
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease"
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.9)",
+              fontSize: "0.875rem",
+              lineHeight: 1.4
+            }}
+          >
+            {uptimeStatus.label}
+          </Typography>
+        </Box>
+      </Box>
       <Box sx={{ px: 2, pt: 1, pb: 2 }}>
         <Paper
           elevation={0}
           sx={{
             p: 2,
             borderRadius: 3,
-            border:
-              theme.palette.mode === "dark"
-                ? "1px solid rgba(45, 212, 191, 0.45)"
-                : "1px solid rgba(13, 148, 136, 0.35)",
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(15, 118, 110, 0.2)"
-                : "rgba(240, 253, 250, 0.85)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
             display: "flex",
             flexDirection: "column",
             gap: 1.5
@@ -680,15 +698,12 @@ export function DocsPage(): JSX.Element {
             sx={{
               letterSpacing: 1.2,
               fontWeight: 700,
-              color:
-                theme.palette.mode === "dark"
-                  ? "rgba(34, 211, 238, 0.9)"
-                  : theme.palette.primary.main
+              color: "rgba(16, 185, 129, 1)"
             }}
           >
             QA resources
           </Typography>
-          <Typography variant="body2" sx={{ color: "inherit", opacity: 0.85 }}>
+          <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.85)" }}>
             Open the Testing Workbook to log smoke tests, validation steps, and status.
           </Typography>
           <Button
@@ -704,10 +719,7 @@ export function DocsPage(): JSX.Element {
               borderRadius: 2,
               textTransform: "none",
               fontWeight: 600,
-              boxShadow:
-                theme.palette.mode === "dark"
-                  ? "0 12px 30px rgba(15, 23, 42, 0.45)"
-                  : "0 10px 24px rgba(15, 118, 110, 0.25)"
+              boxShadow: "0 10px 24px rgba(15, 118, 110, 0.25)"
             }}
           >
             Testing Workbook
@@ -735,10 +747,7 @@ export function DocsPage(): JSX.Element {
                 letterSpacing: 0.6,
                 fontSize: "0.75rem",
                 bgcolor: "transparent",
-                color:
-                  theme.palette.mode === "dark"
-                    ? "rgba(148, 163, 184, 0.9)"
-                    : theme.palette.text.secondary,
+                color: "rgba(148, 163, 184, 0.9)",
                 px: 2,
                 pb: 0.5
               }}
@@ -758,22 +767,17 @@ export function DocsPage(): JSX.Element {
                   sx={{
                     borderRadius: 2,
                     mb: 0.5,
-                    color: "inherit",
+                    color: "rgba(255, 255, 255, 0.8)",
                     "&:hover": {
-                      bgcolor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(148, 163, 184, 0.12)"
-                          : "rgba(148, 163, 184, 0.18)"
+                      bgcolor: "rgba(255, 255, 255, 0.05)",
+                      color: "rgba(255, 255, 255, 1)"
                     }
                   }}
                 >
                   <ListItemIcon
                     sx={{
                       minWidth: 32,
-                      color:
-                        theme.palette.mode === "dark"
-                          ? "primary.light"
-                          : theme.palette.primary.main
+                      color: "rgba(16, 185, 129, 1)"
                     }}
                   >
                     {section.icon}
@@ -787,12 +791,12 @@ export function DocsPage(): JSX.Element {
       </List>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
       <Box sx={{ p: 2 }}>
-        <Typography variant="body2" sx={{ color: "rgba(226, 232, 240, 0.75)" }}>
+        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.75)" }}>
           Need more help? Email{" "}
           <Typography
             component="a"
             href="mailto:lb@lindsaybrunner.com"
-            sx={{ color: "primary.light" }}
+            sx={{ color: "rgba(16, 185, 129, 1)" }}
           >
             lb@lindsaybrunner.com
           </Typography>
@@ -807,12 +811,8 @@ export function DocsPage(): JSX.Element {
       sx={{
         display: "flex",
         minHeight: "100vh",
-        backgroundColor:
-          theme.palette.mode === "dark" ? "rgba(15, 23, 42, 0.98)" : theme.palette.grey[50],
-        backgroundImage:
-          theme.palette.mode === "dark"
-            ? "radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 55%), radial-gradient(circle at 30% 20%, rgba(45, 212, 191, 0.18), transparent 50%)"
-            : "radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 55%), radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.12), transparent 55%)"
+        background:
+          "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
       }}
     >
       <CssBaseline />
@@ -821,18 +821,12 @@ export function DocsPage(): JSX.Element {
         elevation={0}
         sx={{
           backdropFilter: "blur(14px)",
-          backgroundColor:
-            theme.palette.mode === "dark" ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.92)",
-          color:
-            theme.palette.mode === "dark"
-              ? "rgba(226, 232, 240, 0.98)"
-              : theme.palette.text.primary,
-          borderBottom:
-            theme.palette.mode === "dark"
-              ? "1px solid rgba(255, 255, 255, 0.08)"
-              : "1px solid rgba(148, 163, 184, 0.18)",
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          ml: { md: `${DRAWER_WIDTH}px` }
+          backgroundColor: "rgba(255, 255, 255, 0.92)",
+          color: theme.palette.text.primary,
+          borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
+          width: "100%",
+          ml: 0,
+          zIndex: (theme) => theme.zIndex.drawer + 1
         }}
       >
         <Toolbar sx={{ minHeight: 88, display: "flex", justifyContent: "space-between" }}>
@@ -891,7 +885,15 @@ export function DocsPage(): JSX.Element {
 
       <Box
         component="nav"
-        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+        sx={{
+          width: { md: DRAWER_WIDTH },
+          flexShrink: { md: 0 },
+          position: { md: "fixed" },
+          top: { md: 88 },
+          left: 0,
+          height: { md: `calc(100vh - 88px)` },
+          zIndex: (theme) => theme.zIndex.drawer
+        }}
         aria-label="Documentation sections"
       >
         {!isMdUp ? (
@@ -921,7 +923,9 @@ export function DocsPage(): JSX.Element {
               "& .MuiDrawer-paper": {
                 width: DRAWER_WIDTH,
                 border: "none",
-                position: "relative"
+                position: "fixed",
+                top: 88,
+                height: "calc(100vh - 88px)"
               }
             }}
           >
@@ -934,33 +938,31 @@ export function DocsPage(): JSX.Element {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 3, md: 6 },
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` }
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          ml: { md: `${DRAWER_WIDTH}px` },
+          height: { md: `calc(100vh - 88px)` },
+          overflowY: "auto",
+          position: { md: "fixed" },
+          top: { md: 88 },
+          right: 0
         }}
       >
-        <Toolbar sx={{ minHeight: 88 }} />
-        <Stack spacing={{ xs: 4, md: 6 }}>
+        <Box
+          sx={{
+            p: { xs: 3, md: 6 }
+          }}
+        >
+          <Toolbar sx={{ minHeight: 88 }} />
+          <Stack spacing={{ xs: 4, md: 6 }}>
           <Alert
             severity="warning"
             variant="outlined"
             sx={{
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(254, 243, 199, 0.12)"
-                  : "rgba(252, 211, 77, 0.2)",
-              borderColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(251, 191, 36, 0.45)"
-                  : "rgba(217, 119, 6, 0.35)",
-              color:
-                theme.palette.mode === "dark"
-                  ? "rgba(180, 83, 9, 0.95)"
-                  : theme.palette.warning.dark,
+              backgroundColor: "rgba(252, 211, 77, 0.2)",
+              borderColor: "rgba(217, 119, 6, 0.35)",
+              color: theme.palette.warning.dark,
               "& .MuiAlert-icon": {
-                color:
-                  theme.palette.mode === "dark"
-                    ? "rgba(217, 119, 6, 1)"
-                    : theme.palette.warning.main
+                color: theme.palette.warning.main
               }
             }}
           >
@@ -1035,6 +1037,7 @@ export function DocsPage(): JSX.Element {
             {sections.find((section) => section.id === "support")?.body ?? null}
           </SectionPaper>
         </Stack>
+        </Box>
       </Box>
     </Box>
   );
