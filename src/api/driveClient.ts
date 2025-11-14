@@ -115,7 +115,9 @@ export const createDriveClient = (): DriveClient => ({
   },
   async getStory(storyId: string) {
     try {
+      console.log("[DriveClient.getStory] Starting fetch for story:", storyId);
       const files = await listAllDriveFiles(storyId);
+      console.log("[DriveClient.getStory] Listed", files.length, "files for story:", storyId);
       const fileMap = new Map<string, (typeof files)[number]>();
       for (const file of files) {
         if (file.name) {

@@ -165,6 +165,26 @@ function createBatches(syncs, batchSize, windowMs) {
 
 // Sync a single JSON file to Google Doc
 async function syncSingleJsonToGdoc(sync) {
+  // Track retry count to prevent infinite loops
+  const retryCount = sync.retryCount || 0;
+  const MAX_RETRIES = 3;
+  
+  if (retryCount >= MAX_RETRIES) {
+    console.warn(`Skipping sync for snippet ${sync.snippetId} - exceeded max retries (${MAX_RETRIES})`);
+    // Notify main thread that sync was skipped due to too many failures
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage({
+          type: "SYNC_SKIPPED",
+          snippetId: sync.snippetId,
+          reason: "Max retries exceeded"
+        });
+      });
+    });
+    // Don't throw - skip this sync to prevent infinite retries
+    return { success: false, skipped: true };
+  }
+
   try {
     // Notify main thread that sync started
     self.clients.matchAll().then((clients) => {
@@ -222,7 +242,7 @@ async function syncSingleJsonToGdoc(sync) {
 
     return result;
   } catch (error) {
-    console.error(`Failed to sync snippet ${sync.snippetId}:`, error);
+    console.error(`Failed to sync snippet ${sync.snippetId} (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
     
     // Notify main thread that sync failed
     self.clients.matchAll().then((clients) => {
@@ -230,10 +250,19 @@ async function syncSingleJsonToGdoc(sync) {
         client.postMessage({
           type: "SYNC_ERROR",
           snippetId: sync.snippetId,
-          error: error.message || String(error)
+          error: error.message || String(error),
+          retryCount: retryCount + 1,
+          maxRetries: MAX_RETRIES
         });
       });
     });
+
+    // Only throw if we haven't exceeded max retries (browser will retry)
+    // If we've exceeded max retries, return error result instead of throwing
+    if (retryCount >= MAX_RETRIES - 1) {
+      console.warn(`Max retries reached for snippet ${sync.snippetId}, giving up`);
+      return { success: false, error: error.message || String(error) };
+    }
 
     throw error;
   }

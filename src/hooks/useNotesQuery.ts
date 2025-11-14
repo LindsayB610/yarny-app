@@ -28,9 +28,11 @@ export function useNotesQuery(
 
       // First, find the notes folder (People, Places, or Things)
       const folderName = noteType.charAt(0).toUpperCase() + noteType.slice(1);
+      console.log(`[useNotesQuery] Fetching ${noteType} notes for story:`, storyFolderId);
       const filesResponse = await apiClient.listDriveFiles({
         folderId: storyFolderId
       });
+      console.log(`[useNotesQuery] Found ${filesResponse.files?.length || 0} files in story folder`);
 
       // Find the notes folder
       const notesFolder = filesResponse.files?.find(
@@ -42,9 +44,11 @@ export function useNotesQuery(
       }
 
       // List all files in the notes folder
+      console.log(`[useNotesQuery] Listing files in ${folderName} folder:`, notesFolder.id);
       const notesFilesResponse = await apiClient.listDriveFiles({
         folderId: notesFolder.id
       });
+      console.log(`[useNotesQuery] Found ${notesFilesResponse.files?.length || 0} files in ${folderName} folder`);
 
       if (!notesFilesResponse.files || notesFilesResponse.files.length === 0) {
         return [];

@@ -281,6 +281,7 @@ export function useCreateStory() {
       }
 
       // Invalidate stories query to refresh the list
+      console.log("[useCreateStory] Invalidating queries after story creation:", data.id);
       queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
       queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
 

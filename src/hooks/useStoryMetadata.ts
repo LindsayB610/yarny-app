@@ -21,7 +21,9 @@ export function useStoryMetadata(storyFolderId: string | undefined) {
         return null;
       }
 
+      console.log("[useStoryMetadata] Fetching metadata for story:", storyFolderId);
       const files = await listAllDriveFiles(storyFolderId);
+      console.log("[useStoryMetadata] Listed", files.length, "files for metadata");
       const projectFile = files.find((file) => file.name === "project.json");
       if (!projectFile?.id) {
         return null;

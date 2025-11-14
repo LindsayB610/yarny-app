@@ -1,5 +1,6 @@
 import { apiClient } from "../../api/client";
 import { normalizePlainText } from "../../editor/textExtraction";
+import { getQueryClient } from "../../app/queryClient";
 
 /**
  * JSON file structure for snippet content storage
@@ -23,19 +24,46 @@ export function getSnippetJsonFileName(snippetId: string): string {
 /**
  * Find a snippet's JSON file in a folder
  * Returns the file ID if found, undefined otherwise
+ * Uses React Query's cache to prevent repeated API calls
  */
 export async function findSnippetJsonFile(
   snippetId: string,
   parentFolderId: string
 ): Promise<string | undefined> {
+  const queryClient = getQueryClient();
   const fileName = getSnippetJsonFileName(snippetId);
-  const files = await apiClient.listDriveFiles({ folderId: parentFolderId });
   
-  const jsonFile = files.files?.find(
-    (file) => file.name === fileName && !file.trashed
-  );
+  // Use React Query's fetchQuery to leverage its built-in caching and deduplication
+  // Query key includes both snippetId and parentFolderId to ensure uniqueness
+  const queryKey = ["snippet-json-file", snippetId, parentFolderId];
   
-  return jsonFile?.id;
+  const fileId = await queryClient.fetchQuery({
+    queryKey,
+    queryFn: async () => {
+      console.log(`[findSnippetJsonFile] Fetching file list for ${snippetId} in folder ${parentFolderId.substring(0, 10)}...`);
+      const files = await apiClient.listDriveFiles({ folderId: parentFolderId });
+      
+      const jsonFile = files.files?.find(
+        (file) => file.name === fileName && !file.trashed
+      );
+      
+      return jsonFile?.id || null; // Return null if not found (React Query can cache null)
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes - same as default query staleTime
+    gcTime: 1000 * 60 * 10 // 10 minutes - keep in cache
+  });
+  
+  return fileId || undefined;
+}
+
+/**
+ * Invalidate cache entry for a specific snippet (call after creating/deleting a file)
+ */
+export function invalidateFileIdCache(snippetId: string, parentFolderId: string): void {
+  const queryClient = getQueryClient();
+  queryClient.invalidateQueries({
+    queryKey: ["snippet-json-file", snippetId, parentFolderId]
+  });
 }
 
 /**
@@ -102,6 +130,13 @@ export async function writeSnippetJson(
     parentFolderId,
     mimeType: "application/json"
   });
+
+  // Update React Query cache with the new file ID (in case file was just created)
+  const queryClient = getQueryClient();
+  queryClient.setQueryData(
+    ["snippet-json-file", snippetId, parentFolderId],
+    response.id
+  );
 
   return {
     fileId: response.id,

@@ -45,12 +45,15 @@ export function useConflictDetection() {
         const jsonContent = jsonData?.content || localContent || "";
 
         // Get Google Doc metadata
+        console.log("[useConflictDetection] Checking conflict for snippet:", snippetId, "in folder:", parentFolderId);
         const filesResponse = await queryClient.fetchQuery({
           queryKey: ["drive", "files", parentFolderId],
-          queryFn: () =>
-            apiClient.listDriveFiles({
+          queryFn: () => {
+            console.log("[useConflictDetection] Fetching files for conflict check:", parentFolderId);
+            return apiClient.listDriveFiles({
               folderId: parentFolderId
-            }),
+            });
+          },
           staleTime: 30 * 1000 // 30 seconds - conflict checks need fresh data
         });
 

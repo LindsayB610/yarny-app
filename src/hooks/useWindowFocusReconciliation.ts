@@ -29,12 +29,14 @@ export function useWindowFocusReconciliation(): void {
         if (!storedToken && currentToken) {
           queryClient.clear();
         }
-      }
 
-      // Refetch active queries to ensure data is fresh
-      queryClient.refetchQueries({
-        type: "active"
-      });
+        // Only refetch if auth actually changed
+        queryClient.refetchQueries({
+          type: "active"
+        });
+      }
+      // Don't refetch on every focus - only when auth changes
+      // This prevents infinite loops when entering the editor
     };
 
     window.addEventListener("focus", handleFocus);

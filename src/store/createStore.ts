@@ -94,6 +94,7 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
         });
       },
       selectStory(storyId) {
+        console.log("[Store] selectStory called:", storyId, "current:", baseState.ui.activeStoryId, new Error().stack?.split("\n")[2]?.trim());
         set((draft) => {
           draft.ui.activeStoryId = storyId;
           draft.ui.activeSnippetId = undefined;
