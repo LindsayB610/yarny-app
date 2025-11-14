@@ -938,13 +938,13 @@ export function DocsPage(): JSX.Element {
       >
         <Box
           sx={{
-            pt: { xs: 2, md: 3 },
+            pt: { xs: 2, md: 2 },
             px: { xs: 3, md: 6 },
             pb: { xs: 3, md: 6 }
           }}
         >
           <Toolbar sx={{ minHeight: 88 }} />
-          <Stack spacing={{ xs: 4, md: 6 }}>
+          <Stack spacing={{ xs: 4, md: 6 }} sx={{ mt: { md: -12 } }}>
           <Alert
             severity="warning"
             variant="filled"
@@ -964,7 +964,7 @@ export function DocsPage(): JSX.Element {
               px: 5,
               maxWidth: "1000px",
               mx: "auto",
-              mt: { xs: -2, md: -5 },
+              mt: { xs: -2, md: 0 },
               "& .MuiAlert-icon": {
                 color: "#F59E0B",
                 fontSize: "1.5rem",
