@@ -251,14 +251,12 @@ test.describe("Performance Budgets", () => {
     expect(maxFrameTime).toBeLessThan(50);
   });
 
-  test("performance metrics hook should track metrics correctly", async ({ page }) => {
+  test("browser performance API should be available", async ({ page }) => {
     await page.goto("/editor");
     await page.waitForSelector('[contenteditable="true"]');
 
-    // Check that performance metrics are being tracked
+    // Check that browser performance API is available
     const metrics = await page.evaluate(() => {
-      // Access the performance metrics from the hook (if exposed)
-      // This is a basic check - in a real scenario, you might expose metrics via a dev tool or API
       return {
         hasPerformanceAPI: typeof performance !== "undefined",
         hasNow: typeof performance.now === "function"

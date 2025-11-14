@@ -18,7 +18,6 @@ import {
 } from "../../editor/textExtraction";
 import { useAutoSave } from "../../hooks/useAutoSave";
 import { useConflictDetection, type ConflictInfo } from "../../hooks/useConflictDetection";
-import { usePerformanceMetrics } from "../../hooks/usePerformanceMetrics";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import { useYarnyStore } from "../../store/provider";
 import {
@@ -178,9 +177,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   // Note: Visibility gating for snippet loading is now handled in StorySidebarContent
   // where the snippet list DOM elements exist
 
-  // Performance metrics tracking
-  const { recordFirstKeystroke, startSnippetSwitch, endSnippetSwitch } = usePerformanceMetrics();
-
   // Conflict detection
   const { checkSnippetConflict } = useConflictDetection();
   type ConflictModalState = {
@@ -194,24 +190,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
   // Track if editor is open (authoritative)
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const previousStoryIdRef = useRef<string | undefined>(story?.id);
-  const previousActiveSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastLoadedSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
   const lastAppliedContentRef = useRef<string>("");
   const isSettingContentRef = useRef(false);
-
-  // Track story/snippet switches for performance metrics
-  useEffect(() => {
-    const storyChanged = story?.id !== previousStoryIdRef.current;
-    const snippetChanged = activeSnippet?.id !== previousActiveSnippetIdRef.current;
-
-    if (storyChanged || snippetChanged) {
-      startSnippetSwitch();
-    }
-
-    previousStoryIdRef.current = story?.id;
-    previousActiveSnippetIdRef.current = activeSnippet?.id;
-  }, [story?.id, activeSnippet?.id, startSnippetSwitch]);
 
   // Reset tracking refs when story changes
   useEffect(() => {
@@ -287,15 +268,13 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
 
         tryFocus();
       }
-      endSnippetSwitch();
     });
   }, [
     editor,
     activeSnippetId,
     activeSnippet?.content,
     isEditorOpen,
-    hasUnsavedChanges,
-    endSnippetSwitch
+    hasUnsavedChanges
   ]);
 
   // Check for conflicts when story/snippet changes or editor opens
@@ -364,8 +343,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
   useEffect(() => {
     if (!editor) return;
 
-    let hasRecordedFirstKeystroke = false;
-
     const handleUpdate = () => {
       if (!activeSnippet) {
         return;
@@ -391,14 +368,6 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
           }
         ]
       });
-
-      const isFocused = editor.isFocused;
-
-      // Record first keystroke for performance metrics only when user is actively typing
-      if (!hasRecordedFirstKeystroke && isFocused) {
-        recordFirstKeystroke();
-        hasRecordedFirstKeystroke = true;
-      }
     };
 
     const handleFocus = () => setIsEditorOpen(true);
@@ -416,7 +385,7 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
       editor.off("focus", handleFocus);
       editor.off("blur", handleBlur);
     };
-  }, [editor, activeSnippet, recordFirstKeystroke, upsertEntities]);
+  }, [editor, activeSnippet, upsertEntities]);
 
   if (showLoadingState) {
     return (
