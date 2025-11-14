@@ -306,6 +306,105 @@
   color: var(--color-primary);
 }
 
+/* ============================================
+   Docs Header (matching DocsPage AppBar)
+   ============================================ */
+
+.docs-header-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 88px;
+  backdrop-filter: blur(14px);
+  background-color: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-2xl);
+}
+
+.docs-header-bar .header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.docs-header-bar .mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  padding: var(--space-sm);
+  margin-right: var(--space-md);
+}
+
+.docs-header-bar .header-title {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.docs-header-bar .header-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.docs-header-bar .header-nav .btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.docs-header-bar .header-nav .btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.docs-header-bar .header-nav .btn-outlined {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  text-transform: none;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.docs-header-bar .header-nav .btn-outlined:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Adjust sidebar and content positioning to account for fixed header */
+.docs-sidebar {
+  top: 88px !important;
+  height: calc(100vh - 88px) !important;
+}
+
+.docs-content {
+  padding-top: calc(88px + var(--space-5xl)) !important;
+}
+
 @media (max-width: 900px) {
   .phase-grid {
     grid-template-columns: 1fr;
@@ -313,6 +412,24 @@
 
   .phase-card {
     padding: var(--space-xl);
+  }
+
+  .docs-header-bar {
+    padding: 0 var(--space-lg);
+  }
+
+  .docs-header-bar .mobile-menu-btn {
+    display: block;
+  }
+
+  .docs-header-bar .header-nav {
+    gap: var(--space-sm);
+  }
+
+  .docs-header-bar .header-nav .btn-primary,
+  .docs-header-bar .header-nav .btn-outlined {
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.875rem;
   }
 }
 

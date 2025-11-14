@@ -19,6 +19,7 @@ import {
   Divider,
   Drawer,
   IconButton,
+  Link,
   List,
   ListSubheader,
   ListItemButton,
@@ -624,14 +625,10 @@ export function DocsPage(): JSX.Element {
         display: "flex",
         flexDirection: "column",
         backgroundColor: "rgba(31, 41, 55, 0.98)",
-        color: "rgba(255, 255, 255, 0.9)"
+        color: "rgba(255, 255, 255, 0.9)",
+        pt: { md: 11 } // 88px header height (11 * 8px = 88px)
       }}
     >
-      <Toolbar sx={{ minHeight: 88 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Yarny Guide
-        </Typography>
-      </Toolbar>
       <Box sx={{ px: 2, pb: 1 }}>
         <Box
           sx={{
@@ -789,20 +786,6 @@ export function DocsPage(): JSX.Element {
           </Box>
         ))}
       </List>
-      <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
-      <Box sx={{ p: 2 }}>
-        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.75)" }}>
-          Need more help? Email{" "}
-          <Typography
-            component="a"
-            href="mailto:lb@lindsaybrunner.com"
-            sx={{ color: "rgba(16, 185, 129, 1)" }}
-          >
-            lb@lindsaybrunner.com
-          </Typography>
-          .
-        </Typography>
-      </Box>
     </Box>
   );
 
@@ -826,6 +809,7 @@ export function DocsPage(): JSX.Element {
           borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
           width: "100%",
           ml: 0,
+          borderRadius: 0,
           zIndex: (theme) => theme.zIndex.drawer + 1
         }}
       >
@@ -852,11 +836,12 @@ export function DocsPage(): JSX.Element {
                 <Button
                   component={RouterLink}
                   to="/stories"
-                  color="inherit"
-                  variant="outlined"
-                  sx={{ borderRadius: "9999px", textTransform: "none" }}
+                  color="primary"
+                  variant="contained"
+                  startIcon={<AutoStoriesIcon />}
+                  sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
                 >
-                  My Stories
+                  Back to Stories
                 </Button>
                 <Button
                   component={RouterLink}
@@ -889,9 +874,9 @@ export function DocsPage(): JSX.Element {
           width: { md: DRAWER_WIDTH },
           flexShrink: { md: 0 },
           position: { md: "fixed" },
-          top: { md: 88 },
+          top: { md: 0 },
           left: 0,
-          height: { md: `calc(100vh - 88px)` },
+          height: { md: "100vh" },
           zIndex: (theme) => theme.zIndex.drawer
         }}
         aria-label="Documentation sections"
@@ -908,7 +893,8 @@ export function DocsPage(): JSX.Element {
               display: { xs: "block", md: "none" },
               "& .MuiDrawer-paper": {
                 width: DRAWER_WIDTH,
-                border: "none"
+                border: "none",
+                borderRadius: 0
               }
             }}
           >
@@ -923,9 +909,10 @@ export function DocsPage(): JSX.Element {
               "& .MuiDrawer-paper": {
                 width: DRAWER_WIDTH,
                 border: "none",
+                borderRadius: 0,
                 position: "fixed",
-                top: 88,
-                height: "calc(100vh - 88px)"
+                top: 0,
+                height: "100vh"
               }
             }}
           >
@@ -944,7 +931,8 @@ export function DocsPage(): JSX.Element {
           overflowY: "auto",
           position: { md: "fixed" },
           top: { md: 88 },
-          right: 0
+          right: 0,
+          pb: { md: 20 } // Add padding bottom for footer
         }}
       >
         <Box
@@ -956,38 +944,45 @@ export function DocsPage(): JSX.Element {
           <Stack spacing={{ xs: 4, md: 6 }}>
           <Alert
             severity="warning"
-            variant="outlined"
+            variant="filled"
             sx={{
-              backgroundColor: "rgba(252, 211, 77, 0.2)",
-              borderColor: "rgba(217, 119, 6, 0.35)",
-              color: theme.palette.warning.dark,
+              backgroundColor: "#F59E0B",
+              color: "#FFFFFF",
+              fontWeight: 500,
+              fontSize: "1rem",
+              lineHeight: 1.6,
+              borderRadius: 3,
+              boxShadow: "0 8px 24px rgba(245, 158, 11, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15)",
+              border: "2px solid rgba(255, 255, 255, 0.2)",
+              py: 2.5,
+              px: 3,
               "& .MuiAlert-icon": {
-                color: theme.palette.warning.main
+                color: "#FFFFFF",
+                fontSize: "1.5rem",
+                alignItems: "flex-start",
+                mt: 0.5
+              },
+              "& .MuiAlert-message": {
+                width: "100%",
+                fontWeight: 500
               }
             }}
           >
-            Yarny React is currently in alpha. Features may change and we are actively
-            incorporating writer feedback. Report anything unexpected so we can tighten the
-            experience quickly.
-          </Alert>
-
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="flex-end">
-            <Button
-              component={RouterLink}
-              to="/stories"
-              color="primary"
-              variant="contained"
-              startIcon={<AutoStoriesIcon />}
+            <Typography
+              component="span"
               sx={{
-                alignSelf: { xs: "stretch", sm: "flex-start" },
-                borderRadius: "9999px",
-                textTransform: "none",
-                fontWeight: 600
+                color: "#FFFFFF",
+                fontWeight: 600,
+                fontSize: "1rem",
+                lineHeight: 1.6,
+                display: "block"
               }}
             >
-              Back to Stories
-            </Button>
-          </Stack>
+              Yarny is currently in alpha. Features may change and we are actively
+              incorporating writer feedback. Report anything unexpected so we can tighten the
+              experience quickly.
+            </Typography>
+          </Alert>
 
           <SectionPaper id="getting-started" title="Getting Started">
             {sections.find((section) => section.id === "getting-started")?.body ?? null}
@@ -1037,6 +1032,166 @@ export function DocsPage(): JSX.Element {
             {sections.find((section) => section.id === "support")?.body ?? null}
           </SectionPaper>
         </Stack>
+        </Box>
+      </Box>
+
+      {/* Footer matching legacy docs footer - spans full page width */}
+      <Box
+        component="footer"
+        sx={{
+          position: { md: "fixed" },
+          bottom: 0,
+          left: { md: 0 },
+          right: 0,
+          width: "100%",
+          backgroundColor: "rgba(15, 23, 42, 0.9)",
+          backdropFilter: "blur(10px)",
+          borderTop: "1px solid rgba(148, 163, 184, 0.2)",
+          py: { xs: 4, md: 6 },
+          px: { xs: 3, md: 4 },
+          mt: { xs: 6, md: 0 },
+          zIndex: (theme) => theme.zIndex.drawer - 1
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 960,
+            mx: "auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            textAlign: "center"
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(226, 232, 240, 0.78)",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+              m: 0
+            }}
+          >
+            © {new Date().getFullYear()} Yarny. Your personal writing tool.
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={3}
+            flexWrap="wrap"
+            justifyContent="center"
+            component="nav"
+            aria-label="Footer navigation"
+          >
+            {user && (
+              <Link
+                component={RouterLink}
+                to="/stories"
+                sx={{
+                  color: "rgba(34, 211, 238, 0.9)",
+                  textDecoration: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  transition: "color 0.2s ease",
+                  "&:hover": {
+                    color: "rgba(165, 243, 252, 0.95)"
+                  }
+                }}
+              >
+                My Stories
+              </Link>
+            )}
+            <Link
+              component={RouterLink}
+              to="/docs"
+              sx={{
+                color: "rgba(34, 211, 238, 0.9)",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: "rgba(165, 243, 252, 0.95)"
+                }
+              }}
+            >
+              User Guide
+            </Link>
+            <Link
+              component="a"
+              href="/migration-plan"
+              sx={{
+                color: "rgba(34, 211, 238, 0.9)",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: "rgba(165, 243, 252, 0.95)"
+                }
+              }}
+            >
+              Migration Plan
+            </Link>
+            <Link
+              component="a"
+              href="/migration-plan/testing-workbook.html"
+              sx={{
+                color: "rgba(34, 211, 238, 0.9)",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: "rgba(165, 243, 252, 0.95)"
+                }
+              }}
+            >
+              Testing Workbook
+            </Link>
+            {!user && (
+              <Link
+                component={RouterLink}
+                to="/login"
+                sx={{
+                  color: "rgba(34, 211, 238, 0.9)",
+                  textDecoration: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  transition: "color 0.2s ease",
+                  "&:hover": {
+                    color: "rgba(165, 243, 252, 0.95)"
+                  }
+                }}
+              >
+                Back to Login
+              </Link>
+            )}
+          </Stack>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(226, 232, 240, 0.65)",
+              fontSize: "0.875rem",
+              mt: 1
+            }}
+          >
+            Need more help? Email{" "}
+            <Link
+              component="a"
+              href="mailto:lb@lindsaybrunner.com"
+              sx={{
+                color: "rgba(34, 211, 238, 0.9)",
+                textDecoration: "none",
+                "&:hover": {
+                  color: "rgba(165, 243, 252, 0.95)",
+                  textDecoration: "underline"
+                }
+              }}
+            >
+              lb@lindsaybrunner.com
+            </Link>
+          </Typography>
         </Box>
       </Box>
     </Box>

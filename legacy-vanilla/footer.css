@@ -3,6 +3,7 @@
    ============================================ */
 
 .shared-footer {
+  width: 100%;
   background: rgba(15, 23, 42, 0.9);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(148, 163, 184, 0.2);

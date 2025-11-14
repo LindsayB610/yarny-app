@@ -27,13 +27,19 @@
 
     const storiesLink = document.getElementById("storiesNavLink");
     const loginLink = document.getElementById("loginNavLink");
+    const footerStoriesLink = document.getElementById("footerStoriesLink");
+    const footerLoginLink = document.getElementById("footerLoginLink");
 
     if (isLoggedIn) {
       if (storiesLink) storiesLink.style.display = "inline-block";
       if (loginLink) loginLink.style.display = "none";
+      if (footerStoriesLink) footerStoriesLink.style.display = "inline-block";
+      if (footerLoginLink) footerLoginLink.style.display = "none";
     } else {
       if (storiesLink) storiesLink.style.display = "none";
       if (loginLink) loginLink.style.display = "inline-block";
+      if (footerStoriesLink) footerStoriesLink.style.display = "none";
+      if (footerLoginLink) footerLoginLink.style.display = "inline-block";
     }
   }
 
@@ -93,7 +99,11 @@
   function setupMobileMenu(sidebar, backdrop) {
     if (!sidebar) return;
 
-    let menuButton = document.querySelector(".mobile-menu-toggle");
+    // Check for header mobile menu button first, then fall back to creating one
+    let menuButton = document.querySelector(".mobile-menu-btn");
+    if (!menuButton) {
+      menuButton = document.querySelector(".mobile-menu-toggle");
+    }
     if (!menuButton) {
       menuButton = document.createElement("button");
       menuButton.className = "mobile-menu-toggle";
@@ -126,7 +136,7 @@
       if (!sidebar.classList.contains("open")) return;
       const target = event.target;
       if (target instanceof Element) {
-        if (!sidebar.contains(target) && !target.classList.contains("mobile-menu-toggle")) {
+        if (!sidebar.contains(target) && !target.classList.contains("mobile-menu-toggle") && !target.classList.contains("mobile-menu-btn") && !target.closest(".mobile-menu-btn")) {
           sidebar.classList.remove("open");
           if (backdrop) backdrop.classList.remove("active");
         }

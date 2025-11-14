@@ -12,6 +12,22 @@
   <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
 <body data-storage-key="testingWorkbookPhase5">
+  <header class="docs-header-bar">
+    <div class="header-left">
+      <button class="mobile-menu-btn" aria-label="Open navigation menu">
+        <i class="material-icons">menu</i>
+      </button>
+      <h1 class="header-title">Phase 5 · Testing Workbook</h1>
+    </div>
+    <nav class="header-nav">
+      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
+        Back to Stories
+      </a>
+      <a href="/docs.html" class="btn-outlined">Docs</a>
+      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+    </nav>
+  </header>
   <div class="docs-container">
     <main class="docs-main">
       <div class="sidebar-backdrop"></div>
@@ -39,12 +55,6 @@
       </aside>
 
       <div class="docs-content">
-        <nav class="docs-nav">
-          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
-          <a href="/docs.html" class="btn-secondary">Docs</a>
-          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
-        </nav>
-
         <div class="phase-breadcrumbs">
           <a href="/migration-plan/testing-workbook">Testing Workbook</a>
           <span>/</span>
@@ -743,9 +753,11 @@
           © <span data-current-year>2025</span> Yarny. Your personal writing tool.
         </p>
         <nav class="shared-footer-nav" aria-label="Footer navigation">
+          <a href="/stories.html" id="footerStoriesLink" style="display: none;">My Stories</a>
           <a href="/docs.html">User Guide</a>
           <a href="/migration-plan">Migration Plan</a>
           <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+          <a href="/" id="footerLoginLink">Back to Login</a>
         </nav>
       </div>
     </footer>
