@@ -1,4 +1,5 @@
 import { Box, Link, Stack, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 type FooterVariant = "auto" | "dark" | "light";
@@ -21,12 +22,17 @@ const FOOTER_LINKS: FooterLink[] = [
 export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JSX.Element {
   const currentYear = new Date().getFullYear();
 
-  const resolvedVariant: Exclude<FooterVariant, "auto"> =
-    variant === "auto"
-      ? typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-        ? "dark"
-        : "light"
-      : variant;
+  // Use useState/useEffect to avoid hydration mismatches
+  const [resolvedVariant, setResolvedVariant] = useState<Exclude<FooterVariant, "auto">>(
+    variant === "auto" ? "light" : variant
+  );
+
+  useEffect(() => {
+    if (variant === "auto" && typeof window !== "undefined") {
+      const isDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
+      setResolvedVariant(isDark ? "dark" : "light");
+    }
+  }, [variant]);
 
   const palette = resolvedVariant === "dark"
     ? {
