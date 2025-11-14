@@ -241,21 +241,28 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
     }
 
     // Set content from the snippet
-    // Use ref to prevent update handler from triggering store updates during programmatic setContent
-    isSettingContentRef.current = true;
-    const newDocument = buildPlainTextDocument(activeSnippet?.content ?? "");
-    editor.commands.setContent(newDocument, false, {
-      preserveWhitespace: true
-    });
+    // Check if content actually needs to be updated to avoid unnecessary setContent calls
+    const newContent = activeSnippet?.content ?? "";
+    const currentEditorContent = extractPlainTextFromDocument(editor.getJSON());
+    
+    // Only update if content actually changed
+    if (currentEditorContent !== newContent) {
+      // Use ref to prevent update handler from triggering store updates during programmatic setContent
+      isSettingContentRef.current = true;
+      const newDocument = buildPlainTextDocument(newContent);
+      editor.commands.setContent(newDocument, false, {
+        preserveWhitespace: true
+      });
+      
+      // Reset flag in next event loop tick to allow any synchronous update events to be ignored
+      setTimeout(() => {
+        isSettingContentRef.current = false;
+      }, 0);
+    }
 
     // Update tracking refs
-    lastAppliedContentRef.current = activeSnippet?.content ?? "";
+    lastAppliedContentRef.current = newContent;
     lastLoadedSnippetIdRef.current = activeSnippetId;
-    
-    // Reset flag after a microtask to allow any synchronous update events to be ignored
-    Promise.resolve().then(() => {
-      isSettingContentRef.current = false;
-    });
 
     // Focus the editor after content is set
     // Use requestAnimationFrame to ensure DOM is updated, then focus
@@ -574,9 +581,9 @@ export function StoryEditor({ isLoading }: StoryEditorProps): JSX.Element {
               isSettingContentRef.current = true;
               const driveDocument = buildPlainTextDocument(driveContent);
               editor.commands.setContent(driveDocument);
-              Promise.resolve().then(() => {
+              setTimeout(() => {
                 isSettingContentRef.current = false;
-              });
+              }, 0);
               const now = new Date().toISOString();
               upsertEntities({
                 snippets: [
