@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { type ReactElement, type ReactNode } from "react";
+import { type ReactElement, type ReactNode, useRef } from "react";
 import { BrowserRouter } from "react-router-dom";
 
 import { createYarnyStore } from "../../src/store/createStore";
-import { AppStoreProvider } from "../../src/store/provider";
+import { YarnyStoreContext } from "../../src/store/provider";
 import type { YarnyState, YarnyStoreApi } from "../../src/store/types";
 
 // Create a test query client with default options
@@ -23,6 +23,27 @@ function createTestQueryClient() {
   });
 }
 
+// Test-specific store provider that accepts initial state
+function TestStoreProvider({
+  children,
+  initialState
+}: {
+  children: ReactNode;
+  initialState?: Partial<YarnyState>;
+}) {
+  const storeRef = useRef<YarnyStoreApi>();
+
+  if (!storeRef.current) {
+    storeRef.current = createYarnyStore(initialState);
+  }
+
+  return (
+    <YarnyStoreContext.Provider value={storeRef.current}>
+      {children}
+    </YarnyStoreContext.Provider>
+  );
+}
+
 // Custom render function that includes all providers
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   initialState?: Partial<YarnyState>;
@@ -37,14 +58,14 @@ export function renderWithProviders(
     ...renderOptions
   }: CustomRenderOptions = {}
 ) {
-  // Create store for return value, but AppStoreProvider creates its own
+  // Create store with initial state
   const store = createYarnyStore(initialState);
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <AppStoreProvider>{children}</AppStoreProvider>
+          <TestStoreProvider initialState={initialState}>{children}</TestStoreProvider>
         </QueryClientProvider>
       </BrowserRouter>
     );

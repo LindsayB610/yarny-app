@@ -42,7 +42,7 @@ Yarny uses a JSON-primary storage model where snippet content is saved to JSON f
 3. On snippet load, the system checks if Google Docs have been modified externally
 4. If conflicts are detected, a modal appears allowing you to choose which version to keep
 
-**Status**: ✅ Complete - All features implemented including migration system, conflict detection, sync status indicators, and manual sync controls. See `react-migration/JSON_PRIMARY_ARCHITECTURE.md` for technical details.
+**Status**: ✅ Complete - All features implemented including migration system, conflict detection, sync status indicators, and manual sync controls. See `plans/JSON_PRIMARY_ARCHITECTURE.md` for technical details.
 
 ## Legacy Application Reference
 
@@ -51,7 +51,7 @@ The original vanilla HTML/JS implementation has been preserved for parity, audit
 - `archive/` contains the full legacy UI (docs, editor, stories) plus migration planning artifacts.
 - `archive/vanilla-app/index.html` serves the historic single-page experience that once lived at `/vanilla-app/`.
 
-During the migration phase these assets are published alongside the React app so internal testers can reference the legacy documentation (for example `/migration-plan/testing-workbook.html`). The source of truth still lives in `archive/`, which Vite now copies into the production bundle at build time.
+The source of truth lives in `archive/`, which Vite copies into the production bundle at build time.
 
 ## Prerequisites
 
@@ -76,7 +76,7 @@ Configure environment variables (local `.env` or Netlify UI):
 - `NETLIFY_SITE_ID` / `NETLIFY_AUTH_TOKEN` – Required for Netlify Blobs access outside of the production context.
 - Optional helpers: `GDRIVE_REDIRECT_URI`, `GOOGLE_REDIRECT_URI`, `SITE_ID`, `UPTIME_ROBOT_API_KEY`.
 
-See `GOOGLE_DRIVE_SETUP.md` for a step-by-step walkthrough and `SETUP.md` for the older vanilla guidance (still useful for user education).
+See `plans/GOOGLE_DRIVE_SETUP.md` for a step-by-step walkthrough and `plans/SETUP.md` for the older vanilla guidance (still useful for user education).
 
 ### Local Sign-In Bypass (localhost only)
 
@@ -101,10 +101,11 @@ Visit `http://localhost:8888`. The Drive auth callback must be registered in Goo
 
 ### Testing Commands
 
-- `npm run test` – unit + integration suites (Vitest).
-- `npm run test:watch` – watch mode.
+- `npm run test` – unit + integration suites (Vitest, runs once and exits).
+- `npm run test:watch` – watch mode for development.
 - `npm run test:coverage` – HTML + text coverage reports.
-- `npm run test:e2e` – Playwright tests (requires seeded Google credentials or MSW mocks).
+- `npm run test:e2e` – Playwright end-to-end tests (requires seeded Google credentials or MSW mocks).
+- `npm run test:all` – Run all tests (unit/integration + e2e) sequentially.
 - `npm run lint` / `npm run format` – ESLint and Prettier automation.
 
 ### Building & Deploying
@@ -114,40 +115,55 @@ npm run build            # tsc for functions + Vite SPA output in ./dist
 netlify deploy --build   # manual deploy (requires NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID)
 ```
 
-Production builds publish the React SPA to `/` and continue to serve the vanilla rollout at `/vanilla-app/` for parity checks.
+Production builds publish the React SPA to `/` and continue to serve the vanilla rollout at `/vanilla-app/` for parity checks. The React docs page is available at `/docs` (redirects from `/docs.html`).
 
 ## Directory Guide
 
 - `src/` – React application (Routing, hooks, Zustand stores, TipTap editor, Material UI composition).
+  - `src/app/` – Application entry point, routing configuration, and query client setup.
+  - `src/components/` – React components organized by feature (auth, docs, editor, stories, settings, etc.).
   - `src/services/jsonStorage/` – JSON file save/read utilities for snippet content.
   - `src/services/serviceWorker/` – Service Worker registration for background sync.
+  - `src/hooks/` – Custom React hooks for data fetching, auth, and UI state.
+  - `src/store/` – Zustand stores for application state management.
 - `netlify/functions/` – TypeScript + JS handlers wrapping Drive/Docs APIs, auth, logout, uptime integrations.
   - `sync-json-to-gdoc-background.ts` – Background function for syncing JSON files to Google Docs.
 - `public/service-worker.js` – Service Worker for background sync (runs independently of page).
 - `tests/` – Vitest suites (unit, integration), Playwright specs, shared testing utilities.
+  - `tests/e2e/` – End-to-end tests using Playwright.
+  - `tests/integration/` – Integration tests for services and API interactions.
+  - `tests/utils/` – Shared test utilities and mocks.
 - `archive/` – Legacy app, documentation snapshots, migration plan, and the original vanilla assets.
-- `react-migration/` – Planning docs and audits that detail each phase of the React rewrite.
+- `plans/` – Planning docs, architecture documentation, and ongoing project plans.
   - `JSON_PRIMARY_ARCHITECTURE.md` – Architecture documentation for JSON primary system.
   - `JSON_PRIMARY_TESTING.md` – Testing guide for JSON primary features.
+  - `LOCAL_SAVE_FEATURE_PLAN.md` – Local backup feature implementation plan.
 - `scripts/` – Developer utilities (data seeding, corpus generation, etc.).
 - `reference-docs/` – Screenshots and PDFs used during UX validation.
 
 ## Helpful Documentation
 
-- `GOOGLE_DRIVE_SETUP.md` – Comprehensive OAuth credential setup guide.
-- `DEPLOY.md` – Netlify deployment checklist and environment configuration tips.
-- `react-migration/` folder – Phase-by-phase notes, testing matrices, and deployment handoffs.
-  - `JSON_PRIMARY_ARCHITECTURE.md` – JSON primary architecture design and implementation status.
-  - `JSON_PRIMARY_TESTING.md` – Testing guide for JSON primary features.
+- **User Guide**: Visit `/docs` in the running application for the complete user guide (also available at `/docs.html`).
+- **Plans Folder** (`plans/`) – Architecture documentation, testing guides, and ongoing project plans:
+  - `plans/GOOGLE_DRIVE_SETUP.md` – Step-by-step guide for creating Google Cloud OAuth clients, enabling APIs, configuring consent screens, and setting up credentials for both Sign-In and Drive server authentication.
+  - `plans/DEPLOY.md` – Netlify deployment checklist and environment configuration tips (note: some content may be outdated; see main README for current deployment steps).
+  - `plans/JSON_PRIMARY_ARCHITECTURE.md` – Complete architecture documentation for the JSON primary storage system, including design decisions, implementation phases, file structure, sync mechanisms, and conflict detection strategies.
+  - `plans/JSON_PRIMARY_TESTING.md` – Testing strategies and guidelines specifically for JSON primary features, including unit tests, integration tests, and E2E scenarios.
+  - `plans/LOCAL_SAVE_FEATURE_PLAN.md` – Implementation plan for local filesystem backups using the File System Access API, including architecture, user experience flows, and technical specifications.
+  - `plans/TEST_COVERAGE_GAPS.md` – Analysis identifying components, hooks, and services that could benefit from additional test coverage, prioritized by importance.
+  - `plans/SETUP.md` – Legacy user-facing onboarding documentation (outdated; kept for historical reference).
 - `tests/README.md` – Notes on automated test structure and how to extend coverage.
-- `SETUP.md` – Legacy onboarding steps for user-facing communication (kept for history).
+- `agents.md` – Guidelines for AI agents and automated tools working in this repository.
 
 ## Support & Troubleshooting
 
-- Drive calls fail? Re-authorize in Settings → Storage → “Reconnect”.
-- Local backups disabled? Ensure the browser supports the File System Access API and grant folder access again.
-- Need to inspect errors? Run `viewYarnyErrors()` in the browser console to review the persisted error log; `clearYarnyErrors()` wipes it.
-- Adding a user? Update `ALLOWED_EMAIL` in Netlify, redeploy, and have the new user sign in.
+- **Drive connection issues**: Re-authorize in Settings → Storage → "Reconnect".
+- **Local backups**: Ensure the browser supports the File System Access API (Chrome/Edge recommended) and grant folder access in Settings → Storage.
+- **Sync status**: Check the sync status indicator in the editor footer to see when changes are synced to Google Docs.
+- **Conflict detection**: If Google Docs are modified externally, Yarny will prompt you to resolve conflicts when you open the snippet.
+- **Error logging**: Run `viewYarnyErrors()` in the browser console to review the persisted error log; `clearYarnyErrors()` wipes it.
+- **Adding a user**: Update `ALLOWED_EMAIL` in Netlify environment variables, redeploy, and have the new user sign in.
+- **Testing**: See `agents.md` for guidelines on running tests in automated contexts (always use non-watch mode).
 
 ## License
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useAuth, useAuthConfig } from "./useAuth";
@@ -115,7 +115,9 @@ describe("useAuth", () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      await result.current.login("google-token");
+      await act(async () => {
+        await result.current.login("google-token");
+      });
 
       await waitFor(() => {
         expect(result.current.isAuthenticated).toBe(true);
@@ -138,7 +140,9 @@ describe("useAuth", () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      await expect(result.current.login("invalid-token")).rejects.toThrow("Authentication failed");
+      await act(async () => {
+        await expect(result.current.login("invalid-token")).rejects.toThrow("Authentication failed");
+      });
 
       expect(result.current.isAuthenticated).toBe(false);
     });
@@ -154,7 +158,9 @@ describe("useAuth", () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      await result.current.loginWithBypass("bypass-secret");
+      await act(async () => {
+        await result.current.loginWithBypass("bypass-secret");
+      });
 
       await waitFor(() => {
         expect(result.current.isAuthenticated).toBe(true);
@@ -183,7 +189,9 @@ describe("useAuth", () => {
         expect(result.current.isAuthenticated).toBe(true);
       });
 
-      await result.current.logout();
+      await act(async () => {
+        await result.current.logout();
+      });
 
       await waitFor(() => {
         expect(result.current.isAuthenticated).toBe(false);
@@ -204,14 +212,19 @@ describe("useAuth", () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
-      const loginPromise = result.current.login("token");
+      let loginPromise: Promise<void>;
+      await act(async () => {
+        loginPromise = result.current.login("token");
+      });
 
       // Wait for the mutation to start (isPending becomes true)
       await waitFor(() => {
         expect(result.current.isLoading).toBe(true);
       });
 
-      await loginPromise;
+      await act(async () => {
+        await loginPromise!;
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -241,7 +254,9 @@ describe("useAuth", () => {
       localStorage.setItem("yarny_user", JSON.stringify(mockUser2));
 
       // Simulate window focus
-      window.dispatchEvent(new Event("focus"));
+      act(() => {
+        window.dispatchEvent(new Event("focus"));
+      });
 
       await waitFor(() => {
         expect(result.current.user?.email).toBe("test2@example.com");

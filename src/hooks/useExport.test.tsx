@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useExport } from "./useExport";
@@ -58,11 +58,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test Export",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test Export",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive"
+      });
     });
 
     await waitFor(() => {
@@ -100,11 +102,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test Export",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test Export",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive"
+      });
     });
 
     expect(apiClient.writeDriveFile).toHaveBeenCalledWith(
@@ -139,11 +143,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Large Export",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Large Export",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive"
+      });
     });
 
     // Should be called multiple times for chunking
@@ -169,12 +175,14 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test Export",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive",
-      onProgress
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test Export",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive",
+        onProgress
+      });
     });
 
     expect(onProgress).toHaveBeenCalledWith(
@@ -207,11 +215,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test<>Export|File",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test<>Export|File",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive"
+      });
     });
 
     expect(apiClient.writeDriveFile).toHaveBeenCalledWith(
@@ -242,11 +252,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test Export",
-      snippets,
-      destination: "local",
-      fileExtension: ".md"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test Export",
+        snippets,
+        destination: "local",
+        fileExtension: ".md"
+      });
     });
 
     expect(mockRepository.writeExportFile).toHaveBeenCalledWith(
@@ -273,13 +285,15 @@ describe("useExport", () => {
       }
     ];
 
-    await expect(
-      result.current.exportSnippets({
-        fileName: "Test Export",
-        snippets,
-        destination: "local"
-      })
-    ).rejects.toThrow("Local backups must be enabled");
+    await act(async () => {
+      await expect(
+        result.current.exportSnippets({
+          fileName: "Test Export",
+          snippets,
+          destination: "local"
+        })
+      ).rejects.toThrow("Local backups must be enabled");
+    });
   });
 
   it("handles export errors", async () => {
@@ -296,14 +310,16 @@ describe("useExport", () => {
       }
     ];
 
-    await expect(
-      result.current.exportSnippets({
-        fileName: "Test Export",
-        snippets,
-        parentFolderId: "folder-id",
-        destination: "drive"
-      })
-    ).rejects.toThrow("Export failed");
+    await act(async () => {
+      await expect(
+        result.current.exportSnippets({
+          fileName: "Test Export",
+          snippets,
+          parentFolderId: "folder-id",
+          destination: "drive"
+        })
+      ).rejects.toThrow("Export failed");
+    });
 
     await waitFor(() => {
       expect(result.current.progress.status).toBe("error");
@@ -328,11 +344,13 @@ describe("useExport", () => {
       }
     ];
 
-    await result.current.exportSnippets({
-      fileName: "Test Export",
-      snippets,
-      parentFolderId: "folder-id",
-      destination: "drive"
+    await act(async () => {
+      await result.current.exportSnippets({
+        fileName: "Test Export",
+        snippets,
+        parentFolderId: "folder-id",
+        destination: "drive"
+      });
     });
 
     expect(apiClient.writeDriveFile).toHaveBeenCalledWith(

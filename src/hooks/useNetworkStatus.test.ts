@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useNetworkStatus } from "./useNetworkStatus";
 
 describe("useNetworkStatus", () => {
@@ -53,7 +53,9 @@ describe("useNetworkStatus", () => {
       value: false
     });
 
-    window.dispatchEvent(new Event("offline"));
+    act(() => {
+      window.dispatchEvent(new Event("offline"));
+    });
 
     await waitFor(() => {
       expect(result.current.isOnline).toBe(false);
@@ -81,7 +83,9 @@ describe("useNetworkStatus", () => {
       value: true
     });
 
-    window.dispatchEvent(new Event("online"));
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
 
     await waitFor(() => {
       expect(result.current.isOnline).toBe(true);
@@ -200,7 +204,9 @@ describe("useNetworkStatus", () => {
     )?.[1];
 
     if (changeHandler) {
-      changeHandler();
+      act(() => {
+        changeHandler();
+      });
     }
 
     await waitFor(() => {
@@ -242,7 +248,9 @@ describe("useNetworkStatus", () => {
       value: true
     });
 
-    window.dispatchEvent(new Event("online"));
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
 
     await waitFor(() => {
       expect(result.current.isOnline).toBe(true);

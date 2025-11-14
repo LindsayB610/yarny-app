@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { LoginPage } from "./LoginPage";
@@ -100,7 +100,9 @@ describe("LoginPage", () => {
     const initializeCall = mockGoogleAccounts.accounts.id.initialize.mock.calls[0];
     const callback = initializeCall[0].callback;
     
-    await callback({ credential: "test-token" });
+    await act(async () => {
+      await callback({ credential: "test-token" });
+    });
     
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
@@ -134,7 +136,9 @@ describe("LoginPage", () => {
     const initializeCall = mockGoogleAccounts.accounts.id.initialize.mock.calls[0];
     const callback = initializeCall[0].callback;
     
-    await callback({ credential: "test-token" });
+    await act(async () => {
+      await callback({ credential: "test-token" });
+    });
     
     await waitFor(() => {
       expect(apiClient.verifyGoogle).toHaveBeenCalledWith({ token: "test-token" });

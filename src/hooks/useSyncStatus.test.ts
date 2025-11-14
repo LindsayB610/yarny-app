@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useSyncStatus } from "./useSyncStatus";
 
@@ -88,7 +88,9 @@ describe("useSyncStatus", () => {
     });
 
     if (messageHandler) {
-      messageHandler(messageEvent);
+      act(() => {
+        messageHandler!(messageEvent);
+      });
     }
 
     await waitFor(() => {
@@ -124,7 +126,9 @@ describe("useSyncStatus", () => {
     });
 
     if (messageHandler) {
-      messageHandler(messageEvent);
+      act(() => {
+        messageHandler!(messageEvent);
+      });
     }
 
     await waitFor(() => {
@@ -162,7 +166,9 @@ describe("useSyncStatus", () => {
     });
 
     if (messageHandler) {
-      messageHandler(messageEvent);
+      act(() => {
+        messageHandler!(messageEvent);
+      });
     }
 
     await waitFor(() => {
@@ -180,20 +186,26 @@ describe("useSyncStatus", () => {
       expect(result.current).toBeDefined();
     }, { timeout: 100 });
 
-    window.dispatchEvent(new CustomEvent("yarny:sync-start"));
+    act(() => {
+      window.dispatchEvent(new CustomEvent("yarny:sync-start"));
+    });
 
     await waitFor(() => {
       expect(result.current.status).toBe("syncing");
     }, { timeout: 500 });
   });
 
-  it("should handle custom sync-success event", () => {
+  it("should handle custom sync-success event", async () => {
     const { result } = renderHook(() => useSyncStatus());
 
-    window.dispatchEvent(new CustomEvent("yarny:sync-success"));
+    act(() => {
+      window.dispatchEvent(new CustomEvent("yarny:sync-success"));
+    });
 
-    expect(localStorage.getItem("yarny_last_sync_time")).toBeTruthy();
-    expect(localStorage.getItem("yarny_sync_error")).toBeNull();
+    await waitFor(() => {
+      expect(localStorage.getItem("yarny_last_sync_time")).toBeTruthy();
+      expect(localStorage.getItem("yarny_sync_error")).toBeNull();
+    });
   });
 
   it("should handle custom sync-error event", async () => {
@@ -205,11 +217,13 @@ describe("useSyncStatus", () => {
     }, { timeout: 100 });
 
     const errorMessage = "Custom error";
-    window.dispatchEvent(
-      new CustomEvent("yarny:sync-error", {
-        detail: { error: errorMessage }
-      })
-    );
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("yarny:sync-error", {
+          detail: { error: errorMessage }
+        })
+      );
+    });
 
     await waitFor(() => {
       expect(result.current.status).toBe("failed");
@@ -224,7 +238,9 @@ describe("useSyncStatus", () => {
 
     const dispatchSpy = vi.spyOn(window, "dispatchEvent");
 
-    result.current.retry();
+    act(() => {
+      result.current.retry();
+    });
 
     expect(localStorage.getItem("yarny_sync_error")).toBeNull();
     expect(dispatchSpy).toHaveBeenCalledWith(

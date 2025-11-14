@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { OfflineBanner } from "./OfflineBanner";
@@ -201,7 +201,9 @@ describe("OfflineBanner", () => {
     );
 
     // Trigger storage event
-    window.dispatchEvent(new StorageEvent("storage", { key: "yarny_queued_saves" }));
+    act(() => {
+      window.dispatchEvent(new StorageEvent("storage", { key: "yarny_queued_saves" }));
+    });
 
     rerender(<OfflineBanner />);
 

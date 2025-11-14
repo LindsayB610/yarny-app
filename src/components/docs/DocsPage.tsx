@@ -482,8 +482,9 @@ export function DocsPage(): JSX.Element {
             <BulletList
               items={[
                 "If you go offline, Yarny queues saves locally and syncs them once you reconnect.",
-                "Queued saves are listed in the offline banner. Click “Retry now” as soon as you are back online or Yarny will retry automatically.",
-                "Manual Save is always available in the editor header for a quick confidence check."
+                'Queued saves are listed in the offline banner. Click "Retry now" as soon as you are back online or Yarny will retry automatically.',
+                "Use the Sync Story button in the editor header to manually trigger a sync of all pending changes to Google Docs.",
+                "The sync status indicator in the editor footer shows when your changes have been synced to Google Docs."
               ]}
             />
           </Stack>

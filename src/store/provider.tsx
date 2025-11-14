@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import { createYarnyStore, type YarnyStoreApi } from "./createStore";
 import type { YarnyStore } from "./types";
 
-const YarnyStoreContext = createContext<YarnyStoreApi | null>(null);
+export const YarnyStoreContext = createContext<YarnyStoreApi | null>(null);
 
 export function AppStoreProvider({ children }: PropsWithChildren): JSX.Element {
   const storeRef = useRef<YarnyStoreApi>();

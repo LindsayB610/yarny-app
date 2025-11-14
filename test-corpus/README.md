@@ -111,7 +111,7 @@ This will create all necessary files for `test-medium` and `test-large` projects
 
 ## Smoke Test Coverage
 
-The accompanying smoke test checklist (`react-migration/smoke-tests-phase-1.md`) and comprehensive smoke tests in `REACT_MIGRATION_PLAN.md` reference this corpus for validation scenarios.
+This test corpus is used for validation scenarios in automated tests.
 
 ### Test Coverage by Project Size
 

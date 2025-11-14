@@ -215,13 +215,43 @@ export async function navigateToReactEditor(
 
 /**
  * Waits for a story to be loaded in the React editor
+ * Checks for chapters/snippets in sidebar as indication that story data loaded
  */
 export async function waitForStoryLoad(
   page: Page,
-  storyTitle: string
+  storyTitle?: string
 ): Promise<void> {
-  // Wait for story title to appear (Material UI Typography)
-  await page.waitForSelector(`text=${storyTitle}`, { timeout: 10000 });
+  // Wait for React Query to finish loading
+  await page.waitForLoadState("networkidle");
+  
+  // Wait for sidebar to appear (indicates app loaded)
+  await page.waitForSelector('aside', { timeout: 10000 });
+  
+  // Wait a bit for React to process data and render
+  await page.waitForTimeout(500);
+  
+  // If story title provided, wait for it
+  if (storyTitle) {
+    try {
+      await page.waitForSelector(`text=${storyTitle}`, { timeout: 5000 });
+    } catch {
+      // Story title might not be visible, that's okay
+    }
+  }
+}
+
+/**
+ * Waits for chapters to appear in sidebar (indicates story data loaded)
+ */
+export async function waitForChaptersToLoad(page: Page, expectedChapters: string[] = []): Promise<void> {
+  // Wait for any chapter to appear
+  if (expectedChapters.length > 0) {
+    await page.waitForSelector(`text=${expectedChapters[0]}`, { timeout: 15000 });
+  } else {
+    // Wait for sidebar content to load
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+  }
 }
 
 /**

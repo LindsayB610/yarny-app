@@ -98,7 +98,7 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 - **E2E**: Playwright scenario using `browserContext.overridePermissions` to simulate directory access where supported.
 - **Manual QA**: New checklist documenting enabling, writing, revoking, re-enabling (coordinate with `testing-workbook.html` phases and React migration smoke tests).
 - **Regression**: Ensure Drive-only workflow unaffected when backups disabled.
-- **Test corpus parity**: Seeded local corpus must match the size/edge-case coverage defined in `react-migration/REACT_MIGRATION_PLAN.md` (small/medium/large projects, RTL/CJK/emoji snippets, large chapter export fixture).
+- **Test corpus parity**: Seeded local corpus must match the size/edge-case coverage defined in `test-corpus/README.md` (small/medium/large projects, RTL/CJK/emoji snippets, large chapter export fixture).
 
 ---
 
@@ -129,5 +129,5 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 - [ ] Auto-save and mutation pipelines writing to local FS.
 - [ ] Tests (unit/integration/e2e) and manual QA checklist.
 - [ ] Telemetry, error handling, and rollout flag.
-- [ ] Generate deterministic local test corpus via repository APIs for manual/Drive testing per workbook (align with `REACT_MIGRATION_PLAN.md` corpus requirements and `testing-workbook` scenarios).
+- [ ] Generate deterministic local test corpus via repository APIs for manual/Drive testing (align with `test-corpus/README.md` corpus requirements).
 
