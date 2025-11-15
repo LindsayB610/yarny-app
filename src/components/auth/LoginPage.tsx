@@ -232,9 +232,15 @@ export function LoginPage(): JSX.Element {
             boxShadow: 6
           }}
         >
-          <Typography variant="h3" sx={{ color: "primary.main", mb: 2, fontWeight: "bold" }}>
-            Yarny
-          </Typography>
+          <Box
+            component="img"
+            src="/yarny-wordmark.svg"
+            alt="Yarny"
+            sx={{
+              height: "3rem",
+              mb: 2
+            }}
+          />
           <Typography variant="h5" sx={{ color: "white", mb: 1, fontWeight: "bold" }}>
             Welcome back!
           </Typography>

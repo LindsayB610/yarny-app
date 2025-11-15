@@ -828,9 +828,19 @@ export function DocsPage(): JSX.Element {
                 <MenuIcon />
               </IconButton>
             )}
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Yarny User Guide
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                component="img"
+                src="/yarny-wordmark.svg"
+                alt="Yarny"
+                sx={{
+                  height: "2rem"
+                }}
+              />
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                User Guide
+              </Typography>
+            </Box>
           </Box>
           <Stack direction="row" spacing={1.5}>
             {user ? (

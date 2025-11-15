@@ -56,7 +56,16 @@ describe("DocsPage", () => {
   it("renders the page title", () => {
     renderWithProviders(<DocsPage />);
     
-    expect(screen.getByText("Yarny User Guide")).toBeInTheDocument();
+    // Check for Yarny wordmark image and User Guide text in header
+    expect(screen.getByAltText("Yarny")).toBeInTheDocument();
+    // "User Guide" appears in header (h5) and footer (link), so check for header specifically
+    const userGuideHeaders = screen.getAllByText("User Guide");
+    expect(userGuideHeaders.length).toBeGreaterThan(0);
+    // Verify at least one is in an h5 (header)
+    const headerUserGuide = userGuideHeaders.find(
+      (el) => el.tagName === "H5"
+    );
+    expect(headerUserGuide).toBeInTheDocument();
   });
 
   it("displays the alpha warning banner", () => {

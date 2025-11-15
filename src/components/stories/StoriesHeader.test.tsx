@@ -24,7 +24,8 @@ describe("StoriesHeader", () => {
   it("renders header with title and subtitle", () => {
     renderHeader();
 
-    expect(screen.getByText("Yarny")).toBeInTheDocument();
+    // Check for Yarny wordmark image instead of text
+    expect(screen.getByAltText("Yarny")).toBeInTheDocument();
     expect(screen.getByText("Your writing projects")).toBeInTheDocument();
   });
 

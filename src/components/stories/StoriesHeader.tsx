@@ -29,17 +29,16 @@ export function StoriesHeader({
         }}
       >
         <Box>
-          <Typography
-            variant="h3"
+          <Box
+            component="img"
+            src="/yarny-wordmark.svg"
+            alt="Yarny"
             sx={{
-              color: "white",
-              fontWeight: "bold",
+              height: "3rem",
               mb: 1,
-              textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+              filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
             }}
-          >
-            Yarny
-          </Typography>
+          />
           <Typography
             variant="body1"
             sx={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "1rem" }}
