@@ -4,6 +4,7 @@ import type * as ApiClientModule from "../../src/api/client";
 import { useYarnyStoreApi } from "../../src/store/provider";
 import { type Chapter, type Project, type Story } from "../../src/store/types";
 import { useEffect, type ReactNode } from "react";
+import { Routes, Route } from "react-router-dom";
 import { StorySidebarContent } from "../../src/components/story/StorySidebarContent";
 
 vi.mock("../../src/api/client", async (importOriginal) => {
@@ -151,13 +152,16 @@ function StoreInitializer({ children }: { children: ReactNode }) {
 }
 
 describe("StorySidebarContent - New Chapter", () => {
-  it.skip("shows newly created chapters even when a search filter is active", async () => {
-    // TODO(fix-test): StorySidebarContent now pulls active story from route params; mount the
-    // component under a Router with /stories/:storyId before reenabling this scenario.
+  it("shows newly created chapters even when a search filter is active", async () => {
     renderWithProviders(
       <StoreInitializer>
-        <StorySidebarContent searchTerm="foo" />
-      </StoreInitializer>
+        <Routes>
+          <Route path="/stories/:storyId" element={<StorySidebarContent searchTerm="foo" />} />
+        </Routes>
+      </StoreInitializer>,
+      {
+        initialEntries: ["/stories/story-1"]
+      }
     );
 
     const createButton = await screen.findByRole("button", { name: /new chapter/i });

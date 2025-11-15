@@ -46,85 +46,92 @@ describe("useAutoSave - Session Persistence", () => {
     vi.clearAllMocks();
     localStorage.clear();
     vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     localStorage.clear();
+    vi.useRealTimers();
   });
 
   describe("Queued Saves Persistence", () => {
     it("should queue save to localStorage when offline", async () => {
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "test content", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 100
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
-      await waitFor(
-        () => {
-          const queued = JSON.parse(
-            localStorage.getItem("yarny_queued_saves") || "[]"
-          );
-          expect(queued.length).toBeGreaterThan(0);
-          expect(queued[0].fileId).toBe("file-1");
-          expect(queued[0].content).toBe("test content");
-          expect(queued[0].timestamp).toBeDefined();
-        },
-        { timeout: 500 }
+      // Wait for hook to initialize
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Change content to trigger save
+      rerender({ content: "test content" });
+
+      // Advance timers to trigger debounced save
+      await vi.advanceTimersByTimeAsync(150);
+
+      const queued = JSON.parse(
+        localStorage.getItem("yarny_queued_saves") || "[]"
       );
+      expect(queued.length).toBeGreaterThan(0);
+      expect(queued[0].fileId).toBe("file-1");
+      expect(queued[0].content).toBe("test content");
+      expect(queued[0].timestamp).toBeDefined();
     });
 
     it("should persist multiple queued saves", async () => {
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
 
-      const { result: result1 } = renderHook(
-        () =>
-          useAutoSave("file-1", "content 1", {
+      const { result: result1, rerender: rerender1 } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 100
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
-      await waitFor(
-        () => {
-          const queued = JSON.parse(
-            localStorage.getItem("yarny_queued_saves") || "[]"
-          );
-          expect(queued.length).toBeGreaterThan(0);
-        },
-        { timeout: 500 }
-      );
+      await vi.advanceTimersByTimeAsync(0);
+      rerender1({ content: "content 1" });
+      await vi.advanceTimersByTimeAsync(150);
 
-      const { result: result2 } = renderHook(
-        () =>
-          useAutoSave("file-2", "content 2", {
+      const queued1 = JSON.parse(
+        localStorage.getItem("yarny_queued_saves") || "[]"
+      );
+      expect(queued1.length).toBeGreaterThan(0);
+
+      const { result: result2, rerender: rerender2 } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-2", content, {
             enabled: true,
             debounceMs: 100
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
-      await waitFor(
-        () => {
-          const queued = JSON.parse(
-            localStorage.getItem("yarny_queued_saves") || "[]"
-          );
-          expect(queued.length).toBeGreaterThanOrEqual(1);
-        },
-        { timeout: 500 }
+      await vi.advanceTimersByTimeAsync(0);
+      rerender2({ content: "content 2" });
+      await vi.advanceTimersByTimeAsync(150);
+
+      const queued2 = JSON.parse(
+        localStorage.getItem("yarny_queued_saves") || "[]"
       );
+      expect(queued2.length).toBeGreaterThanOrEqual(1);
     });
 
     it.skip("should process queued saves when coming back online", async () => {
@@ -230,43 +237,56 @@ describe("useAutoSave - Session Persistence", () => {
 
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "test content", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 100
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
+      await vi.advanceTimersByTimeAsync(0);
+      rerender({ content: "test content" });
+      
+      // Advance timers to trigger debounced save, which will call readQueuedSaves
+      await vi.advanceTimersByTimeAsync(150);
+
       // Should not throw error, should handle gracefully
-      await waitFor(
-        () => {
-          // Should either fix the queue or start fresh
-          const queued = localStorage.getItem("yarny_queued_saves");
-          expect(queued).toBeDefined();
-        },
-        { timeout: 500 }
-      );
+      // The hook should have fixed the invalid JSON or started fresh
+      const queued = localStorage.getItem("yarny_queued_saves");
+      expect(queued).toBeDefined();
+      // Should be valid JSON now (either empty array or array with new save)
+      const parsed = JSON.parse(queued || "[]");
+      expect(Array.isArray(parsed)).toBe(true);
     });
   });
 
   describe("beforeunload Persistence", () => {
-    it("should queue save on beforeunload when content has changed", () => {
+    it("should queue save on beforeunload when content has changed", async () => {
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "unsaved content", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 10000 // Long debounce to prevent auto-save
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
+
+      // Wait for hook to initialize
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Change content to trigger unsaved changes
+      rerender({ content: "unsaved content" });
+      await vi.advanceTimersByTimeAsync(0);
 
       // Trigger beforeunload
       const beforeUnloadEvent = new Event("beforeunload");
@@ -287,24 +307,33 @@ describe("useAutoSave - Session Persistence", () => {
         fileId: "file-1"
       });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "saved content", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 100
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
-      // Wait for auto-save to complete
-      await waitFor(
-        () => {
-          expect(result.current.hasUnsavedChanges).toBe(false);
-        },
-        { timeout: 2000 }
-      );
+      // Wait for hook to initialize
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Change content to trigger save
+      rerender({ content: "saved content" });
+
+      // Advance timers to trigger debounced save
+      await vi.advanceTimersByTimeAsync(150);
+      
+      // Run all pending async operations
+      await vi.runAllTimersAsync();
+      
+      // Check that save completed (hasUnsavedChanges should be false)
+      // Note: We check directly instead of using waitFor since we're using fake timers
+      expect(result.current.hasUnsavedChanges).toBe(false);
 
       // Trigger beforeunload
       const beforeUnloadEvent = new Event("beforeunload");
@@ -331,23 +360,26 @@ describe("useAutoSave - Session Persistence", () => {
         fileId: "file-1"
       });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "content to save", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 10000, // Long debounce
             snippetId: "snippet-1",
             parentFolderId: "folder-1"
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
 
-      // Wait for hook to initialize and content to be set
-      await waitFor(() => {
-        expect(result.current).toBeDefined();
-      }, { timeout: 500 });
+      // Wait for hook to initialize
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Change content to trigger unsaved changes
+      rerender({ content: "content to save" });
+      await vi.advanceTimersByTimeAsync(0);
 
       // Simulate tab becoming hidden
       Object.defineProperty(document, "hidden", {
@@ -360,31 +392,40 @@ describe("useAutoSave - Session Persistence", () => {
       const visibilityChangeEvent = new Event("visibilitychange");
       document.dispatchEvent(visibilityChangeEvent);
 
-      // Wait for save to be triggered (either writeSnippetJson for snippets or writeDriveFile for non-snippets)
-      await waitFor(
-        () => {
-          // Check that either writeSnippetJson was called (for snippets) or writeDriveFile (for non-snippets)
-          const jsonCalled = vi.mocked(writeSnippetJson).mock.calls.length > 0;
-          const driveCalled = vi.mocked(apiClient.writeDriveFile).mock.calls.length > 0;
-          expect(jsonCalled || driveCalled).toBe(true);
-        },
-        { timeout: 2000 }
-      );
+      // Advance timers to allow async operations to complete
+      await vi.advanceTimersByTimeAsync(100);
+      
+      // Run all pending async operations
+      await vi.runAllTimersAsync();
+
+      // Check that save was triggered (either writeSnippetJson for snippets or writeDriveFile for non-snippets)
+      // Note: We check directly instead of using waitFor since we're using fake timers
+      const jsonCalled = vi.mocked(writeSnippetJson).mock.calls.length > 0;
+      const driveCalled = vi.mocked(apiClient.writeDriveFile).mock.calls.length > 0;
+      expect(jsonCalled || driveCalled).toBe(true);
     });
 
-    it("should queue save when tab becomes hidden and offline", () => {
+    it("should queue save when tab becomes hidden and offline", async () => {
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
 
-      const { result } = renderHook(
-        () =>
-          useAutoSave("file-1", "content to queue", {
+      const { result, rerender } = renderHook(
+        ({ content }) =>
+          useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 10000
           }),
         {
-          wrapper: createWrapper()
+          wrapper: createWrapper(),
+          initialProps: { content: "" }
         }
       );
+
+      // Wait for hook to initialize
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Change content to trigger unsaved changes
+      rerender({ content: "content to queue" });
+      await vi.advanceTimersByTimeAsync(0);
 
       // Simulate tab becoming hidden
       Object.defineProperty(document, "hidden", {

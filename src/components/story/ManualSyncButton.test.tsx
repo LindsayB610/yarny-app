@@ -1,31 +1,25 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { screen, waitFor, renderWithProviders, userEvent } from "../../../tests/utils/test-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Routes, Route } from "react-router-dom";
 import { ManualSyncButton } from "./ManualSyncButton";
 import { useManualSync } from "../../hooks/useManualSync";
+import type { Story } from "../../store/types";
 
 // Mock the hook
 vi.mock("../../hooks/useManualSync", () => ({
   useManualSync: vi.fn()
 }));
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false }
-    }
-  });
-
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+const testStory: Story = {
+  id: "story-1",
+  projectId: "project-1",
+  title: "Test Story",
+  driveFileId: "drive-file-1",
+  chapterIds: [],
+  updatedAt: new Date().toISOString()
 };
 
-describe.skip("ManualSyncButton", () => {
-  // TODO(fix-test): ManualSyncButton now depends on route params/AppStoreProvider via useActiveStory.
-  // Reintroduce these tests once they render within the full provider/router stack or mock the hook.
+describe("ManualSyncButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -37,7 +31,21 @@ describe.skip("ManualSyncButton", () => {
       error: null
     });
 
-    render(<ManualSyncButton />, { wrapper: createWrapper() });
+    renderWithProviders(
+      <Routes>
+        <Route path="/stories/:storyId/snippets/:snippetId?" element={<ManualSyncButton />} />
+      </Routes>,
+      {
+        initialEntries: ["/stories/story-1/snippets/snippet-1"],
+        initialState: {
+          entities: {
+            stories: {
+              "story-1": testStory
+            }
+          }
+        }
+      }
+    );
 
     expect(screen.getByText("Sync Story")).toBeInTheDocument();
   });
@@ -49,7 +57,21 @@ describe.skip("ManualSyncButton", () => {
       error: null
     });
 
-    render(<ManualSyncButton />, { wrapper: createWrapper() });
+    renderWithProviders(
+      <Routes>
+        <Route path="/stories/:storyId/snippets/:snippetId?" element={<ManualSyncButton />} />
+      </Routes>,
+      {
+        initialEntries: ["/stories/story-1/snippets/snippet-1"],
+        initialState: {
+          entities: {
+            stories: {
+              "story-1": testStory
+            }
+          }
+        }
+      }
+    );
 
     expect(screen.getByText("Syncing...")).toBeInTheDocument();
     expect(screen.getByRole("button")).toBeDisabled();
@@ -64,7 +86,21 @@ describe.skip("ManualSyncButton", () => {
       error: null
     });
 
-    render(<ManualSyncButton />, { wrapper: createWrapper() });
+    renderWithProviders(
+      <Routes>
+        <Route path="/stories/:storyId/snippets/:snippetId?" element={<ManualSyncButton />} />
+      </Routes>,
+      {
+        initialEntries: ["/stories/story-1/snippets/snippet-1"],
+        initialState: {
+          entities: {
+            stories: {
+              "story-1": testStory
+            }
+          }
+        }
+      }
+    );
 
     const button = screen.getByRole("button");
     await user.click(button);
@@ -83,7 +119,21 @@ describe.skip("ManualSyncButton", () => {
       error: null
     });
 
-    render(<ManualSyncButton />, { wrapper: createWrapper() });
+    renderWithProviders(
+      <Routes>
+        <Route path="/stories/:storyId/snippets/:snippetId?" element={<ManualSyncButton />} />
+      </Routes>,
+      {
+        initialEntries: ["/stories/story-1/snippets/snippet-1"],
+        initialState: {
+          entities: {
+            stories: {
+              "story-1": testStory
+            }
+          }
+        }
+      }
+    );
 
     const button = screen.getByRole("button");
     await user.click(button);

@@ -6,6 +6,18 @@ import { NotesSidebar } from "./NotesSidebar";
 import { useNotesQuery } from "../../hooks/useNotesQuery";
 import { useCreateNoteMutation, useReorderNotesMutation } from "../../hooks/useNotesMutations";
 
+// Mock useParams to provide storyId
+const mockUseParams = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useParams: () => mockUseParams(),
+    useLocation: () => ({ pathname: "/stories/story-1" }),
+    useNavigate: () => vi.fn()
+  };
+});
+
 // Mock dependencies
 vi.mock("../../hooks/useNotesQuery", () => ({
   useNotesQuery: vi.fn()
@@ -66,6 +78,9 @@ describe("NotesSidebar", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Default mock for useParams - return storyId for most tests
+    mockUseParams.mockReturnValue({ storyId: mockStory.id });
 
     // Mock useNotesQuery - needs to return different values based on noteType parameter
     vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => {
@@ -85,6 +100,8 @@ describe("NotesSidebar", () => {
   });
 
   it("renders empty state when no story is selected", () => {
+    mockUseParams.mockReturnValue({ storyId: undefined });
+    
     const initialState = {
       entities: {
         stories: {}

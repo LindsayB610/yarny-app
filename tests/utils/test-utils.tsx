@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactElement, type ReactNode, useRef } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, MemoryRouter } from "react-router-dom";
 
 import { createYarnyStore } from "../../src/store/createStore";
 import { YarnyStoreContext } from "../../src/store/provider";
@@ -48,6 +48,7 @@ function TestStoreProvider({
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   initialState?: Partial<YarnyState>;
   queryClient?: QueryClient;
+  initialEntries?: string[];
 }
 
 export function renderWithProviders(
@@ -55,6 +56,7 @@ export function renderWithProviders(
   {
     initialState,
     queryClient = createTestQueryClient(),
+    initialEntries,
     ...renderOptions
   }: CustomRenderOptions = {}
 ) {
@@ -62,12 +64,15 @@ export function renderWithProviders(
   const store = createYarnyStore(initialState);
 
   function Wrapper({ children }: { children: ReactNode }) {
+    const Router = initialEntries ? MemoryRouter : BrowserRouter;
+    const routerProps = initialEntries ? { initialEntries } : {};
+    
     return (
-      <BrowserRouter>
+      <Router {...routerProps}>
         <QueryClientProvider client={queryClient}>
           <TestStoreProvider initialState={initialState}>{children}</TestStoreProvider>
         </QueryClientProvider>
-      </BrowserRouter>
+      </Router>
     );
   }
 

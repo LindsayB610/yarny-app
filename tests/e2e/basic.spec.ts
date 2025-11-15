@@ -8,12 +8,17 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Basic App Functionality", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication
+    // Mock authentication using localStorage (as used by useAuth hook)
     await page.addInitScript(() => {
-      Object.defineProperty(document, "cookie", {
-        writable: true,
-        value: "yarny_session=test-session"
-      });
+      window.localStorage.setItem("yarny_auth", "test-session-token");
+      window.localStorage.setItem(
+        "yarny_user",
+        JSON.stringify({
+          email: "test@example.com",
+          token: "test-session-token",
+          name: "Test User"
+        })
+      );
     });
 
     // Mock Yarny Stories folder

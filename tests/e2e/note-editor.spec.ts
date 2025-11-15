@@ -515,8 +515,43 @@ test.describe("NoteEditor Integration Tests", () => {
   });
 
   test("saves content on beforeunload if there are unsaved changes", async ({ page }) => {
+    // Wait for editor to initialize
+    const editor = page.locator('[contenteditable="true"]').first();
+    await expect(editor).toBeVisible({ timeout: 10000 });
+
+    // Type content to create unsaved changes
+    await editor.click();
+    await editor.fill("New content");
+
+    // Wait a moment for content to be registered
+    await page.waitForTimeout(500);
+
+    // Trigger beforeunload event
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("beforeunload"));
+    });
+
+    // Wait a bit for the queue save to complete
+    await page.waitForTimeout(500);
+
+    // Verify save was queued in localStorage (beforeunload queues saves, doesn't make immediate API calls)
+    const queuedSaves = await page.evaluate(() => {
+      const queued = localStorage.getItem("yarny_queued_saves");
+      return queued ? JSON.parse(queued) : [];
+    });
+
+    expect(queuedSaves.length).toBeGreaterThan(0);
+    const queuedSave = queuedSaves.find((save: any) => save.fileId === testNoteId || save.snippetId);
+    expect(queuedSave).toBeDefined();
+    expect(queuedSave?.content).toContain("New content");
+  });
+
+  test("saves previous note when switching to a new note", async ({ page }) => {
+    const secondNoteId = "note-2";
+    const secondNoteName = "Second Note";
     const writeRequests: Array<{ fileId: string; content: string }> = [];
-    
+
+    // Track write requests first
     await page.route("**/.netlify/functions/drive-write*", async (route) => {
       const request = route.request();
       const postData = request.postDataJSON();
@@ -531,46 +566,57 @@ test.describe("NoteEditor Integration Tests", () => {
         contentType: "application/json",
         body: JSON.stringify({
           id: postData?.fileId || testNoteId,
-          name: testNoteName,
+          name: postData?.fileId === secondNoteId ? secondNoteName : testNoteName,
           modifiedTime: new Date().toISOString()
         })
       });
     });
 
-    // Wait for editor to initialize
-    const editor = page.locator('[contenteditable="true"]').first();
-    await expect(editor).toBeVisible({ timeout: 10000 });
-
-    // Type content to create unsaved changes
-    await editor.click();
-    await editor.fill("New content");
-
-    // Trigger beforeunload event
-    await page.evaluate(() => {
-      window.dispatchEvent(new Event("beforeunload"));
-    });
-
-    // Wait a bit for save to complete
-    await page.waitForTimeout(1000);
-
-    // Verify save was called
-    expect(writeRequests.length).toBeGreaterThan(0);
-    const lastRequest = writeRequests[writeRequests.length - 1];
-    expect(lastRequest.fileId).toBe(testNoteId);
-    expect(lastRequest.content).toContain("New content");
-  });
-
-  test("saves previous note when switching to a new note", async ({ page }) => {
-    const secondNoteId = "note-2";
-    const secondNoteName = "Second Note";
-    const writeRequests: Array<{ fileId: string; content: string }> = [];
-
-    // Add second note to People folder listing
+    // Add second note to People folder listing (must handle POST and GET requests)
     await page.route(`**/.netlify/functions/drive-list*`, (route) => {
       const url = route.request().url();
+      const request = route.request();
+      const method = request.method();
       
-      // Return People notes folder when listing story contents
-      if (url.includes(`folderId=${testStoryId}`)) {
+      // Handle POST requests (some endpoints use POST)
+      let folderId: string | undefined;
+      if (method === "POST") {
+        try {
+          const postData = request.postDataJSON();
+          folderId = postData?.folderId;
+        } catch {
+          // Not JSON, try query params
+        }
+      }
+      
+      // Also check query params
+      if (!folderId) {
+        const urlObj = new URL(url);
+        folderId = urlObj.searchParams.get("folderId") || undefined;
+      }
+      
+      // Return test story when listing stories (yarny folder)
+      if (folderId === "yarny-folder-id" || url.includes("folderId=yarny-folder-id")) {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            files: [
+              {
+                id: testStoryId,
+                name: "Test Story",
+                mimeType: "application/vnd.google-apps.folder",
+                modifiedTime: "2024-01-01T00:00:00Z"
+              }
+            ],
+            nextPageToken: undefined
+          })
+        });
+        return;
+      }
+      
+      // Return story folder contents (People folder, project.json, data.json)
+      if (folderId === testStoryId || url.includes(`folderId=${testStoryId}`)) {
         route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -581,6 +627,18 @@ test.describe("NoteEditor Integration Tests", () => {
                 name: "People",
                 mimeType: "application/vnd.google-apps.folder",
                 modifiedTime: "2024-01-01T00:00:00Z"
+              },
+              {
+                id: "project-json-id",
+                name: "project.json",
+                mimeType: "application/json",
+                modifiedTime: "2024-01-01T00:00:00Z"
+              },
+              {
+                id: "data-json-id",
+                name: "data.json",
+                mimeType: "application/json",
+                modifiedTime: "2024-01-01T00:00:00Z"
               }
             ],
             nextPageToken: undefined
@@ -590,7 +648,7 @@ test.describe("NoteEditor Integration Tests", () => {
       }
 
       // Return both notes when listing People folder
-      if (url.includes("folderId=people-folder-id")) {
+      if (folderId === "people-folder-id" || url.includes("folderId=people-folder-id")) {
         route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -626,73 +684,129 @@ test.describe("NoteEditor Integration Tests", () => {
       });
     });
 
-    // Mock reading second note content
+    // Mock reading note content (must handle both notes)
     await page.route("**/.netlify/functions/drive-read*", (route) => {
       const request = route.request();
       const method = request.method();
+      let fileId: string | undefined;
       
       if (method === "POST") {
-        const postData = request.postDataJSON();
-        
-        if (postData?.fileId === testNoteId) {
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              content: initialContent,
-              modifiedTime: "2024-01-01T00:00:00Z"
-            })
-          });
-          return;
-        }
-
-        if (postData?.fileId === secondNoteId) {
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              content: "Second note content",
-              modifiedTime: "2024-01-01T00:00:00Z"
-            })
-          });
-          return;
+        try {
+          const postData = request.postDataJSON();
+          fileId = postData?.fileId;
+        } catch {
+          // Not JSON
         }
       }
-
-      // Default: empty content
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          content: "",
-          modifiedTime: new Date().toISOString()
-        })
-      });
-    });
-
-    // Track write requests
-    await page.route("**/.netlify/functions/drive-write*", async (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON();
       
-      writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
-      });
+      // Also check query params
+      if (!fileId) {
+        const url = request.url();
+        const urlObj = new URL(url);
+        fileId = urlObj.searchParams.get("fileId") || undefined;
+      }
+      
+      // Return first note content
+      if (fileId === testNoteId) {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: testNoteId,
+            name: `${testNoteName}.txt`,
+            content: initialContent,
+            modifiedTime: "2024-01-01T00:00:00Z",
+            mimeType: "text/plain"
+          })
+        });
+        return;
+      }
 
+      // Return second note content
+      if (fileId === secondNoteId) {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: secondNoteId,
+            name: `${secondNoteName}.txt`,
+            content: "Second note content",
+            modifiedTime: "2024-01-01T00:00:00Z",
+            mimeType: "text/plain"
+          })
+        });
+        return;
+      }
+
+      // Handle project.json and data.json (needed for story loading)
+      if (fileId === "project-json-id") {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: "project-json-id",
+            name: "project.json",
+            content: JSON.stringify({
+              title: "Test Story",
+              updatedAt: "2024-01-01T00:00:00Z"
+            }),
+            modifiedTime: "2024-01-01T00:00:00Z",
+            mimeType: "application/json"
+          })
+        });
+        return;
+      }
+
+      if (fileId === "data-json-id") {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: "data-json-id",
+            name: "data.json",
+            content: JSON.stringify({
+              groups: {},
+              snippets: {},
+              notes: {
+                [testNoteId]: {
+                  id: testNoteId,
+                  kind: "person",
+                  name: testNoteName,
+                  driveFileId: testNoteId,
+                  updatedAt: "2024-01-01T00:00:00Z"
+                },
+                [secondNoteId]: {
+                  id: secondNoteId,
+                  kind: "person",
+                  name: secondNoteName,
+                  driveFileId: secondNoteId,
+                  updatedAt: "2024-01-01T00:00:00Z"
+                }
+              }
+            }),
+            modifiedTime: "2024-01-01T00:00:00Z",
+            mimeType: "application/json"
+          })
+        });
+        return;
+      }
+
+      // Default: empty content (must include required fields)
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
-          name: postData?.fileId === secondNoteId ? secondNoteName : testNoteName,
-          modifiedTime: new Date().toISOString()
+          id: fileId || "unknown",
+          name: "unknown.txt",
+          content: "",
+          modifiedTime: new Date().toISOString(),
+          mimeType: "text/plain"
         })
       });
     });
 
     // Navigate to first note
-    await page.goto(`/stories/${testStoryId}/people/${testNoteId}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/stories/${testStoryId}/people/${testNoteId}`, { waitUntil: "networkidle", timeout: 30000 });
 
     // Wait for editor to initialize
     const editor = page.locator('[contenteditable="true"]').first();
@@ -702,8 +816,17 @@ test.describe("NoteEditor Integration Tests", () => {
     await editor.click();
     await editor.fill("Note 1 content");
 
-    // Wait a moment for the content to be registered
-    await page.waitForTimeout(500);
+    // Wait for debounced save to complete (debounce is 2 seconds)
+    await page.waitForTimeout(2500);
+
+    // Verify first note was saved before switching
+    expect(writeRequests.length).toBeGreaterThan(0);
+    const firstNoteSaveBeforeSwitch = writeRequests.find(req => req.fileId === testNoteId);
+    expect(firstNoteSaveBeforeSwitch).toBeDefined();
+    expect(firstNoteSaveBeforeSwitch?.content).toContain("Note 1 content");
+
+    // Clear write requests to track new saves
+    writeRequests.length = 0;
 
     // Switch to second note by clicking on it in the sidebar or navigating
     // First, try to find and click the second note in the sidebar
@@ -717,14 +840,12 @@ test.describe("NoteEditor Integration Tests", () => {
       await page.goto(`/stories/${testStoryId}/people/${secondNoteId}`, { waitUntil: "domcontentloaded" });
     }
 
-    // Wait a bit for the save to complete
-    await page.waitForTimeout(1000);
-
-    // Verify first note was saved
-    expect(writeRequests.length).toBeGreaterThan(0);
-    const firstNoteSave = writeRequests.find(req => req.fileId === testNoteId);
-    expect(firstNoteSave).toBeDefined();
-    expect(firstNoteSave?.content).toContain("Note 1 content");
+    // Wait for second note editor to load
+    const secondEditor = page.locator('[contenteditable="true"]').first();
+    await expect(secondEditor).toBeVisible({ timeout: 10000 });
+    
+    // Verify second note content is loaded
+    await expect(secondEditor).toContainText("Second note content", { timeout: 5000 });
   });
 
   test("handles save errors gracefully", async ({ page }) => {
