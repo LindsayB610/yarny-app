@@ -25,6 +25,7 @@ import { getDisplayTitle } from "./utils";
 import { usePlainTextEditor } from "../../../editor/plainTextEditor";
 import { buildPlainTextDocument, extractPlainTextFromDocument } from "../../../editor/textExtraction";
 import { useActiveStory } from "../../../hooks/useActiveStory";
+import { useAutoSave } from "../../../hooks/useAutoSave";
 
 export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   const { snippetId, noteId } = useParams<{
@@ -39,6 +40,8 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   const chaptersById = useYarnyStore((state) => state.entities.chapters);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
+  const setSyncing = useYarnyStore((state) => state.setSyncing);
+  const setLastSyncedAtAction = useYarnyStore((state) => state.setLastSyncedAt);
   const { data: storyMetadata } = useStoryMetadata(story?.driveFileId);
 
   // Determine if we have a snippet or note
@@ -72,8 +75,54 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
     markAsSaved: markContentAsSaved
   } = useAutoSaveConfig(activeSnippetForEditor, editorContent, story, activeChapter);
 
-  // Block navigation when saving
-  const isSaving = isAutoSaving || isSyncing;
+  // Auto-save for notes (similar to snippets)
+  const noteType = useMemo(() => {
+    if (!noteId) return undefined;
+    const path = window.location.pathname;
+    if (path.includes("/people/")) return "people";
+    if (path.includes("/places/")) return "places";
+    if (path.includes("/things/")) return "things";
+    return undefined;
+  }, [noteId]);
+
+  const noteFileName = useMemo(() => {
+    if (!activeNoteForEditor || !editorContent) return undefined;
+    // Use first line of content as filename, or note ID as fallback
+    const firstLine = editorContent.split("\n")[0]?.trim();
+    return firstLine ? `${firstLine}.txt` : `${activeNoteForEditor.id}.txt`;
+  }, [activeNoteForEditor, editorContent]);
+
+  const {
+    save: saveNote,
+    isSaving: isNoteAutoSaving,
+    hasUnsavedChanges: hasNoteUnsavedChanges,
+    markAsSaved: markNoteAsSaved
+  } = useAutoSave(
+    activeNoteForEditor?.driveFileId,
+    editorContent,
+    {
+      enabled: Boolean(activeNoteForEditor?.id && activeNoteForEditor?.driveFileId),
+      debounceMs: 2000,
+      onSaveStart: () => {
+        setSyncing(true);
+      },
+      onSaveSuccess: () => {
+        setSyncing(false);
+        setLastSyncedAtAction(new Date().toISOString());
+      },
+      onSaveError: (error) => {
+        console.error("[StoryEditor] Note auto-save failed:", error);
+        setSyncing(false);
+      },
+      localBackupStoryId: story?.id,
+      fileName: noteFileName,
+      mimeType: "text/plain"
+    }
+  );
+
+  // Combine saving states for both snippets and notes
+  const isSaving = isAutoSaving || isNoteAutoSaving || isSyncing;
+  const hasAnyUnsavedChanges = hasUnsavedChanges || hasNoteUnsavedChanges;
   
   // Warn before page unload/refresh when saving
   useEffect(() => {
@@ -101,6 +150,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   useEditorContentSync(
     editor,
     activeSnippetForEditor,
+    activeContent,
     snippetId ?? noteId,
     isEditorOpen,
     hasUnsavedChanges,
@@ -174,9 +224,13 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
       } catch (error) {
         console.error("Manual save failed:", error);
       }
-    } else if (isNote && activeNoteForEditor) {
-      // TODO: Implement note save logic
-      console.warn("Note save not yet implemented");
+    } else if (isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId) {
+      try {
+        await saveNote();
+        markNoteAsSaved(editorContent);
+      } catch (error) {
+        console.error("Note save failed:", error);
+      }
     }
   };
 
@@ -217,9 +271,9 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   };
 
   const statusText =
-    isAutoSaving || isSyncing
+    isSaving
       ? "Syncing with Google Drive..."
-      : hasUnsavedChanges
+      : hasAnyUnsavedChanges
         ? "Unsaved changes"
         : lastSyncedAt
           ? `Last synced ${new Date(lastSyncedAt).toLocaleString()}`
@@ -231,12 +285,12 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
         title={displayTitle}
         statusText={statusText}
         onSave={handleSave}
-        isSaving={isAutoSaving}
+        isSaving={isAutoSaving || isNoteAutoSaving}
         isSyncing={isSyncing}
-        hasUnsavedChanges={hasUnsavedChanges}
+        hasUnsavedChanges={hasAnyUnsavedChanges}
         canSave={Boolean(
           (isSnippet && activeSnippetForEditor?.id && activeChapter?.driveFolderId) ||
-          (isNote && activeNoteForEditor?.id)
+          (isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId)
         )}
       />
       <EditorContentArea editor={editor} />

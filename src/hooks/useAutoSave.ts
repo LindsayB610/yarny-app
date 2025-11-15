@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
@@ -157,6 +157,23 @@ export function useAutoSave(
   const lastSavedContentRef = useRef<string>("");
   const queuedSaveRef = useRef<QueuedSave | null>(null);
   const pendingContentRef = useRef<string | null>(null);
+  const currentItemIdRef = useRef<string>(""); // Track which item we're editing
+  
+  // Initialize lastSavedContentRef with initial content when switching to a new item
+  // This ensures hasUnsavedChanges is false when content matches what was loaded
+  // We track the item ID (fileId or snippetId) to detect when we switch items
+  const currentItemId = fileId || localBackupSnippetId || "";
+  useEffect(() => {
+    // If we switched to a different item, initialize lastSavedContentRef with its content
+    if (currentItemId && currentItemId !== currentItemIdRef.current) {
+      lastSavedContentRef.current = content;
+      currentItemIdRef.current = currentItemId;
+    }
+    // If this is the first time and we have content but no itemId yet, still initialize
+    else if (!currentItemIdRef.current && content) {
+      lastSavedContentRef.current = content;
+    }
+  }, [currentItemId, content, fileId, localBackupSnippetId]);
 
   const resolvedFileName = providedFileName ?? "Yarny Auto Save";
   const writeLocalBackup = useCallback(

@@ -2,26 +2,27 @@ import type { Editor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 
 import { buildPlainTextDocument, extractPlainTextFromDocument } from "../../../editor/textExtraction";
-import type { Snippet } from "../../../store/types";
+import type { Content, Note, Snippet } from "../../../store/types";
 
 export function useEditorContentSync(
   editor: Editor | null,
   activeSnippet: Snippet | undefined,
-  activeSnippetId: string | undefined,
+  activeContent: Content | undefined,
+  activeContentId: string | undefined,
   isEditorOpen: boolean,
   hasUnsavedChanges: boolean,
   isSettingContentRef: React.MutableRefObject<boolean>
 ) {
-  const lastLoadedSnippetIdRef = useRef<string | undefined>(activeSnippet?.id);
+  const lastLoadedContentIdRef = useRef<string | undefined>(activeContent?.id);
   const lastAppliedContentRef = useRef<string>("");
 
   useEffect(() => {
     if (!editor) return;
 
-    const snippetChanged = activeSnippetId !== lastLoadedSnippetIdRef.current;
-    const contentChanged = activeSnippet?.content !== lastAppliedContentRef.current;
+    const contentIdChanged = activeContentId !== lastLoadedContentIdRef.current;
+    const contentChanged = activeContent?.content !== lastAppliedContentRef.current;
 
-    if (!snippetChanged && (!contentChanged || isEditorOpen || hasUnsavedChanges)) {
+    if (!contentIdChanged && (!contentChanged || isEditorOpen || hasUnsavedChanges)) {
       return;
     }
 
@@ -29,7 +30,9 @@ export function useEditorContentSync(
       editor.setEditable(true);
     }
 
-    const newContent = activeSnippet?.content ?? "";
+    // Use activeContent.content if available (works for both snippets and notes)
+    // Fallback to activeSnippet.content for backward compatibility
+    const newContent = activeContent?.content ?? activeSnippet?.content ?? "";
     const currentEditorContent = extractPlainTextFromDocument(editor.getJSON());
     
     if (currentEditorContent !== newContent) {
@@ -45,14 +48,15 @@ export function useEditorContentSync(
     }
 
     lastAppliedContentRef.current = newContent;
-    lastLoadedSnippetIdRef.current = activeSnippetId;
+    lastLoadedContentIdRef.current = activeContentId;
 
     requestAnimationFrame(() => {
-      if (activeSnippetId && editor.isEditable) {
+      if (activeContentId && editor.isEditable) {
         const tryFocus = () => {
           if (editor.isDestroyed) return;
           editor.commands.focus("end");
-          if (!editor.isFocused && (!activeSnippet?.content || activeSnippet.content.trim() === "")) {
+          const contentToCheck = activeContent?.content ?? activeSnippet?.content ?? "";
+          if (!editor.isFocused && (!contentToCheck || contentToCheck.trim() === "")) {
             setTimeout(() => {
               if (!editor.isDestroyed && editor.isEditable) {
                 editor.commands.focus("end");
@@ -63,6 +67,6 @@ export function useEditorContentSync(
         tryFocus();
       }
     });
-  }, [editor, activeSnippetId, activeSnippet?.content, isEditorOpen, hasUnsavedChanges, isSettingContentRef]);
+  }, [editor, activeContentId, activeContent?.content, activeSnippet?.content, isEditorOpen, hasUnsavedChanges, isSettingContentRef]);
 }
 
