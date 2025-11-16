@@ -28,14 +28,17 @@ export function StoriesHeader({
           mb: 4
         }}
       >
-        <Box>
+        <Box sx={{ m: 0, p: 0, textAlign: "left" }}>
           <Box
             component={RouterLink}
             to="/stories"
             sx={{
-              display: "block",
+              display: "inline-block",
               textDecoration: "none",
               mb: 1,
+              m: 0,
+              p: 0,
+              verticalAlign: "top",
               "&:hover": {
                 opacity: 0.9
               }
@@ -48,15 +51,23 @@ export function StoriesHeader({
               sx={{
                 height: "4rem",
                 display: "block",
+                m: 0,
+                p: 0,
+                verticalAlign: "top",
                 filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
               }}
             />
           </Box>
           <Typography
+            component="div"
             variant="body1"
             sx={{ 
               color: "rgba(255, 255, 255, 0.9)", 
-              fontSize: "1rem"
+              fontSize: "1rem",
+              m: 0,
+              p: 0,
+              display: "block",
+              textAlign: "left"
             }}
           >
             Your writing projects
