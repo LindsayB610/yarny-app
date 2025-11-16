@@ -234,7 +234,7 @@ export function LoginPage(): JSX.Element {
         >
           <Box
             component="img"
-            src="/yarny-wordmark.svg"
+            src="/yarny-wordmark-white.svg"
             alt="Yarny"
             sx={{
               height: "3rem",
