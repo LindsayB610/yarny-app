@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 2 · Yarny Testing Workbook</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/docs.css">
+  <link rel="stylesheet" href="/footer.css">
+  <link rel="stylesheet" href="/migration-plan/testing-workbook.css">
+  <script src="/migration-plan/testing-workbook.js" defer></script>
+</head>
+<body data-storage-key="testingWorkbookPhase2">
+  <div class="docs-container">
+    <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-branding">
+            <h1>Yarny</h1>
+            <p class="docs-subtitle">Your personal writing tool</p>
+          </div>
+          <a href="/migration-plan" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
+            Migration Plan
+          </a>
+          <a href="/migration-plan/testing-workbook" style="color: rgba(255, 255, 255, 0.7); text-decoration: none; font-size: 0.95rem; display: block;">Back to Workbook Overview</a>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#phase-intro" class="nav-link">Phase Overview</a></li>
+            <li><a href="#section-3" class="nav-link">Section 3 · Editor</a></li>
+            <li><a href="#section-4" class="nav-link">Section 4 · Drag &amp; Drop</a></li>
+            <li><a href="#section-5" class="nav-link">Section 5 · Classic UX</a></li>
+            <li><a href="#section-6" class="nav-link">Section 6 · Notes Drag &amp; Drop</a></li>
+            <li><a href="#phase-summary" class="nav-link">Phase Progress</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <nav class="docs-nav">
+          <a href="/stories.html" id="storiesNavLink" class="btn-secondary" style="display: none;">My Stories</a>
+          <a href="/docs.html" class="btn-secondary">Docs</a>
+          <a href="/" id="loginNavLink" class="btn-secondary">Back to Login</a>
+        </nav>
+
+        <div class="phase-breadcrumbs">
+          <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+          <span>/</span>
+          <span>Phase 2 · Core Editor Experience</span>
+        </div>
+
+        <div class="workbook-intro" id="phase-intro" data-section-anchor>
+          <h1>Phase 2 · Core Editor Experience</h1>
+          <p>Validate the editor in its React form: text handling, IME composition, drag-and-drop flows, and UX anchors that writers rely on.</p>
+          <ul style="margin: var(--space-lg) 0 0; padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.78);">
+            <li>Confirm editing fidelity including formatting, undo/redo, and IME scenarios.</li>
+            <li>Exercise the drag-and-drop interactions for chapter snippets and notes.</li>
+            <li>Check that classic UX anchors remain visually and functionally aligned.</li>
+          </ul>
+          <div class="phase-nav-links">
+            <a href="/migration-plan/testing-workbook-phase-1.html">Phase 1</a>
+            <a href="/migration-plan/testing-workbook-phase-3.html">Next: Phase 3</a>
+            <a href="/migration-plan/testing-workbook-phase-4.html">Phase 4</a>
+            <a href="/migration-plan/testing-workbook-phase-5.html">Phase 5</a>
+          </div>
+        </div>
+
+        <!-- Section 3: Editor - Visual & IME Testing -->
+        <div class="test-section" data-section-anchor id="section-3">
+          <h2><i class="material-icons">edit</i> Section 3: Editor - Visual & IME Testing</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification or human judgment. Functional editor tests (open snippet, edit content, auto-save, word count) are automated.</p>
+        
+        <div class="test-item">
+          <h4>Test 1.1: Plain Text Only (No Rich Formatting) - Visual Verification</h4>
+          <p>Verify that the editor only supports plain text (no bold, italic, colors, etc.) and preserves paragraph/line breaks correctly.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Type some text in the editor</li>
+              <li>Try to make text bold (Ctrl+B or Cmd+B) - it should NOT work</li>
+              <li>Try to make text italic (Ctrl+I or Cmd+I) - it should NOT work</li>
+              <li>Paste rich text from another document</li>
+              <li>Verify the formatting is stripped and only plain text remains</li>
+              <li>Test paragraph breaks: Press Enter twice to create a paragraph break</li>
+              <li>Verify paragraph breaks (double Enter) create proper spacing between paragraphs</li>
+              <li>Test soft line breaks: Press Shift+Enter to create a line break within a paragraph</li>
+              <li>Verify single line breaks (Shift+Enter) work correctly without creating new paragraphs</li>
+              <li>Save the snippet and open it in Google Docs</li>
+              <li>Verify paragraph breaks and line breaks are preserved correctly in Google Docs</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-1-1" name="test-1-1">
+            <label for="test-1-1">Editor only supports plain text and preserves paragraph/line breaks correctly</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 1.2: IME Composition Handling (Japanese/Chinese/Korean Input)</h4>
+          <p>Verify that the editor handles IME (Input Method Editor) composition correctly for Japanese, Chinese, and Korean text input.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Enable Japanese IME on your computer (or use browser dev tools to simulate)</li>
+              <li>Open a snippet in the Yarny editor</li>
+              <li>Start typing in Japanese (e.g., "こんにちは" - konnichiwa)</li>
+              <li>While composing (before pressing Enter to confirm), verify word count does NOT update prematurely</li>
+              <li>Complete the IME composition (press Enter to confirm)</li>
+              <li>Verify word count updates only after composition ends</li>
+              <li>Verify save debouncing respects composition (doesn't save during composition)</li>
+              <li>Repeat with Chinese text (e.g., "你好" - nǐ hǎo)</li>
+              <li>Repeat with Korean text (e.g., "안녕하세요" - annyeonghaseyo)</li>
+              <li>Verify all IME compositions work correctly</li>
+              <li>Save the snippet and verify the text is preserved correctly</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-1-2" name="test-1-2">
+            <label for="test-1-2">IME composition handling works correctly for Japanese/Chinese/Korean input</label>
+          </div>
+        </div>
+
+          <div class="test-item">
+            <h4>Test 1.3: Right-to-Left (RTL) Snippet Display</h4>
+            <p>Verify that snippets containing right-to-left languages (Arabic, Hebrew, etc.) render correctly in the editor.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Create or open a snippet containing RTL text (e.g., Arabic or Hebrew)</li>
+                <li><strong>Verify layout:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Text aligns to the right edge</li>
+                    <li>Paragraph direction is RTL (punctuation appears on correct side)</li>
+                    <li>Mixed RTL/LTR content displays correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Verify persistence:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Save the snippet in Yarny</li>
+                    <li>Open the corresponding Google Doc</li>
+                    <li>Confirm RTL text is preserved</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-3" name="test-1-3">
+              <label for="test-1-3">RTL snippets display correctly in the editor</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 1.4: RTL Caret Movement & Navigation</h4>
+            <p>Verify that keyboard navigation behaves correctly while editing RTL snippets.</p>
+            <div class="test-steps">
+              <ol>
+                <li>Open the RTL snippet from Test 1.3</li>
+                <li>Place the caret within the RTL text</li>
+                <li><strong>Verify arrow keys:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Left arrow moves caret visually to the left (toward sentence end)</li>
+                    <li>Right arrow moves caret visually to the right (toward sentence start)</li>
+                    <li>Home/End keys move to start/end of RTL line correctly</li>
+                  </ul>
+                </li>
+                <li><strong>Verify selection:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Shift+Arrow extends selection in expected direction</li>
+                    <li>Selected text highlights correctly without reversing characters</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-4" name="test-1-4">
+              <label for="test-1-4">Caret movement and selection work correctly in RTL snippets</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 1.5: RTL Word Count & Normalization</h4>
+            <p>Verify that word counting and normalization logic handle RTL content correctly.</p>
+            <div class="test-steps">
+              <ol>
+                <li>In the RTL snippet, type additional RTL words and punctuation</li>
+                <li>Observe word count in footer and daily tally</li>
+                <li><strong>Verify:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Word count increases correctly for RTL words</li>
+                    <li>No unexpected extra spaces or reversed characters appear</li>
+                  </ul>
+                </li>
+                <li>Paste RTL text from an external source (Google Docs or Word)</li>
+                <li><strong>Verify normalization:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Formatting is normalized to plain text</li>
+                    <li>Directionality remains RTL</li>
+                    <li>No stray LTR characters appear at line edges</li>
+                  </ul>
+                </li>
+                <li>Save the snippet and confirm Google Docs copy matches exactly</li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-1-5" name="test-1-5">
+              <label for="test-1-5">RTL words count correctly and pasted content normalizes as expected</label>
+            </div>
+          </div>
+
+      </div>
+
+        <!-- Section 4: Drag & Drop Visual Testing -->
+        <div class="test-section" data-section-anchor id="section-4">
+          <h2><i class="material-icons">folder</i> Section 4: Drag & Drop Visual Testing</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require visual verification of drag & drop feedback. Functional drag & drop operations (create, rename, delete chapters/snippets) are automated.</p>
+        
+        <div class="test-item">
+          <h4>Test 4.1: Drag & Drop Reorder Chapters - Visual Feedback</h4>
+          <p>Verify that you can reorder chapters by dragging and dropping.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click and hold on a chapter in the left sidebar</li>
+              <li>Drag it up or down to a new position</li>
+              <li>Release to drop it</li>
+              <li>Verify the chapter moves to the new position</li>
+              <li>Refresh the page</li>
+              <li>Verify the chapter order is preserved</li>
+              <li>Verify the order is saved in Google Drive</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-2-1" name="test-2-1">
+            <label for="test-2-1">I can reorder chapters by dragging and dropping</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 4.2: Drag & Drop Reorder Snippets - Visual Feedback</h4>
+          <p>Verify that you can reorder snippets within a chapter by dragging and dropping.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click and hold on a snippet in the left sidebar</li>
+              <li>Drag it up or down within the same chapter</li>
+              <li>Release to drop it</li>
+              <li>Verify the snippet moves to the new position</li>
+              <li>Refresh the page</li>
+              <li>Verify the snippet order is preserved</li>
+              <li>Verify the order is saved in Google Drive</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-2-2" name="test-2-2">
+            <label for="test-2-2">I can reorder snippets by dragging and dropping</label>
+          </div>
+        </div>
+
+        <div class="test-item">
+          <h4>Test 4.3: Drag & Drop Move Snippet Between Chapters - Visual Feedback</h4>
+          <p>Verify that you can move a snippet from one chapter to another by dragging and dropping.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click and hold on a snippet</li>
+              <li>Drag it to a different chapter</li>
+              <li>Release to drop it</li>
+              <li>Verify the snippet moves to the new chapter</li>
+              <li>Verify the snippet disappears from the old chapter</li>
+              <li>Refresh the page</li>
+              <li>Verify the snippet is still in the new chapter</li>
+              <li>Verify the Google Doc is moved to the new chapter folder in Google Drive</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-2-3" name="test-2-3">
+            <label for="test-2-3">I can move snippets between chapters by dragging and dropping</label>
+          </div>
+        </div>
+
+      </div>
+
+        <!-- Note: Sections 5 and 6 (Color Coding, Search) are fully automated -->
+
+        <!-- Section 5: Classic UX Anchors - Visual Parity -->
+        <div class="test-section" data-section-anchor id="section-5">
+          <h2><i class="material-icons">track_changes</i> Section 5: Classic UX Anchors - Visual Parity</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">These tests require side-by-side visual comparison between the classic app (root) and React app (`/react`) to verify design parity. This is <strong>REQUIRED before closing the editor phase</strong>. Functional goal tests (set goal, calculations, updates) are automated.</p>
+        
+          <div class="note-box" style="margin-bottom: var(--space-xl);">
+            <p><strong>Prerequisites:</strong> Before starting visual parity checks:</p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>React app deployed to <code>/react</code> path (verify <code>netlify.toml</code> is configured)</li>
+              <li>Build completed successfully (React app builds to <code>dist/</code> with <code>/react/</code> base path)</li>
+              <li>Both apps accessible: Classic app at root (<code>/editor.html</code>), React app at <code>/react/editor</code></li>
+              <li>Same test data loaded in both apps (same story, same goals, same content)</li>
+              <li>Browser setup: Open both apps side-by-side or use browser dev tools for comparison</li>
+            </ul>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.1: Setup - Deploy React App to /react Path</h4>
+            <p>Verify that the React app is properly deployed to the <code>/react</code> path for side-by-side comparison. This is a <strong>REQUIRED</strong> step before visual parity checks.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Verify netlify.toml configuration:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Open <code>netlify.toml</code> in the project root</li>
+                    <li>Verify a redirect rule exists for <code>/react/*</code>:
+                      <pre style="background: rgba(0, 0, 0, 0.3); padding: var(--space-md); border-radius: 4px; margin: var(--space-sm) 0; overflow-x: auto; font-size: 0.9em;">[[redirects]]
+  from = "/react/*"
+  to = "/react/index.html"
+  status = 200</pre>
+                    </li>
+                    <li>If the redirect rule is missing, add it to <code>netlify.toml</code></li>
+                  </ul>
+                </li>
+                <li><strong>Verify vite.config.ts configuration:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Open <code>vite.config.ts</code> in the project root</li>
+                    <li>Verify <code>base: "/react/"</code> is set in the config</li>
+                    <li>Verify <code>build.outDir: "dist"</code> is set</li>
+                    <li>If missing, update the configuration</li>
+                  </ul>
+                </li>
+                <li><strong>Verify src/app/routes.tsx configuration:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Open <code>src/app/routes.tsx</code></li>
+                    <li>Verify <code>basename: "/react"</code> is set in <code>createBrowserRouter</code></li>
+                    <li>If missing, add it to the router configuration</li>
+                  </ul>
+                </li>
+                <li><strong>Build the React app:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Run <code>npm run build</code> in the project root</li>
+                    <li>Verify build completes without errors</li>
+                    <li>Verify post-build script runs (moves React build to <code>dist/react/</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Verify build output structure:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Check that <code>dist/react/index.html</code> exists</li>
+                    <li>Check that <code>dist/react/assets/</code> directory exists</li>
+                    <li>Verify classic app files remain in <code>dist/</code> (not moved)</li>
+                    <li>Open <code>dist/react/index.html</code> and verify asset paths start with <code>/react/</code></li>
+                  </ul>
+                </li>
+                <li><strong>Deploy to Netlify:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Push changes to trigger deployment, or</li>
+                    <li>Use <code>netlify deploy --build --prod</code> for production deployment</li>
+                    <li>Wait for deployment to complete</li>
+                  </ul>
+                </li>
+                <li><strong>Verify deployment:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li><strong>Check React app accessibility:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Navigate to <code>https://yarny.lindsaybrunner.com/react/</code></li>
+                        <li>Confirm React app loads correctly (no 404 errors)</li>
+                        <li>Check browser console for any JavaScript errors</li>
+                        <li>Verify React app renders (not blank page)</li>
+                      </ul>
+                    </li>
+                    <li><strong>Test React Router routes:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Navigate to <code>/react/stories</code> - should load stories page</li>
+                        <li>Navigate to <code>/react/editor</code> - should load editor page</li>
+                        <li>Navigate to <code>/react/login</code> - should load login page</li>
+                        <li>Verify all routes work without page refresh (SPA navigation)</li>
+                      </ul>
+                    </li>
+                    <li><strong>Verify assets load correctly:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Open browser DevTools → Network tab</li>
+                        <li>Reload page and check asset requests</li>
+                        <li>Verify all <code>/react/assets/</code> requests return 200 status codes</li>
+                        <li>Check for any 404 errors on asset requests</li>
+                        <li>Verify CSS and JS files load correctly</li>
+                      </ul>
+                    </li>
+                    <li><strong>Test React Router navigation:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Click navigation links in the app</li>
+                        <li>Verify URL changes to <code>/react/...</code> paths</li>
+                        <li>Test browser back/forward buttons</li>
+                        <li>Test direct URL navigation (type URL in address bar)</li>
+                        <li>Verify no full page reloads occur (SPA behavior)</li>
+                      </ul>
+                    </li>
+                    <li><strong>Verify authentication works:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Test login flow in React app</li>
+                        <li>Verify protected routes redirect to login when not authenticated</li>
+                        <li>Verify authenticated routes load correctly after login</li>
+                      </ul>
+                    </li>
+                    <li><strong>Check for console errors:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Open browser DevTools → Console tab</li>
+                        <li>Check for any red error messages</li>
+                        <li>Check for any yellow warning messages</li>
+                        <li>Document any errors or warnings found</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li><strong>Verify classic app still works:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Navigate to <code>https://yarny.lindsaybrunner.com/editor.html</code></li>
+                    <li>Confirm classic app loads correctly</li>
+                    <li>Verify both apps can be accessed simultaneously</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-1" name="test-5-1">
+              <label for="test-5-1">React app deployed to /react path and accessible, classic app still works</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.2: Setup - Prepare Test Data for Comparison</h4>
+            <p>Prepare the same test data in both apps for accurate visual comparison.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Select test story:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Use test-small or test-medium project</li>
+                    <li>Open the same story in both classic and React apps</li>
+                  </ul>
+                </li>
+                <li><strong>Set word count goal:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Set a goal (e.g., 3,000 words) with some progress</li>
+                    <li>Ensure both apps show the same goal value</li>
+                  </ul>
+                </li>
+                <li><strong>Set daily goal:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Configure daily writing goal with some progress</li>
+                    <li>Ensure both apps show the same daily target</li>
+                  </ul>
+                </li>
+                <li><strong>Add content:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Ensure story has content to display word/character counts</li>
+                    <li>Select the same snippet in both apps</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-2" name="test-5-2">
+              <label for="test-5-2">Test data prepared and synchronized between both apps</label>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.3: Goal Meter - Visual Parity Check (Side-by-Side)</h4>
+            <p>Verify that the goal meter in the React app matches the classic app visually. This is a <strong>CRITICAL</strong> visual parity check. Document any differences with screenshots.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Open both apps side-by-side:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Open classic app: <code>https://yarny.lindsaybrunner.com/editor.html</code></li>
+                    <li>Open React app: <code>https://yarny.lindsaybrunner.com/react/editor</code></li>
+                    <li>Arrange windows side-by-side (use browser window management or split screen)</li>
+                    <li>Ensure both apps show the same story with the same goal settings</li>
+                  </ul>
+                </li>
+                <li><strong>Take baseline screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a screenshot of the classic app's goal meter</li>
+                    <li>Take a screenshot of the React app's goal meter</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>goal-meter-classic.png</code>, <code>goal-meter-react.png</code>)</li>
+                    <li>Store screenshots in a shared location (e.g., project documentation folder)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Goal Meter Position:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify goal meter appears in same position (below story header, above "Today" chip)</li>
+                    <li>Verify spacing matches (margin-bottom: 12px)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Goal Meter Layout:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify text and progress bar layout matches</li>
+                    <li>Verify word count format matches (e.g., "1,500 / 3,000")</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Typography:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify font size matches (13px for text)</li>
+                    <li>Verify font color matches (#6B7280 for secondary text)</li>
+                    <li>Use browser dev tools to inspect computed styles</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Progress Bar:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify progress bar height matches (4px)</li>
+                    <li>Verify progress bar color matches (green #10B981 when &lt; 100%, gold when &gt;= 100%)</li>
+                    <li>Verify progress bar width matches (100% of container)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Styling:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify background color/styling matches</li>
+                    <li>Verify border radius and styling matches (if any)</li>
+                    <li>Verify hover state matches (0.8 opacity on hover)</li>
+                    <li>Verify cursor shows pointer on hover</li>
+                  </ul>
+                </li>
+                <li><strong>Test Interaction:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Click on goal meter in both apps</li>
+                    <li>Verify click handler works (opens goal editor if implemented)</li>
+                    <li>Verify keyboard navigation works (if implemented)</li>
+                  </ul>
+                </li>
+                <li><strong>Document Measurements:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Use browser dev tools to measure font sizes, spacing, colors</li>
+                    <li>Record measurements in the notes section below</li>
+                    <li>Compare measurements between classic and React apps</li>
+                  </ul>
+                </li>
+                <li><strong>Take comparison screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a side-by-side screenshot showing both goal meters</li>
+                    <li>Take close-up screenshots of any differences found</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>goal-meter-comparison.png</code>, <code>goal-meter-difference.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Test different states:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Test with goal at 0% (no progress)</li>
+                    <li>Test with goal at 50% (half progress)</li>
+                    <li>Test with goal at 100% (complete - should show gold color)</li>
+                    <li>Test with goal exceeded (over 100%)</li>
+                    <li>Take screenshots for each state</li>
+                    <li>Verify colors and styling match in all states</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Expected Measurements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>Text font size: 13px</li>
+                <li>Text color: #6B7280</li>
+                <li>Progress bar height: 4px</li>
+                <li>Progress bar color (&lt; 100%): #10B981</li>
+                <li>Progress bar color (&gt;= 100%): #F59E0B</li>
+                <li>Margin bottom: 12px</li>
+              </ul>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-3" name="test-5-3">
+              <label for="test-5-3">Goal meter visual parity verified - matches classic app</label>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Documentation Requirements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>✅ Baseline screenshots taken (classic and React)</li>
+                <li>✅ Comparison screenshots taken (side-by-side)</li>
+                <li>✅ State screenshots taken (0%, 50%, 100%, exceeded)</li>
+                <li>✅ Measurements recorded</li>
+                <li>✅ Differences documented (if any)</li>
+              </ul>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Notes:</strong> Record any differences, issues, or observations. Include screenshot file names.</p>
+              <textarea style="width: 100%; min-height: 100px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record measurements, differences, screenshot file names, and any issues found..."></textarea>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.4: "Today" Chip - Visual Parity Check (Side-by-Side)</h4>
+            <p>Verify that the "Today" chip in the React app matches the classic app visually. This is a <strong>CRITICAL</strong> visual parity check. Document any differences with screenshots.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Take baseline screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a screenshot of the classic app's "Today" chip</li>
+                    <li>Take a screenshot of the React app's "Today" chip</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>today-chip-classic.png</code>, <code>today-chip-react.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare "Today" Chip Position:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify "Today" chip appears in same position (below goal meter, above search)</li>
+                    <li>Verify spacing matches (margin-bottom: 12px)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Layout:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify horizontal layout with "Today" label, count, and progress bar matches</li>
+                    <li>Verify container styling matches (padding: 8px 10px, border, background)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Typography:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify "Today" label font size and color match</li>
+                    <li>Verify word count font weight and size match (semibold, 12px)</li>
+                    <li>Use browser dev tools to inspect computed styles</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Progress Bar:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify progress bar height matches (2px)</li>
+                    <li>Verify progress bar max width matches (60px)</li>
+                    <li>Verify progress bar color logic matches (green when ahead, red when behind, blue when on track)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Styling:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify background color matches (rgba(255, 255, 255, 0.5))</li>
+                    <li>Verify border style and color match (1px solid, border-color)</li>
+                    <li>Verify border radius matches (var(--radius-lg))</li>
+                    <li>Verify hover background color matches (rgba(255, 255, 255, 0.8))</li>
+                    <li>Verify hover border color matches (var(--color-primary))</li>
+                    <li>Verify cursor shows pointer on hover</li>
+                  </ul>
+                </li>
+                <li><strong>Test Interaction:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Click on "Today" chip in both apps</li>
+                    <li>Verify click handler works (opens goal editor if implemented)</li>
+                    <li>Verify keyboard navigation works (if implemented)</li>
+                  </ul>
+                </li>
+                <li><strong>Document Measurements:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Use browser dev tools to measure font sizes, spacing, colors</li>
+                    <li>Record measurements in the notes section below</li>
+                    <li>Compare measurements between classic and React apps</li>
+                  </ul>
+                </li>
+                <li><strong>Take comparison screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a side-by-side screenshot showing both "Today" chips</li>
+                    <li>Take close-up screenshots of any differences found</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>today-chip-comparison.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Test different states:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Test with daily goal at 0% (no progress)</li>
+                    <li>Test with daily goal at 50% (half progress)</li>
+                    <li>Test with daily goal at 100% (complete)</li>
+                    <li>Test with daily goal exceeded (over 100%)</li>
+                    <li>Test "ahead" state (isAhead: true - should show green)</li>
+                    <li>Test "behind" state (isBehind: true - should show red)</li>
+                    <li>Test "on track" state (neither ahead nor behind - should show blue)</li>
+                    <li>Take screenshots for each state</li>
+                    <li>Verify colors and styling match in all states</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Expected Measurements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>Container padding: 8px 10px</li>
+                <li>Font size: 12px</li>
+                <li>Progress bar height: 2px</li>
+                <li>Progress bar max width: 60px</li>
+                <li>Background color: rgba(255, 255, 255, 0.5)</li>
+                <li>Border radius: var(--radius-lg)</li>
+                <li>Margin bottom: 12px</li>
+              </ul>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-4" name="test-5-4">
+              <label for="test-5-4">"Today" chip visual parity verified - matches classic app</label>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Documentation Requirements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>✅ Baseline screenshots taken (classic and React)</li>
+                <li>✅ Comparison screenshots taken (side-by-side)</li>
+                <li>✅ State screenshots taken (0%, 50%, 100%, ahead, behind, on track)</li>
+                <li>✅ Measurements recorded</li>
+                <li>✅ Differences documented (if any)</li>
+              </ul>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Notes:</strong> Record any differences, issues, or observations. Include screenshot file names.</p>
+              <textarea style="width: 100%; min-height: 100px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record measurements, differences, screenshot file names, and any issues found..."></textarea>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.5: Footer Counts (EditorFooter) - Visual Parity Check (Side-by-Side)</h4>
+            <p>Verify that the footer word and character counts in the React app match the classic app visually. This is a <strong>CRITICAL</strong> visual parity check. Document any differences with screenshots.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Take baseline screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a screenshot of the classic app's footer counts</li>
+                    <li>Take a screenshot of the React app's footer counts</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>footer-counts-classic.png</code>, <code>footer-counts-react.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Footer Position:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify footer appears at bottom of editor (grid-area: footer)</li>
+                    <li>Verify footer height matches (44px)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Layout:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify horizontal layout with word count and character count matches</li>
+                    <li>Verify word count display format matches (e.g., "1,500 words")</li>
+                    <li>Verify character count display format matches (e.g., "8,500 characters")</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Typography:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify font size matches (var(--font-size-xs))</li>
+                    <li>Verify text color matches (var(--color-text-secondary))</li>
+                    <li>Use browser dev tools to inspect computed styles</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Spacing:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify gap between word and character count matches</li>
+                    <li>Verify text alignment matches (right-aligned in footer-right)</li>
+                    <li>Verify padding matches (0 var(--space-md) for footer, py: 1.5 for counts)</li>
+                  </ul>
+                </li>
+                <li><strong>Compare Styling:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Verify background color matches (var(--color-bg-secondary))</li>
+                    <li>Verify top border matches (1px solid var(--color-border))</li>
+                  </ul>
+                </li>
+                <li><strong>Document Measurements:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Use browser dev tools to measure font sizes, spacing, colors</li>
+                    <li>Record measurements in the notes section below</li>
+                    <li>Compare measurements between classic and React apps</li>
+                  </ul>
+                </li>
+                <li><strong>Take comparison screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Take a side-by-side screenshot showing both footer counts</li>
+                    <li>Take close-up screenshots of any differences found</li>
+                    <li>Save screenshots with descriptive names (e.g., <code>footer-counts-comparison.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Test different content lengths:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Test with empty content (0 words, 0 characters)</li>
+                    <li>Test with small content (10 words, 50 characters)</li>
+                    <li>Test with medium content (100 words, 500 characters)</li>
+                    <li>Test with large content (1000+ words, 5000+ characters)</li>
+                    <li>Test with very large numbers (10,000+ words - verify number formatting with commas)</li>
+                    <li>Take screenshots for each content length</li>
+                    <li>Verify number formatting matches (commas for thousands)</li>
+                    <li>Verify text labels match ("words" vs "word", "characters" vs "character")</li>
+                  </ul>
+                </li>
+                <li><strong>Test real-time updates:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Type in the editor in both apps</li>
+                    <li>Verify counts update in real-time in both apps</li>
+                    <li>Verify update timing matches (no lag in React app)</li>
+                    <li>Take screenshots during typing to verify updates</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Expected Measurements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>Footer height: 44px</li>
+                <li>Font size: var(--font-size-xs)</li>
+                <li>Text color: var(--color-text-secondary)</li>
+                <li>Gap between counts: var(--space-md)</li>
+                <li>Padding (horizontal): var(--space-md)</li>
+              </ul>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-5" name="test-5-5">
+              <label for="test-5-5">Footer counts visual parity verified - matches classic app</label>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Documentation Requirements:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>✅ Baseline screenshots taken (classic and React)</li>
+                <li>✅ Comparison screenshots taken (side-by-side)</li>
+                <li>✅ Content length screenshots taken (empty, small, medium, large, very large)</li>
+                <li>✅ Real-time update screenshots taken</li>
+                <li>✅ Measurements recorded</li>
+                <li>✅ Differences documented (if any)</li>
+              </ul>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Notes:</strong> Record any differences, issues, or observations. Include screenshot file names.</p>
+              <textarea style="width: 100%; min-height: 100px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record measurements, differences, screenshot file names, and any issues found..."></textarea>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <h4>Test 5.6: Document Visual Differences with Screenshots</h4>
+            <p>Create a comprehensive visual comparison document with screenshots showing all three UX anchors (Goal Meter, Today Chip, Footer Counts) side-by-side. This documentation is <strong>REQUIRED</strong> before closing the editor phase.</p>
+            <div class="test-steps">
+              <ol>
+                <li><strong>Organize screenshots:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Create a folder for visual parity documentation (e.g., <code>docs/visual-parity/</code>)</li>
+                    <li>Organize screenshots by component (GoalMeter, TodayChip, EditorFooter)</li>
+                    <li>Name files consistently (e.g., <code>goal-meter-classic.png</code>, <code>goal-meter-react.png</code>, <code>goal-meter-comparison.png</code>)</li>
+                  </ul>
+                </li>
+                <li><strong>Create comparison document:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Create a markdown document (e.g., <code>docs/visual-parity/COMPARISON.md</code>)</li>
+                    <li>Include sections for each component (Goal Meter, Today Chip, Footer Counts)</li>
+                    <li>Add screenshots to the document with descriptive captions</li>
+                  </ul>
+                </li>
+                <li><strong>Document each component:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li><strong>Goal Meter:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Include baseline screenshots (classic and React)</li>
+                        <li>Include comparison screenshot (side-by-side)</li>
+                        <li>Include state screenshots (0%, 50%, 100%, exceeded)</li>
+                        <li>Document measurements (font size, colors, spacing)</li>
+                        <li>Document any differences found</li>
+                      </ul>
+                    </li>
+                    <li><strong>Today Chip:</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Include baseline screenshots (classic and React)</li>
+                        <li>Include comparison screenshot (side-by-side)</li>
+                        <li>Include state screenshots (ahead, behind, on track, 0%, 50%, 100%)</li>
+                        <li>Document measurements (font size, colors, spacing)</li>
+                        <li>Document any differences found</li>
+                      </ul>
+                    </li>
+                    <li><strong>Footer Counts (EditorFooter):</strong>
+                      <ul style="margin-top: var(--space-xs); padding-left: var(--space-lg);">
+                        <li>Include baseline screenshots (classic and React)</li>
+                        <li>Include comparison screenshot (side-by-side)</li>
+                        <li>Include content length screenshots (empty, small, medium, large, very large)</li>
+                        <li>Document measurements (font size, colors, spacing)</li>
+                        <li>Document any differences found</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li><strong>Create summary table:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Create a table comparing measurements between classic and React apps</li>
+                    <li>Include columns: Component, Measurement, Classic Value, React Value, Match Status</li>
+                    <li>Mark any differences in red or with a warning icon</li>
+                  </ul>
+                </li>
+                <li><strong>Document any issues:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>List any visual differences found</li>
+                    <li>Include screenshots showing the differences</li>
+                    <li>Note severity (critical, minor, acceptable)</li>
+                    <li>Create GitHub issues for critical differences</li>
+                  </ul>
+                </li>
+                <li><strong>Share documentation:</strong>
+                  <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl);">
+                    <li>Commit screenshots and comparison document to repository</li>
+                    <li>Share with team for review</li>
+                    <li>Update this workbook with results</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Documentation Checklist:</strong></p>
+              <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+                <li>✅ Screenshots organized in dedicated folder</li>
+                <li>✅ Comparison document created with all components</li>
+                <li>✅ Baseline screenshots for each component (classic and React)</li>
+                <li>✅ Side-by-side comparison screenshots</li>
+                <li>✅ State screenshots (different progress levels, content lengths)</li>
+                <li>✅ Measurements documented in table format</li>
+                <li>✅ Differences documented with screenshots</li>
+                <li>✅ GitHub issues created for critical differences (if any)</li>
+                <li>✅ Documentation committed to repository</li>
+              </ul>
+            </div>
+            <div class="checkbox-container">
+              <input type="checkbox" id="test-5-6" name="test-5-6">
+              <label for="test-5-6">Visual differences documented with screenshots and comparison document created</label>
+            </div>
+            <div class="note-box" style="margin-top: var(--space-md);">
+              <p><strong>Notes:</strong> Record location of documentation, screenshot folder path, and any issues encountered</p>
+              <textarea style="width: 100%; min-height: 80px; padding: var(--space-sm); border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1);" placeholder="Record documentation location, screenshot folder path, and any issues..."></textarea>
+            </div>
+          </div>
+
+          <div class="note-box" style="margin-top: var(--space-2xl);">
+            <p><strong>Visual Parity Validation Summary:</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li><strong>Deployment to /react path:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Goal Meter:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>"Today" Chip:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Footer Counts (EditorFooter):</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Screenshot Documentation:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+              <li><strong>Overall Visual Parity:</strong> [ ] ✅ PASS / [ ] ❌ FAIL</li>
+            </ul>
+            <p style="margin-top: var(--space-md);"><strong>Note:</strong> All UX anchors must pass visual parity checks and be documented with screenshots before closing the editor phase.</p>
+          </div>
+      </div>
+
+        <!-- Section 6: Notes Drag & Drop Visual Testing -->
+        <div class="test-section" data-section-anchor id="section-6">
+          <h2><i class="material-icons">note</i> Section 6: Notes Drag & Drop Visual Testing</h2>
+          <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: var(--space-lg);">This test requires visual verification of drag & drop feedback. Functional notes tests (create, edit, rename, delete) are automated.</p>
+        
+        <div class="test-item">
+          <h4>Test 6.1: Reorder Notes (Drag & Drop) - Visual Feedback</h4>
+          <p>Verify that you can reorder notes by dragging and dropping.</p>
+          <div class="test-steps">
+            <ol>
+              <li>Click and hold on a note in the right sidebar</li>
+              <li>Drag it up or down to a new position</li>
+              <li>Release to drop it</li>
+              <li>Verify the note moves to the new position</li>
+              <li>Refresh the page</li>
+              <li>Verify the note order is preserved</li>
+            </ol>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="test-4-1" name="test-4-1">
+            <label for="test-4-1">I can reorder notes by dragging and dropping</label>
+          </div>
+        </div>
+      </div>
+
+        <div class="summary-section" id="phase-summary" data-section-anchor>
+          <h2>Phase 2 Progress</h2>
+          <p style="color: rgba(255, 255, 255, 0.78); margin-bottom: var(--space-xl);">Use this as the final checklist before leaving the editor-focused phase.</p>
+          <div class="summary-stats">
+            <div class="stat-box">
+              <div class="stat-number" id="totalTests">0</div>
+              <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="completedTests">0</div>
+              <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="remainingTests">0</div>
+              <div class="stat-label">Remaining</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="completionPercent">0%</div>
+              <div class="stat-label">Completion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="shared-footer">
+      <p>&copy; 2025 Yarny. Your personal writing tool.</p>
+      <nav class="shared-footer-nav">
+        <a href="/docs.html">User Guide</a>
+        <a href="/migration-plan">Migration Plan</a>
+        <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>

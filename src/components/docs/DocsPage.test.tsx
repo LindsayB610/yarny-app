@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { DocsPage } from "./DocsPage";
 import { useAuth } from "../../hooks/useAuth";
 import { useUptimeStatus } from "../../hooks/useUptimeStatus";
@@ -139,6 +141,34 @@ describe("DocsPage", () => {
     expect(screen.getByText(/© \d{4} Yarny/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "User Guide" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Testing Workbook" })).toBeInTheDocument();
+  });
+
+  it("verifies static file links point to existing files", () => {
+    renderWithProviders(<DocsPage />);
+    
+    // Get all links that point to static files (not routes or mailto links)
+    const allLinks = screen.getAllByRole("link");
+    const staticFileLinks = allLinks.filter((link) => {
+      const href = link.getAttribute("href");
+      return (
+        href &&
+        href.startsWith("/") &&
+        !href.startsWith("mailto:") &&
+        href.endsWith(".html")
+      );
+    });
+    
+    expect(staticFileLinks.length).toBeGreaterThan(0);
+    
+    staticFileLinks.forEach((link) => {
+      const href = link.getAttribute("href");
+      if (href) {
+        // Remove leading slash and check if file exists in public directory
+        const filePath = href.startsWith("/") ? href.slice(1) : href;
+        const publicPath = resolve(process.cwd(), "public", filePath);
+        expect(existsSync(publicPath)).toBe(true);
+      }
+    });
   });
 
   it("shows My Stories link in footer when authenticated", () => {

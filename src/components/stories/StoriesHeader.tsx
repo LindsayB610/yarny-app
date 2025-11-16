@@ -28,20 +28,23 @@ export function StoriesHeader({
           mb: 4
         }}
       >
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
           <Box
             component="img"
             src="/yarny-wordmark-white.svg"
             alt="Yarny"
             sx={{
-              height: "3rem",
-              mb: 1,
+              height: "4rem",
               filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
             }}
           />
           <Typography
             variant="body1"
-            sx={{ color: "rgba(255, 255, 255, 0.9)", fontSize: "1rem" }}
+            sx={{ 
+              color: "rgba(255, 255, 255, 0.9)", 
+              fontSize: "1rem",
+              pb: 0.5
+            }}
           >
             Your writing projects
           </Typography>

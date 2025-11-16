@@ -828,16 +828,16 @@ export function DocsPage(): JSX.Element {
                 <MenuIcon />
               </IconButton>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5 }}>
               <Box
                 component="img"
                 src="/yarny-wordmark.svg"
                 alt="Yarny"
                 sx={{
-                  height: "2rem"
+                  height: "3rem"
                 }}
               />
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, pb: 0.25 }}>
                 User Guide
               </Typography>
             </Box>
