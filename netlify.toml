@@ -29,20 +29,10 @@
   to = "/docs"
   status = 301
 
-# Allow direct access to migration-plan.html (public, no auth required)
-[[redirects]]
-  from = "/migration-plan"
-  to = "/migration-plan.html"
-  status = 200
-
+# Allow direct access to testing workbook (public, no auth required)
 [[redirects]]
   from = "/migration-plan/testing-workbook"
   to = "/migration-plan/testing-workbook.html"
-  status = 200
-
-[[redirects]]
-  from = "/migration-plan.html"
-  to = "/migration-plan.html"
   status = 200
 
 # Redirect deprecated /react paths to new SPA routes

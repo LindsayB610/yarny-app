@@ -24,7 +24,7 @@ declare global {
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const { data: config, isLoading: configLoading } = useAuthConfig();
-  const { isAuthenticated, login, loginWithBypass, isLoading } = useAuth();
+  const { isAuthenticated, user, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if already authenticated
@@ -233,14 +233,26 @@ export function LoginPage(): JSX.Element {
           }}
         >
           <Box
-            component="img"
-            src="/yarny-wordmark-white.svg"
-            alt="Yarny"
+            component={RouterLink}
+            to={user ? "/stories" : "/login"}
             sx={{
-              height: "3rem",
-              mb: 2
+              display: "inline-block",
+              textDecoration: "none",
+              mb: 2,
+              "&:hover": {
+                opacity: 0.9
+              }
             }}
-          />
+          >
+            <Box
+              component="img"
+              src="/yarny-wordmark-white.svg"
+              alt="Yarny"
+              sx={{
+                height: "3rem"
+              }}
+            />
+          </Box>
           <Typography variant="h5" sx={{ color: "white", mb: 1, fontWeight: "bold" }}>
             Welcome back!
           </Typography>

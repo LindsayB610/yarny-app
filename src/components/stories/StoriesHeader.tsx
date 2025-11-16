@@ -28,22 +28,34 @@ export function StoriesHeader({
           mb: 4
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+        <Box>
           <Box
-            component="img"
-            src="/yarny-wordmark-white.svg"
-            alt="Yarny"
+            component={RouterLink}
+            to="/stories"
             sx={{
-              height: "4rem",
-              filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
+              display: "inline-block",
+              textDecoration: "none",
+              "&:hover": {
+                opacity: 0.9
+              }
             }}
-          />
+          >
+            <Box
+              component="img"
+              src="/yarny-wordmark-white.svg"
+              alt="Yarny"
+              sx={{
+                height: "4rem",
+                mb: 1,
+                filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
+              }}
+            />
+          </Box>
           <Typography
             variant="body1"
             sx={{ 
               color: "rgba(255, 255, 255, 0.9)", 
-              fontSize: "1rem",
-              pb: 0.5
+              fontSize: "1rem"
             }}
           >
             Your writing projects

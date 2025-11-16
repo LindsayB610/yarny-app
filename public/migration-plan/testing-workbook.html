@@ -8,1783 +8,206 @@
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/docs.css">
   <link rel="stylesheet" href="/footer.css">
-  <style>
-    .workbook-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-4xl) var(--space-xl);
-    }
-    
-    .workbook-header {
-      text-align: center;
-      margin-bottom: var(--space-6xl);
-      padding-bottom: var(--space-4xl);
-      border-bottom: 2px solid rgba(16, 185, 129, 0.3);
-    }
-    
-    .workbook-header h1 {
-      color: var(--color-primary);
-      font-size: 2.5rem;
-      margin-bottom: var(--space-md);
-    }
-    
-    .workbook-header p {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 1.1rem;
-      line-height: 1.6;
-    }
-    
-    .test-section {
-      background: rgba(31, 41, 55, 0.6);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4xl);
-      margin-bottom: var(--space-4xl);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .test-section h2 {
-      color: var(--color-primary);
-      font-size: 1.8rem;
-      margin-bottom: var(--space-lg);
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-    }
-    
-    .test-section h3 {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 1.3rem;
-      margin-top: var(--space-3xl);
-      margin-bottom: var(--space-md);
-    }
-    
-    .test-item {
-      background: rgba(31, 41, 55, 0.4);
-      border-left: 4px solid var(--color-primary);
-      padding: var(--space-xl);
-      margin-bottom: var(--space-lg);
-      border-radius: var(--radius-md);
-    }
-    
-    .test-item h4 {
-      color: rgba(255, 255, 255, 0.95);
-      font-size: 1.1rem;
-      margin-bottom: var(--space-sm);
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-    
-    .test-item p {
-      color: rgba(255, 255, 255, 0.7);
-      margin-bottom: var(--space-md);
-      line-height: 1.6;
-    }
-    
-    .test-steps {
-      background: rgba(0, 0, 0, 0.2);
-      padding: var(--space-lg);
-      border-radius: var(--radius-md);
-      margin-top: var(--space-md);
-    }
-    
-    .test-steps ol {
-      margin: 0;
-      padding-left: var(--space-xl);
-      color: rgba(255, 255, 255, 0.8);
-    }
-    
-    .test-steps li {
-      margin-bottom: var(--space-sm);
-      line-height: 1.6;
-    }
-    
-    .checkbox-container {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-md);
-      margin-top: var(--space-md);
-    }
-    
-    .checkbox-container input[type="checkbox"] {
-      margin-top: 4px;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    
-    .checkbox-container label {
-      color: rgba(255, 255, 255, 0.7);
-      cursor: pointer;
-      flex: 1;
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: var(--radius-full);
-      font-size: 0.85rem;
-      font-weight: var(--font-weight-semibold);
-      margin-left: var(--space-sm);
-    }
-    
-    .status-pass {
-      background: rgba(16, 185, 129, 0.2);
-      color: var(--color-primary);
-      border: 1px solid var(--color-primary);
-    }
-    
-    .status-fail {
-      background: rgba(239, 68, 68, 0.2);
-      color: #EF4444;
-      border: 1px solid #EF4444;
-    }
-    
-    .status-skip {
-      background: rgba(156, 163, 175, 0.2);
-      color: #9CA3AF;
-      border: 1px solid #9CA3AF;
-    }
-    
-    .note-box {
-      background: rgba(254, 243, 199, 0.1);
-      border-left: 4px solid #F59E0B;
-      padding: var(--space-lg);
-      margin: var(--space-lg) 0;
-      border-radius: var(--radius-md);
-    }
-    
-    .note-box p {
-      color: rgba(255, 255, 255, 0.9);
-      margin: 0;
-    }
-    
-    .note-box strong {
-      color: #F59E0B;
-    }
-    
-    .summary-section {
-      background: rgba(16, 185, 129, 0.1);
-      border: 2px solid var(--color-primary);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4xl);
-      margin-top: var(--space-6xl);
-      text-align: center;
-    }
-    
-    .summary-section h2 {
-      color: var(--color-primary);
-      margin-bottom: var(--space-xl);
-    }
-    
-    .summary-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--space-xl);
-      margin-top: var(--space-2xl);
-    }
-    
-    .stat-box {
-      background: rgba(31, 41, 55, 0.6);
-      padding: var(--space-xl);
-      border-radius: var(--radius-md);
-    }
-    
-    .stat-box .stat-number {
-      font-size: 2rem;
-      font-weight: var(--font-weight-bold);
-      color: var(--color-primary);
-    }
-    
-    .stat-box .stat-label {
-      color: rgba(255, 255, 255, 0.7);
-      margin-top: var(--space-sm);
-    }
-  </style>
+  <link rel="stylesheet" href="/migration-plan/testing-workbook.css">
+  <script src="/migration-plan/testing-workbook.js" defer></script>
 </head>
-<body>
-  <div class="docs-container">
-    <div class="workbook-container">
-      <div class="workbook-header">
-        <h1>Yarny React Migration - Testing Workbook</h1>
-        <p>This workbook guides you through testing every feature and function after the React migration is complete. Check off each item as you test it, and note any issues you encounter.</p>
-        <p style="margin-top: var(--space-md);"><strong>Note:</strong> This workbook is designed for non-developers. Each test includes clear instructions and expected results.</p>
-      </div>
-
-      <!-- Section 1: Authentication & Access -->
-      <div class="test-section">
-        <h2><i class="material-icons">lock</i> Section 1: Authentication & Access</h2>
-        
-        <div class="test-item">
-          <h4>Test 1.1: Google Sign-In</h4>
-          <p>Verify that you can sign in with your Google account.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Go to the login page (yarny.lindsaybrunner.com/react)</li>
-              <li>Click "Sign in with Google"</li>
-              <li>Select your Google account</li>
-              <li>Authorize Yarny to access your account</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-1-1" name="test-1-1">
-            <label for="test-1-1">I successfully signed in with Google</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 1.2: Google Drive Connection</h4>
-          <p>Verify that you can connect your Google Drive account.</p>
-          <div class="test-steps">
-            <ol>
-              <li>After signing in, you should be prompted to connect Google Drive</li>
-              <li>Click "Connect to Drive" or similar button</li>
-              <li>Authorize Yarny to access your Google Drive</li>
-              <li>Verify you see the stories list after connection</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-1-2" name="test-1-2">
-            <label for="test-1-2">I successfully connected my Google Drive</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 1.3: Session Persistence</h4>
-          <p>Verify that your session persists when you refresh the page or close and reopen the browser.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Sign in and connect Drive</li>
-              <li>Refresh the page (F5 or Cmd+R)</li>
-              <li>Verify you remain signed in (don't need to sign in again)</li>
-              <li>Close the browser tab and reopen it</li>
-              <li>Navigate back to yarny.lindsaybrunner.com/react</li>
-              <li>Verify you remain signed in (session should last 48 hours)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-1-3" name="test-1-3">
-            <label for="test-1-3">My session persists after refresh and browser close</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 1.4: Sign Out</h4>
-          <p>Verify that you can sign out properly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "Sign out" button (usually in header or footer)</li>
-              <li>Verify you are redirected to login page</li>
-              <li>Verify you need to sign in again to access stories</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-1-4" name="test-1-4">
-            <label for="test-1-4">I can sign out successfully</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 2: Story Management -->
-      <div class="test-section">
-        <h2><i class="material-icons">book</i> Section 2: Story Management</h2>
-        
-        <div class="test-item">
-          <h4>Test 2.1: View Stories List</h4>
-          <p>Verify that you can see all your stories in a list.</p>
-          <div class="test-steps">
-            <ol>
-              <li>After signing in, you should see the Stories page</li>
-              <li>Verify all your existing stories are displayed</li>
-              <li>Verify each story shows: title, genre (if set), word count, last modified date</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-1" name="test-2-1">
-            <label for="test-2-1">I can see all my stories in the list</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 2.2: Create New Story</h4>
-          <p>Verify that you can create a new story with all options.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "+ New Story" button</li>
-              <li>Fill in the story name (required)</li>
-              <li>Optionally add genre</li>
-              <li>Optionally add description (up to 500 characters)</li>
-              <li>Set word count goal (optional)</li>
-              <li>Configure writing goals: deadline, writing days, mode (elastic/strict), days off</li>
-              <li>Click "Create Story"</li>
-              <li>Verify the new story appears in your stories list</li>
-              <li>Verify the story folder is created in your Google Drive "Yarny Stories" folder</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-2" name="test-2-2">
-            <label for="test-2-2">I successfully created a new story with all options</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 2.3: Open Story (Enter Editor)</h4>
-          <p>Verify that you can open a story and enter the editor.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on a story in the stories list</li>
-              <li>Verify you are taken to the editor page</li>
-              <li>Verify the story title appears in the left sidebar</li>
-              <li>Verify you can see chapters and snippets (if any exist)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-3" name="test-2-3">
-            <label for="test-2-3">I can open a story and enter the editor</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 2.4: Edit Story Info</h4>
-          <p>Verify that you can edit story information (title, genre, description, word goal).</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, click the settings/gear icon next to the story title (left sidebar)</li>
-              <li>Verify the "Story Info" modal opens</li>
-              <li>Change the story title</li>
-              <li>Change the genre</li>
-              <li>Change the description</li>
-              <li>Change the word count goal</li>
-              <li>Click "Save"</li>
-              <li>Verify changes are saved</li>
-              <li>Go back to stories list and verify the updated information appears</li>
-              <li>Verify the story.json file in Google Drive is updated</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-4" name="test-2-4">
-            <label for="test-2-4">I can edit and save story information</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 2.5: Delete Story</h4>
-          <p>Verify that you can delete a story (with confirmation).</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, click the settings/gear icon</li>
-              <li>Click "Delete Story" or similar option</li>
-              <li>Verify a confirmation modal appears</li>
-              <li>Confirm deletion</li>
-              <li>Verify you are redirected to the stories list</li>
-              <li>Verify the story no longer appears in the list</li>
-              <li>Verify the story folder is deleted from Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-5" name="test-2-5">
-            <label for="test-2-5">I can delete a story with confirmation</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 2.6: Refresh Stories from Drive</h4>
-          <p>Verify that you can refresh the stories list to sync with Google Drive.</p>
-          <div class="test-steps">
-            <ol>
-              <li>On the stories page, click "Refresh" button</li>
-              <li>Verify the stories list updates</li>
-              <li>If you created a story folder directly in Google Drive, verify it appears after refresh</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-2-6" name="test-2-6">
-            <label for="test-2-6">I can refresh stories from Drive</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 3: Editor - Basic Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">edit</i> Section 3: Editor - Basic Functionality</h2>
-        
-        <div class="test-item">
-          <h4>Test 3.1: Open Snippet in Editor</h4>
-          <p>Verify that you can open a snippet and see its content in the editor.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, click on a snippet in the left sidebar</li>
-              <li>Verify the snippet content appears in the center editor area</li>
-              <li>Verify the snippet title appears at the top of the editor</li>
-              <li>Verify you can see and edit the text</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-3-1" name="test-3-1">
-            <label for="test-3-1">I can open a snippet and see its content</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 3.2: Edit Snippet Content</h4>
-          <p>Verify that you can type and edit text in the editor.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a snippet in the editor</li>
-              <li>Click in the editor area</li>
-              <li>Type some text</li>
-              <li>Verify text appears as you type</li>
-              <li>Use backspace/delete to remove text</li>
-              <li>Verify text is removed</li>
-              <li>Use arrow keys to move cursor</li>
-              <li>Verify cursor moves correctly</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-3-2" name="test-3-2">
-            <label for="test-3-2">I can type and edit text in the editor</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 3.3: Auto-Save</h4>
-          <p>Verify that changes are automatically saved to Google Drive.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a snippet and make some edits</li>
-              <li>Look for save status indicator (usually shows "Saving..." then "Saved at X:XX")</li>
-              <li>Wait a few seconds after typing</li>
-              <li>Verify the save status shows "Saved"</li>
-              <li>Open the same snippet's Google Doc in another tab</li>
-              <li>Verify your changes appear in the Google Doc</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-3-3" name="test-3-3">
-            <label for="test-3-3">Changes are automatically saved to Google Drive</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 3.4: Footer Word/Character Count</h4>
-          <p>Verify that the footer shows accurate word and character counts for the active snippet.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a snippet in the editor</li>
-              <li>Look at the footer bar (bottom of screen)</li>
-              <li>Verify it shows "Words: N — Characters: N"</li>
-              <li>Type some text in the editor</li>
-              <li>Verify the word and character counts update in real-time</li>
-              <li>Switch to a different snippet</li>
-              <li>Verify the counts update to reflect the new snippet</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-3-4" name="test-3-4">
-            <label for="test-3-4">Footer shows accurate word/character counts that update in real-time</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 3.5: Plain Text Only (No Rich Formatting)</h4>
-          <p>Verify that the editor only supports plain text (no bold, italic, colors, etc.).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Type some text in the editor</li>
-              <li>Try to make text bold (Ctrl+B or Cmd+B) - it should NOT work</li>
-              <li>Try to make text italic (Ctrl+I or Cmd+I) - it should NOT work</li>
-              <li>Paste rich text from another document</li>
-              <li>Verify the formatting is stripped and only plain text remains</li>
-              <li>Verify paragraph breaks (double Enter) work correctly</li>
-              <li>Verify single line breaks (Shift+Enter) work correctly</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-3-5" name="test-3-5">
-            <label for="test-3-5">Editor only supports plain text (no rich formatting)</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 4: Chapters & Snippets Management -->
-      <div class="test-section">
-        <h2><i class="material-icons">folder</i> Section 4: Chapters & Snippets Management</h2>
-        
-        <div class="test-item">
-          <h4>Test 4.1: Create New Chapter</h4>
-          <p>Verify that you can create a new chapter (group).</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, look for "+ New Chapter" or "+ Add Chapter" button</li>
-              <li>Click it</li>
-              <li>Enter a chapter name</li>
-              <li>Optionally add a description</li>
-              <li>Select a color for the chapter (optional)</li>
-              <li>Click "Create" or "Save"</li>
-              <li>Verify the new chapter appears in the left sidebar</li>
-              <li>Verify a chapter folder is created in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-1" name="test-4-1">
-            <label for="test-4-1">I can create a new chapter</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.2: Create New Snippet</h4>
-          <p>Verify that you can create a new snippet within a chapter.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on a chapter in the left sidebar</li>
-              <li>Look for "+ New Snippet" or "+ Add Snippet" button</li>
-              <li>Click it</li>
-              <li>Enter a snippet name</li>
-              <li>Optionally add a description</li>
-              <li>Select a color for the snippet (optional)</li>
-              <li>Click "Create" or "Save"</li>
-              <li>Verify the new snippet appears under the chapter in the left sidebar</li>
-              <li>Verify a Google Doc is created in the chapter folder in Google Drive</li>
-              <li>Verify the snippet opens automatically in the editor</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-2" name="test-4-2">
-            <label for="test-4-2">I can create a new snippet within a chapter</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.3: Rename Chapter</h4>
-          <p>Verify that you can rename a chapter.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a chapter in the left sidebar (or click a menu/options icon)</li>
-              <li>Select "Rename" from the context menu</li>
-              <li>Enter a new name</li>
-              <li>Click "Save" or press Enter</li>
-              <li>Verify the chapter name updates in the sidebar</li>
-              <li>Verify the chapter folder is renamed in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-3" name="test-4-3">
-            <label for="test-4-3">I can rename a chapter</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.4: Rename Snippet</h4>
-          <p>Verify that you can rename a snippet.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a snippet in the left sidebar (or click a menu/options icon)</li>
-              <li>Select "Rename" from the context menu</li>
-              <li>Enter a new name</li>
-              <li>Click "Save" or press Enter</li>
-              <li>Verify the snippet name updates in the sidebar</li>
-              <li>Verify the Google Doc is renamed in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-4" name="test-4-4">
-            <label for="test-4-4">I can rename a snippet</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.5: Edit Chapter Description</h4>
-          <p>Verify that you can edit a chapter's description.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on a chapter in the left sidebar</li>
-              <li>Look for an edit/description icon or option</li>
-              <li>Click it to open description edit modal</li>
-              <li>Enter or modify the description</li>
-              <li>Click "Save"</li>
-              <li>Verify the description is saved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-5" name="test-4-5">
-            <label for="test-4-5">I can edit a chapter description</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.6: Edit Snippet Description</h4>
-          <p>Verify that you can edit a snippet's description.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on a snippet in the left sidebar</li>
-              <li>Look for an edit/description icon or option</li>
-              <li>Click it to open description edit modal</li>
-              <li>Enter or modify the description</li>
-              <li>Click "Save"</li>
-              <li>Verify the description is saved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-6" name="test-4-6">
-            <label for="test-4-6">I can edit a snippet description</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.7: Delete Chapter</h4>
-          <p>Verify that you can delete a chapter (with confirmation).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a chapter (or click menu/options icon)</li>
-              <li>Select "Delete" from the context menu</li>
-              <li>Verify a confirmation modal appears</li>
-              <li>Confirm deletion</li>
-              <li>Verify the chapter is removed from the sidebar</li>
-              <li>Verify the chapter folder is deleted from Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-7" name="test-4-7">
-            <label for="test-4-7">I can delete a chapter with confirmation</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.8: Delete Snippet</h4>
-          <p>Verify that you can delete a snippet (with confirmation).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a snippet (or click menu/options icon)</li>
-              <li>Select "Delete" from the context menu</li>
-              <li>Verify a confirmation modal appears</li>
-              <li>Confirm deletion</li>
-              <li>Verify the snippet is removed from the sidebar</li>
-              <li>Verify the Google Doc is deleted from Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-8" name="test-4-8">
-            <label for="test-4-8">I can delete a snippet with confirmation</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.9: Drag & Drop Reorder Chapters</h4>
-          <p>Verify that you can reorder chapters by dragging and dropping.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click and hold on a chapter in the left sidebar</li>
-              <li>Drag it up or down to a new position</li>
-              <li>Release to drop it</li>
-              <li>Verify the chapter moves to the new position</li>
-              <li>Refresh the page</li>
-              <li>Verify the chapter order is preserved</li>
-              <li>Verify the order is saved in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-9" name="test-4-9">
-            <label for="test-4-9">I can reorder chapters by dragging and dropping</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.10: Drag & Drop Reorder Snippets</h4>
-          <p>Verify that you can reorder snippets within a chapter by dragging and dropping.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click and hold on a snippet in the left sidebar</li>
-              <li>Drag it up or down within the same chapter</li>
-              <li>Release to drop it</li>
-              <li>Verify the snippet moves to the new position</li>
-              <li>Refresh the page</li>
-              <li>Verify the snippet order is preserved</li>
-              <li>Verify the order is saved in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-10" name="test-4-10">
-            <label for="test-4-10">I can reorder snippets by dragging and dropping</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.11: Drag & Drop Move Snippet Between Chapters</h4>
-          <p>Verify that you can move a snippet from one chapter to another by dragging and dropping.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click and hold on a snippet</li>
-              <li>Drag it to a different chapter</li>
-              <li>Release to drop it</li>
-              <li>Verify the snippet moves to the new chapter</li>
-              <li>Verify the snippet disappears from the old chapter</li>
-              <li>Refresh the page</li>
-              <li>Verify the snippet is still in the new chapter</li>
-              <li>Verify the Google Doc is moved to the new chapter folder in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-11" name="test-4-11">
-            <label for="test-4-11">I can move snippets between chapters by dragging and dropping</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 4.12: Collapse/Expand Chapters</h4>
-          <p>Verify that you can collapse and expand chapters to hide/show their snippets.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Look for a collapse/expand icon (usually an arrow) next to a chapter</li>
-              <li>Click it to collapse the chapter</li>
-              <li>Verify the snippets under that chapter are hidden</li>
-              <li>Click the icon again to expand</li>
-              <li>Verify the snippets are shown again</li>
-              <li>Refresh the page</li>
-              <li>Verify the collapse/expand state is preserved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-4-12" name="test-4-12">
-            <label for="test-4-12">I can collapse and expand chapters</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 5: Color Coding -->
-      <div class="test-section">
-        <h2><i class="material-icons">palette</i> Section 5: Color Coding</h2>
-        
-        <div class="test-item">
-          <h4>Test 5.1: Assign Color to Chapter</h4>
-          <p>Verify that you can assign a color to a chapter.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a chapter (or click menu/options icon)</li>
-              <li>Select "Change Color" or "Color" option</li>
-              <li>Verify a color picker appears with 12 accent colors</li>
-              <li>Select a color</li>
-              <li>Verify the chapter displays with the selected color</li>
-              <li>Verify the color is saved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-5-1" name="test-5-1">
-            <label for="test-5-1">I can assign a color to a chapter</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 5.2: Assign Color to Snippet</h4>
-          <p>Verify that you can assign a color to a snippet.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a snippet (or click menu/options icon)</li>
-              <li>Select "Change Color" or "Color" option</li>
-              <li>Verify a color picker appears with 12 accent colors</li>
-              <li>Select a color</li>
-              <li>Verify the snippet displays with the selected color</li>
-              <li>Verify the color is saved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-5-2" name="test-5-2">
-            <label for="test-5-2">I can assign a color to a snippet</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 5.3: All 12 Accent Colors Available</h4>
-          <p>Verify that all 12 accent colors are available in the color picker.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open the color picker for a chapter or snippet</li>
-              <li>Verify you see 12 different colors available</li>
-              <li>Verify the colors match the expected palette (Red, Orange, Amber, Yellow, Lime, Emerald, Teal, Cyan, Blue, Indigo, Violet, Fuchsia)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-5-3" name="test-5-3">
-            <label for="test-5-3">All 12 accent colors are available</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 6: Search Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">search</i> Section 6: Search Functionality</h2>
-        
-        <div class="test-item">
-          <h4>Test 6.1: Search Chapters and Snippets</h4>
-          <p>Verify that you can search for chapters and snippets by title.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, find the search box (usually in the left sidebar header)</li>
-              <li>Type a chapter or snippet title (or part of it)</li>
-              <li>Verify matching chapters and snippets are highlighted or filtered</li>
-              <li>Clear the search</li>
-              <li>Verify all chapters and snippets are shown again</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-6-1" name="test-6-1">
-            <label for="test-6-1">I can search for chapters and snippets by title</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 6.2: Search Snippet Content</h4>
-          <p>Verify that you can search within snippet body content.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Type a word or phrase that appears in a snippet's body content (not just the title)</li>
-              <li>Verify the snippet containing that text is found and highlighted</li>
-              <li>Test with partial words</li>
-              <li>Verify search is case-insensitive (try uppercase and lowercase)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-6-2" name="test-6-2">
-            <label for="test-6-2">I can search within snippet body content</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 7: Goals & Word Count Tracking -->
-      <div class="test-section">
-        <h2><i class="material-icons">track_changes</i> Section 7: Goals & Word Count Tracking</h2>
-        
-        <div class="test-item">
-          <h4>Test 7.1: Goal Meter Display</h4>
-          <p>Verify that the goal meter in the left sidebar displays correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, look at the left sidebar</li>
-              <li>Find the goal meter (should show "X / Y" where X is current word count and Y is goal)</li>
-              <li>Verify it shows "0 / 3,000" or similar if a goal is set</li>
-              <li>Verify a progress bar shows completion percentage</li>
-              <li>Click on the goal meter</li>
-              <li>Verify the goal panel modal opens</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-1" name="test-7-1">
-            <label for="test-7-1">Goal meter displays correctly and is clickable</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.2: "Today • N" Chip</h4>
-          <p>Verify that the "Today • N" chip displays daily word count correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, look at the left sidebar below the goal meter</li>
-              <li>Find the "Today • N" chip (where N is today's word count)</li>
-              <li>Verify it shows "Today • 0" or the actual daily word count</li>
-              <li>Write some text in a snippet</li>
-              <li>Verify the "Today • N" number updates</li>
-              <li>Verify a progress bar shows daily progress (if daily target is set)</li>
-              <li>Click on the chip</li>
-              <li>Verify the goal panel modal opens</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-2" name="test-7-2">
-            <label for="test-7-2">"Today • N" chip displays and updates correctly</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.3: Set Writing Goal</h4>
-          <p>Verify that you can set a writing goal (target, deadline, writing days, mode).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on the goal meter or "Today • N" chip to open goal panel</li>
-              <li>Set a word count target (e.g., 50,000)</li>
-              <li>Set a deadline date</li>
-              <li>Select writing days (Mon-Sun checkboxes)</li>
-              <li>Select mode: Elastic or Strict</li>
-              <li>Optionally add days off (comma-separated dates)</li>
-              <li>Click "Save"</li>
-              <li>Verify the goal is saved</li>
-              <li>Verify the goal meter and "Today • N" chip update to reflect the goal</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-3" name="test-7-3">
-            <label for="test-7-3">I can set a writing goal with all options</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.4: Goal Calculation - Elastic Mode</h4>
-          <p>Verify that Elastic mode rebalances daily targets based on progress.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Set a goal with Elastic mode</li>
-              <li>Note the daily target shown in "Today • N" chip</li>
-              <li>Write more words than the daily target</li>
-              <li>Verify the next day's target is adjusted (reduced) to account for extra words</li>
-              <li>Or write fewer words than the daily target</li>
-              <li>Verify the next day's target is adjusted (increased) to catch up</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-4" name="test-7-4">
-            <label for="test-7-4">Elastic mode rebalances daily targets based on progress</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.5: Goal Calculation - Strict Mode</h4>
-          <p>Verify that Strict mode maintains fixed daily targets regardless of progress.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Set a goal with Strict mode</li>
-              <li>Note the daily target shown in "Today • N" chip</li>
-              <li>Write more words than the daily target</li>
-              <li>Verify the next day's target remains the same (doesn't adjust)</li>
-              <li>Or write fewer words than the daily target</li>
-              <li>Verify the next day's target remains the same</li>
-              <li>Verify the progress bar shows green when ahead, red when behind</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-5" name="test-7-5">
-            <label for="test-7-5">Strict mode maintains fixed daily targets</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.6: Goal Updates in Real-Time</h4>
-          <p>Verify that word counts and goal progress update in real-time as you write.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Set a writing goal</li>
-              <li>Open a snippet and start typing</li>
-              <li>Watch the goal meter progress bar</li>
-              <li>Verify it updates as you type</li>
-              <li>Watch the "Today • N" chip</li>
-              <li>Verify the daily word count updates as you type</li>
-              <li>Verify the progress bars update smoothly</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-6" name="test-7-6">
-            <label for="test-7-6">Goal progress updates in real-time as I write</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 7.7: Midnight Rollover</h4>
-          <p>Verify that daily word counts reset at midnight and goals recalculate.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Set a writing goal</li>
-              <li>Write some words today</li>
-              <li>Note the "Today • N" count</li>
-              <li>Wait until after midnight (or manually change your computer's date/time)</li>
-              <li>Refresh the page or reopen the editor</li>
-              <li>Verify the "Today • N" count resets to 0 (or shows new day's count)</li>
-              <li>Verify daily targets recalculate for the new day</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-7-7" name="test-7-7">
-            <label for="test-7-7">Daily word counts reset at midnight and goals recalculate</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 8: People, Places, Things (Notes) -->
-      <div class="test-section">
-        <h2><i class="material-icons">note</i> Section 8: People, Places, Things (Notes)</h2>
-        
-        <div class="test-item">
-          <h4>Test 8.1: View Notes Sidebar</h4>
-          <p>Verify that you can see the Notes sidebar on the right side of the editor.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, look at the right sidebar</li>
-              <li>Verify you see three tabs: "People", "Places", "Things"</li>
-              <li>Click on each tab</li>
-              <li>Verify the tab switches correctly</li>
-              <li>Verify you can see existing notes (if any) in each category</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-1" name="test-8-1">
-            <label for="test-8-1">I can view the Notes sidebar with three tabs</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.2: Create People Note</h4>
-          <p>Verify that you can create a new People note.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on the "People" tab in the right sidebar</li>
-              <li>Look for "+ New Person" or "+ Add Person" button</li>
-              <li>Click it</li>
-              <li>Enter a name for the person</li>
-              <li>Optionally add a description</li>
-              <li>Select a color (optional)</li>
-              <li>Click "Create" or "Save"</li>
-              <li>Verify the new person note appears in the People list</li>
-              <li>Verify a text file is created in the "People" folder in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-2" name="test-8-2">
-            <label for="test-8-2">I can create a new People note</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.3: Create Places Note</h4>
-          <p>Verify that you can create a new Places note.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on the "Places" tab in the right sidebar</li>
-              <li>Look for "+ New Place" or "+ Add Place" button</li>
-              <li>Click it</li>
-              <li>Enter a name for the place</li>
-              <li>Optionally add a description</li>
-              <li>Select a color (optional)</li>
-              <li>Click "Create" or "Save"</li>
-              <li>Verify the new place note appears in the Places list</li>
-              <li>Verify a text file is created in the "Places" folder in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-3" name="test-8-3">
-            <label for="test-8-3">I can create a new Places note</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.4: Create Things Note</h4>
-          <p>Verify that you can create a new Things note.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on the "Things" tab in the right sidebar</li>
-              <li>Look for "+ New Thing" or "+ Add Thing" button</li>
-              <li>Click it</li>
-              <li>Enter a name for the thing</li>
-              <li>Optionally add a description</li>
-              <li>Select a color (optional)</li>
-              <li>Click "Create" or "Save"</li>
-              <li>Verify the new thing note appears in the Things list</li>
-              <li>Verify a text file is created in the "Things" folder in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-4" name="test-8-4">
-            <label for="test-8-4">I can create a new Things note</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.5: Edit Note Content</h4>
-          <p>Verify that you can edit the content of a note.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click on a note (People, Places, or Things) in the right sidebar</li>
-              <li>Verify the note content appears in an editor area (or opens in the main editor)</li>
-              <li>Type or edit text in the note</li>
-              <li>Verify changes are saved automatically</li>
-              <li>Verify the text file in Google Drive is updated</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-5" name="test-8-5">
-            <label for="test-8-5">I can edit note content and it saves automatically</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.6: Rename Note</h4>
-          <p>Verify that you can rename a note.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a note (or click menu/options icon)</li>
-              <li>Select "Rename"</li>
-              <li>Enter a new name</li>
-              <li>Click "Save" or press Enter</li>
-              <li>Verify the note name updates</li>
-              <li>Verify the text file is renamed in Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-6" name="test-8-6">
-            <label for="test-8-6">I can rename a note</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.7: Delete Note</h4>
-          <p>Verify that you can delete a note (with confirmation).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a note (or click menu/options icon)</li>
-              <li>Select "Delete"</li>
-              <li>Verify a confirmation modal appears</li>
-              <li>Confirm deletion</li>
-              <li>Verify the note is removed from the list</li>
-              <li>Verify the text file is deleted from Google Drive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-7" name="test-8-7">
-            <label for="test-8-7">I can delete a note with confirmation</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 8.8: Reorder Notes (Drag & Drop)</h4>
-          <p>Verify that you can reorder notes by dragging and dropping.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click and hold on a note in the right sidebar</li>
-              <li>Drag it up or down to a new position</li>
-              <li>Release to drop it</li>
-              <li>Verify the note moves to the new position</li>
-              <li>Refresh the page</li>
-              <li>Verify the note order is preserved</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-8-8" name="test-8-8">
-            <label for="test-8-8">I can reorder notes by dragging and dropping</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 9: Export Functionality -->
-      <div class="test-section">
-        <h2><i class="material-icons">file_download</i> Section 9: Export Functionality</h2>
-        
-        <div class="test-item">
-          <h4>Test 9.1: Export All Chapters</h4>
-          <p>Verify that you can export all chapters as a single Google Doc.</p>
-          <div class="test-steps">
-            <ol>
-              <li>In the editor, look for an "Export" button or menu</li>
-              <li>Click it and select "Export All Chapters"</li>
-              <li>Enter a filename for the export</li>
-              <li>Optionally choose to include snippet names</li>
-              <li>Click "Export"</li>
-              <li>Verify a new Google Doc is created in the story folder in Google Drive</li>
-              <li>Open the exported Google Doc</li>
-              <li>Verify all chapters and snippets are included in order</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-9-1" name="test-9-1">
-            <label for="test-9-1">I can export all chapters as a Google Doc</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 9.2: Export Outline</h4>
-          <p>Verify that you can export an outline (chapter and snippet titles with descriptions).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "Export" and select "Export Outline"</li>
-              <li>Enter a filename for the export</li>
-              <li>Click "Export"</li>
-              <li>Verify a new Google Doc is created in the story folder</li>
-              <li>Open the exported Google Doc</li>
-              <li>Verify it contains chapter titles, snippet titles, and descriptions</li>
-              <li>Verify it does NOT contain snippet body content</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-9-2" name="test-9-2">
-            <label for="test-9-2">I can export an outline with titles and descriptions</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 9.3: Export All People</h4>
-          <p>Verify that you can export all People notes as a single Google Doc.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "Export" and select "Export All People"</li>
-              <li>Enter a filename for the export</li>
-              <li>Click "Export"</li>
-              <li>Verify a new Google Doc is created in the story folder</li>
-              <li>Open the exported Google Doc</li>
-              <li>Verify it contains all People notes with their content</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-9-3" name="test-9-3">
-            <label for="test-9-3">I can export all People notes</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 9.4: Export All Places</h4>
-          <p>Verify that you can export all Places notes as a single Google Doc.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "Export" and select "Export All Places"</li>
-              <li>Enter a filename for the export</li>
-              <li>Click "Export"</li>
-              <li>Verify a new Google Doc is created in the story folder</li>
-              <li>Open the exported Google Doc</li>
-              <li>Verify it contains all Places notes with their content</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-9-4" name="test-9-4">
-            <label for="test-9-4">I can export all Places notes</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 9.5: Export All Things</h4>
-          <p>Verify that you can export all Things notes as a single Google Doc.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Click "Export" and select "Export All Things"</li>
-              <li>Enter a filename for the export</li>
-              <li>Click "Export"</li>
-              <li>Verify a new Google Doc is created in the story folder</li>
-              <li>Open the exported Google Doc</li>
-              <li>Verify it contains all Things notes with their content</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-9-5" name="test-9-5">
-            <label for="test-9-5">I can export all Things notes</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 10: Google Drive Integration & Sync -->
-      <div class="test-section">
-        <h2><i class="material-icons">cloud</i> Section 10: Google Drive Integration & Sync</h2>
-        
-        <div class="test-item">
-          <h4>Test 10.1: Files Created in Google Drive</h4>
-          <p>Verify that all created items (stories, chapters, snippets, notes) appear in Google Drive.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Create a new story in Yarny</li>
-              <li>Open Google Drive in another tab</li>
-              <li>Navigate to "Yarny Stories" folder</li>
-              <li>Verify the story folder exists</li>
-              <li>Create a chapter and snippet in Yarny</li>
-              <li>Refresh Google Drive</li>
-              <li>Verify the chapter folder and snippet Google Doc exist in the story folder</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-1" name="test-10-1">
-            <label for="test-10-1">All created items appear in Google Drive</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.2: Changes Saved to Google Drive</h4>
-          <p>Verify that edits made in Yarny are saved to Google Drive files.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Edit a snippet in Yarny</li>
-              <li>Wait for auto-save to complete (check save status)</li>
-              <li>Open the snippet's Google Doc in Google Drive</li>
-              <li>Verify your changes appear in the Google Doc</li>
-              <li>Edit a note in Yarny</li>
-              <li>Open the note's text file in Google Drive</li>
-              <li>Verify your changes appear in the text file</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-2" name="test-10-2">
-            <label for="test-10-2">Changes are saved to Google Drive files</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.3: Round-Trip Editing (Yarny → Google Docs → Yarny)</h4>
-          <p>Verify that you can edit in Google Docs and see changes in Yarny (after reconciliation).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Edit a snippet in Yarny and save</li>
-              <li>Open the same snippet's Google Doc in Google Docs (another tab)</li>
-              <li>Make changes in Google Docs</li>
-              <li>Save in Google Docs</li>
-              <li>Switch to a different snippet in Yarny (or close and reopen Yarny)</li>
-              <li>Switch back to the original snippet</li>
-              <li>Verify Yarny detects the external changes (may show conflict resolution or reconciliation)</li>
-              <li>Verify you can see the changes from Google Docs</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-3" name="test-10-3">
-            <label for="test-10-3">I can edit in Google Docs and see changes in Yarny</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.4: Conflict Detection</h4>
-          <p>Verify that Yarny detects conflicts when both Yarny and Google Docs are edited.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Edit a snippet in Yarny (but don't switch snippets yet)</li>
-              <li>Open the same snippet's Google Doc in Google Docs (another tab)</li>
-              <li>Make different changes in Google Docs</li>
-              <li>Save in Google Docs</li>
-              <li>In Yarny, switch to a different snippet (or wait for reconciliation check)</li>
-              <li>Switch back to the original snippet</li>
-              <li>Verify a conflict resolution modal appears</li>
-              <li>Verify you can see both versions (Yarny version vs Google Docs version)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-4" name="test-10-4">
-            <label for="test-10-4">Conflict detection works when both are edited</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.5: Conflict Resolution - Keep Yarny Version</h4>
-          <p>Verify that you can resolve conflicts by keeping the Yarny version.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Trigger a conflict (see Test 10.4)</li>
-              <li>In the conflict resolution modal, choose "Keep Yarny Version"</li>
-              <li>Verify the Yarny version is kept</li>
-              <li>Verify the Google Doc is updated with the Yarny version</li>
-              <li>Open the Google Doc in Google Docs</li>
-              <li>Verify it matches the Yarny version</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-5" name="test-10-5">
-            <label for="test-10-5">I can resolve conflicts by keeping Yarny version</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.6: Conflict Resolution - Use Google Docs Version</h4>
-          <p>Verify that you can resolve conflicts by using the Google Docs version.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Trigger a conflict (see Test 10.4)</li>
-              <li>In the conflict resolution modal, choose "Use Google Docs Version"</li>
-              <li>Verify the Google Docs version replaces the Yarny content</li>
-              <li>Verify the editor shows the Google Docs content</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-6" name="test-10-6">
-            <label for="test-10-6">I can resolve conflicts by using Google Docs version</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.7: Reconciliation on Window Focus</h4>
-          <p>Verify that Yarny checks for external changes when the window regains focus.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a snippet in Yarny</li>
-              <li>Switch to another browser tab</li>
-              <li>Edit the snippet's Google Doc in Google Docs</li>
-              <li>Save in Google Docs</li>
-              <li>Switch back to the Yarny tab (window regains focus)</li>
-              <li>Verify Yarny detects the external changes</li>
-              <li>Verify a reconciliation notification appears (or conflict modal if content differs)</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-7" name="test-10-7">
-            <label for="test-10-7">Yarny checks for external changes on window focus</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 10.8: Comments/Tracked Changes Warning</h4>
-          <p>Verify that Yarny warns about comments or tracked changes in Google Docs.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a snippet's Google Doc in Google Docs</li>
-              <li>Add a comment to the document</li>
-              <li>Save in Google Docs</li>
-              <li>In Yarny, try to save the snippet (or switch snippets)</li>
-              <li>Verify a warning modal appears about comments/tracked changes</li>
-              <li>Verify you can acknowledge the warning and proceed</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-10-8" name="test-10-8">
-            <label for="test-10-8">Yarny warns about comments/tracked changes in Google Docs</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 11: UI/UX Elements -->
-      <div class="test-section">
-        <h2><i class="material-icons">design_services</i> Section 11: UI/UX Elements</h2>
-        
-        <div class="test-item">
-          <h4>Test 11.1: Classic UX Anchors - Goal Meter</h4>
-          <p>Verify that the goal meter looks and behaves identically to the original app.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Compare the goal meter in the left sidebar with the original app (if available)</li>
-              <li>Verify it shows "X / Y" format (e.g., "0 / 3,000")</li>
-              <li>Verify the progress bar styling matches (colors, height, border radius)</li>
-              <li>Verify clicking it opens the goal panel</li>
-              <li>Verify it updates in real-time as you write</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-1" name="test-11-1">
-            <label for="test-11-1">Goal meter looks and behaves identically to original</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.2: Classic UX Anchors - "Today • N" Chip</h4>
-          <p>Verify that the "Today • N" chip looks and behaves identically to the original app.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Compare the "Today • N" chip with the original app (if available)</li>
-              <li>Verify it shows "Today • N" format with number formatting (commas for large numbers)</li>
-              <li>Verify the progress bar styling matches (2px height, subtle background)</li>
-              <li>Verify color logic (green/red in strict mode, primary color otherwise)</li>
-              <li>Verify clicking it opens the goal panel</li>
-              <li>Verify it always shows (even when no goal set, shows "—")</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-2" name="test-11-2">
-            <label for="test-11-2">"Today • N" chip looks and behaves identically to original</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.3: Classic UX Anchors - Footer Word/Character Counts</h4>
-          <p>Verify that the footer word/character counts look and behave identically to the original app.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Compare the footer counts with the original app (if available)</li>
-              <li>Verify it shows "Words: N — Characters: N" format</li>
-              <li>Verify the font size, color, and spacing match</li>
-              <li>Verify it updates in real-time as you type</li>
-              <li>Verify it shows counts for active snippet only</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-3" name="test-11-3">
-            <label for="test-11-3">Footer word/character counts look and behave identically to original</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.4: Modals - Open and Close</h4>
-          <p>Verify that all modals open and close correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Test opening each modal: Story Info, Export, Description Edit, Goal Panel, Rename, Delete, Conflict Resolution, Comments Warning</li>
-              <li>Verify each modal opens when triggered</li>
-              <li>Verify you can close modals by: clicking X button, clicking outside modal, pressing Escape key</li>
-              <li>Verify modals don't overlap or break layout</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-4" name="test-11-4">
-            <label for="test-11-4">All modals open and close correctly</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.5: Context Menus</h4>
-          <p>Verify that right-click context menus work correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Right-click on a chapter in the left sidebar</li>
-              <li>Verify a context menu appears with options (Rename, Delete, Change Color, etc.)</li>
-              <li>Right-click on a snippet</li>
-              <li>Verify a context menu appears with options</li>
-              <li>Click on a menu option</li>
-              <li>Verify the action is performed</li>
-              <li>Click outside the menu</li>
-              <li>Verify the menu closes</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-5" name="test-11-5">
-            <label for="test-11-5">Context menus work correctly</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.6: Mobile Device Warning</h4>
-          <p>Verify that mobile devices show a warning message.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Access Yarny from a mobile device (or use browser dev tools to simulate mobile)</li>
-              <li>Verify a warning message appears</li>
-              <li>Verify the message says to use a computer</li>
-              <li>Verify you can navigate back to stories from the warning</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-6" name="test-11-6">
-            <label for="test-11-6">Mobile devices show warning message</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.7: Loading States</h4>
-          <p>Verify that loading indicators appear during data fetching.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a story with many snippets</li>
-              <li>Verify loading indicators appear while snippets load</li>
-              <li>Switch between snippets</li>
-              <li>Verify loading states appear if content isn't cached</li>
-              <li>Verify the UI doesn't freeze during loading</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-7" name="test-11-7">
-            <label for="test-11-7">Loading indicators appear during data fetching</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 11.8: Error Messages</h4>
-          <p>Verify that error messages are clear and helpful.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Try to perform an action that might fail (e.g., save with network disconnected)</li>
-              <li>Verify an error message appears</li>
-              <li>Verify the error message is clear and explains what went wrong</li>
-              <li>Verify you can retry the action if applicable</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-11-8" name="test-11-8">
-            <label for="test-11-8">Error messages are clear and helpful</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 12: Performance & Edge Cases -->
-      <div class="test-section">
-        <h2><i class="material-icons">speed</i> Section 12: Performance & Edge Cases</h2>
-        
-        <div class="test-item">
-          <h4>Test 12.1: Large Story Performance</h4>
-          <p>Verify that the app performs well with large stories (many chapters and snippets).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a story with 25+ chapters and 200+ snippets (if available)</li>
-              <li>Verify the app loads in a reasonable time (< 5 seconds)</li>
-              <li>Scroll through the chapter/snippet list</li>
-              <li>Verify scrolling is smooth (no lag)</li>
-              <li>Switch between snippets</li>
-              <li>Verify snippet switching is responsive</li>
-              <li>Verify the UI doesn't freeze or become unresponsive</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-1" name="test-12-1">
-            <label for="test-12-1">App performs well with large stories</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 12.2: Lazy Loading</h4>
-          <p>Verify that snippet content loads on demand (lazy loading).</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open a story with many snippets</li>
-              <li>Verify the active snippet loads immediately</li>
-              <li>Verify other snippets load in the background (check network tab or wait)</li>
-              <li>Switch to a different snippet</li>
-              <li>Verify it loads quickly (may be from cache if already loaded)</li>
-              <li>Verify the UI doesn't block while loading</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-2" name="test-12-2">
-            <label for="test-12-2">Snippet content loads on demand (lazy loading)</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 12.3: Special Characters</h4>
-          <p>Verify that special characters (quotes, em dashes, etc.) are preserved correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Type special characters in a snippet: "quotes", 'apostrophes', —em dashes, –en dashes, …ellipses</li>
-              <li>Save the snippet</li>
-              <li>Open the Google Doc in Google Drive</li>
-              <li>Verify special characters are preserved</li>
-              <li>Edit in Google Docs and add more special characters</li>
-              <li>Switch snippets in Yarny and switch back</li>
-              <li>Verify special characters are preserved in round-trip</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-3" name="test-12-3">
-            <label for="test-12-3">Special characters are preserved correctly</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 12.4: Long Text</h4>
-          <p>Verify that the editor handles long text (10,000+ words) without issues.</p>
-          <div class="test-steps">
-            <ol>
-              <li>Open or create a snippet with very long text (10,000+ words)</li>
-              <li>Verify the editor displays all text</li>
-              <li>Scroll through the text</li>
-              <li>Verify scrolling is smooth</li>
-              <li>Edit text in the middle</li>
-              <li>Verify edits work correctly</li>
-              <li>Save the snippet</li>
-              <li>Verify it saves successfully</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-4" name="test-12-4">
-            <label for="test-12-4">Editor handles long text without issues</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 12.5: Empty States</h4>
-          <p>Verify that empty states (no stories, no chapters, no snippets) display correctly.</p>
-          <div class="test-steps">
-            <ol>
-              <li>If you have no stories, verify the empty state message appears</li>
-              <li>Create a story but don't add chapters</li>
-              <li>Verify the editor shows appropriate empty state or message</li>
-              <li>Add a chapter but don't add snippets</li>
-              <li>Verify appropriate empty state or message appears</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-5" name="test-12-5">
-            <label for="test-12-5">Empty states display correctly</label>
-          </div>
-        </div>
-
-        <div class="test-item">
-          <h4>Test 12.6: Network Interruption</h4>
-          <p>Verify that the app handles network interruptions gracefully.</p>
-          <div class="test-steps">
-            <ol>
-              <li>While using Yarny, disconnect your internet (or use browser dev tools to simulate offline)</li>
-              <li>Try to save a snippet</li>
-              <li>Verify an error message appears</li>
-              <li>Reconnect internet</li>
-              <li>Verify the app retries or allows you to retry</li>
-              <li>Verify changes are saved once connection is restored</li>
-            </ol>
-          </div>
-          <div class="checkbox-container">
-            <input type="checkbox" id="test-12-6" name="test-12-6">
-            <label for="test-12-6">App handles network interruptions gracefully</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Summary Section -->
-      <div class="summary-section">
-        <h2>Testing Summary</h2>
-        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: var(--space-xl);">Use this section to track your overall testing progress.</p>
-        
-        <div class="summary-stats">
-          <div class="stat-box">
-            <div class="stat-number" id="totalTests">0</div>
-            <div class="stat-label">Total Tests</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-number" id="completedTests">0</div>
-            <div class="stat-label">Completed</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-number" id="remainingTests">0</div>
-            <div class="stat-label">Remaining</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-number" id="completionPercent">0%</div>
-            <div class="stat-label">Completion</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="note-box" style="margin-top: var(--space-4xl);">
-        <p><strong>Note:</strong> This testing workbook is designed to be comprehensive. You don't need to complete all tests in one session. Work through them systematically, and note any issues or unexpected behavior you encounter. Report any bugs or problems to the development team.</p>
-      </div>
+<body data-storage-key="testingWorkbookOverview">
+  <header class="docs-header-bar">
+    <div class="header-left">
+      <button class="mobile-menu-btn" aria-label="Open navigation menu">
+        <i class="material-icons">menu</i>
+      </button>
+      <h1 class="header-title">Testing Workbook</h1>
     </div>
+    <nav class="header-nav">
+      <a href="/stories.html" id="storiesNavLink" class="btn-primary" style="display: none;">
+        <i class="material-icons" style="font-size: 1.2rem;">auto_stories</i>
+        Back to Stories
+      </a>
+      <a href="/docs.html" class="btn-outlined">Docs</a>
+      <a href="/" id="loginNavLink" class="btn-outlined">Back to Login</a>
+    </nav>
+  </header>
+  <div class="docs-container">
+    <main class="docs-main">
+      <div class="sidebar-backdrop"></div>
+      <aside class="docs-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-branding">
+            <h1>Yarny</h1>
+            <p class="docs-subtitle">Your personal writing tool</p>
+          </div>
+          <a href="/migration-plan" style="color: var(--color-primary); text-decoration: none; font-weight: var(--font-weight-semibold); display: block; margin-bottom: var(--space-md);">
+            Migration Plan
+          </a>
+        </div>
+        <nav class="sidebar-nav">
+          <ul class="sidebar-nav-list">
+            <li><a href="#intro" class="nav-link">Overview</a></li>
+            <li><a href="#phase-1" class="nav-link">Phase 1 · Setup &amp; Foundations</a></li>
+            <li><a href="#phase-2" class="nav-link">Phase 2 · Core Editor Experience</a></li>
+            <li><a href="#phase-3" class="nav-link">Phase 3 · UI Polish &amp; Performance</a></li>
+            <li><a href="#phase-4" class="nav-link">Phase 4 · Feature Validation</a></li>
+            <li><a href="#phase-5" class="nav-link">Phase 5 · Reliability &amp; Visual QA</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <div class="workbook-intro" id="intro" data-section-anchor>
+          <h1>Yarny React Migration · Manual Testing Workbook</h1>
+          <p>This workbook captures the <strong>manual validation</strong> required as we finalize the React migration. These pages focus on scenarios that require human judgment, visual inspection, and UX feedback.</p>
+          <p>Work through the phases in order. Each page clusters related sections so you can stay focused on a single theme without scrolling through thousands of lines.</p>
+          <div class="note-box" style="margin-top: var(--space-lg); background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E;">
+            <p><strong>JSON Primary Architecture (✅ Complete):</strong></p>
+            <ul style="margin-top: var(--space-sm); padding-left: var(--space-xl); color: rgba(255, 255, 255, 0.9);">
+              <li>✅ <strong>Fast saves:</strong> Snippet content saves to JSON files first (<50ms), then syncs to Google Docs in the background.</li>
+              <li>✅ <strong>Background sync:</strong> Service Worker + Background Sync API ensures changes persist even if the page is closed.</li>
+              <li>✅ <strong>Conflict detection:</strong> Automatically detects when Google Docs are modified externally and prompts for resolution.</li>
+              <li>✅ <strong>Sync status:</strong> Editor footer shows sync status indicator (Synced/Syncing/Pending/Failed).</li>
+              <li>✅ <strong>Migration system:</strong> One-time migration of existing stories from Google Docs to JSON files.</li>
+            </ul>
+            <p style="margin-top: var(--space-md);"><strong>Testing note:</strong> When testing save operations, verify that saves complete quickly (<50ms) and check the sync status indicator to confirm background sync to Google Docs is working.</p>
+          </div>
+          <div class="note-box" style="margin-top: var(--space-lg);">
+            <p><strong>Shared Test Corpus:</strong> Use the Yarny Test Corpus (small / medium / large) on Google Drive. Start with <em>test-small</em> for sanity checks, then expand to medium and large when validating performance and sync behavior.</p>
+          </div>
+        </div>
+
+        <section class="phase-summary" id="phase-1" data-section-anchor>
+          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 1 · Setup &amp; Foundations</h2>
+          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Prepare the shared test corpus, confirm the environment, and make sure Google Drive sync is ready. Complete this before touching any functional phases.</p>
+          <div class="phase-grid">
+            <article class="phase-card">
+              <h3><i class="material-icons">folder</i> Sections Covered</h3>
+              <ul>
+                <li>Section 0 · Test Corpus Setup</li>
+                <li>Section 1 · Smoke Tests &amp; Infrastructure</li>
+                <li>Section 2 · Google Drive Integration &amp; Sync</li>
+              </ul>
+              <div class="phase-links">
+                <a class="phase-link" href="/migration-plan/testing-workbook-phase-1.html">
+                  Open Phase 1 Workbook
+                  <i class="material-icons" style="font-size: 1.1rem;">arrow_forward</i>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="phase-summary" id="phase-2" data-section-anchor>
+          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 2 · Core Editor Experience</h2>
+          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Validate the editor experience end-to-end: rich text behavior, drag-and-drop for snippets, and parity with classic anchors.</p>
+          <div class="phase-grid">
+            <article class="phase-card">
+              <h3><i class="material-icons">edit</i> Sections Covered</h3>
+              <ul>
+                <li>Section 3 · Editor · Visual &amp; IME</li>
+                <li>Section 4 · Drag &amp; Drop Visual</li>
+                <li>Section 5 · Classic UX Anchors</li>
+                <li>Section 6 · Notes Drag &amp; Drop</li>
+              </ul>
+              <div class="phase-links">
+                <a class="phase-link" href="/migration-plan/testing-workbook-phase-2.html">
+                  Open Phase 2 Workbook
+                  <i class="material-icons" style="font-size: 1.1rem;">arrow_forward</i>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="phase-summary" id="phase-3" data-section-anchor>
+          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 3 · UI Polish &amp; Performance</h2>
+          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Cover the shared UI surface—accessibility, export pipelines, and stress/performance flows that depend on the earlier setup work.</p>
+          <div class="phase-grid">
+            <article class="phase-card">
+              <h3><i class="material-icons">speed</i> Sections Covered</h3>
+              <ul>
+                <li>Section 7 · UI/UX Elements &amp; Accessibility</li>
+                <li>Section 8 · Export Functionality</li>
+                <li>Section 9 · Performance &amp; Edge Cases</li>
+              </ul>
+              <div class="phase-links">
+                <a class="phase-link" href="/migration-plan/testing-workbook-phase-3.html">
+                  Open Phase 3 Workbook
+                  <i class="material-icons" style="font-size: 1.1rem;">arrow_forward</i>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="phase-summary" id="phase-4" data-section-anchor>
+          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 4 · Feature Validation</h2>
+          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Run the deep feature sweeps—round-trip validation, conflict resolution, color coding, search, and goal tracking.</p>
+          <div class="phase-grid">
+            <article class="phase-card">
+              <h3><i class="material-icons">sync</i> Sections Covered</h3>
+              <ul>
+                <li>Section 10 · Round-Trip Validation</li>
+                <li>Section 11 · Operations &amp; Conflict Resolution</li>
+                <li>Section 12 · Color Coding &amp; Visual Organization</li>
+                <li>Section 13 · Search Functionality</li>
+                <li>Section 14 · Goals &amp; Daily Writing Targets</li>
+              </ul>
+              <div class="phase-links">
+                <a class="phase-link" href="/migration-plan/testing-workbook-phase-4.html">
+                  Open Phase 4 Workbook
+                  <i class="material-icons" style="font-size: 1.1rem;">arrow_forward</i>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="phase-summary" id="phase-5" data-section-anchor>
+          <h2 style="color: var(--color-primary); margin-bottom: var(--space-lg);">Phase 5 · Reliability &amp; Visual QA</h2>
+          <p style="color: rgba(255, 255, 255, 0.75); max-width: 900px;">Complete the hardening pass: CRUD for notes, visibility gating, rate limiting, and full visual regression coverage.</p>
+          <div class="phase-grid">
+            <article class="phase-card">
+              <h3><i class="material-icons">visibility</i> Sections Covered</h3>
+              <ul>
+                <li>Section 15 · Notes CRUD Operations</li>
+                <li>Section 16 · Visibility Gating &amp; Performance</li>
+                <li>Section 17 · Rate Limiting &amp; Error Handling</li>
+                <li>Section 18 · Visual Regression Testing</li>
+                <li>Summary · Phase completion checklist</li>
+              </ul>
+              <div class="phase-links">
+                <a class="phase-link" href="/migration-plan/testing-workbook-phase-5.html">
+                  Open Phase 5 Workbook
+                  <i class="material-icons" style="font-size: 1.1rem;">arrow_forward</i>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="phase-footer-note" data-section-anchor>
+          <p><strong>How to work the phases:</strong> Finish each page before moving on so context stays fresh. Capture bugs, UX feedback, or data discrepancies directly in the phase you are testing. Wrap up with Phase 5 to ensure we meet the visual parity bar before launch.</p>
+        </div>
+      </div>
+    </main>
 
     <footer class="shared-footer">
-      <p>&copy; 2025 Yarny. Your personal writing tool.</p>
-      <nav class="shared-footer-nav">
-        <a href="/docs.html">User Guide</a>
-        <a href="/migration-plan">Migration Plan</a>
-        <a href="/migration-plan/testing-workbook">Testing Workbook</a>
-      </nav>
+      <div class="shared-footer-content">
+        <p class="shared-footer-copy">
+          © <span data-current-year>2025</span> Yarny. Your personal writing tool.
+        </p>
+        <nav class="shared-footer-nav" aria-label="Footer navigation">
+          <a href="/stories.html" id="footerStoriesLink" style="display: none;">My Stories</a>
+          <a href="/docs.html">User Guide</a>
+          <a href="/migration-plan">Migration Plan</a>
+          <a href="/migration-plan/testing-workbook">Testing Workbook</a>
+          <a href="/" id="footerLoginLink">Back to Login</a>
+        </nav>
+      </div>
     </footer>
   </div>
-
-  <script>
-    // Calculate and update test statistics
-    function updateStats() {
-      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-      const total = checkboxes.length;
-      const completed = Array.from(checkboxes).filter(cb => cb.checked).length;
-      const remaining = total - completed;
-      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-      document.getElementById('totalTests').textContent = total;
-      document.getElementById('completedTests').textContent = completed;
-      document.getElementById('remainingTests').textContent = remaining;
-      document.getElementById('completionPercent').textContent = percent + '%';
-    }
-
-    // Update stats when checkboxes change
-    document.addEventListener('change', function(e) {
-      if (e.target.type === 'checkbox') {
-        updateStats();
-        // Save state to localStorage
-        localStorage.setItem('testingWorkbookState', JSON.stringify(
-          Array.from(document.querySelectorAll('input[type="checkbox"]')).map(cb => ({
-            id: cb.id,
-            checked: cb.checked
-          }))
-        ));
-      }
-    });
-
-    // Load saved state from localStorage
-    window.addEventListener('load', function() {
-      const saved = localStorage.getItem('testingWorkbookState');
-      if (saved) {
-        try {
-          const state = JSON.parse(saved);
-          state.forEach(item => {
-            const checkbox = document.getElementById(item.id);
-            if (checkbox) {
-              checkbox.checked = item.checked;
-            }
-          });
-        } catch (e) {
-          console.error('Error loading saved state:', e);
-        }
-      }
-      updateStats();
-    });
-  </script>
 </body>
 </html>
+
+
+
 
