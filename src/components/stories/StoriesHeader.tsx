@@ -33,8 +33,9 @@ export function StoriesHeader({
             component={RouterLink}
             to="/stories"
             sx={{
-              display: "inline-block",
+              display: "block",
               textDecoration: "none",
+              mb: 1,
               "&:hover": {
                 opacity: 0.9
               }
@@ -46,7 +47,7 @@ export function StoriesHeader({
               alt="Yarny"
               sx={{
                 height: "4rem",
-                mb: 1,
+                display: "block",
                 filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))"
               }}
             />

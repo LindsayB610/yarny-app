@@ -828,13 +828,14 @@ export function DocsPage(): JSX.Element {
                 <MenuIcon />
               </IconButton>
             )}
-            <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
               <Box
                 component={RouterLink}
                 to={user ? "/stories" : "/login"}
                 sx={{
                   display: "inline-block",
                   textDecoration: "none",
+                  flexShrink: 0,
                   "&:hover": {
                     opacity: 0.9
                   }
@@ -845,12 +846,11 @@ export function DocsPage(): JSX.Element {
                   src="/yarny-wordmark.svg"
                   alt="Yarny"
                   sx={{
-                    height: "3rem",
-                    mb: 0.5
+                    height: "3rem"
                   }}
                 />
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
                 User Guide
               </Typography>
             </Box>
