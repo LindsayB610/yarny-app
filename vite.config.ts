@@ -19,6 +19,7 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
     exclude: ["tests/e2e/**/*"],
+    pool: "forks",
     coverage: {
       reporter: ["text", "json-summary", "html"]
     }
