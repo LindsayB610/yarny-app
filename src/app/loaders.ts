@@ -7,7 +7,6 @@ import { fetchStories, STORIES_QUERY_KEY } from "../hooks/useStoriesQuery";
 import { loadAllLocalProjects } from "../services/localFileStorage/loadLocalProject";
 import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 import { loadLocalProjectFromHandle } from "../services/localFileStorage/loadLocalProject";
-import { useYarnyStoreApi } from "../store/provider";
 
 function ensureAuthenticated(): void {
   try {
@@ -158,10 +157,8 @@ export async function editorLoader(
         throw redirect("/stories");
       }
 
-      // Upsert the loaded data into the store so components can access it
-      const storeApi = useYarnyStoreApi();
-      storeApi.getState().upsertEntities(localData);
-
+      // Note: We don't upsert here because loaders run outside React
+      // The component (AppLayout) will handle upserting via useDriveStoryQuery
       // Use the loaded data for validation
       projects = {
         projects: localData.projects || [],
@@ -257,6 +254,8 @@ export async function editorLoader(
     return {
       yarnyStoriesFolder,
       projects,
+      // For local projects, include the loaded data so components can access it
+      localData: isLocalProject ? storyData : undefined
     };
   } catch (error) {
     if (error instanceof Response) {

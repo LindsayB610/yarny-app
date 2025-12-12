@@ -10,7 +10,7 @@ import {
   useMediaQuery
 } from "@mui/material";
 import { useCallback, useEffect, useState, type JSX } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLoaderData } from "react-router-dom";
 
 import { OfflineBanner } from "./OfflineBanner";
 import { ResizeHandle } from "./ResizeHandle";
@@ -137,10 +137,18 @@ export function AppLayout(): JSX.Element {
   );
 
 
+  const loaderData = useLoaderData() as { localData?: any } | undefined;
   const { data: storyData, isPending: isStoryLoading, isFetching: isStoryFetching } = useDriveStoryQuery(storyId);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const selectStory = useYarnyStore((state) => state.selectStory);
   const storiesFromStore = useYarnyStore((state) => state.entities.stories);
+  
+  // For local projects, upsert data from loader (since useDriveStoryQuery is disabled)
+  useEffect(() => {
+    if (loaderData?.localData) {
+      upsertEntities(loaderData.localData);
+    }
+  }, [loaderData?.localData, upsertEntities]);
   
   // Select story when route changes
   useEffect(() => {
