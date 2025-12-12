@@ -11,6 +11,7 @@ export async function loadChaptersAndSnippets(
     title: string;
     order: number;
     snippetIds: string[];
+    color?: string;
   }>,
   storyId: string
 ): Promise<{ chapters: Chapter[]; snippets: Snippet[] }> {
@@ -72,17 +73,18 @@ export async function loadChaptersAndSnippets(
 
     snippets.push(...chapterSnippets);
 
-    chapters.push({
-      id: chapterId,
-      storyId,
-      title: chapterMeta.title,
-      order: chapterMeta.order,
-      snippetIds: chapterMeta.snippetIds.filter((id) =>
-        chapterSnippets.some((s) => s.id === id)
-      ),
-      driveFolderId: "",
-      updatedAt: new Date().toISOString()
-    });
+        chapters.push({
+          id: chapterId,
+          storyId,
+          title: chapterMeta.title,
+          color: chapterMeta.color || "#3B82F6", // Default color if not set
+          order: chapterMeta.order,
+          snippetIds: chapterMeta.snippetIds.filter((id) =>
+            chapterSnippets.some((s) => s.id === id)
+          ),
+          driveFolderId: "",
+          updatedAt: new Date().toISOString()
+        });
   }
 
   return { chapters, snippets };

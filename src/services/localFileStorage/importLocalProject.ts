@@ -110,15 +110,20 @@ export async function importLocalProject(
           });
     }
 
-    chapters.push({
-      id: chapterId,
-      storyId,
-      title: `Chapter ${chapterNumber}`,
-      order: chapterIndex,
-      snippetIds,
-      driveFolderId: "", // Not used for local projects
-      updatedAt: nowIso
-    });
+        // Assign default color based on chapter order
+        const { ACCENT_COLORS } = await import("../../utils/contrastChecker");
+        const defaultColor = ACCENT_COLORS[chapterIndex % ACCENT_COLORS.length]?.value ?? "#3B82F6";
+        
+        chapters.push({
+          id: chapterId,
+          storyId,
+          title: `Chapter ${chapterNumber}`,
+          color: defaultColor,
+          order: chapterIndex,
+          snippetIds,
+          driveFolderId: "", // Not used for local projects
+          updatedAt: nowIso
+        });
   }
 
   // Create story title from README or use project name
@@ -239,12 +244,13 @@ async function writeStoryMetadata(
     title: story.title,
     chapterIds: story.chapterIds,
     updatedAt: story.updatedAt,
-    chapters: chapters.map((ch) => ({
-      id: ch.id,
-      title: ch.title,
-      order: ch.order,
-      snippetIds: ch.snippetIds
-    }))
+        chapters: chapters.map((ch) => ({
+          id: ch.id,
+          title: ch.title,
+          order: ch.order,
+          snippetIds: ch.snippetIds,
+          color: ch.color
+        }))
   };
 
   const fileHandle = await rootHandle.getFileHandle("yarny-story.json", { create: true });

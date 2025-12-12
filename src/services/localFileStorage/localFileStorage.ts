@@ -195,6 +195,13 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       title?: string;
       chapterIds?: string[];
       updatedAt?: string;
+      chapters?: Array<{
+        id: string;
+        title: string;
+        order: number;
+        snippetIds: string[];
+        color?: string;
+      }>;
     }>(rootHandle, "yarny-story.json");
 
     const projectId = projectData?.id || storyId;
@@ -239,15 +246,20 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
         });
       }
 
-      chapters.push({
-        id: chapterId,
-        storyId,
-        title: `Chapter ${chapterNumber}`,
-        order: chapterIndex,
-        snippetIds,
-        driveFolderId: "", // Not used for local projects
-        updatedAt: storyData?.updatedAt || nowIso
-      });
+        // Get color from metadata if available
+        const chapterMetadata = storyData?.chapters?.find((ch) => ch.id === chapterId);
+        const defaultColor = chapterMetadata?.color || "#3B82F6"; // Default blue if not set
+        
+        chapters.push({
+          id: chapterId,
+          storyId,
+          title: `Chapter ${chapterNumber}`,
+          color: defaultColor,
+          order: chapterIndex,
+          snippetIds,
+          driveFolderId: "", // Not used for local projects
+          updatedAt: storyData?.updatedAt || nowIso
+        });
     }
 
     // Sort snippets by order within each chapter
@@ -355,15 +367,20 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
     await getOrCreateDirectory(draftsHandle, chapterId);
 
     // Update metadata
-    const updatedChapters = [
-      ...existingChapters,
-      {
-        id: chapterId,
-        title: chapterTitle,
-        order: existingChapters.length,
-        snippetIds: []
-      }
-    ];
+        // Assign default color based on chapter order
+        const { ACCENT_COLORS } = await import("../../utils/contrastChecker");
+        const defaultColor = ACCENT_COLORS[existingChapters.length % ACCENT_COLORS.length]?.value ?? "#3B82F6";
+        
+        const updatedChapters = [
+          ...existingChapters,
+          {
+            id: chapterId,
+            title: chapterTitle,
+            order: existingChapters.length,
+            snippetIds: [],
+            color: defaultColor
+          }
+        ];
 
     await writeJsonFile(rootHandle, "yarny-story.json", {
       ...storyData,

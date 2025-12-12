@@ -321,6 +321,7 @@ export function useUpdateChapterColorMutation() {
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const activeStoryId = activeStory?.id;
   const storeApi = useYarnyStoreApi();
+  const projects = useYarnyStore((state) => state.entities.projects);
 
   return useMutation({
     mutationFn: async ({
@@ -334,6 +335,85 @@ export function useUpdateChapterColorMutation() {
         throw new Error("No active story selected");
       }
 
+      // Check if this is a local project
+      const project = projects[activeStory.projectId];
+      const isLocalProject = project?.storageType === "local";
+
+      // Handle local projects
+      if (isLocalProject) {
+        const rootHandle = await getPersistedDirectoryHandle();
+        if (!rootHandle) {
+          throw new Error("No persisted directory handle found for local project");
+        }
+
+        // Read yarny-story.json
+        let storyDataFile: File;
+        try {
+          const storyHandle = await rootHandle.getFileHandle("yarny-story.json");
+          storyDataFile = await storyHandle.getFile();
+        } catch (error) {
+          if ((error as DOMException).name === "NotFoundError") {
+            throw new Error("yarny-story.json not found");
+          }
+          throw error;
+        }
+        
+        const storyDataContent = await storyDataFile.text();
+        const storyData: {
+          id?: string;
+          title?: string;
+          chapterIds?: string[];
+          updatedAt?: string;
+          chapters?: Array<{
+            id: string;
+            title: string;
+            order: number;
+            snippetIds: string[];
+            color?: string;
+          }>;
+        }>(rootHandle, "yarny-story.json");
+
+        if (!storyData) {
+          throw new Error("Story metadata not found");
+        }
+
+        const chapters = storyData.chapters || [];
+        const chapter = chapters.find((ch) => ch.id === chapterId);
+        if (!chapter) {
+          throw new Error(`Chapter ${chapterId} not found`);
+        }
+
+        // Update chapter color
+        const updatedChapters = chapters.map((ch) =>
+          ch.id === chapterId ? { ...ch, color } : ch
+        );
+
+        // Write updated metadata
+        const updatedStoryData = {
+          ...storyData,
+          chapters: updatedChapters,
+          updatedAt: new Date().toISOString()
+        };
+        
+        const storyHandle = await rootHandle.getFileHandle("yarny-story.json", { create: true });
+        const writable = await storyHandle.createWritable();
+        await writable.write(JSON.stringify(updatedStoryData, null, 2));
+        await writable.close();
+
+        const updatedAt = new Date().toISOString();
+        return {
+          id: chapterId,
+          storyId: activeStory.id,
+          title: chapter.title,
+          color,
+          order: chapter.order,
+          snippetIds: chapter.snippetIds,
+          driveFolderId: "",
+          updatedAt
+        };
+      }
+
+      // Handle Drive projects (existing logic)
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
 
       if (!data.groups || !data.groups[chapterId]) {
