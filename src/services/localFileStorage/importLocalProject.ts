@@ -1,5 +1,5 @@
 import { parseYarnyIgnore } from "./yarnyIgnore";
-import { normalizePlainText } from "../../editor/textExtraction";
+import { markdownToPlainText } from "../../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
 
 function generateId(prefix: string): string {
@@ -100,14 +100,14 @@ export async function importLocalProject(
       const snippetId = fileName.replace(/\.md$/, "");
       snippetIds.push(snippetId);
 
-      snippets.push({
-        id: snippetId,
-        storyId,
-        chapterId,
-        order: snippetIndex,
-        content: normalizePlainText(content),
-        updatedAt: nowIso
-      });
+          snippets.push({
+            id: snippetId,
+            storyId,
+            chapterId,
+            order: snippetIndex,
+            content: markdownToPlainText(content),
+            updatedAt: nowIso
+          });
     }
 
     chapters.push({

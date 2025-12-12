@@ -1,4 +1,4 @@
-import { normalizePlainText } from "../../editor/textExtraction";
+import { markdownToPlainText } from "../../editor/textExtraction";
 import type { Chapter, Snippet } from "../../store/types";
 
 /**
@@ -53,14 +53,14 @@ export async function loadChaptersAndSnippets(
         const file = await fileHandle.getFile();
         const content = await file.text();
 
-        chapterSnippets.push({
-          id: snippetId,
-          storyId,
-          chapterId,
-          order: chapterMeta.snippetIds.indexOf(snippetId),
-          content: normalizePlainText(content),
-          updatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString()
-        });
+            chapterSnippets.push({
+              id: snippetId,
+              storyId,
+              chapterId,
+              order: chapterMeta.snippetIds.indexOf(snippetId),
+              content: markdownToPlainText(content),
+              updatedAt: file.lastModified ? new Date(file.lastModified).toISOString() : new Date().toISOString()
+            });
       } catch (error) {
         if ((error as DOMException).name === "NotFoundError") {
           // Snippet file doesn't exist - skip it

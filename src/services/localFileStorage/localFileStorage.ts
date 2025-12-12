@@ -1,4 +1,4 @@
-import { normalizePlainText } from "../../editor/textExtraction";
+import { markdownToPlainText } from "../../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
 
 export interface LocalFileStorage {
@@ -234,7 +234,7 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
           storyId,
           chapterId,
           order: snippetIndex,
-          content: normalizePlainText(content),
+          content: markdownToPlainText(content),
           updatedAt: storyData?.updatedAt || nowIso
         });
       }

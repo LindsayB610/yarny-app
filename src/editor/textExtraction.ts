@@ -3,6 +3,67 @@ import type { JSONContent } from "@tiptap/core";
 export const normalizePlainText = (value: string): string =>
   value.replace(/\r\n/g, "\n").replace(/\u00A0/g, " ").trimEnd();
 
+/**
+ * Converts markdown to plain text by stripping markdown syntax
+ * This allows markdown files to display as clean text in the editor
+ * Examples:
+ * - "**bold**" -> "bold"
+ * - "*italic*" -> "italic"
+ * - "# Header" -> "Header"
+ * - "[link](url)" -> "link"
+ * - "`code`" -> "code"
+ */
+export const markdownToPlainText = (markdown: string): string => {
+  let text = markdown;
+
+  // Remove code blocks (```code``` or ```language\ncode\n```)
+  text = text.replace(/```[\s\S]*?```/g, (match) => {
+    // Extract code content, removing language identifier if present
+    const codeContent = match.replace(/^```\w*\n?/m, "").replace(/\n?```$/m, "");
+    return codeContent;
+  });
+
+  // Remove inline code (`code`)
+  text = text.replace(/`([^`]+)`/g, "$1");
+
+  // Remove headers (### Header -> Header)
+  text = text.replace(/^#{1,6}\s+(.+)$/gm, "$1");
+
+  // Remove bold (**bold** or __bold__)
+  text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
+  text = text.replace(/__([^_]+)__/g, "$1");
+
+  // Remove italic (*italic* or _italic_)
+  // Be careful not to match bold - only match single asterisks/underscores
+  text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "$1");
+  text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, "$1");
+
+  // Remove links ([text](url) or [text][ref])
+  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
+  text = text.replace(/\[([^\]]+)\]\[[^\]]+\]/g, "$1");
+
+  // Remove images (![alt](url))
+  text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
+
+  // Remove strikethrough (~~text~~)
+  text = text.replace(/~~([^~]+)~~/g, "$1");
+
+  // Remove horizontal rules (--- or ***)
+  text = text.replace(/^[-*]{3,}$/gm, "");
+
+  // Remove blockquotes (> text)
+  text = text.replace(/^>\s+(.+)$/gm, "$1");
+
+  // Remove list markers (- item, * item, 1. item)
+  text = text.replace(/^[\s]*[-*+]\s+(.+)$/gm, "$1");
+  text = text.replace(/^[\s]*\d+\.\s+(.+)$/gm, "$1");
+  
+  // Trim leading whitespace from lines (after removing markers)
+  text = text.split("\n").map(line => line.trimStart()).join("\n");
+
+  return normalizePlainText(text);
+};
+
 export const buildPlainTextDocument = (text: string): JSONContent => {
   const normalized = normalizePlainText(text);
   
