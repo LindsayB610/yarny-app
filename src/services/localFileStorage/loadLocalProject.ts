@@ -114,8 +114,10 @@ export async function loadLocalProjectFromHandle(
  * Future: could support multiple handles stored separately
  */
 export async function loadAllLocalProjects(): Promise<NormalizedPayload> {
+  console.log("[loadAllLocalProjects] Starting to load local projects...");
   const handle = await getPersistedDirectoryHandle();
   if (!handle) {
+    console.log("[loadAllLocalProjects] No persisted directory handle found");
     return {
       projects: [],
       stories: [],
@@ -124,13 +126,17 @@ export async function loadAllLocalProjects(): Promise<NormalizedPayload> {
     };
   }
 
+  console.log("[loadAllLocalProjects] Found persisted directory handle:", handle.name);
+
   // Check if this directory has a yarny-project.json
   // If it does, it's a project root
   const project = await loadLocalProjectFromHandle(handle);
   if (project) {
+    console.log("[loadAllLocalProjects] Loaded project:", project.projects[0]?.name, "with", project.stories.length, "stories");
     return project;
   }
 
+  console.log("[loadAllLocalProjects] No yarny-project.json found in directory");
   // Otherwise, scan for subdirectories that might be projects
   // (For now, we only support one project per directory handle)
   // Future: could scan subdirectories for yarny-project.json files

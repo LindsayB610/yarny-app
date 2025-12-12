@@ -29,17 +29,21 @@ export function StoriesPage(): JSX.Element {
   const allProjectsFromStore = useYarnyStore((state) => state.entities.projects);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   
-  // Load local projects on mount
+  // Load local projects on mount - always refetch to ensure we have the latest data
   const { data: localProjectsData } = useQuery({
     queryKey: ["local", "projects"],
     queryFn: loadAllLocalProjects,
-    staleTime: Infinity, // Local projects don't change unless explicitly imported
+    staleTime: 0, // Always consider stale so it refetches on mount
+    gcTime: Infinity, // Keep in cache forever once loaded
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false
   });
   
   // Upsert local projects into store when they load
   React.useEffect(() => {
     if (localProjectsData && localProjectsData.projects.length > 0) {
+      console.log("[StoriesPage] Loading local projects into store:", localProjectsData);
       upsertEntities(localProjectsData);
     }
   }, [localProjectsData, upsertEntities]);
