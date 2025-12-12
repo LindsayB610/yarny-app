@@ -36,9 +36,11 @@ export function StorySidebarHeader({
 
   // Get story folder ID from story (assuming it's stored in driveFileId or we need to get it)
   // For now, we'll use the story's driveFileId as the folder ID
+  // Skip Drive API calls for local projects
   const storyFolderId = story?.driveFileId;
-  const { data: progress } = useStoryProgress(storyFolderId);
-  const { data: metadata } = useStoryMetadata(storyFolderId);
+  const isLocalProject = story?.id.startsWith("local-story_");
+  const { data: progress } = useStoryProgress(isLocalProject ? undefined : storyFolderId);
+  const { data: metadata } = useStoryMetadata(isLocalProject ? undefined : storyFolderId);
   const updateGoalsMutation = useUpdateStoryGoalsMutation();
   const updateMetadataMutation = useUpdateStoryMetadataMutation();
 
