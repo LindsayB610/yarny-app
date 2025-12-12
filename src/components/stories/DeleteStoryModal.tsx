@@ -13,7 +13,7 @@ import { useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useDeleteStory } from "../../hooks/useStoryMutations";
-import { useYarnyStore } from "../../store/provider";
+import { useYarnyStore, useYarnyStoreApi } from "../../store/provider";
 
 interface DeleteStoryModalProps {
   open: boolean;
@@ -31,6 +31,7 @@ export function DeleteStoryModal({
   const [confirmText, setConfirmText] = useState("");
   const [deleteFromDrive, setDeleteFromDrive] = useState(false);
   const deleteStory = useDeleteStory();
+  const storeApi = useYarnyStoreApi();
   const removeSnippet = useYarnyStore((state) => state.removeSnippet);
   const removeChapter = useYarnyStore((state) => state.removeChapter);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
@@ -53,7 +54,7 @@ export function DeleteStoryModal({
       if (isLocalProject && story) {
         // For local projects, remove from store
         // Remove all snippets and chapters first
-        const chapters = useYarnyStore.getState().entities.chapters;
+        const chapters = storeApi.getState().entities.chapters;
         story.chapterIds.forEach((chapterId) => {
           const chapter = chapters[chapterId];
           if (chapter) {
@@ -82,7 +83,7 @@ export function DeleteStoryModal({
         }
         
         // Remove story entity from store using setState
-        useYarnyStore.setState((state) => {
+        storeApi.setState((state) => {
           delete state.entities.stories[storyId];
           if (state.ui.activeStoryId === storyId) {
             state.ui.activeStoryId = undefined;
@@ -93,7 +94,7 @@ export function DeleteStoryModal({
         });
         
         // Clear active story if it was the deleted one
-        if (useYarnyStore.getState().ui.activeStoryId === storyId) {
+        if (storeApi.getState().ui.activeStoryId === storyId) {
           selectStory(undefined);
         }
         
