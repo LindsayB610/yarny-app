@@ -5,6 +5,7 @@
 export async function parseYarnyIgnore(
   rootHandle: FileSystemDirectoryHandle
 ): Promise<(path: string) => boolean> {
+  // Ensure we return a function even if there's an error
   let ignoreContent = "";
   
   try {
