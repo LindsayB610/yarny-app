@@ -1,5 +1,5 @@
-import { useParams } from "react-router-dom";
 import { useMemo } from "react";
+import { useParams } from "react-router-dom";
 
 import { useYarnyStore } from "../store/provider";
 import type { Snippet } from "../store/types";

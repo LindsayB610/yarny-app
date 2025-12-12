@@ -15,9 +15,10 @@ import { useContextMenuActions } from "./useContextMenuActions";
 import { useSearchFilter } from "./useSearchFilter";
 import { useSidebarHandlers } from "./useSidebarHandlers";
 import { useSidebarState } from "./useSidebarState";
+
 import { normalizePlainText } from "@/editor/textExtraction";
-import { useVisibilityGatedSnippetQueries } from "@/hooks/useVisibilityGatedQueries";
 import { useActiveStory } from "@/hooks/useActiveStory";
+import { useVisibilityGatedSnippetQueries } from "@/hooks/useVisibilityGatedQueries";
 import { useYarnyStore } from "@/store/provider";
 import {
   selectStoryChapters,

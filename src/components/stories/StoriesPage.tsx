@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
@@ -13,6 +14,7 @@ import type { StoriesLoaderData } from "../../app/loaders";
 import { useAuth } from "../../hooks/useAuth";
 import { useStoriesQuery } from "../../hooks/useStoriesQuery";
 import { useRefreshStories } from "../../hooks/useStoryMutations";
+import { loadAllLocalProjects } from "../../services/localFileStorage/loadLocalProject";
 import { useYarnyStore } from "../../store/provider";
 import { AppFooter } from "../layout/AppFooter";
 
@@ -25,6 +27,22 @@ export function StoriesPage(): JSX.Element {
   const refreshStories = useRefreshStories();
   const allStoriesFromStore = useYarnyStore((state) => Object.values(state.entities.stories));
   const allProjectsFromStore = useYarnyStore((state) => state.entities.projects);
+  const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  
+  // Load local projects on mount
+  const { data: localProjectsData } = useQuery({
+    queryKey: ["local", "projects"],
+    queryFn: loadAllLocalProjects,
+    staleTime: Infinity, // Local projects don't change unless explicitly imported
+    retry: false
+  });
+  
+  // Upsert local projects into store when they load
+  React.useEffect(() => {
+    if (localProjectsData && localProjectsData.projects.length > 0) {
+      upsertEntities(localProjectsData);
+    }
+  }, [localProjectsData, upsertEntities]);
   const [isNewStoryModalOpen, setIsNewStoryModalOpen] = useState(false);
   const [isImportLocalModalOpen, setIsImportLocalModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

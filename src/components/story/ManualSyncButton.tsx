@@ -1,8 +1,8 @@
 import { Sync } from "@mui/icons-material";
 import { Button } from "@mui/material";
 
-import { useManualSync } from "../../hooks/useManualSync";
 import { useActiveStory } from "../../hooks/useActiveStory";
+import { useManualSync } from "../../hooks/useManualSync";
 
 export function ManualSyncButton() {
   const story = useActiveStory();

@@ -23,7 +23,9 @@ interface StoryCardProps {
 export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: StoryCardProps): JSX.Element {
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { data: progress } = useStoryProgress(story.id);
+  // Skip progress query for local projects (they don't have Drive folder IDs)
+  const isLocalProject = story.id.startsWith("local-story");
+  const { data: progress } = useStoryProgress(isLocalProject ? undefined : story.id);
   const percentage = progress
     ? Math.min(100, Math.round((progress.totalWords / progress.wordGoal) * 100))
     : 0;

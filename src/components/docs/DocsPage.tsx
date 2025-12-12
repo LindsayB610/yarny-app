@@ -289,6 +289,153 @@ export function DocsPage(): JSX.Element {
               Once you land on the Stories dashboard you can refresh your Drive
               catalog, create a new project, or jump straight into the editor.
             </Typography>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2" component="div">
+                <strong>Local Projects:</strong> Yarny also supports local-first projects that edit files directly on your computer. 
+                Click "Import Local" on the Stories dashboard to import an existing novel project. See the{" "}
+                <RouterLink to="/docs#local-projects" style={{ color: "inherit", textDecoration: "underline" }}>
+                  Local Projects
+                </RouterLink>{" "}
+                section for details.
+              </Typography>
+            </Alert>
+          </Stack>
+        )
+      },
+      {
+        id: "local-projects",
+        title: "Local Projects",
+        icon: <LibraryBooksIcon fontSize="small" />,
+        body: (
+          <Stack spacing={3}>
+            <Typography variant="body1">
+              Yarny supports local-first projects that edit files directly on your computer. 
+              This is perfect for writers who want to use Yarny's editor while keeping their files in a local repository 
+              (like Git) or editing with other tools like Cursor.
+            </Typography>
+            <Typography variant="h6">Project Structure</Typography>
+            <Typography variant="body1">
+              Local projects should follow this structure:
+            </Typography>
+            <Box component="pre" sx={{ bgcolor: "rgba(0,0,0,0.05)", p: 2, borderRadius: 1, overflow: "auto", fontSize: "0.875rem" }}>
+{`your-novel/
+├── README.md              # Optional: First # heading becomes story title
+├── .yarnyignore          # Optional: Files/folders to ignore
+├── yarny-project.json    # Auto-generated: Project metadata
+├── yarny-story.json      # Auto-generated: Story metadata
+└── drafts/
+    ├── chapter-1/
+    │   ├── 01-opening.md
+    │   ├── 02-discovery.md
+    │   └── 03-conflict.md
+    ├── chapter-2/
+    │   ├── 01-new-day.md
+    │   └── 02-investigation.md
+    └── chapter-3/
+        └── ...`}
+            </Box>
+            <BulletList
+              items={[
+                "Chapters are folders named `chapter-1`, `chapter-2`, etc. (sorted numerically)",
+                "Snippets are markdown files (`.md`) with numbered prefixes for ordering (e.g., `01-opening.md`, `02-discovery.md`)",
+                "The `README.md` file is optional—if present, the first `# Heading` becomes the story title",
+                "The `.yarnyignore` file (optional) lets you exclude files/folders from import (supports glob patterns like `*.txt`, `notes/`, etc.)",
+                "Yarny automatically creates `yarny-project.json` and `yarny-story.json` metadata files in the project root"
+              ]}
+            />
+            <Typography variant="h6">Importing a Local Project</Typography>
+            <BulletList
+              items={[
+                "Click 'Import Local' on the Stories dashboard",
+                "Select your project folder (the one containing `drafts/`)",
+                "Yarny will scan the structure and import all chapters and snippets",
+                "The project will appear in your stories list and persist across page refreshes"
+              ]}
+            />
+            <Typography variant="h6">Editing Local Projects</Typography>
+            <BulletList
+              items={[
+                "Local projects work just like Drive projects—edit snippets, create chapters, manage notes",
+                "Changes are saved directly to the markdown files on your computer",
+                "You can edit files in Cursor or any other editor—Yarny will reload them on refresh",
+                "Local projects don't require Google Drive authentication"
+              ]}
+            />
+            <Typography variant="h6">.yarnyignore Patterns</Typography>
+            <Typography variant="body1">
+              Create a `.yarnyignore` file in your project root to exclude files from import:
+            </Typography>
+            <Box component="pre" sx={{ bgcolor: "rgba(0,0,0,0.05)", p: 2, borderRadius: 1, overflow: "auto", fontSize: "0.875rem" }}>
+{`# Ignore specific file types
+*.txt
+*.docx
+
+# Ignore entire directories
+notes/
+worldbuilding/
+characters/
+images/
+
+# Ignore patterns
+backup-*
+*.tmp`}
+            </Box>
+            <Typography variant="body2" sx={{ fontStyle: "italic", mt: 1 }}>
+              Patterns work like `.gitignore`—use `*` for wildcards, `**` for recursive matching, and `#` for comments.
+            </Typography>
+            <Typography variant="h6">Setting Up with Cursor (or AI Assistants)</Typography>
+            <Typography variant="body1">
+              If you're using Cursor or another AI assistant to organize your project, use this prompt:
+            </Typography>
+            <Box 
+              component="pre" 
+              sx={{ 
+                bgcolor: "rgba(0,0,0,0.05)", 
+                p: 2, 
+                borderRadius: 1, 
+                overflow: "auto", 
+                fontSize: "0.875rem",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word"
+              }}
+            >
+{`I need to organize my novel project to work with Yarny, a writing tool that imports local markdown files.
+
+Please organize my novel project with the following structure:
+
+1. Create a \`drafts/\` folder in the project root
+2. Organize chapters as folders named \`chapter-1\`, \`chapter-2\`, \`chapter-3\`, etc. inside \`drafts/\`
+3. For each chapter, create markdown files with numbered prefixes like \`01-opening.md\`, \`02-discovery.md\`, etc.
+4. Create a \`README.md\` file with a \`# Novel Title\` heading (use the actual title of my novel)
+5. Optionally create a \`.yarnyignore\` file to exclude any folders/files that shouldn't be imported (like \`notes/\`, \`worldbuilding/\`, \`characters/\`, \`*.txt\`, etc.)
+
+Please:
+- Preserve all existing content
+- Use descriptive, human-readable snippet filenames (e.g., \`01-opening.md\` not \`01.md\`)
+- Number snippets sequentially within each chapter
+- Keep chapter folders numbered sequentially starting from \`chapter-1\`
+- If I have existing markdown files, organize them into this structure
+- If I have other folders (like \`notes/\`, \`characters/\`, \`worldbuilding/\`), add them to \`.yarnyignore\` so they're not imported`}
+            </Box>
+            <Typography variant="h6">Tips</Typography>
+            <BulletList
+              items={[
+                "Use descriptive snippet filenames so you can easily identify content when editing in Cursor or other editors",
+                "Number snippets sequentially (01, 02, 03...) to maintain order",
+                "Keep chapter folders numbered sequentially (chapter-1, chapter-2, chapter-3...)",
+                "Yarny automatically creates and updates metadata files—don't edit `yarny-project.json` or `yarny-story.json` manually",
+                "You can edit files in Cursor or any editor—changes will be reflected in Yarny on refresh"
+              ]}
+            />
+            <Typography variant="h6">Troubleshooting</Typography>
+            <BulletList
+              items={[
+                "Story doesn't appear after import: Check the browser console for errors. Make sure the `drafts/` folder exists and contains `chapter-*` folders.",
+                "Files not importing: Check `.yarnyignore` patterns—they might be excluding your files.",
+                "Story disappears on refresh: This shouldn't happen—Yarny persists the directory handle. If it does, re-import the project.",
+                "Can't edit in Yarny: Make sure you granted read/write permissions when selecting the directory."
+              ]}
+            />
           </Stack>
         )
       },
@@ -579,7 +726,7 @@ export function DocsPage(): JSX.Element {
     () => [
       {
         label: "Overview",
-        sectionIds: ["getting-started", "stories-dashboard"]
+        sectionIds: ["getting-started", "stories-dashboard", "local-projects"]
       },
       {
         label: "Writing Workflow",
@@ -1024,6 +1171,10 @@ export function DocsPage(): JSX.Element {
 
           <SectionPaper id="stories-dashboard" title="Managing Stories">
             {sections.find((section) => section.id === "stories-dashboard")?.body ?? null}
+          </SectionPaper>
+
+          <SectionPaper id="local-projects" title="Local Projects">
+            {sections.find((section) => section.id === "local-projects")?.body ?? null}
           </SectionPaper>
 
           <SectionPaper id="genres" title="Story Genres">

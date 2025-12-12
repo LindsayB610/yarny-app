@@ -1,5 +1,5 @@
-import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
 import { normalizePlainText } from "../../editor/textExtraction";
+import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
 
 export interface LocalFileStorage {
   listProjects(): Promise<NormalizedPayload>;

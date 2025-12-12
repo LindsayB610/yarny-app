@@ -219,5 +219,56 @@ describe("importLocalProject", () => {
 
     expect(result.stories![0].title).toBe("my-novel");
   });
+
+  it("should respect .yarnyignore patterns", async () => {
+    const snippet1 = createMockFileHandle("01-opening.md", "The morning sun...");
+    const snippet2 = createMockFileHandle("02-notes.txt", "Some notes"); // Should be ignored
+    const chapter1 = createMockDirectoryHandle("chapter-1", [
+      { name: "01-opening.md", handle: snippet1 },
+      { name: "02-notes.txt", handle: snippet2 }
+    ]);
+
+    const drafts = createMockDirectoryHandle("drafts", [
+      { name: "chapter-1", handle: chapter1 }
+    ]);
+
+    const ignoreFile = createMockFileHandle(".yarnyignore", "*.txt\nnotes/");
+    const rootHandle = createMockDirectoryHandle("test", [
+      { name: "drafts", handle: drafts },
+      { name: ".yarnyignore", handle: ignoreFile }
+    ]);
+
+    const result = await importLocalProject(rootHandle as unknown as FileSystemDirectoryHandle);
+
+    // Should only import .md files, not .txt
+    expect(result.snippets).toHaveLength(1);
+    expect(result.snippets![0].content).toContain("morning sun");
+  });
+
+  it("should ignore chapters matching .yarnyignore patterns", async () => {
+    const chapter1 = createMockDirectoryHandle("chapter-1", [
+      { name: "01-opening.md", handle: createMockFileHandle("01-opening.md", "Content") }
+    ]);
+    const chapter2 = createMockDirectoryHandle("chapter-draft", [
+      { name: "01-draft.md", handle: createMockFileHandle("01-draft.md", "Draft") }
+    ]);
+
+    const drafts = createMockDirectoryHandle("drafts", [
+      { name: "chapter-1", handle: chapter1 },
+      { name: "chapter-draft", handle: chapter2 }
+    ]);
+
+    const ignoreFile = createMockFileHandle(".yarnyignore", "drafts/chapter-draft");
+    const rootHandle = createMockDirectoryHandle("test", [
+      { name: "drafts", handle: drafts },
+      { name: ".yarnyignore", handle: ignoreFile }
+    ]);
+
+    const result = await importLocalProject(rootHandle as unknown as FileSystemDirectoryHandle);
+
+    // Should only import chapter-1, not chapter-draft
+    expect(result.chapters).toHaveLength(1);
+    expect(result.chapters![0].id).toBe("chapter-1");
+  });
 });
 

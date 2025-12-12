@@ -1,6 +1,6 @@
 import { apiClient } from "../../api/client";
-import { normalizePlainText } from "../../editor/textExtraction";
 import { getQueryClient } from "../../app/queryClient";
+import { normalizePlainText } from "../../editor/textExtraction";
 
 /**
  * JSON file structure for snippet content storage

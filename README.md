@@ -2,7 +2,7 @@
 
 > ⚠️ **Alpha status**: The React rewrite is actively evolving. Expect rapid iteration, occasional rough edges, and breaking changes while we finish the migration.
 
-Yarny is a distraction-free writing environment that keeps your projects organized in Google Drive. Authors sign in with Google, manage stories, chapters, and snippets, and take advantage of inline goals, exports, and automated backups that mirror Drive content to the local filesystem.
+Yarny is a distraction-free writing environment that keeps your projects organized in Google Drive or on your local filesystem. Authors sign in with Google, manage stories, chapters, and snippets, and take advantage of inline goals, exports, and automated backups. Yarny supports both cloud-based projects (Google Drive) and local-first projects (direct file editing).
 
 **Access**: Yarny is invite-only. Email [lb@lindsaybrunner.com](mailto:lb@lindsaybrunner.com) with the Google account you plan to use.
 
@@ -10,6 +10,7 @@ Yarny is a distraction-free writing environment that keeps your projects organiz
 
 - **Secure authentication** powered by Google Identity Services with multi-user allow-list support.
 - **Google Drive + Docs integration** for automatic cloud persistence, export jobs, and conflict checks.
+- **Local-first projects** for direct file editing with support for `.yarnyignore` patterns and automatic project detection.
 - **Rich story editor** built with TipTap, Material UI, TanStack Query, and Zustand.
 - **Daily writing goals** with elastic/strict planning, deadline tracking, and quick progress views.
 - **Local mirrored backups** using the File System Access API so Drive saves are duplicated on disk for offline work and regression testing.
@@ -123,6 +124,7 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
   - `src/app/` – Application entry point, routing configuration, and query client setup.
   - `src/components/` – React components organized by feature (auth, docs, editor, stories, settings, etc.).
   - `src/services/jsonStorage/` – JSON file save/read utilities for snippet content.
+  - `src/services/localFileStorage/` – Local file system integration for importing and editing local projects.
   - `src/services/serviceWorker/` – Service Worker registration for background sync.
   - `src/hooks/` – Custom React hooks for data fetching, auth, and UI state.
   - `src/store/` – Zustand stores for application state management.
@@ -146,6 +148,7 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
 - **User Guide**: Visit `/docs` in the running application for the complete user guide (also available at `/docs.html`).
 - **Plans Folder** (`plans/`) – Architecture documentation, testing guides, and ongoing project plans:
   - `plans/GOOGLE_DRIVE_SETUP.md` – Step-by-step guide for creating Google Cloud OAuth clients, enabling APIs, configuring consent screens, and setting up credentials for both Sign-In and Drive server authentication.
+  - `plans/LOCAL_PROJECT_SETUP.md` – Guide for organizing local novel projects to work with Yarny, including project structure, `.yarnyignore` patterns, and instructions for Cursor/AI assistants.
   - `plans/DEPLOY.md` – Netlify deployment checklist and environment configuration tips (note: some content may be outdated; see main README for current deployment steps).
   - `plans/JSON_PRIMARY_ARCHITECTURE.md` – Complete architecture documentation for the JSON primary storage system, including design decisions, implementation phases, file structure, sync mechanisms, and conflict detection strategies.
   - `plans/JSON_PRIMARY_TESTING.md` – Testing strategies and guidelines specifically for JSON primary features, including unit tests, integration tests, and E2E scenarios.

@@ -7,12 +7,12 @@ import {
   DialogTitle,
   Typography
 } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { requestDirectoryHandle } from "../../services/localFs/LocalFsCapability";
 import { importLocalProject } from "../../services/localFileStorage/importLocalProject";
+import { requestDirectoryHandle } from "../../services/localFs/LocalFsCapability";
 import { useYarnyStore } from "../../store/provider";
 
 interface ImportLocalProjectModalProps {
@@ -66,6 +66,7 @@ export function ImportLocalProjectModal({
       console.log("[ImportLocalProject] Starting import...");
       
       // Import the project
+      // Note: requestDirectoryHandle already stores the handle, so it will persist
       const normalized = await importLocalProject(selectedHandle);
       console.log("[ImportLocalProject] Import completed:", normalized);
       

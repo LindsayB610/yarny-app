@@ -1,5 +1,6 @@
-import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
+import { parseYarnyIgnore } from "./yarnyIgnore";
 import { normalizePlainText } from "../../editor/textExtraction";
+import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
 
 function generateId(prefix: string): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -33,11 +34,17 @@ export async function importLocalProject(
     throw error;
   }
 
+  // Parse .yarnyignore if it exists
+  const isIgnored = await parseYarnyIgnore(rootHandle);
+
   // Scan chapter folders
   const chapterEntries: Array<{ name: string; handle: FileSystemDirectoryHandle }> = [];
   for await (const entry of draftsHandle.values()) {
     if (entry.kind === "directory" && entry.name.startsWith("chapter-")) {
-      chapterEntries.push({ name: entry.name, handle: entry });
+      const relativePath = `drafts/${entry.name}`;
+      if (!isIgnored(relativePath)) {
+        chapterEntries.push({ name: entry.name, handle: entry });
+      }
     }
   }
 
@@ -62,10 +69,13 @@ export async function importLocalProject(
     const snippetFiles: Array<{ name: string; content: string }> = [];
     for await (const entry of chapterHandle.values()) {
       if (entry.kind === "file" && entry.name.endsWith(".md")) {
-        const fileHandle = await chapterHandle.getFileHandle(entry.name);
-        const file = await fileHandle.getFile();
-        const content = await file.text();
-        snippetFiles.push({ name: entry.name, content });
+        const relativePath = `drafts/${chapterFolderName}/${entry.name}`;
+        if (!isIgnored(relativePath)) {
+          const fileHandle = await chapterHandle.getFileHandle(entry.name);
+          const file = await fileHandle.getFile();
+          const content = await file.text();
+          snippetFiles.push({ name: entry.name, content });
+        }
       }
     }
 

@@ -4,6 +4,7 @@ import { redirect } from "react-router-dom";
 import { apiClient, ApiError } from "../api/client";
 import { createDriveClient } from "../api/driveClient";
 import { fetchStories, STORIES_QUERY_KEY } from "../hooks/useStoriesQuery";
+import { loadAllLocalProjects } from "../services/localFileStorage/loadLocalProject";
 
 function ensureAuthenticated(): void {
   try {
@@ -54,6 +55,19 @@ function isDriveAuthorizationError(error: unknown): boolean {
 
 export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLoaderData> {
   ensureAuthenticated();
+  
+  // Load local projects first (they don't require Drive auth)
+  try {
+    const localProjects = await loadAllLocalProjects();
+    if (localProjects.projects.length > 0) {
+      // Store local projects in query cache so they're available to components
+      queryClient.setQueryData(["local", "projects"], localProjects);
+    }
+  } catch (error) {
+    console.warn("[Loader] Failed to load local projects:", error);
+    // Continue - local projects are optional
+  }
+  
   try {
     const yarnyStoriesFolder = await queryClient.ensureQueryData({
       queryKey: ["drive", "yarny-stories-folder"],
