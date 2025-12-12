@@ -13,6 +13,8 @@ import {
 } from "../services/localFs/localBackupMirror";
 import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
 import { selectActiveStory } from "../store/selectors";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
 import type {
   Chapter as ChapterEntity,
   NormalizedPayload,
@@ -626,6 +628,7 @@ export function useCreateChapterMutation() {
   const activeStory = useYarnyStore(selectActiveStory);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const storeApi = useYarnyStoreApi();
+  const projects = useYarnyStore((state) => state.entities.projects);
 
   return useMutation({
     mutationFn: async ({ title }: { title?: string } = {}) => {
@@ -633,9 +636,60 @@ export function useCreateChapterMutation() {
         throw new Error("No active story selected");
       }
 
+      // Check if this is a local project
+      const project = projects[activeStory.projectId];
+      const isLocalProject = project?.storageType === "local";
+
       const now = new Date().toISOString();
+
+      // Handle local projects
+      if (isLocalProject) {
+        const rootHandle = await getPersistedDirectoryHandle();
+        if (!rootHandle) {
+          throw new Error("No persisted directory handle found for local project");
+        }
+
+        const localStorage = createLocalFileStorage();
+        const result = await localStorage.createChapter(rootHandle, activeStory.id, title);
+
+        const defaultColor =
+          ACCENT_COLORS[result.order % ACCENT_COLORS.length]?.value ?? "#3B82F6";
+
+        const newChapter: ChapterEntity = {
+          id: result.id,
+          storyId: activeStory.id,
+          title: result.title,
+          color: defaultColor,
+          order: result.order,
+          snippetIds: [],
+          driveFolderId: "",
+          updatedAt: now
+        };
+
+        const storeState = storeApi.getState();
+        const currentStory = storeState.entities.stories[activeStory.id];
+        if (currentStory) {
+          const storyUpdate: StoryEntity = {
+            ...currentStory,
+            chapterIds: [...currentStory.chapterIds, result.id],
+            updatedAt: now
+          };
+          upsertEntities({
+            chapters: [newChapter],
+            stories: [storyUpdate]
+          });
+        } else {
+          upsertEntities({
+            chapters: [newChapter]
+          });
+        }
+
+        return newChapter;
+      }
+
+      // Handle Drive projects (existing logic)
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
-      const { project, fileId: projectFileId } = await readProjectJson(activeStory.driveFileId);
+      const { project: projectData, fileId: projectFileId } = await readProjectJson(activeStory.driveFileId);
 
       if (!data.groups) {
         data.groups = {};
@@ -676,8 +730,8 @@ export function useCreateChapterMutation() {
       }
 
       const updatedProject: ProjectJson = {
-        ...project,
-        groupIds: [...(project.groupIds ?? []), groupId],
+        ...projectData,
+        groupIds: [...(projectData.groupIds ?? []), groupId],
         updatedAt: now
       };
 
@@ -740,6 +794,7 @@ export function useCreateSnippetMutation() {
   const chaptersById = useYarnyStore((state) => state.entities.chapters);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const selectSnippet = useYarnyStore((state) => state.selectSnippet);
+  const projects = useYarnyStore((state) => state.entities.projects);
 
   return useMutation({
     mutationFn: async ({ chapterId, title }: CreateSnippetParams) => {
@@ -747,7 +802,59 @@ export function useCreateSnippetMutation() {
         throw new Error("No active story selected");
       }
 
+      // Check if this is a local project
+      const project = projects[activeStory.projectId];
+      const isLocalProject = project?.storageType === "local";
+
       const now = new Date().toISOString();
+
+      // Handle local projects
+      if (isLocalProject) {
+        const rootHandle = await getPersistedDirectoryHandle();
+        if (!rootHandle) {
+          throw new Error("No persisted directory handle found for local project");
+        }
+
+        const localStorage = createLocalFileStorage();
+        const result = await localStorage.createSnippet(
+          rootHandle,
+          activeStory.id,
+          chapterId,
+          title
+        );
+
+        const chapter = chaptersById[chapterId];
+        if (!chapter) {
+          throw new Error(`Chapter ${chapterId} not found`);
+        }
+
+        const newSnippet: SnippetEntity = {
+          id: result.id,
+          storyId: activeStory.id,
+          chapterId,
+          order: result.order,
+          content: "",
+          driveFileId: "",
+          updatedAt: now
+        };
+
+        const updatedChapter: ChapterEntity = {
+          ...chapter,
+          snippetIds: [...chapter.snippetIds, result.id],
+          updatedAt: now
+        };
+
+        upsertEntities({
+          chapters: [updatedChapter],
+          snippets: [newSnippet]
+        });
+
+        selectSnippet(result.id);
+
+        return newSnippet;
+      }
+
+      // Handle Drive projects (existing logic)
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
 
       if (!data.groups || !data.groups[chapterId]) {

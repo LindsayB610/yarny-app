@@ -11,6 +11,17 @@ export interface LocalFileStorage {
     snippetId: string,
     content: string
   ): Promise<void>;
+  createChapter(
+    rootHandle: FileSystemDirectoryHandle,
+    storyId: string,
+    title?: string
+  ): Promise<{ id: string; title: string; order: number }>;
+  createSnippet(
+    rootHandle: FileSystemDirectoryHandle,
+    storyId: string,
+    chapterId: string,
+    title?: string
+  ): Promise<{ id: string; title: string; order: number; fileName: string }>;
 }
 
 /**
@@ -309,6 +320,132 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       id: storyId,
       updatedAt: new Date().toISOString()
     });
+  },
+
+  async createChapter(
+    rootHandle: FileSystemDirectoryHandle,
+    storyId: string,
+    title?: string
+  ) {
+    // Read story metadata
+    const storyData = await readJsonFile<{
+      id?: string;
+      title?: string;
+      chapterIds?: string[];
+      updatedAt?: string;
+      chapters?: Array<{
+        id: string;
+        title: string;
+        order: number;
+        snippetIds: string[];
+      }>;
+    }>(rootHandle, "yarny-story.json");
+
+    if (!storyData) {
+      throw new Error("Story metadata not found");
+    }
+
+    const existingChapters = storyData.chapters || [];
+    const chapterNumber = existingChapters.length + 1;
+    const chapterTitle = title?.trim() || `Chapter ${chapterNumber}`;
+    const chapterId = `chapter-${chapterNumber}`;
+
+    // Create chapter folder
+    const draftsHandle = await getOrCreateDirectory(rootHandle, "drafts");
+    await getOrCreateDirectory(draftsHandle, chapterId);
+
+    // Update metadata
+    const updatedChapters = [
+      ...existingChapters,
+      {
+        id: chapterId,
+        title: chapterTitle,
+        order: existingChapters.length,
+        snippetIds: []
+      }
+    ];
+
+    await writeJsonFile(rootHandle, "yarny-story.json", {
+      ...storyData,
+      id: storyId,
+      chapterIds: updatedChapters.map((ch) => ch.id),
+      chapters: updatedChapters,
+      updatedAt: new Date().toISOString()
+    });
+
+    return {
+      id: chapterId,
+      title: chapterTitle,
+      order: existingChapters.length
+    };
+  },
+
+  async createSnippet(
+    rootHandle: FileSystemDirectoryHandle,
+    storyId: string,
+    chapterId: string,
+    title?: string
+  ) {
+    // Read story metadata
+    const storyData = await readJsonFile<{
+      id?: string;
+      title?: string;
+      chapterIds?: string[];
+      updatedAt?: string;
+      chapters?: Array<{
+        id: string;
+        title: string;
+        order: number;
+        snippetIds: string[];
+      }>;
+    }>(rootHandle, "yarny-story.json");
+
+    if (!storyData) {
+      throw new Error("Story metadata not found");
+    }
+
+    const chapters = storyData.chapters || [];
+    const chapter = chapters.find((ch) => ch.id === chapterId);
+    if (!chapter) {
+      throw new Error(`Chapter ${chapterId} not found`);
+    }
+
+    const existingSnippetCount = chapter.snippetIds.length;
+    const snippetTitle = title?.trim() || `Snippet ${existingSnippetCount + 1}`;
+    const snippetOrder = existingSnippetCount;
+    
+    // Generate filename
+    const fileName = generateSnippetFileName(snippetOrder, snippetTitle);
+    const snippetId = fileName.replace(/\.md$/, ""); // Use filename (without .md) as snippet ID
+
+    // Create snippet file
+    const draftsHandle = await getOrCreateDirectory(rootHandle, "drafts");
+    const chapterHandle = await getOrCreateDirectory(draftsHandle, chapterId);
+    await writeMarkdownFile(chapterHandle, fileName, ""); // Empty content for new snippet
+
+    // Update metadata
+    const updatedChapters = chapters.map((ch) =>
+      ch.id === chapterId
+        ? {
+            ...ch,
+            snippetIds: [...ch.snippetIds, snippetId]
+          }
+        : ch
+    );
+
+    await writeJsonFile(rootHandle, "yarny-story.json", {
+      ...storyData,
+      id: storyId,
+      chapters: updatedChapters,
+      updatedAt: new Date().toISOString()
+    });
+
+    return {
+      id: snippetId,
+      title: snippetTitle,
+      order: snippetOrder,
+      fileName
+    };
   }
 });
 
