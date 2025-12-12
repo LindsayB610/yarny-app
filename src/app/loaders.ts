@@ -5,6 +5,9 @@ import { apiClient, ApiError } from "../api/client";
 import { createDriveClient } from "../api/driveClient";
 import { fetchStories, STORIES_QUERY_KEY } from "../hooks/useStoriesQuery";
 import { loadAllLocalProjects } from "../services/localFileStorage/loadLocalProject";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { loadLocalProjectFromHandle } from "../services/localFileStorage/loadLocalProject";
+import { useYarnyStoreApi } from "../store/provider";
 
 function ensureAuthenticated(): void {
   try {
@@ -141,19 +144,37 @@ export async function editorLoader(
     let storyData;
 
     if (isLocalProject) {
-      // For local projects, skip Drive validation
-      // The story data is already in the store from import
-      // Just validate that we have basic structure - let the component handle loading
+      // For local projects, load from the persisted directory handle
+      const rootHandle = await getPersistedDirectoryHandle();
+      if (!rootHandle) {
+        // No persisted handle - redirect to stories
+        throw redirect("/stories");
+      }
+
+      // Load the actual story data from files
+      const localData = await loadLocalProjectFromHandle(rootHandle);
+      if (!localData || !localData.stories.some((s) => s.id === storyId)) {
+        // Story not found in local project - redirect
+        throw redirect("/stories");
+      }
+
+      // Upsert the loaded data into the store so components can access it
+      const storeApi = useYarnyStoreApi();
+      storeApi.getState().upsertEntities(localData);
+
+      // Use the loaded data for validation
       projects = {
-        projects: [],
-        stories: [{ id: storyId }], // Minimal validation
-        chapters: [],
-        snippets: []
+        projects: localData.projects || [],
+        stories: localData.stories || [],
+        chapters: localData.chapters || [],
+        snippets: localData.snippets || []
       };
+      
+      const story = localData.stories.find((s) => s.id === storyId);
       storyData = {
-        stories: [{ id: storyId }],
-        chapters: [],
-        snippets: [],
+        stories: story ? [story] : [],
+        chapters: localData.chapters || [],
+        snippets: localData.snippets || [],
         notes: []
       };
     } else {

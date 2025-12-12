@@ -11,7 +11,9 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useDeleteStory } from "../../hooks/useStoryMutations";
+import { useYarnyStore } from "../../store/provider";
 
 interface DeleteStoryModalProps {
   open: boolean;
@@ -29,6 +31,18 @@ export function DeleteStoryModal({
   const [confirmText, setConfirmText] = useState("");
   const [deleteFromDrive, setDeleteFromDrive] = useState(false);
   const deleteStory = useDeleteStory();
+  const removeSnippet = useYarnyStore((state) => state.removeSnippet);
+  const removeChapter = useYarnyStore((state) => state.removeChapter);
+  const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const selectStory = useYarnyStore((state) => state.selectStory);
+  const stories = useYarnyStore((state) => state.entities.stories);
+  const projects = useYarnyStore((state) => state.entities.projects);
+  const queryClient = useQueryClient();
+  
+  // Check if this is a local project
+  const story = stories[storyId];
+  const project = story ? projects[story.projectId] : undefined;
+  const isLocalProject = project?.storageType === "local";
 
   const handleDelete = async () => {
     if (confirmText !== "DELETE") {
@@ -36,13 +50,70 @@ export function DeleteStoryModal({
     }
 
     try {
-      await deleteStory.mutateAsync({
-        storyFolderId: storyId,
-        deleteFromDrive
-      });
-      onClose();
-      setConfirmText("");
-      setDeleteFromDrive(false);
+      if (isLocalProject && story) {
+        // For local projects, remove from store
+        // Remove all snippets and chapters first
+        const chapters = useYarnyStore.getState().entities.chapters;
+        story.chapterIds.forEach((chapterId) => {
+          const chapter = chapters[chapterId];
+          if (chapter) {
+            // Remove all snippets in this chapter
+            chapter.snippetIds.forEach((snippetId) => {
+              removeSnippet(snippetId);
+            });
+            // Remove the chapter
+            removeChapter(chapterId);
+          }
+        });
+        
+        // Remove story from project
+        if (project) {
+          const updatedProject = {
+            ...project,
+            storyIds: project.storyIds.filter((id) => id !== storyId),
+            updatedAt: new Date().toISOString()
+          };
+          upsertEntities({
+            projects: [updatedProject],
+            stories: [],
+            chapters: [],
+            snippets: []
+          });
+        }
+        
+        // Remove story entity from store using setState
+        useYarnyStore.setState((state) => {
+          delete state.entities.stories[storyId];
+          if (state.ui.activeStoryId === storyId) {
+            state.ui.activeStoryId = undefined;
+            state.ui.activeSnippetId = undefined;
+            state.ui.activeContentId = undefined;
+            state.ui.activeContentType = undefined;
+          }
+        });
+        
+        // Clear active story if it was the deleted one
+        if (useYarnyStore.getState().ui.activeStoryId === storyId) {
+          selectStory(undefined);
+        }
+        
+        // Invalidate queries
+        queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
+        queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+        
+        onClose();
+        setConfirmText("");
+        setDeleteFromDrive(false);
+      } else {
+        // For Drive projects, use the existing delete mutation
+        await deleteStory.mutateAsync({
+          storyFolderId: storyId,
+          deleteFromDrive
+        });
+        onClose();
+        setConfirmText("");
+        setDeleteFromDrive(false);
+      }
     } catch (error) {
       console.error("Failed to delete story:", error);
       // Error handling can be added here (show toast, etc.)
