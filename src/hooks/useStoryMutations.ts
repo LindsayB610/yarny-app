@@ -472,34 +472,45 @@ export function useUpdateChapterColorMutation() {
     },
     onSuccess: (chapter) => {
       upsertEntities({ chapters: [chapter] });
+      
+      // Check if it's a local project
+      const project = projects[activeStory?.projectId ?? ""];
+      const isLocalProject = project?.storageType === "local";
+      
       if (activeStoryId) {
-        queryClient.setQueryData<NormalizedPayload | null | undefined>(
-          ["drive", "story", activeStoryId],
-          (previous) => {
-            if (!previous?.chapters) {
-              return previous;
+        if (!isLocalProject) {
+          // Only update Drive query cache for Drive projects
+          queryClient.setQueryData<NormalizedPayload | null | undefined>(
+            ["drive", "story", activeStoryId],
+            (previous) => {
+              if (!previous?.chapters) {
+                return previous;
+              }
+
+              const nextChapters = previous.chapters.map((existingChapter) =>
+                existingChapter.id === chapter.id
+                  ? {
+                      ...existingChapter,
+                      color: chapter.color,
+                      updatedAt: chapter.updatedAt
+                    }
+                  : existingChapter
+              );
+
+              return {
+                ...previous,
+                chapters: nextChapters
+              };
             }
+          );
 
-            const nextChapters = previous.chapters.map((existingChapter) =>
-              existingChapter.id === chapter.id
-                ? {
-                    ...existingChapter,
-                    color: chapter.color,
-                    updatedAt: chapter.updatedAt
-                  }
-                : existingChapter
-            );
-
-            return {
-              ...previous,
-              chapters: nextChapters
-            };
-          }
-        );
-
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStoryId] });
-        }, 750);
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStoryId] });
+          }, 750);
+        } else {
+          // For local projects, invalidate local projects query
+          queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
+        }
       }
     },
     onError: (_error, _variables, context) => {
