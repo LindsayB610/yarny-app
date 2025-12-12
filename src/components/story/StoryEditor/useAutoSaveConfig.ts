@@ -15,14 +15,22 @@ export function useAutoSaveConfig(
 ) {
   const setSyncing = useYarnyStore((state) => state.setSyncing);
   const setLastSyncedAtAction = useYarnyStore((state) => state.setLastSyncedAt);
+  const projects = useYarnyStore((state) => state.entities.projects);
   const snippetFileName = useMemo(
     () => getSnippetFileName(activeSnippet, editorContent),
     [activeSnippet, editorContent]
   );
 
-  // Enable auto-save if we have snippetId and parentFolderId (JSON-primary storage)
-  // driveFileId is optional - we can save to JSON even without a Google Doc
-  const enabled = Boolean(activeSnippet?.id && activeChapter?.driveFolderId);
+  // Check if this is a local project
+  const isLocalProject = story ? projects[story.projectId]?.storageType === "local" : false;
+
+  // Enable auto-save if we have snippetId and:
+  // - For Drive projects: need parentFolderId (driveFolderId)
+  // - For local projects: just need snippetId (parentFolderId not needed)
+  const enabled = Boolean(
+    activeSnippet?.id && 
+    (isLocalProject || activeChapter?.driveFolderId)
+  );
 
   return useAutoSave(
     activeSnippet?.driveFileId, // Optional - can be undefined for JSON-only saves

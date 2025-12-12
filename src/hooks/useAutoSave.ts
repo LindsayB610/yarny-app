@@ -8,6 +8,9 @@ import {
   mirrorSnippetWrite,
   mirrorStoryDocument
 } from "../services/localFs/localBackupMirror";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
+import { useYarnyStore } from "../store/provider";
 
 interface QueuedSave {
   fileId: string; // Empty string for JSON-only saves (snippets without Google Doc)
@@ -153,6 +156,10 @@ export function useAutoSave(
 
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
+  // Access store selectors for local project detection (will be used in mutation function)
+  const getProjects = useYarnyStore((state) => state.entities.projects);
+  const getStories = useYarnyStore((state) => state.entities.stories);
+  const getSnippets = useYarnyStore((state) => state.entities.snippets);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContentRef = useRef<string>("");
   const queuedSaveRef = useRef<QueuedSave | null>(null);
@@ -203,9 +210,24 @@ export function useAutoSave(
     (contentValue: string, explicitFileId?: string): SavePayload | null => {
       const effectiveFileId = explicitFileId ?? fileId;
       
-      // For JSON-primary storage: allow saving if we have snippetId and parentFolderId, even without fileId
+      // Check if this is a local project
+      let isLocalProject = false;
+      if (localBackupStoryId) {
+        const story = getStories[localBackupStoryId];
+        if (story) {
+          const project = getProjects[story.projectId];
+          isLocalProject = project?.storageType === "local" ?? false;
+        }
+      }
+      
+      // For local projects: just need snippetId and storyId
+      // For Drive projects (JSON-primary storage): allow saving if we have snippetId and parentFolderId, even without fileId
       // For non-snippet saves: still require fileId
-      if (!effectiveFileId && !(localBackupSnippetId && parentFolderId)) {
+      if (isLocalProject) {
+        if (!localBackupSnippetId || !localBackupStoryId) {
+          return null;
+        }
+      } else if (!effectiveFileId && !(localBackupSnippetId && parentFolderId)) {
         return null;
       }
       
@@ -216,10 +238,10 @@ export function useAutoSave(
         snippetId: localBackupSnippetId,
         fileName: providedFileName,
         mimeType,
-        parentFolderId
+        parentFolderId: isLocalProject ? undefined : parentFolderId // Don't need parentFolderId for local projects
       };
     },
-    [fileId, localBackupStoryId, localBackupSnippetId, providedFileName, mimeType, parentFolderId]
+    [fileId, localBackupSnippetId, localBackupStoryId, parentFolderId, providedFileName, mimeType, getProjects, getStories]
   );
 
   const readQueuedSyncs = (): QueuedSync[] => {
@@ -380,6 +402,45 @@ export function useAutoSave(
         // Throw a special error to indicate we skipped (onError won't be called for this)
         // We'll handle this in onSuccess by checking if content matches
         throw new Error("SKIP_SAVE_CONTENT_UNCHANGED");
+      }
+      
+      // Check if this is a local project
+      let isLocalProject = false;
+      if (payload.storyId) {
+        const story = getStories[payload.storyId];
+        if (story) {
+          const project = getProjects[story.projectId];
+          isLocalProject = project?.storageType === "local" ?? false;
+        }
+      }
+      
+      // For local projects, save directly to local files
+      if (isLocalProject && payload.snippetId && payload.storyId) {
+        const snippet = getSnippets[payload.snippetId];
+        if (!snippet) {
+          throw new Error(`Snippet ${payload.snippetId} not found`);
+        }
+        
+        const rootHandle = await getPersistedDirectoryHandle();
+        if (!rootHandle) {
+          throw new Error("No persisted directory handle found for local project");
+        }
+        
+        const localStorage = createLocalFileStorage();
+        await localStorage.saveSnippet(
+          rootHandle,
+          payload.storyId,
+          snippet.chapterId,
+          payload.snippetId,
+          payload.content
+        );
+        
+        // Return a mock response for consistency with Drive saves
+        return {
+          id: payload.snippetId,
+          name: payload.fileName ?? resolvedFileName,
+          modifiedTime: new Date().toISOString()
+        };
       }
       
       // If this is a snippet save, save to JSON file (fast, primary storage)

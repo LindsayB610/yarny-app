@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { apiClient } from "../api/client";
 import { useNetworkStatus } from "./useNetworkStatus";
 import { useAutoSave } from "./useAutoSave";
+import { AppStoreProvider } from "../store/provider";
 
 // Mock dependencies
 vi.mock("../api/client", () => ({
@@ -37,7 +38,9 @@ const createWrapper = () => {
   });
 
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppStoreProvider>{children}</AppStoreProvider>
+    </QueryClientProvider>
   );
 };
 
