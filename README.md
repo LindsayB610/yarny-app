@@ -163,8 +163,9 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
 
 - **Drive connection issues**: Re-authorize in Settings → Storage → "Reconnect".
 - **Local backups**: Ensure the browser supports the File System Access API (Chrome/Edge recommended) and grant folder access in Settings → Storage.
-- **Sync status**: Check the sync status indicator in the editor footer to see when changes are synced to Google Docs.
-- **Conflict detection**: If Google Docs are modified externally, Yarny will prompt you to resolve conflicts when you open the snippet.
+- **Local projects**: Click "Import Local" on the Stories dashboard to import a local project. Local projects are marked with a "Local" badge and save directly to your filesystem. See the user guide (`/docs`) for project structure requirements.
+- **Sync status**: Check the sync status indicator in the editor footer to see when changes are synced to Google Docs (Drive projects only).
+- **Conflict detection**: If Google Docs are modified externally, Yarny will prompt you to resolve conflicts when you open the snippet (Drive projects only).
 - **Error logging**: Run `viewYarnyErrors()` in the browser console to review the persisted error log; `clearYarnyErrors()` wipes it.
 - **Adding a user**: Update `ALLOWED_EMAIL` in Netlify environment variables, redeploy, and have the new user sign in.
 - **Testing**: See `agents.md` for guidelines on running tests in automated contexts (always use non-watch mode).

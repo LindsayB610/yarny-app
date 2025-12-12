@@ -358,7 +358,10 @@ export function DocsPage(): JSX.Element {
                 "Local projects work just like Drive projects—edit snippets, create chapters, manage notes",
                 "Changes are saved directly to the markdown files on your computer",
                 "You can edit files in Cursor or any other editor—Yarny will reload them on refresh",
-                "Local projects don't require Google Drive authentication"
+                "Local projects don't require Google Drive authentication",
+                "In the editor, local projects display a 'Local' badge and use 'Save to Local Files' button (instead of 'Save to Drive')",
+                "On the Stories dashboard, local projects are marked with a 'Local' badge for easy identification",
+                "Chapter colors are saved to `yarny-story.json` metadata and persist across sessions"
               ]}
             />
             <Typography variant="h6">.yarnyignore Patterns</Typography>
