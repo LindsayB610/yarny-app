@@ -67,10 +67,6 @@ export function ImportLocalProjectModal({
       
       // Import the project
       // Note: requestDirectoryHandle already stores the handle, so it will persist
-      // But let's make sure it's stored explicitly
-      const { storeDirectoryHandle } = await import("../../services/localFs/LocalFsCapability");
-      await storeDirectoryHandle(selectedHandle);
-      
       const normalized = await importLocalProject(selectedHandle);
       console.log("[ImportLocalProject] Import completed:", normalized);
       

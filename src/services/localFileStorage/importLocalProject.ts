@@ -35,7 +35,17 @@ export async function importLocalProject(
   }
 
   // Parse .yarnyignore if it exists
-  const isIgnored = await parseYarnyIgnore(rootHandle);
+  let isIgnored: (path: string) => boolean;
+  try {
+    isIgnored = await parseYarnyIgnore(rootHandle);
+    if (typeof isIgnored !== "function") {
+      console.error("[importLocalProject] parseYarnyIgnore did not return a function:", typeof isIgnored);
+      isIgnored = () => false; // Fallback to never ignore
+    }
+  } catch (error) {
+    console.error("[importLocalProject] Failed to parse .yarnyignore:", error);
+    isIgnored = () => false; // Fallback to never ignore
+  }
 
   // Scan chapter folders
   const chapterEntries: Array<{ name: string; handle: FileSystemDirectoryHandle }> = [];
