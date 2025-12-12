@@ -67,12 +67,15 @@ export const markdownToPlainText = (markdown: string): string => {
 export const buildPlainTextDocument = (text: string): JSONContent => {
   const normalized = normalizePlainText(text);
   
-  // Split by single newlines to preserve line breaks exactly as they are
-  // Each line becomes a paragraph, matching legacy behavior
-  const lines = normalized.split("\n");
+  // Collapse multiple consecutive newlines to maximum of 2 (paragraph break)
+  // This prevents excessive spacing from markdown files
+  const collapsed = normalized.replace(/\n{3,}/g, "\n\n");
+  
+  // Split by double newlines (paragraph breaks) first
+  const paragraphs = collapsed.split(/\n\n/);
 
   // Ensure at least one paragraph exists (TipTap requires at least one)
-  if (lines.length === 0) {
+  if (paragraphs.length === 0 || (paragraphs.length === 1 && paragraphs[0] === "")) {
     return {
       type: "doc",
       content: [
@@ -86,17 +89,32 @@ export const buildPlainTextDocument = (text: string): JSONContent => {
 
   return {
     type: "doc",
-    content: lines.map((line) => ({
-      type: "paragraph",
-      content: line.length > 0
-        ? [
-            {
-              type: "text",
-              text: line
-            }
-          ]
-        : []
-    }))
+    content: paragraphs.map((para) => {
+      // Within each paragraph, single newlines become hard breaks
+      const lines = para.split("\n");
+      
+      const paragraphContent: Array<{ type: "text" | "hardBreak"; text?: string }> = [];
+      
+      lines.forEach((line, index) => {
+        if (line.length > 0) {
+          paragraphContent.push({
+            type: "text",
+            text: line
+          });
+        }
+        // Add hard break after each line except the last
+        if (index < lines.length - 1) {
+          paragraphContent.push({
+            type: "hardBreak"
+          });
+        }
+      });
+      
+      return {
+        type: "paragraph",
+        content: paragraphContent.length > 0 ? paragraphContent : []
+      };
+    })
   };
 };
 
@@ -107,7 +125,7 @@ export const extractPlainTextFromDocument = (
     return "";
   }
 
-  const lines: string[] = [];
+  const paragraphs: string[] = [];
 
   doc.content.forEach((node) => {
     if (node.type === "paragraph") {
@@ -128,12 +146,12 @@ export const extractPlainTextFromDocument = (
 
       // Join paragraph content (handles hard breaks within paragraph)
       const paragraphContent = paragraphText.length > 0 ? paragraphText.join("\n") : "";
-      lines.push(paragraphContent);
+      paragraphs.push(paragraphContent);
     }
   });
 
-  // Join all paragraphs with single newlines (each paragraph is a line)
-  return lines.join("\n");
+  // Join paragraphs with double newlines (paragraph breaks)
+  return paragraphs.join("\n\n");
 };
 
 export const toGoogleDocsPlainText = (text: string): string =>

@@ -92,12 +92,12 @@ describe("Format Normalization - textExtraction", () => {
     it("should build document with hard breaks within paragraphs", () => {
       const doc = buildPlainTextDocument("Line one\nLine two");
 
-      // With new behavior: each line becomes a separate paragraph
-      expect(doc.content).toHaveLength(2);
+      // With new behavior: single newlines become hard breaks within a paragraph
+      expect(doc.content).toHaveLength(1);
       expect(doc.content[0].type).toBe("paragraph");
-      expect(doc.content[1].type).toBe("paragraph");
       expect(doc.content[0].content?.[0]?.text).toBe("Line one");
-      expect(doc.content[1].content?.[0]?.text).toBe("Line two");
+      expect(doc.content[0].content?.[1]?.type).toBe("hardBreak");
+      expect(doc.content[0].content?.[2]?.text).toBe("Line two");
     });
 
     it("should handle empty paragraphs", () => {
