@@ -139,6 +139,15 @@ export function AppLayout(): JSX.Element {
 
   const { data: storyData, isPending: isStoryLoading, isFetching: isStoryFetching } = useDriveStoryQuery(storyId);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const selectStory = useYarnyStore((state) => state.selectStory);
+  const storiesFromStore = useYarnyStore((state) => state.entities.stories);
+  
+  // Select story when route changes
+  useEffect(() => {
+    if (storyId && storiesFromStore[storyId]) {
+      selectStory(storyId);
+    }
+  }, [storyId, storiesFromStore, selectStory]);
   
   // Ensure story data from query is upserted into store (in case it came from cache)
   useEffect(() => {

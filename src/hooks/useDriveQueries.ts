@@ -32,10 +32,19 @@ export const useDriveProjectsQuery = () => {
 export const useDriveStoryQuery = (storyId: string | undefined) => {
   const upsert = useYarnyStore((state) => state.upsertEntities);
   const driveClient = useMemo(() => createDriveClient(), []);
+  const storyFromStore = useYarnyStore((state) => 
+    storyId ? state.entities.stories[storyId] : undefined
+  );
+  const projectFromStore = useYarnyStore((state) =>
+    storyFromStore ? state.entities.projects[storyFromStore.projectId] : undefined
+  );
+
+  // Check if this is a local project
+  const isLocalProject = projectFromStore?.storageType === "local";
 
   return useQuery({
     queryKey: ["drive", "story", storyId],
-    enabled: Boolean(storyId),
+    enabled: Boolean(storyId) && !isLocalProject, // Skip query for local projects
     queryFn: async () => {
       if (!storyId) {
         return null;

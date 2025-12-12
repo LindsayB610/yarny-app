@@ -120,27 +120,51 @@ export async function editorLoader(
       }
     }
 
-    // Prefetch projects list
-    const driveClient = createDriveClient();
-    const projects = await queryClient.fetchQuery({
-      queryKey: ["drive", "projects"],
-      queryFn: async () => {
-        const normalized = await driveClient.listProjects();
-        return normalized;
-      },
-    });
+    // Check if this is a local project (starts with "local-story")
+    const isLocalProject = storyId.startsWith("local-story");
+    
+    let projects;
+    let storyData;
 
-    // Validate story exists
-    const storyExists = projects.stories?.some((s) => s.id === storyId);
-    if (!storyExists) {
-      throw redirect("/stories");
+    if (isLocalProject) {
+      // For local projects, skip Drive validation
+      // The story data is already in the store from import
+      // Just validate that we have basic structure - let the component handle loading
+      projects = {
+        projects: [],
+        stories: [{ id: storyId }], // Minimal validation
+        chapters: [],
+        snippets: []
+      };
+      storyData = {
+        stories: [{ id: storyId }],
+        chapters: [],
+        snippets: [],
+        notes: []
+      };
+    } else {
+      // For Drive projects, use existing flow
+      const driveClient = createDriveClient();
+      projects = await queryClient.fetchQuery({
+        queryKey: ["drive", "projects"],
+        queryFn: async () => {
+          const normalized = await driveClient.listProjects();
+          return normalized;
+        },
+      });
+
+      // Validate story exists
+      const storyExists = projects.stories?.some((s) => s.id === storyId);
+      if (!storyExists) {
+        throw redirect("/stories");
+      }
+
+      // Prefetch story data to validate content
+      storyData = await queryClient.fetchQuery({
+        queryKey: ["drive", "story", storyId],
+        queryFn: () => driveClient.getStory(storyId),
+      });
     }
-
-    // Prefetch story data to validate content
-    const storyData = await queryClient.fetchQuery({
-      queryKey: ["drive", "story", storyId],
-      queryFn: () => driveClient.getStory(storyId),
-    });
 
     if (noteId && noteType) {
       // Validate note exists in story
