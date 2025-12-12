@@ -13,6 +13,7 @@ import type { StoriesLoaderData } from "../../app/loaders";
 import { useAuth } from "../../hooks/useAuth";
 import { useStoriesQuery } from "../../hooks/useStoriesQuery";
 import { useRefreshStories } from "../../hooks/useStoryMutations";
+import { useYarnyStore } from "../../store/provider";
 import { AppFooter } from "../layout/AppFooter";
 
 export function StoriesPage(): JSX.Element {
@@ -20,8 +21,10 @@ export function StoriesPage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
   const loaderData = useLoaderData() as StoriesLoaderData | undefined;
   const { user, logout } = useAuth();
-  const { data: stories, isLoading, error } = useStoriesQuery();
+  const { data: driveStories, isLoading, error } = useStoriesQuery();
   const refreshStories = useRefreshStories();
+  const allStoriesFromStore = useYarnyStore((state) => Object.values(state.entities.stories));
+  const allProjectsFromStore = useYarnyStore((state) => state.entities.projects);
   const [isNewStoryModalOpen, setIsNewStoryModalOpen] = useState(false);
   const [isImportLocalModalOpen, setIsImportLocalModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,21 +79,56 @@ export function StoriesPage(): JSX.Element {
     }
   }, [searchParams, setSearchParams, refreshStories, authError]);
 
+  // Combine Drive stories with local stories from store
+  const allStories = useMemo(() => {
+    const driveStoriesList = driveStories || [];
+    
+    // Convert local stories from store to StoryFolder format
+    const localStories = allStoriesFromStore
+      .filter((story) => {
+        // Only include local projects
+        const project = allProjectsFromStore[story.projectId];
+        return project?.storageType === "local";
+      })
+      .map((story) => ({
+        id: story.id,
+        name: story.title,
+        mimeType: "application/vnd.google-apps.folder",
+        modifiedTime: story.updatedAt,
+        trashed: false
+      }));
+
+    // Sort combined list by modified time (newest first)
+    const combined = [...driveStoriesList, ...localStories];
+    combined.sort((a, b) => {
+      const timeA = new Date(a.modifiedTime || 0).getTime();
+      const timeB = new Date(b.modifiedTime || 0).getTime();
+      return timeB - timeA;
+    });
+
+    return combined;
+  }, [driveStories, allStoriesFromStore, allProjectsFromStore]);
+
   // Filter stories based on search query
   const filteredStories = useMemo(
     () =>
-      stories?.filter((story) =>
+      allStories.filter((story) =>
         story.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) || [],
-    [stories, searchQuery]
+      ),
+    [allStories, searchQuery]
   );
 
   // Check if Drive is authorized
   // If we have an auth error (especially invalid_grant), treat as unauthorized
+  // But allow showing local projects even if Drive isn't authorized
   const isDriveAuthorized =
     loaderData?.driveAuthorized === false || authError !== null
       ? false
-      : !error && (stories !== undefined || isLoading);
+      : !error && (driveStories !== undefined || isLoading);
+  
+  // Show content if we have stories (Drive or local) OR if Drive is authorized
+  const hasStories = filteredStories.length > 0;
+  const shouldShowContent = hasStories || isDriveAuthorized;
 
   const handleLogout = async () => {
     await logout();
@@ -211,11 +249,11 @@ export function StoriesPage(): JSX.Element {
               </Alert>
             )}
 
-            {!isDriveAuthorized ? (
-              // Show DriveAuthPrompt when Drive is not authorized
+            {!shouldShowContent && !isDriveAuthorized ? (
+              // Show DriveAuthPrompt when Drive is not authorized and no local stories
               // This appears whether or not there's an error (error alert is shown above)
               <DriveAuthPrompt />
-            ) : isLoading ? (
+            ) : isLoading && !hasStories ? (
               <LoadingState />
             ) : filteredStories.length === 0 && searchQuery ? (
               <Box sx={{ textAlign: "center", py: 6 }}>
