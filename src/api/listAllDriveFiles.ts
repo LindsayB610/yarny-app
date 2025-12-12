@@ -4,6 +4,10 @@ import type { DriveFile } from "./contract";
 const MAX_PAGES = 1000;
 
 export async function listAllDriveFiles(folderId: string | undefined): Promise<DriveFile[]> {
+  // Skip Drive API calls for local projects
+  if (folderId?.startsWith("local-story_") || folderId?.startsWith("local-project_")) {
+    return [];
+  }
   if (!folderId) {
     return [];
   }
