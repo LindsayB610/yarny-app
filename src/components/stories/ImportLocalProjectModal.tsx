@@ -28,6 +28,7 @@ export function ImportLocalProjectModal({
   const [error, setError] = useState<string | null>(null);
   const [selectedHandle, setSelectedHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
+  const selectProject = useYarnyStore((state) => state.selectProject);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -36,14 +37,18 @@ export function ImportLocalProjectModal({
     setSelectedHandle(null);
 
     try {
+      console.log("[ImportLocalProject] Requesting directory handle...");
       const handle = await requestDirectoryHandle();
       if (!handle) {
+        console.log("[ImportLocalProject] User cancelled directory selection");
         // User cancelled
         return;
       }
 
+      console.log("[ImportLocalProject] Directory selected:", handle.name);
       setSelectedHandle(handle);
     } catch (err) {
+      console.error("[ImportLocalProject] Directory selection error:", err);
       setError(err instanceof Error ? err.message : "Failed to select directory");
     }
   };
@@ -58,23 +63,40 @@ export function ImportLocalProjectModal({
     setIsImporting(true);
 
     try {
+      console.log("[ImportLocalProject] Starting import...");
+      
       // Import the project
       const normalized = await importLocalProject(selectedHandle);
+      console.log("[ImportLocalProject] Import completed:", normalized);
       
       // Update store with imported project
       upsertEntities(normalized);
+      console.log("[ImportLocalProject] Store updated");
+
+      // Select the imported project so it shows in the UI
+      if (normalized.projects && normalized.projects.length > 0) {
+        const projectId = normalized.projects[0].id;
+        selectProject(projectId);
+        console.log("[ImportLocalProject] Project selected:", projectId);
+      }
 
       // Invalidate queries to refresh the UI
       await queryClient.invalidateQueries({ queryKey: ["drive", "projects"] });
+      await queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+      console.log("[ImportLocalProject] Queries invalidated");
 
       // Navigate to the imported story
       if (normalized.stories && normalized.stories.length > 0) {
         const storyId = normalized.stories[0].id;
+        console.log("[ImportLocalProject] Navigating to story:", storyId);
         navigate(`/stories/${storyId}/snippets`);
+      } else {
+        console.warn("[ImportLocalProject] No stories in normalized payload");
       }
 
       handleClose();
     } catch (err) {
+      console.error("[ImportLocalProject] Import failed:", err);
       setError(err instanceof Error ? err.message : "Failed to import project");
     } finally {
       setIsImporting(false);
@@ -173,6 +195,9 @@ export function ImportLocalProjectModal({
             <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
               {selectedHandle.name}
             </Typography>
+            <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.7 }}>
+              Ready to import. Click "Import" to continue.
+            </Typography>
           </Box>
         )}
 
@@ -207,8 +232,19 @@ export function ImportLocalProjectModal({
             bgcolor: "primary.main",
             "&:hover": {
               bgcolor: "primary.dark"
+            },
+            "&:disabled": {
+              bgcolor: "rgba(255, 255, 255, 0.1)",
+              color: "rgba(255, 255, 255, 0.3)"
             }
           }}
+          title={
+            !isSupported
+              ? "File System Access API not supported"
+              : !selectedHandle
+                ? "Please select a directory first"
+                : ""
+          }
         >
           {isImporting ? "Importing..." : "Import"}
         </Button>
