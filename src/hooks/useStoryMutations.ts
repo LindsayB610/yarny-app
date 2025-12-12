@@ -371,7 +371,7 @@ export function useUpdateChapterColorMutation() {
             snippetIds: string[];
             color?: string;
           }>;
-        }>(rootHandle, "yarny-story.json");
+        } = JSON.parse(storyDataContent);
 
         if (!storyData) {
           throw new Error("Story metadata not found");

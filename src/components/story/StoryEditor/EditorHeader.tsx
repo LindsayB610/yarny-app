@@ -11,6 +11,7 @@ interface EditorHeaderProps {
   isSyncing: boolean;
   hasUnsavedChanges: boolean;
   canSave: boolean;
+  isLocalProject?: boolean;
 }
 
 export function EditorHeader({
@@ -20,7 +21,8 @@ export function EditorHeader({
   isSaving,
   isSyncing,
   hasUnsavedChanges,
-  canSave
+  canSave,
+  isLocalProject = false
 }: EditorHeaderProps): JSX.Element {
   return (
     <Stack
@@ -30,20 +32,43 @@ export function EditorHeader({
       justifyContent="space-between"
     >
       <Box>
-        <Typography variant="h3">{title}</Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="h3">{title}</Typography>
+          {isLocalProject && (
+            <Typography
+              variant="caption"
+              sx={{
+                bgcolor: "rgba(59, 130, 246, 0.2)",
+                color: "primary.main",
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                fontWeight: 600,
+                textTransform: "uppercase",
+                fontSize: "0.65rem"
+              }}
+            >
+              Local
+            </Typography>
+          )}
+        </Stack>
         <Typography variant="body2" color="text.secondary">
           {statusText}
         </Typography>
       </Box>
       <Stack direction="row" spacing={1}>
-        <ManualSyncButton />
+        {!isLocalProject && <ManualSyncButton />}
         <Button
           onClick={onSave}
           variant="contained"
           disabled={isSaving || isSyncing || !canSave || !hasUnsavedChanges}
           startIcon={isSaving || isSyncing ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {isSyncing || isSaving ? "Saving..." : "Save to Drive"}
+          {isSyncing || isSaving 
+            ? "Saving..." 
+            : isLocalProject 
+              ? "Save to Local Files" 
+              : "Save to Drive"}
         </Button>
       </Stack>
     </Stack>

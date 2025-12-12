@@ -124,7 +124,8 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
   - `src/app/` – Application entry point, routing configuration, and query client setup.
   - `src/components/` – React components organized by feature (auth, docs, editor, stories, settings, etc.).
   - `src/services/jsonStorage/` – JSON file save/read utilities for snippet content.
-  - `src/services/localFileStorage/` – Local file system integration for importing and editing local projects.
+  - `src/services/localFileStorage/` – Local file system integration for importing and editing local-first projects (direct file editing, `.yarnyignore` support, metadata management).
+  - `src/services/localFs/` – Local backup mirroring service for Drive projects (separate from local-first projects).
   - `src/services/serviceWorker/` – Service Worker registration for background sync.
   - `src/hooks/` – Custom React hooks for data fetching, auth, and UI state.
   - `src/store/` – Zustand stores for application state management.

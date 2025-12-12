@@ -166,6 +166,32 @@ See `src/components/story/` for reference:
 4. **Separation of Concerns**: Split logic (hooks), types, and presentation (view)
 5. **Maintainability**: Keep files focused and readable (target < 300 lines for views)
 
+## Local Projects
+
+Yarny supports both Google Drive projects and local-first projects. Local projects:
+- Edit files directly on the user's computer using the File System Access API
+- Store metadata in `yarny-project.json` and `yarny-story.json` files
+- Save snippet content as markdown files in `drafts/chapter-*/` folders
+- Support `.yarnyignore` patterns for excluding files/folders
+- Persist directory handles in IndexedDB using `idb-keyval`
+
+### Key Files for Local Projects
+
+- `src/services/localFileStorage/` - Local file system integration
+  - `localFileStorage.ts` - Service for reading/writing local files
+  - `importLocalProject.ts` - Import logic for scanning and importing local projects
+  - `loadLocalProject.ts` - Loading persisted local projects on startup
+  - `loadChaptersAndSnippets.ts` - Loading chapters and snippets from file system
+  - `yarnyIgnore.ts` - `.yarnyignore` parsing and filtering
+- `src/services/localFs/` - Local backup mirroring (separate from local-first projects)
+- Components detect local projects via `project.storageType === "local"` and adjust UI accordingly
+
+### Testing Local Projects
+
+- Mock `FileSystemDirectoryHandle` and `FileSystemFileHandle` in tests
+- Use `getPersistedDirectoryHandle()` and `persistDirectoryHandle()` for directory access
+- Test files: `importLocalProject.test.ts`, `loadLocalProject.test.ts`, `yarnyIgnore.test.ts`
+
 ## Additional Notes
 
 - Vitest tests are configured in `vite.config.ts` under the `test` section

@@ -217,7 +217,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   }
 
   const handleSave = async () => {
-    if (isSnippet && activeSnippetForEditor?.id && activeChapter?.driveFolderId) {
+    if (isSnippet && activeSnippetForEditor?.id && (isLocalProject || activeChapter?.driveFolderId)) {
       try {
         await saveSnippet();
         markContentAsSaved(editorContent);
@@ -272,12 +272,14 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
 
   const statusText =
     isSaving
-      ? "Syncing with Google Drive..."
+      ? isLocalProject 
+        ? "Saving to local files..." 
+        : "Syncing with Google Drive..."
       : hasAnyUnsavedChanges
         ? "Unsaved changes"
         : lastSyncedAt
-          ? `Last synced ${new Date(lastSyncedAt).toLocaleString()}`
-          : "Not yet synced";
+          ? `Last saved ${new Date(lastSyncedAt).toLocaleString()}`
+          : "Not yet saved";
 
   return (
     <Stack spacing={3} sx={{ height: "100%" }}>
@@ -289,9 +291,10 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
         isSyncing={isSyncing}
         hasUnsavedChanges={hasAnyUnsavedChanges}
         canSave={Boolean(
-          (isSnippet && activeSnippetForEditor?.id && activeChapter?.driveFolderId) ||
+          (isSnippet && activeSnippetForEditor?.id && (isLocalProject || activeChapter?.driveFolderId)) ||
           (isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId)
         )}
+        isLocalProject={isLocalProject}
       />
       <EditorContentArea editor={editor} />
       <ConflictResolutionModal

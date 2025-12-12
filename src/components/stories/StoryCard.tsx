@@ -14,6 +14,7 @@ import { DeleteStoryModal } from "./DeleteStoryModal";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
 import { highlightSearchText } from "../../utils/highlightSearch";
+import { useYarnyStore } from "../../store/provider";
 
 interface StoryCardProps {
   story: StoryFolder;
@@ -23,8 +24,14 @@ interface StoryCardProps {
 export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: StoryCardProps): JSX.Element {
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const projects = useYarnyStore((state) => state.entities.projects);
+  const stories = useYarnyStore((state) => state.entities.stories);
+  
+  // Check if this is a local project
+  const storyEntity = stories[story.id];
+  const isLocalProject = storyEntity ? projects[storyEntity.projectId]?.storageType === "local" : story.id.startsWith("local-story");
+  
   // Skip progress query for local projects (they don't have Drive folder IDs)
-  const isLocalProject = story.id.startsWith("local-story");
   const { data: progress } = useStoryProgress(isLocalProject ? undefined : story.id);
   const percentage = progress
     ? Math.min(100, Math.round((progress.totalWords / progress.wordGoal) * 100))
@@ -95,27 +102,47 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
       >
         <CardContent sx={{ flex: 1, pb: 1 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                color: "white",
-                fontWeight: 600,
-                flex: 1
-              }}
-              component="div"
-            >
-              {nameParts.map((part, index) => (
-                <span
-                  key={index}
-                  style={{
-                    backgroundColor: part.highlight ? "rgba(255, 235, 59, 0.3)" : "transparent",
-                    fontWeight: part.highlight ? 700 : 600
+            <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "white",
+                  fontWeight: 600,
+                  flex: 1
+                }}
+                component="div"
+              >
+                {nameParts.map((part, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      backgroundColor: part.highlight ? "rgba(255, 235, 59, 0.3)" : "transparent",
+                      fontWeight: part.highlight ? 700 : 600
+                    }}
+                  >
+                    {part.text}
+                  </span>
+                ))}
+              </Typography>
+              {isLocalProject && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    bgcolor: "rgba(59, 130, 246, 0.2)",
+                    color: "primary.main",
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    fontSize: "0.65rem",
+                    whiteSpace: "nowrap"
                   }}
                 >
-                  {part.text}
-                </span>
-              ))}
-            </Typography>
+                  Local
+                </Typography>
+              )}
+            </Box>
             <IconButton
               size="small"
               onClick={handleDelete}
