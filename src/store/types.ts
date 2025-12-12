@@ -1,11 +1,15 @@
 export type EntityId = string;
 
+export type StorageType = "drive" | "local";
+
 export interface Project {
   id: EntityId;
   name: string;
   driveFolderId: string;
   storyIds: EntityId[];
   updatedAt: string;
+  storageType?: StorageType; // "drive" (default) or "local"
+  localPath?: string; // Path to local directory for local projects
 }
 
 export interface Story {

@@ -1,4 +1,4 @@
-import { Add, Refresh, Search } from "@mui/icons-material";
+import { Add, FolderOpen, Refresh, Search } from "@mui/icons-material";
 import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import type { JSX } from "react";
 import { Link as RouterLink } from "react-router-dom";
@@ -6,6 +6,7 @@ import { Link as RouterLink } from "react-router-dom";
 interface StoriesHeaderProps {
   onLogout: () => void;
   onNewStory: () => void;
+  onImportLocal: () => void;
   onRefresh: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -14,6 +15,7 @@ interface StoriesHeaderProps {
 export function StoriesHeader({
   onLogout,
   onNewStory,
+  onImportLocal,
   onRefresh,
   onSearchChange,
   searchQuery
@@ -176,6 +178,24 @@ export function StoriesHeader({
           >
             <Refresh />
           </IconButton>
+          <Button
+            onClick={onImportLocal}
+            startIcon={<FolderOpen />}
+            variant="outlined"
+            sx={{
+              color: "white",
+              borderColor: "rgba(255, 255, 255, 0.3)",
+              "&:hover": {
+                borderColor: "rgba(255, 255, 255, 0.5)",
+                bgcolor: "rgba(255, 255, 255, 0.1)"
+              },
+              borderRadius: "9999px",
+              textTransform: "none",
+              fontWeight: "bold"
+            }}
+          >
+            Import Local
+          </Button>
           <Button
             onClick={onNewStory}
             startIcon={<Add />}

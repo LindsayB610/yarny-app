@@ -9,6 +9,7 @@ describe("StoriesHeader", () => {
   const defaultProps = {
     onLogout: vi.fn(),
     onNewStory: vi.fn(),
+    onImportLocal: vi.fn(),
     onRefresh: vi.fn(),
     onSearchChange: vi.fn(),
     searchQuery: ""
@@ -85,6 +86,24 @@ describe("StoriesHeader", () => {
 
     const newStoryButton = screen.getByRole("button", { name: /New Story/i });
     expect(newStoryButton).toBeInTheDocument();
+  });
+
+  it("renders Import Local button", () => {
+    renderHeader();
+
+    const importButton = screen.getByRole("button", { name: /Import Local/i });
+    expect(importButton).toBeInTheDocument();
+  });
+
+  it("calls onImportLocal when Import Local button is clicked", async () => {
+    const user = userEvent.setup();
+    const onImportLocal = vi.fn();
+    renderHeader({ onImportLocal });
+
+    const importButton = screen.getByRole("button", { name: /Import Local/i });
+    await user.click(importButton);
+
+    expect(onImportLocal).toHaveBeenCalledTimes(1);
   });
 
   it("calls onNewStory when New Story button is clicked", async () => {

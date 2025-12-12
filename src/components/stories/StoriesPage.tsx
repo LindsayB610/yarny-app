@@ -4,6 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "react-router-dom";
 
 import { DriveAuthPrompt } from "./DriveAuthPrompt";
 import { EmptyState } from "./EmptyState";
+import { ImportLocalProjectModal } from "./ImportLocalProjectModal";
 import { LoadingState } from "./LoadingState";
 import { NewStoryModal } from "./NewStoryModal";
 import { StoriesHeader } from "./StoriesHeader";
@@ -22,6 +23,7 @@ export function StoriesPage(): JSX.Element {
   const { data: stories, isLoading, error } = useStoriesQuery();
   const refreshStories = useRefreshStories();
   const [isNewStoryModalOpen, setIsNewStoryModalOpen] = useState(false);
+  const [isImportLocalModalOpen, setIsImportLocalModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState(false);
@@ -119,6 +121,7 @@ export function StoriesPage(): JSX.Element {
           <StoriesHeader
             onLogout={handleLogout}
             onNewStory={() => setIsNewStoryModalOpen(true)}
+            onImportLocal={() => setIsImportLocalModalOpen(true)}
             onRefresh={handleRefresh}
             onSearchChange={setSearchQuery}
             searchQuery={searchQuery}
@@ -234,6 +237,10 @@ export function StoriesPage(): JSX.Element {
       <NewStoryModal
         open={isNewStoryModalOpen}
         onClose={() => setIsNewStoryModalOpen(false)}
+      />
+      <ImportLocalProjectModal
+        open={isImportLocalModalOpen}
+        onClose={() => setIsImportLocalModalOpen(false)}
       />
     </>
   );
