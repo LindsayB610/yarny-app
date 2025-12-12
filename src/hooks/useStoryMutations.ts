@@ -984,10 +984,16 @@ export function useCreateSnippetMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
-          queryKey: ["drive", "story-progress", activeStory.driveFileId]
-        });
+        const project = projects[activeStory.projectId];
+        const isLocalProject = project?.storageType === "local";
+        
+        // Only invalidate Drive queries for Drive projects
+        if (!isLocalProject) {
+          queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+          queryClient.invalidateQueries({
+            queryKey: ["drive", "story-progress", activeStory.driveFileId]
+          });
+        }
       }
     }
   });
