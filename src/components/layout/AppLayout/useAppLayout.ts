@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { useActiveStory } from "@/hooks/useActiveStory";
-import { useDriveProjectsQuery, useDriveStoryQuery } from "@/hooks/useDriveQueries";
-import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import { useWindowFocusReconciliation } from "@/hooks/useWindowFocusReconciliation";
-import { mirrorStoryFolderEnsure } from "@/services/localFs/localBackupMirror";
-import { useYarnyStore } from "@/store/provider";
 import {
   DRAWER_STORAGE_KEY_LEFT,
   DRAWER_STORAGE_KEY_RIGHT,
@@ -17,6 +11,13 @@ import {
   DRAWER_MIN_WIDTH,
   DRAWER_MAX_WIDTH
 } from "./types";
+
+import { useActiveStory } from "@/hooks/useActiveStory";
+import { useDriveProjectsQuery, useDriveStoryQuery } from "@/hooks/useDriveQueries";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useWindowFocusReconciliation } from "@/hooks/useWindowFocusReconciliation";
+import { mirrorStoryFolderEnsure } from "@/services/localFs/localBackupMirror";
+import { useYarnyStore } from "@/store/provider";
 
 export function useAppLayout() {
   const navigate = useNavigate();
@@ -177,7 +178,7 @@ export function useAppLayout() {
     
     // Process queued saves after a short delay to ensure story is loaded
     const timeoutId = setTimeout(() => {
-      import("../../../services/queuedSaveProcessor").then(({ processQueuedSavesDirectly }) => {
+      void import("../../../services/queuedSaveProcessor").then(({ processQueuedSavesDirectly }) => {
         void processQueuedSavesDirectly().catch((error: unknown) => {
           console.error("[AppLayout] Failed to process queued saves:", error);
         });

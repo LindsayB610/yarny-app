@@ -1,16 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { apiClient } from "../api/client";
-import type { DriveDeleteStoryRequest } from "../api/contract";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
-import { mirrorGoalJsonWrite } from "../services/localFs/localBackupMirror";
-import { useLocalBackupStore } from "../store/localBackupProvider";
-import { useYarnyStore } from "../store/provider";
-import { selectActiveStory } from "../store/selectors";
-import { clearStoryProgress } from "../utils/storyProgressCache";
-import type { StoryMetadata } from "../utils/storyCreation";
-import { initializeStoryStructure } from "../utils/storyCreation";
 import {
   readJsonFile,
   readProjectJson,
@@ -18,6 +8,16 @@ import {
   writeJsonFile,
   writeProjectJson
 } from "./useStoryMutations.helpers";
+import { apiClient } from "../api/client";
+import type { DriveDeleteStoryRequest } from "../api/contract";
+import { mirrorGoalJsonWrite } from "../services/localFs/localBackupMirror";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { useLocalBackupStore } from "../store/localBackupProvider";
+import { useYarnyStore } from "../store/provider";
+import { selectActiveStory } from "../store/selectors";
+import type { StoryMetadata } from "../utils/storyCreation";
+import { initializeStoryStructure } from "../utils/storyCreation";
+import { clearStoryProgress } from "../utils/storyProgressCache";
 
 /**
  * Hook for creating a new story

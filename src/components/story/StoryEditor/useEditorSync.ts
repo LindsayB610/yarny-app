@@ -49,7 +49,7 @@ export function useEditorSync(
           upsertEntities({
             snippets: [
               {
-                ...(activeContent as Snippet),
+                ...(activeContent),
                 content: plainText,
                 updatedAt: new Date().toISOString()
               }
@@ -59,7 +59,7 @@ export function useEditorSync(
           upsertEntities({
             notes: [
               {
-                ...(activeContent as Note),
+                ...(activeContent),
                 content: plainText,
                 updatedAt: new Date().toISOString()
               }

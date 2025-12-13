@@ -5,8 +5,8 @@ import { apiClient, ApiError } from "../api/client";
 import { createDriveClient } from "../api/driveClient";
 import { fetchStories, STORIES_QUERY_KEY } from "../hooks/useStoriesQuery";
 import { loadAllLocalProjects } from "../services/localFileStorage/loadLocalProject";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 import { loadLocalProjectFromHandle } from "../services/localFileStorage/loadLocalProject";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 
 function ensureAuthenticated(): void {
   try {
@@ -152,7 +152,7 @@ export async function editorLoader(
 
       // Load the actual story data from files
       const localData = await loadLocalProjectFromHandle(rootHandle);
-      if (!localData || !localData.stories.some((s) => s.id === storyId)) {
+      if (!localData?.stories.some((s) => s.id === storyId)) {
         // Story not found in local project - redirect
         throw redirect("/stories");
       }

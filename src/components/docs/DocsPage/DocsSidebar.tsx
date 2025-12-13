@@ -3,8 +3,9 @@ import { Box, Button, Divider, List, ListItemButton, ListItemIcon, ListItemText,
 import type { JSX, MouseEvent } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
-import { useUptimeStatus } from "@/hooks/useUptimeStatus";
 import type { SectionDefinition, SectionGroup } from "./types";
+
+import { useUptimeStatus } from "@/hooks/useUptimeStatus";
 
 interface DocsSidebarProps {
   category: string | undefined;

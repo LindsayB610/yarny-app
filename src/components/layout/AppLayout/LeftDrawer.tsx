@@ -1,12 +1,13 @@
-import { ChevronLeft, ChevronRight, Menu } from "@mui/icons-material";
-import { Box, Divider, Drawer, IconButton, Stack, Tooltip, useMediaQuery, useTheme } from "@mui/material";
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { Box, Divider, Drawer, IconButton, Stack, Tooltip, useTheme } from "@mui/material";
 import type { JSX } from "react";
+
+import { ResizeHandle } from "../ResizeHandle";
+import { DRAWER_COLLAPSED_WIDTH } from "./types";
 
 import { BackToStoriesLink } from "@/components/story/BackToStoriesLink";
 import { StorySidebarContent } from "@/components/story/StorySidebarContent";
 import { StorySidebarHeader } from "@/components/story/StorySidebarHeader";
-import { ResizeHandle } from "../ResizeHandle";
-import { DRAWER_COLLAPSED_WIDTH } from "./types";
 
 interface LeftDrawerProps {
   isMobile: boolean;

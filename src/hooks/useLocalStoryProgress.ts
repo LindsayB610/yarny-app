@@ -7,11 +7,11 @@ import {
   getPacificDate,
   countWritingDaysForGoal
 } from "./useStoryProgress";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { LocalFsPathResolver } from "../services/localFs/LocalFsPathResolver";
 import { useYarnyStore } from "../store/provider";
 import { selectStorySnippets } from "../store/selectors";
 import { countWords } from "../utils/wordCount";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
-import { LocalFsPathResolver } from "../services/localFs/LocalFsPathResolver";
 
 /**
  * Calculate word count from story snippets in the store

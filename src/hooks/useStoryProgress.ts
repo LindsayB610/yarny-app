@@ -42,7 +42,7 @@ export function isWritingDayForGoal(
   const dayOfWeek = date.getDay();
   const writingDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-  if (goal.daysOff && goal.daysOff.includes(dateString)) {
+  if (goal.daysOff?.includes(dateString)) {
     return false;
   }
 

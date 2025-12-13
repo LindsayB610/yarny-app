@@ -1,23 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { apiClient } from "../api/client";
-import { listAllDriveFiles } from "../api/listAllDriveFiles";
-import {
-  mirrorProjectJsonWrite,
-  mirrorSnippetDelete,
-  mirrorSnippetWrite
-} from "../services/localFs/localBackupMirror";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
-import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
-import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
-import { selectActiveStory } from "../store/selectors";
-import type {
-  Chapter as ChapterEntity,
-  NormalizedPayload,
-  Snippet as SnippetEntity,
-  Story as StoryEntity
-} from "../store/types";
-import { ACCENT_COLORS } from "../utils/contrastChecker";
 import {
   countWords,
   generateId,
@@ -29,6 +11,24 @@ import {
   writeDataJson,
   writeProjectJson
 } from "./useStoryMutations.helpers";
+import { apiClient } from "../api/client";
+import { listAllDriveFiles } from "../api/listAllDriveFiles";
+import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
+import {
+  mirrorProjectJsonWrite,
+  mirrorSnippetDelete,
+  mirrorSnippetWrite
+} from "../services/localFs/localBackupMirror";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
+import { selectActiveStory } from "../store/selectors";
+import type {
+  Chapter as ChapterEntity,
+  NormalizedPayload,
+  Snippet as SnippetEntity,
+  Story as StoryEntity
+} from "../store/types";
+import { ACCENT_COLORS } from "../utils/contrastChecker";
 
 /**
  * Hook for updating a chapter's color
@@ -134,7 +134,7 @@ export function useUpdateChapterColorMutation() {
       // Handle Drive projects (existing logic)
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
 
-      if (!data.groups || !data.groups[chapterId]) {
+      if (!data.groups?.[chapterId]) {
         throw new Error("Chapter not found in data.json");
       }
 
@@ -606,7 +606,7 @@ export function useDuplicateChapterMutation() {
         newSnippetEntry.words = countWords(snippetBody);
         newSnippetEntry.chars = snippetBody.length;
 
-        data.snippets![newSnippetId] = newSnippetEntry;
+        data.snippets[newSnippetId] = newSnippetEntry;
         newSnippetIds.push(newSnippetId);
 
         newSnippetEntities.push({

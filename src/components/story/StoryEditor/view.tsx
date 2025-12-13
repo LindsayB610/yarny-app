@@ -51,8 +51,8 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   // Determine if we have a snippet or note
   const isSnippet = activeContent && "chapterId" in activeContent;
   const isNote = activeContent && "kind" in activeContent;
-  const activeSnippetForEditor = isSnippet ? (activeContent as Snippet) : activeSnippet;
-  const activeNoteForEditor = isNote ? (activeContent as Note) : undefined;
+  const activeSnippetForEditor = isSnippet ? (activeContent) : activeSnippet;
+  const activeNoteForEditor = isNote ? (activeContent) : undefined;
 
   const initialDocument = useMemo(
     () => buildPlainTextDocument(activeContent?.content ?? ""),

@@ -30,7 +30,7 @@ export function LoginPage(): JSX.Element {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/stories", { replace: true });
+      void navigate("/stories", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -60,7 +60,7 @@ export function LoginPage(): JSX.Element {
       try {
         setError(null);
         await login(response.credential);
-        navigate("/stories", { replace: true });
+        void navigate("/stories", { replace: true });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
       }
@@ -125,7 +125,7 @@ export function LoginPage(): JSX.Element {
       try {
         setError(null);
         await loginWithBypass(secret);
-        navigate("/stories", { replace: true });
+        void navigate("/stories", { replace: true });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Authentication failed. Please try again."

@@ -1,8 +1,9 @@
 import { Menu, Notes } from "@mui/icons-material";
-import { Box, IconButton, Tooltip, useMediaQuery, useTheme } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import type { JSX } from "react";
 
 import { OfflineBanner } from "../OfflineBanner";
+
 import { StoryEditor } from "@/components/story/StoryEditor";
 
 interface EditorAreaProps {

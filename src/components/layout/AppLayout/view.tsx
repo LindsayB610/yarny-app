@@ -3,12 +3,13 @@ import type { JSX } from "react";
 import { useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
 
-import { EditorFooterContainer } from "@/components/story/EditorFooterContainer";
-import { useYarnyStore } from "@/store/provider";
 import { EditorArea } from "./EditorArea";
 import { LeftDrawer } from "./LeftDrawer";
 import { RightDrawer } from "./RightDrawer";
 import { useAppLayout } from "./useAppLayout";
+
+import { EditorFooterContainer } from "@/components/story/EditorFooterContainer";
+import { useYarnyStore } from "@/store/provider";
 
 export function AppLayoutView(): JSX.Element {
   const theme = useTheme();
@@ -32,7 +33,7 @@ export function AppLayoutView(): JSX.Element {
   } = useAppLayout();
 
   // Handle local project data from loader
-  const loaderData = useLoaderData() as { localData?: any } | undefined;
+  const loaderData = useLoaderData();
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   
   // For local projects, upsert data from loader (since useDriveStoryQuery is disabled)

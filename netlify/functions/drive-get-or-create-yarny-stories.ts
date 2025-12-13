@@ -45,7 +45,7 @@ export const handler: NetlifyFunctionHandler = async (
     const newFolder = existingFolders.data.files?.find(
       (f) => f.name === YARNY_STORIES_FOLDER
     );
-    if (newFolder && newFolder.id) {
+    if (newFolder?.id) {
       console.log(`Found "${YARNY_STORIES_FOLDER}" folder: ${newFolder.id}`);
       return createSuccessResponse({
         id: newFolder.id,
@@ -58,7 +58,7 @@ export const handler: NetlifyFunctionHandler = async (
     const oldFolder = existingFolders.data.files?.find(
       (f) => f.name === OLD_YARNY_FOLDER
     );
-    if (oldFolder && oldFolder.id) {
+    if (oldFolder?.id) {
       console.log(
         `Found old "${OLD_YARNY_FOLDER}" folder (id: ${oldFolder.id}), migrating to "${YARNY_STORIES_FOLDER}" for user ${session.email}`
       );

@@ -648,7 +648,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
         // The hook should eventually be called with our content
         // Check the most recent call (React may call it multiple times as content updates)
         const lastCall = autoSaveCalls[autoSaveCalls.length - 1];
-        if (lastCall && lastCall[1]) {
+        if (lastCall?.[1]) {
           // Content is the second parameter
           return lastCall[1] === contentWithEmptyParagraphs;
         }

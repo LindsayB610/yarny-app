@@ -102,15 +102,15 @@ export const handler: NetlifyFunctionHandler = async (
     let oauth2Client: OAuth2Client | null = null;
     if (isGoogleDoc) {
       // Try to get auth from drive._auth (should be attached by getAuthenticatedDriveClient)
-      if ((drive as DriveClientWithAuth)._auth) {
-        oauth2Client = (drive as DriveClientWithAuth)._auth!;
+      if ((drive)._auth) {
+        oauth2Client = (drive)._auth!;
         console.log("Using auth client from drive._auth");
       } else {
         // Fallback: recreate the OAuth client from stored tokens
         console.log("drive._auth not found, creating new OAuth client from tokens");
         const tokens = await getTokens(session.email);
 
-        if (!tokens || !tokens.access_token) {
+        if (!tokens?.access_token) {
           throw new Error("No tokens available for Google Docs API");
         }
 
@@ -129,16 +129,16 @@ export const handler: NetlifyFunctionHandler = async (
       }
 
       let credentials = oauth2Client.credentials;
-      if (!credentials || !credentials.access_token) {
+      if (!credentials?.access_token) {
         console.log("Credentials missing or expired, attempting to get access token...");
         // Try to get/refresh access token
         try {
           const authCredentials = await oauth2Client.getAccessToken();
-          if (authCredentials && authCredentials.token) {
+          if (authCredentials?.token) {
             console.log("Successfully retrieved access token");
             // Credentials should now be set by getAccessToken
             credentials = oauth2Client.credentials;
-            if (!credentials || !credentials.access_token) {
+            if (!credentials?.access_token) {
               throw new Error("Access token retrieved but credentials not set");
             }
           } else {
@@ -433,7 +433,7 @@ export const handler: NetlifyFunctionHandler = async (
               const tokens = await getTokens(session.email);
 
               let hasDocsScope = false;
-              if (tokens && tokens.scope) {
+              if (tokens?.scope) {
                 hasDocsScope =
                   tokens.scope.includes("documents") ||
                   tokens.scope.includes("https://www.googleapis.com/auth/documents");

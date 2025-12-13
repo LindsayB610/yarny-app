@@ -57,7 +57,7 @@ export function useConflictDetection() {
 
         const driveFile = filesResponse.files?.find((f) => f.id === driveFileId);
 
-        if (!driveFile || !driveFile.modifiedTime) {
+        if (!driveFile?.modifiedTime) {
           return null;
         }
 

@@ -11,11 +11,11 @@ import { memo, useCallback, useMemo, useState, type MouseEvent, type JSX } from 
 import { useNavigate } from "react-router-dom";
 
 import { DeleteStoryModal } from "./DeleteStoryModal";
+import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
-import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
-import { highlightSearchText } from "../../utils/highlightSearch";
 import { useYarnyStore } from "../../store/provider";
+import { highlightSearchText } from "../../utils/highlightSearch";
 
 interface StoryCardProps {
   story: StoryFolder;
@@ -219,7 +219,7 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
                 }}
               />
 
-              {progress.dailyInfo && progress.dailyInfo.target !== undefined && (
+              {progress.dailyInfo?.target !== undefined && (
                 <Box sx={{ mt: 1.5 }}>
                   <Box
                     sx={{

@@ -21,7 +21,7 @@ import { AppFooter } from "../layout/AppFooter";
 export function StoriesPage(): JSX.Element {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const loaderData = useLoaderData() as StoriesLoaderData | undefined;
+  const loaderData = useLoaderData();
   const { user, logout } = useAuth();
   const { data: driveStories, isLoading, error } = useStoriesQuery();
   const refreshStories = useRefreshStories();

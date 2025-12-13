@@ -41,7 +41,7 @@ export async function loadDirectoryHandle(): Promise<FileSystemDirectoryHandle |
   }
 
   try {
-    const handle = (await get(STORAGE_KEY)) as FileSystemDirectoryHandle | undefined;
+    const handle = (await get(STORAGE_KEY));
     if (!handle) {
       return null;
     }

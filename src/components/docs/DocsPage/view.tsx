@@ -3,12 +3,12 @@ import type { JSX, MouseEvent } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { DRAWER_WIDTH } from "./types";
-import { createSections, createSectionGroups } from "./sections";
 import { DocsContent } from "./DocsContent";
 import { DocsFooter } from "./DocsFooter";
 import { DocsHeader } from "./DocsHeader";
 import { DocsSidebar } from "./DocsSidebar";
+import { createSections, createSectionGroups } from "./sections";
+import { DRAWER_WIDTH } from "./types";
 import type { SectionDefinition } from "./types";
 
 export function DocsPageView(): JSX.Element {

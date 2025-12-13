@@ -61,7 +61,7 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
       oauth2Client = drive._auth;
     } else {
       const tokens = await getTokens(session.email);
-      if (!tokens || !tokens.access_token) {
+      if (!tokens?.access_token) {
         throw new Error("No tokens available for Google Docs API");
       }
       oauth2Client = new OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
@@ -77,9 +77,9 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
     }
 
     let credentials = oauth2Client.credentials;
-    if (!credentials || !credentials.access_token) {
+    if (!credentials?.access_token) {
       const authCredentials = await oauth2Client.getAccessToken();
-      if (!authCredentials || !authCredentials.token) {
+      if (!authCredentials?.token) {
         throw new Error("Failed to get access token");
       }
       credentials = oauth2Client.credentials;

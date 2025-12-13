@@ -122,7 +122,7 @@ export function SortableSnippetList({
           return { x: 0, y: 0 };
         }
 
-        const activeElement = document.querySelector(`[data-id="${activeId}"]`) as HTMLElement | null;
+        const activeElement = document.querySelector(`[data-id="${activeId}"]`);
 
         if (!activeElement) {
           return { x: 0, y: 0 };

@@ -54,7 +54,7 @@ export const handler: NetlifyFunctionHandler = async (
     // Handle Google Docs differently
     if (fileMetadata.data.mimeType === "application/vnd.google-apps.document") {
       // Export Google Doc as plain text
-      const auth = (drive as DriveClientWithAuth)._auth;
+      const auth = (drive)._auth;
       if (!auth) {
         throw new Error("Drive client auth not available");
       }

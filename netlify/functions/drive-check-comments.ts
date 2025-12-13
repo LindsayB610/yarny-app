@@ -58,7 +58,7 @@ export const handler: NetlifyFunctionHandler = async (
       });
     }
 
-    const auth = (drive as DriveClientWithAuth)._auth;
+    const auth = (drive)._auth;
     if (!auth) {
       throw new Error("Drive client auth not available");
     }

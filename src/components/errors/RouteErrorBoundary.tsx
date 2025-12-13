@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Container, Typography } from "@mui/material";
+import { Box, Button, Container, Typography } from "@mui/material";
 import { useEffect, useMemo, type JSX } from "react";
 import { isRouteErrorResponse, Link, useRouteError } from "react-router-dom";
 

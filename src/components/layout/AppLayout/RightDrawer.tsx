@@ -1,9 +1,10 @@
-import { Box, Drawer, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Drawer, useTheme } from "@mui/material";
 import type { JSX } from "react";
 
-import { NotesSidebar } from "@/components/story/NotesSidebar";
 import { ResizeHandle } from "../ResizeHandle";
 import { DRAWER_COLLAPSED_WIDTH } from "./types";
+
+import { NotesSidebar } from "@/components/story/NotesSidebar";
 
 interface RightDrawerProps {
   isMobile: boolean;

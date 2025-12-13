@@ -10,8 +10,8 @@ import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import { Alert, Box, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
-import { GENRE_DESCRIPTIONS } from "./types";
 import { BulletList } from "./BulletList";
+import { GENRE_DESCRIPTIONS } from "./types";
 import type { SectionDefinition, SectionGroup } from "./types";
 
 export function createSections(): SectionDefinition[] {

@@ -225,7 +225,7 @@ export async function initializeStoryStructure(
   }
 
   // Create goal.json if goal metadata is provided
-  if (metadata.goal && metadata.goal.deadline) {
+  if (metadata.goal?.deadline) {
     const today = getPacificDate();
     const goalData = {
       target: metadata.goal.target || metadata.wordGoal || 3000,

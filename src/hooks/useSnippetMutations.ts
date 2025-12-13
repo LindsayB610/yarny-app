@@ -1,15 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { apiClient } from "../api/client";
-import { mirrorSnippetDelete, mirrorSnippetWrite } from "../services/localFs/localBackupMirror";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
-import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
-import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
-import { selectActiveStory } from "../store/selectors";
-import type {
-  Chapter as ChapterEntity,
-  Snippet as SnippetEntity
-} from "../store/types";
 import {
   countWords,
   createSnippetFileName,
@@ -19,6 +9,16 @@ import {
   type StorySnippetData,
   writeDataJson
 } from "./useStoryMutations.helpers";
+import { apiClient } from "../api/client";
+import { createLocalFileStorage } from "../services/localFileStorage/localFileStorage";
+import { mirrorSnippetDelete, mirrorSnippetWrite } from "../services/localFs/localBackupMirror";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { useYarnyStore, useYarnyStoreApi } from "../store/provider";
+import { selectActiveStory } from "../store/selectors";
+import type {
+  Chapter as ChapterEntity,
+  Snippet as SnippetEntity
+} from "../store/types";
 
 /**
  * Hook for reordering snippets within a chapter
@@ -170,7 +170,7 @@ export function useCreateSnippetMutation() {
       // Handle Drive projects (existing logic)
       const { data, fileId } = await readDataJson(activeStory.driveFileId);
 
-      if (!data.groups || !data.groups[chapterId]) {
+      if (!data.groups?.[chapterId]) {
         throw new Error("Chapter not found in data.json");
       }
 
@@ -628,7 +628,7 @@ export function useMoveSnippetToChapterMutation() {
       // Find source chapter (the one currently containing this snippet)
       let sourceChapterId: string | null = null;
       for (const [groupId, group] of Object.entries(data.groups)) {
-        if (group.snippetIds && group.snippetIds.includes(snippetId)) {
+        if (group.snippetIds?.includes(snippetId)) {
           sourceChapterId = groupId;
           break;
         }
