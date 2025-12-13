@@ -6,7 +6,6 @@ node_modules/
 .netlify/
 dist/
 build/
-reference-docs/
 
 # Vite
 .vite/
