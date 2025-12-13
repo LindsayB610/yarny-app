@@ -89,7 +89,11 @@ export function StoryInfoModal({
       <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
         Story Info & Settings
       </DialogTitle>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+      >
         <DialogContent>
           <Typography
             variant="body1"

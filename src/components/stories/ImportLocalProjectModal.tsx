@@ -90,7 +90,7 @@ export function ImportLocalProjectModal({
       if (normalized.stories && normalized.stories.length > 0) {
         const storyId = normalized.stories[0].id;
         console.log("[ImportLocalProject] Navigating to story:", storyId);
-        navigate(`/stories/${storyId}/snippets`);
+        void navigate(`/stories/${storyId}/snippets`);
       } else {
         console.warn("[ImportLocalProject] No stories in normalized payload");
       }
@@ -197,7 +197,7 @@ export function ImportLocalProjectModal({
               {selectedHandle.name}
             </Typography>
             <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.7 }}>
-              Ready to import. Click "Import" to continue.
+              Ready to import. Click &quot;Import&quot; to continue.
             </Typography>
           </Box>
         )}
@@ -205,7 +205,9 @@ export function ImportLocalProjectModal({
         <Box sx={{ display: "flex", gap: 2, flexDirection: "column" }}>
           <Button
             variant="outlined"
-            onClick={handleSelectDirectory}
+            onClick={() => {
+              void handleSelectDirectory();
+            }}
             disabled={!isSupported || isImporting}
             fullWidth
             sx={{
@@ -226,7 +228,9 @@ export function ImportLocalProjectModal({
           Cancel
         </Button>
         <Button
-          onClick={handleImport}
+          onClick={() => {
+            void handleImport();
+          }}
           disabled={!isSupported || !selectedHandle || isImporting}
           variant="contained"
           sx={{

@@ -36,7 +36,7 @@ export function SettingsPage(): JSX.Element {
   const handleTabChange = (_event: SyntheticEvent, value: string) => {
     const targetTab = SETTINGS_TABS.find((tab) => tab.value === value);
     if (targetTab) {
-      navigate(targetTab.path);
+      void navigate(targetTab.path);
     }
   };
 
@@ -87,7 +87,9 @@ export function SettingsPage(): JSX.Element {
                   key={path}
                   variant="contained"
                   color="primary"
-                  onClick={() => navigate(path)}
+                  onClick={() => {
+                    void navigate(path);
+                  }}
                   startIcon={<Icon fontSize="small" />}
                   sx={{
                     textTransform: "none",

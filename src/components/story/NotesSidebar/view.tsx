@@ -66,7 +66,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
       try {
         const result = await createNoteMutation.mutateAsync({ noteType });
         if (result?.id) {
-          navigate(`/stories/${storyId}/${noteType}/${result.id}`);
+          void navigate(`/stories/${storyId}/${noteType}/${result.id}`);
         }
       } catch (error) {
         console.error("Failed to create note:", error);
@@ -88,7 +88,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
   const handleNoteClick = useCallback(
     (clickedNoteType: NoteType, clickedNoteId: string) => {
       if (storyId && clickedNoteId !== noteId) {
-        navigate(`/stories/${storyId}/${clickedNoteType}/${clickedNoteId}`);
+        void navigate(`/stories/${storyId}/${clickedNoteType}/${clickedNoteId}`);
       }
     },
     [navigate, storyId, noteId]

@@ -79,7 +79,11 @@ export function RenameModal({
       <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
         Rename {itemLabel}
       </DialogTitle>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+      >
         <DialogContent>
           {error && (
             <Box

@@ -22,7 +22,9 @@ export function ManualSyncButton() {
 
   return (
     <Button
-      onClick={handleSync}
+      onClick={() => {
+        void handleSync();
+      }}
       variant="outlined"
       color="primary"
       size="small"
