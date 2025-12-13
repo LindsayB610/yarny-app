@@ -133,13 +133,12 @@ describe("NotesSidebar", () => {
     renderWithProviders(<NotesSidebar />, { initialState });
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /people/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /places/i })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /things/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /characters/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /worldbuilding/i })).toBeInTheDocument();
     }, { timeout: 2000 });
   });
 
-  it("displays notes in the People tab", async () => {
+  it("displays notes in the Characters tab", async () => {
     const initialState = {
       entities: {
         stories: {
@@ -249,7 +248,7 @@ describe("NotesSidebar", () => {
   it("switches between tabs", async () => {
     const user = userEvent.setup();
     vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => {
-      if (noteType === "places") {
+      if (noteType === "worldbuilding") {
         return {
           data: [],
           isLoading: false,
@@ -283,15 +282,15 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
-    // Click Places tab
-    const placesTab = screen.getByRole("tab", { name: /places/i });
+    // Click Worldbuilding tab
+    const worldbuildingTab = screen.getByRole("tab", { name: /worldbuilding/i });
     await act(async () => {
-      await user.click(placesTab);
+      await user.click(worldbuildingTab);
     });
 
-    // Should show Places content
+    // Should show Worldbuilding content
     await waitFor(() => {
-      expect(screen.getByText(/No.*Place.*entries yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/No.*Worldbuilding.*entries yet/i)).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
@@ -306,7 +305,7 @@ describe("NotesSidebar", () => {
         activeStoryId: mockStory.id,
         activeNote: {
           id: "note-1",
-          type: "people" as const
+          type: "characters" as const
         }
       }
     };
@@ -335,14 +334,14 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
-    // Find and click the add button (People tab is active by default)
-    const addButton = screen.getByRole("button", { name: /add new person/i });
+    // Find and click the add button (Characters tab is active by default)
+    const addButton = screen.getByRole("button", { name: /add new character/i });
     await act(async () => {
       await user.click(addButton);
     });
 
     await waitFor(() => {
-      expect(mockCreateNoteMutation.mutateAsync).toHaveBeenCalledWith({ noteType: "people" });
+      expect(mockCreateNoteMutation.mutateAsync).toHaveBeenCalledWith({ noteType: "characters" });
     });
 
     // Note: We can't easily verify store state changes without accessing the provider's store
@@ -367,7 +366,7 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
-    const addButton = screen.getByRole("button", { name: /add new person/i });
+    const addButton = screen.getByRole("button", { name: /add new character/i });
     expect(addButton).toBeDisabled();
   });
 
@@ -414,11 +413,11 @@ describe("NotesSidebar", () => {
 
     // Wait for component to render and button to be enabled
     await waitFor(() => {
-      const addButton = screen.getByRole("button", { name: /add new person/i });
+      const addButton = screen.getByRole("button", { name: /add new character/i });
       expect(addButton).not.toBeDisabled();
     });
 
-    const addButton = screen.getByRole("button", { name: /add new person/i });
+    const addButton = screen.getByRole("button", { name: /add new character/i });
     await act(async () => {
       await user.click(addButton);
     });
@@ -435,18 +434,18 @@ describe("NotesSidebar", () => {
 
     // Mock different notes for different types
     vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => {
-      if (noteType === "people") {
+      if (noteType === "characters") {
         return {
-          data: [{ id: "person-1", name: "Person", content: "Person content", modifiedTime: "2024-01-01T00:00:00Z" }],
+          data: [{ id: "character-1", name: "Character", content: "Character content", modifiedTime: "2024-01-01T00:00:00Z" }],
           isLoading: false,
           isError: false,
           isSuccess: true,
           error: null,
           refetch: vi.fn()
         } as any;
-      } else if (noteType === "places") {
+      } else if (noteType === "worldbuilding") {
         return {
-          data: [{ id: "place-1", name: "Place", content: "Place content", modifiedTime: "2024-01-01T00:00:00Z" }],
+          data: [{ id: "worldbuilding-1", name: "Worldbuilding", content: "Worldbuilding content", modifiedTime: "2024-01-01T00:00:00Z" }],
           isLoading: false,
           isError: false,
           isSuccess: true,
@@ -455,7 +454,7 @@ describe("NotesSidebar", () => {
         } as any;
       } else {
         return {
-          data: [{ id: "thing-1", name: "Thing", content: "Thing content", modifiedTime: "2024-01-01T00:00:00Z" }],
+          data: [],
           isLoading: false,
           isError: false,
           isSuccess: true,
@@ -479,27 +478,18 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
-    // Should show People notes initially
-    expect(screen.getByText("Person")).toBeInTheDocument();
+    // Should show Characters notes initially
+    expect(screen.getByText("Character")).toBeInTheDocument();
 
-    // Switch to Places tab
-    const placesTab = screen.getByRole("tab", { name: /places/i });
+    // Switch to Worldbuilding tab
+    const worldbuildingTab = screen.getByRole("tab", { name: /worldbuilding/i });
     await act(async () => {
-      await user.click(placesTab);
+      await user.click(worldbuildingTab);
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Place")).toBeInTheDocument();
-    });
-
-    // Switch to Things tab
-    const thingsTab = screen.getByRole("tab", { name: /things/i });
-    await act(async () => {
-      await user.click(thingsTab);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Thing")).toBeInTheDocument();
+      // Check for the note name in the list (not the tab)
+      expect(screen.getByText("Worldbuilding content")).toBeInTheDocument();
     });
   });
 
