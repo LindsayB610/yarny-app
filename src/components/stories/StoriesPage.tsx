@@ -10,7 +10,6 @@ import { LoadingState } from "./LoadingState";
 import { NewStoryModal } from "./NewStoryModal";
 import { StoriesHeader } from "./StoriesHeader";
 import { VirtualizedStoryList } from "./VirtualizedStoryList";
-import type { StoriesLoaderData } from "../../app/loaders";
 import { useAuth } from "../../hooks/useAuth";
 import { useStoriesQuery } from "../../hooks/useStoriesQuery";
 import { useRefreshStories } from "../../hooks/useStoryMutations";
@@ -152,13 +151,15 @@ export function StoriesPage(): JSX.Element {
   const hasStories = filteredStories.length > 0;
   const shouldShowContent = hasStories || isDriveAuthorized;
 
-  const handleLogout = async () => {
-    await logout();
-    void navigate("/login");
+  const handleLogout = () => {
+    void (async () => {
+      await logout();
+      void navigate("/login");
+    })();
   };
 
-  const handleRefresh = async () => {
-    await refreshStories.mutateAsync();
+  const handleRefresh = () => {
+    void refreshStories.mutateAsync();
   };
 
   if (!user) {

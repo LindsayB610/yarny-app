@@ -4,7 +4,7 @@ import {
   DriveCheckCommentsRequestSchema,
   validateRequest
 } from "./contract";
-import { getAuthenticatedDriveClient, type DriveClientWithAuth } from "./drive-client";
+import { getAuthenticatedDriveClient } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,

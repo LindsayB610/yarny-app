@@ -382,8 +382,6 @@ export const createDriveClient = (): DriveClient => ({
 
             try {
               const contentResponse = await apiClient.readDriveFile({ fileId: file.id });
-              // noteName extracted but not currently used - kept for potential future use
-              const _noteName = file.name.replace(/\.txt$/, "").replace(/\.md$/, "");
               const kind = noteKindMap[folderName] ?? defaultKind;
 
               // Determine order

@@ -74,7 +74,7 @@ export function RouteErrorBoundary(): JSX.Element {
   }, [isChunkLoadError]);
 
   if (isRouteErrorResponse(error)) {
-    errorMessage = error.statusText || (error.data as { message?: string })?.message || errorMessage;
+    errorMessage = error.statusText ?? (error.data as { message?: string })?.message ?? errorMessage;
     errorStatus = error.status;
   } else if (error instanceof Error) {
     errorMessage = error.message;

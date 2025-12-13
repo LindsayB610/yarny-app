@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Something went wrong
             </Typography>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              {this.state.error?.message || "An unexpected error occurred"}
+              {this.state.error?.message ?? "An unexpected error occurred"}
             </Typography>
             {process.env.NODE_ENV === "development" && this.state.errorInfo && (
               <Box

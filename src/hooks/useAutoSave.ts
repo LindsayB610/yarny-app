@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useMemo } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useNetworkStatus } from "./useNetworkStatus";
 import { apiClient } from "../api/client";
@@ -154,7 +154,6 @@ export function useAutoSave(
     parentFolderId
   } = options;
 
-  const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
   // Access store selectors for local project detection (will be used in mutation function)
   const getProjects = useYarnyStore((state) => state.entities.projects);
@@ -306,7 +305,7 @@ export function useAutoSave(
         
         // Register background sync if Service Worker is available
         if ("serviceWorker" in navigator && "sync" in ServiceWorkerRegistration.prototype) {
-          navigator.serviceWorker.ready.then((registration) => {
+          void navigator.serviceWorker.ready.then((registration) => {
             registration.sync.register("sync-json-to-gdoc").catch((error) => {
               console.warn("Failed to register background sync:", error);
             });
@@ -381,7 +380,7 @@ export function useAutoSave(
       }
     };
 
-    processQueuedSaves();
+    void processQueuedSaves();
 
     // Listen for manual retry event
     const handleRetry = () => {
@@ -561,7 +560,6 @@ export function useAutoSave(
 
     // Capture current content in closure for the timer
     const contentToSave = content;
-    const timestampWhenScheduled = Date.now();
 
     // Set new timer
     debounceTimerRef.current = setTimeout(() => {
