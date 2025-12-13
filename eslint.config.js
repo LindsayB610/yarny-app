@@ -110,7 +110,11 @@ export default [
       "import/order": "off",
       "@typescript-eslint/ban-ts-comment": "off",
       // Allow floating promises in tests (test utilities often fire-and-forget)
-      "@typescript-eslint/no-floating-promises": "off"
+      "@typescript-eslint/no-floating-promises": "off",
+      // Allow typeof import() in test files (needed for dynamic import type annotations)
+      "@typescript-eslint/consistent-type-imports": "off",
+      // Allow promise misuse in tests (test event handlers often need async)
+      "@typescript-eslint/no-misused-promises": "off"
     }
   }
 ];
