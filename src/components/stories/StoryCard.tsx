@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { DeleteStoryModal } from "./DeleteStoryModal";
 import type { StoryFolder } from "../../hooks/useStoriesQuery";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
+import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
 import { highlightSearchText } from "../../utils/highlightSearch";
 import { useYarnyStore } from "../../store/provider";
 
@@ -31,8 +32,10 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
   const storyEntity = stories[story.id];
   const isLocalProject = storyEntity ? projects[storyEntity.projectId]?.storageType === "local" : story.id.startsWith("local-story");
   
-  // Skip progress query for local projects (they don't have Drive folder IDs)
-  const { data: progress } = useStoryProgress(isLocalProject ? undefined : story.id);
+  // Use appropriate progress hook based on storage type
+  const driveProgress = useStoryProgress(isLocalProject ? undefined : story.id);
+  const localProgress = useLocalStoryProgress(isLocalProject ? story.id : undefined);
+  const progress = isLocalProject ? localProgress.data : driveProgress.data;
   const percentage = progress
     ? Math.min(100, Math.round((progress.totalWords / progress.wordGoal) * 100))
     : 0;

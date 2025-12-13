@@ -1,7 +1,7 @@
 # Test Coverage Summary
 
-**Last Updated**: 2025-01-14  
-**Overall Status**: ✅ 478 passing | ⏭️ 23 skipped | ❌ 0 failing
+**Last Updated**: 2025-01-XX  
+**Overall Status**: ✅ Tests passing | ⏭️ 23 skipped | ❌ 0 failing (useNotesQuery tests fixed)
 
 ## Test Suite Overview
 
@@ -16,8 +16,9 @@
 
 - **NotesSidebar**: 14/15 tests passing (1 skipped - documented mock issue)
 - **StoryEditor**: 4/14 tests passing (10 skipped - TipTap complexity)
+- **EditorFooter**: All tests passing (newly added)
 - **driveClient**: All tests passing
-- **Hooks**: All tests passing (useSyncStatus, useNetworkStatus, useExport, useAuth, etc.)
+- **Hooks**: All tests passing (useSyncStatus, useNetworkStatus, useExport, useAuth, useManualSync, useNotesMutations, useNotesQuery, etc.)
 - **Components**: LoginPage, OfflineBanner, and others fully tested
 
 ### ⏭️ Partially Tested Components (Skipped Tests)
@@ -97,8 +98,12 @@ The following functionality is **not** covered by E2E tests:
 
 ### API/Hooks
 
-**Status**: ✅ Fully tested
+**Status**: ✅ Fully tested (with recent additions)
 - All hooks have comprehensive test coverage
+- **Newly Added Tests**:
+  - ✅ `useManualSync` - Manual sync functionality with error handling
+  - ✅ `useNotesMutations` - Note creation and reordering mutations
+  - ✅ `useNotesQuery` - Fixed failing tests (5 tests now passing)
 - API clients tested with mocks
 - Error handling verified
 
@@ -141,8 +146,46 @@ The following functionality is **not** covered by E2E tests:
 - **NoteEditor Tests**: `src/components/story/NoteEditor.test.tsx` (12 skipped)
 - **StoryEditor Tests**: `src/components/story/StoryEditor.test.tsx` (10 skipped)
 - **NotesSidebar Tests**: `src/components/story/NotesSidebar.test.tsx` (1 skipped)
+- **EditorFooter Tests**: `src/components/story/EditorFooter.test.tsx` (newly added)
+- **useManualSync Tests**: `src/hooks/useManualSync.test.tsx` (newly added)
+- **useNotesMutations Tests**: `src/hooks/useNotesMutations.test.tsx` (newly added)
+- **useNotesQuery Tests**: `src/hooks/useNotesQuery.test.tsx` (fixed - all tests passing)
 - **Investigation Report**: `plans/NOTEEDITOR_TIPTAP_TESTING_INVESTIGATION.md`
 - **E2E Tests**: `tests/e2e/`
+
+## Recent Test Coverage Improvements
+
+### January 2025
+
+1. **Fixed useNotesQuery Tests** ✅
+   - Fixed 5 failing tests by correcting note type from "people" to "characters"
+   - All 7 tests now passing
+
+2. **Added useManualSync Tests** ✅
+   - Tests for sync functionality
+   - Error handling scenarios
+   - Event dispatching
+   - localStorage updates
+
+3. **Added useNotesMutations Tests** ✅
+   - Note creation with unique name generation
+   - Note reordering with optimistic updates
+   - Folder creation/retrieval
+
+4. **Added EditorFooter Tests** ✅
+   - Word and character count calculations
+   - Last modified date display
+   - Export and logout button interactions
+   - Edge cases (empty snippets, singular counts)
+
+### Remaining Test Coverage Gaps
+
+The following still need test coverage (as documented in `plans/TEST_COVERAGE_GAPS.md`):
+
+- `useLocalBackups.ts` - Local filesystem backup management
+- `useStoryMutations.ts` - Story CRUD operations (complex, 2000+ lines)
+- `AppLayout.tsx` - Main application layout
+- Various other hooks and components (lower priority)
 
 ## Maintenance Notes
 

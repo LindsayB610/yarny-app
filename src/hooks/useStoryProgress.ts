@@ -13,7 +13,7 @@ import {
 /**
  * Get current date in US Pacific time (same as legacy code)
  */
-function getPacificDate(): string {
+export function getPacificDate(): string {
   const now = new Date();
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
@@ -33,7 +33,7 @@ function getPacificDate(): string {
 /**
  * Check if a date is a writing day for goal calculations
  */
-function isWritingDayForGoal(
+export function isWritingDayForGoal(
   dateString: string,
   goal: { writingDays?: boolean[]; daysOff?: string[] }
 ): boolean {
@@ -52,7 +52,7 @@ function isWritingDayForGoal(
 /**
  * Count effective writing days between two dates
  */
-function countWritingDaysForGoal(
+export function countWritingDaysForGoal(
   startDate: string,
   endDate: string,
   goal: { writingDays?: boolean[]; daysOff?: string[] }
@@ -103,7 +103,7 @@ function calculateStoryWordCount(
 /**
  * Calculate daily goal info for a story
  */
-function calculateDailyGoalInfo(
+export function calculateDailyGoalInfo(
   goal: {
     target: number;
     deadline: string;

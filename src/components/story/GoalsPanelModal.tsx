@@ -15,7 +15,7 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import { useState, type JSX, type FormEvent } from "react";
+import { useState, useEffect, type JSX, type FormEvent } from "react";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -43,6 +43,7 @@ export function GoalsPanelModal({
   onSave
 }: GoalsPanelModalProps): JSX.Element {
   const [wordGoal, setWordGoal] = useState(initialWordGoal);
+  const [wordGoalInput, setWordGoalInput] = useState(String(initialWordGoal));
   const [goalTarget, setGoalTarget] = useState(initialGoal?.target || 3000);
   const [goalDeadline, setGoalDeadline] = useState(
     initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : ""
@@ -59,6 +60,14 @@ export function GoalsPanelModal({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync input state when modal opens or initialWordGoal changes
+  useEffect(() => {
+    if (open) {
+      setWordGoal(initialWordGoal);
+      setWordGoalInput(String(initialWordGoal));
+    }
+  }, [open, initialWordGoal]);
+
   const handleWritingDayChange = (index: number) => {
     const newDays = [...writingDays];
     newDays[index] = !newDays[index];
@@ -71,6 +80,14 @@ export function GoalsPanelModal({
     setIsSaving(true);
 
     try {
+      // Parse word goal from input
+      const parsedWordGoal = parseInt(wordGoalInput);
+      if (isNaN(parsedWordGoal) || parsedWordGoal < 1) {
+        setError("Please enter a valid word count target (minimum 1)");
+        setIsSaving(false);
+        return;
+      }
+
       // Parse days off
       const daysOffArray = daysOff
         .split(",")
@@ -88,7 +105,7 @@ export function GoalsPanelModal({
           }
         : undefined;
 
-      await onSave(wordGoal, goalMetadata);
+      await onSave(parsedWordGoal, goalMetadata);
       handleClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save goals");
@@ -99,6 +116,7 @@ export function GoalsPanelModal({
 
   const handleClose = () => {
     setWordGoal(initialWordGoal);
+    setWordGoalInput(String(initialWordGoal));
     setGoalTarget(initialGoal?.target || 3000);
     setGoalDeadline(initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : "");
     setGoalMode(initialGoal?.mode || "elastic");
@@ -149,8 +167,18 @@ export function GoalsPanelModal({
             label="Word Count Target"
             type="number"
             required
-            value={wordGoal}
-            onChange={(e) => setWordGoal(parseInt(e.target.value) || 3000)}
+            value={wordGoalInput}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow empty string or valid numbers
+              if (value === "" || /^\d+$/.test(value)) {
+                setWordGoalInput(value);
+                const numValue = parseInt(value);
+                if (!isNaN(numValue)) {
+                  setWordGoal(numValue);
+                }
+              }
+            }}
             inputProps={{ min: 1 }}
             helperText="Total words you want to write"
             sx={{ mb: 3 }}

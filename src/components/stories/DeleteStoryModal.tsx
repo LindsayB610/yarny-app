@@ -30,6 +30,7 @@ export function DeleteStoryModal({
 }: DeleteStoryModalProps) {
   const [confirmText, setConfirmText] = useState("");
   const [deleteFromDrive, setDeleteFromDrive] = useState(false);
+  const [isDeletingLocal, setIsDeletingLocal] = useState(false);
   const deleteStory = useDeleteStory();
   const storeApi = useYarnyStoreApi();
   const removeSnippet = useYarnyStore((state) => state.removeSnippet);
@@ -41,8 +42,15 @@ export function DeleteStoryModal({
   const queryClient = useQueryClient();
   
   // Check if this is a local project
+  // First try to find the story in the store
   const story = stories[storyId];
-  const project = story ? projects[story.projectId] : undefined;
+  let project = story ? projects[story.projectId] : undefined;
+  
+  // If story not found directly, search through all projects to find which one contains this story
+  if (!project) {
+    project = Object.values(projects).find((p) => p.storyIds.includes(storyId));
+  }
+  
   const isLocalProject = project?.storageType === "local";
 
   const handleDelete = async () => {
@@ -51,21 +59,28 @@ export function DeleteStoryModal({
     }
 
     try {
-      if (isLocalProject && story) {
+      if (isLocalProject) {
+        setIsDeletingLocal(true);
+        
         // For local projects, remove from store
-        // Remove all snippets and chapters first
-        const chapters = storeApi.getState().entities.chapters;
-        story.chapterIds.forEach((chapterId) => {
-          const chapter = chapters[chapterId];
-          if (chapter) {
-            // Remove all snippets in this chapter
-            chapter.snippetIds.forEach((snippetId) => {
-              removeSnippet(snippetId);
-            });
-            // Remove the chapter
-            removeChapter(chapterId);
-          }
-        });
+        // Get the story from store (it might not be loaded yet, so we'll work with what we have)
+        const currentStory = stories[storyId];
+        
+        if (currentStory) {
+          // Remove all snippets and chapters first
+          const chapters = storeApi.getState().entities.chapters;
+          currentStory.chapterIds.forEach((chapterId) => {
+            const chapter = chapters[chapterId];
+            if (chapter) {
+              // Remove all snippets in this chapter
+              chapter.snippetIds.forEach((snippetId) => {
+                removeSnippet(snippetId);
+              });
+              // Remove the chapter
+              removeChapter(chapterId);
+            }
+          });
+        }
         
         // Remove story from project
         if (project) {
@@ -102,6 +117,7 @@ export function DeleteStoryModal({
         queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
         queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
         
+        setIsDeletingLocal(false);
         onClose();
         setConfirmText("");
         setDeleteFromDrive(false);
@@ -117,6 +133,7 @@ export function DeleteStoryModal({
       }
     } catch (error) {
       console.error("Failed to delete story:", error);
+      setIsDeletingLocal(false);
       // Error handling can be added here (show toast, etc.)
     }
   };
@@ -124,10 +141,12 @@ export function DeleteStoryModal({
   const handleClose = () => {
     setConfirmText("");
     setDeleteFromDrive(false);
+    setIsDeletingLocal(false);
     onClose();
   };
 
   const isDeleteEnabled = confirmText === "DELETE";
+  const isDeleting = isLocalProject ? isDeletingLocal : deleteStory.isPending;
 
   return (
     <Dialog
@@ -180,25 +199,38 @@ export function DeleteStoryModal({
           }}
         />
 
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={deleteFromDrive}
-              onChange={(e) => setDeleteFromDrive(e.target.checked)}
-              sx={{
-                color: "rgba(255, 255, 255, 0.7)",
-                "&.Mui-checked": {
-                  color: "primary.main"
-                }
-              }}
-            />
-          }
-          label={
-            <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
-              Also permanently delete from Google Drive (default: move to trash)
-            </Typography>
-          }
-        />
+        {isLocalProject ? (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.7)",
+              mb: 1,
+              fontStyle: "italic"
+            }}
+          >
+            Note: This will remove the story from the app, but you will need to manually delete the local files from your file system.
+          </Typography>
+        ) : (
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={deleteFromDrive}
+                onChange={(e) => setDeleteFromDrive(e.target.checked)}
+                sx={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  "&.Mui-checked": {
+                    color: "primary.main"
+                  }
+                }}
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.9)" }}>
+                Also permanently delete from Google Drive (default: move to trash)
+              </Typography>
+            }
+          />
+        )}
       </DialogContent>
       <DialogActions sx={{ p: 2, pt: 1 }}>
         <Button
@@ -214,7 +246,7 @@ export function DeleteStoryModal({
         </Button>
         <Button
           onClick={handleDelete}
-          disabled={!isDeleteEnabled || deleteStory.isPending}
+          disabled={!isDeleteEnabled || isDeleting}
           variant="contained"
           sx={{
             bgcolor: "error.main",
@@ -230,7 +262,7 @@ export function DeleteStoryModal({
             }
           }}
         >
-          {deleteStory.isPending ? "Deleting..." : "Delete Story"}
+          {isDeleting ? "Deleting..." : "Delete Story"}
         </Button>
       </DialogActions>
     </Dialog>

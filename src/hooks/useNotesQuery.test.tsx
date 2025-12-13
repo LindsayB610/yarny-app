@@ -31,7 +31,7 @@ describe("useNotesQuery", () => {
   });
 
   it("returns empty array when storyFolderId is undefined", async () => {
-    const { result } = renderHook(() => useNotesQuery(undefined, "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery(undefined, "characters", true), { wrapper });
 
     // Query is disabled when storyFolderId is undefined, so it won't run
     // The data should be undefined initially since the query never executes
@@ -44,8 +44,8 @@ describe("useNotesQuery", () => {
     const mockFolderResponse = {
       files: [
         {
-          id: "people-folder-id",
-          name: "People",
+          id: "characters-folder-id",
+          name: "Characters",
           mimeType: "application/vnd.google-apps.folder"
         }
       ]
@@ -55,13 +55,13 @@ describe("useNotesQuery", () => {
       files: [
         {
           id: "note-1",
-          name: "Person 1.txt",
+          name: "Character 1.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-01T00:00:00Z"
         },
         {
           id: "note-2",
-          name: "Person 2.txt",
+          name: "Character 2.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-02T00:00:00Z"
         }
@@ -76,7 +76,7 @@ describe("useNotesQuery", () => {
       .mockResolvedValueOnce({ content: "Note 1 content" })
       .mockResolvedValueOnce({ content: "Note 2 content" });
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -85,7 +85,7 @@ describe("useNotesQuery", () => {
     expect(result.current.data).toHaveLength(2);
     expect(result.current.data?.[0]).toMatchObject({
       id: "note-1",
-      name: "Person 1",
+      name: "Character 1",
       content: "Note 1 content"
     });
   });
@@ -97,7 +97,7 @@ describe("useNotesQuery", () => {
 
     vi.mocked(apiClient.listDriveFiles).mockResolvedValue(mockFolderResponse);
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -110,8 +110,8 @@ describe("useNotesQuery", () => {
     const mockFolderResponse = {
       files: [
         {
-          id: "people-folder-id",
-          name: "People",
+          id: "characters-folder-id",
+          name: "Characters",
           mimeType: "application/vnd.google-apps.folder"
         }
       ]
@@ -148,7 +148,7 @@ describe("useNotesQuery", () => {
       .mockResolvedValueOnce({ content: "Note 1" })
       .mockResolvedValueOnce({ content: "Note 2" });
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -162,8 +162,8 @@ describe("useNotesQuery", () => {
     const mockFolderResponse = {
       files: [
         {
-          id: "people-folder-id",
-          name: "People",
+          id: "characters-folder-id",
+          name: "Characters",
           mimeType: "application/vnd.google-apps.folder"
         }
       ]
@@ -178,13 +178,13 @@ describe("useNotesQuery", () => {
         },
         {
           id: "note-1",
-          name: "Person 1.txt",
+          name: "Character 1.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-01T00:00:00Z"
         },
         {
           id: "note-2",
-          name: "Person 2.txt",
+          name: "Character 2.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-02T00:00:00Z"
         }
@@ -200,7 +200,7 @@ describe("useNotesQuery", () => {
       .mockResolvedValueOnce({ content: "Note 1" })
       .mockResolvedValueOnce({ content: "Note 2" });
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -215,8 +215,8 @@ describe("useNotesQuery", () => {
     const mockFolderResponse = {
       files: [
         {
-          id: "people-folder-id",
-          name: "People",
+          id: "characters-folder-id",
+          name: "Characters",
           mimeType: "application/vnd.google-apps.folder"
         }
       ]
@@ -226,13 +226,13 @@ describe("useNotesQuery", () => {
       files: [
         {
           id: "note-1",
-          name: "Person 1.txt",
+          name: "Character 1.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-01T00:00:00Z"
         },
         {
           id: "note-2",
-          name: "Person 2.txt",
+          name: "Character 2.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-02T00:00:00Z"
         }
@@ -247,7 +247,7 @@ describe("useNotesQuery", () => {
       .mockResolvedValueOnce({ content: "Note 1" })
       .mockRejectedValueOnce(new Error("Read error"));
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -262,8 +262,8 @@ describe("useNotesQuery", () => {
     const mockFolderResponse = {
       files: [
         {
-          id: "people-folder-id",
-          name: "People",
+          id: "characters-folder-id",
+          name: "Characters",
           mimeType: "application/vnd.google-apps.folder"
         }
       ]
@@ -273,13 +273,13 @@ describe("useNotesQuery", () => {
       files: [
         {
           id: "note-1",
-          name: "Person 1.txt",
+          name: "Character 1.txt",
           mimeType: "text/plain",
           modifiedTime: "2024-01-01T00:00:00Z"
         },
         {
           id: "note-2",
-          name: "Person 2.md",
+          name: "Character 2.md",
           mimeType: "text/markdown",
           modifiedTime: "2024-01-02T00:00:00Z"
         }
@@ -294,14 +294,14 @@ describe("useNotesQuery", () => {
       .mockResolvedValueOnce({ content: "Note 1" })
       .mockResolvedValueOnce({ content: "Note 2" });
 
-    const { result } = renderHook(() => useNotesQuery("story-id", "people", true), { wrapper });
+    const { result } = renderHook(() => useNotesQuery("story-id", "characters", true), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.[0].name).toBe("Person 1");
-    expect(result.current.data?.[1].name).toBe("Person 2");
+    expect(result.current.data?.[0].name).toBe("Character 1");
+    expect(result.current.data?.[1].name).toBe("Character 2");
   });
 });
 

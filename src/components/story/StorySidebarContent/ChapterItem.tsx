@@ -2,7 +2,6 @@ import { Add, ExpandMore, ChevronRight, MoreVert } from "@mui/icons-material";
 import { Box, Collapse, IconButton, Typography } from "@mui/material";
 import type { JSX, MouseEvent } from "react";
 
-import { ChapterSnippetCount } from "./ChapterSnippetCount";
 import { ChapterSnippetList } from "./ChapterSnippetList";
 import { darkenColor, getReadableTextColor } from "../../../utils/contrastChecker";
 import type { Chapter as SortableChapter } from "../SortableChapterList";
@@ -88,7 +87,6 @@ export function ChapterItem({
         <Typography variant="body2" sx={{ flex: 1, fontWeight: 600, color: "inherit" }}>
           {chapter.title}
         </Typography>
-        <ChapterSnippetCount chapterId={chapter.id} textColor={headerTextColor} />
         <IconButton
           size="small"
           onClick={(e) => {

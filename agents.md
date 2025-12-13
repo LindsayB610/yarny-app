@@ -152,11 +152,14 @@ Split a component into a directory structure when:
 
 ### Example Structure
 
-See `src/components/story/` for reference:
-- `StoryEditor/` - Main editor with hooks for sync, content, conflict detection
-- `NotesSidebar/` - Notes sidebar with list management and reordering
-- `StorySidebarContent/` - Complex sidebar with chapters, snippets, dialogs
-- `NoteEditor/` - Note editing with auto-save and header management
+See the following directories for reference:
+- `src/components/story/`:
+  - `StoryEditor/` - Main editor with hooks for sync, content, conflict detection
+  - `NotesSidebar/` - Notes sidebar with list management and reordering
+  - `StorySidebarContent/` - Complex sidebar with chapters, snippets, dialogs
+  - `NoteEditor/` - Note editing with auto-save and header management
+- `src/components/docs/DocsPage/` - Documentation page with sections, sidebar, and content
+- `src/components/layout/AppLayout/` - Main app layout with drawers and editor area
 
 ### Key Principles
 
