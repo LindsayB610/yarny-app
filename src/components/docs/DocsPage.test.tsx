@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -14,7 +14,7 @@ import { useUptimeStatus } from "../../hooks/useUptimeStatus";
 vi.mock("../../hooks/useAuth");
 vi.mock("../../hooks/useUptimeStatus");
 
-const renderWithProviders = (ui: React.ReactElement) => {
+const renderWithProviders = (ui: React.ReactElement, initialEntries = ["/docs"]) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -24,9 +24,12 @@ const renderWithProviders = (ui: React.ReactElement) => {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {ui}
-      </BrowserRouter>
+      <MemoryRouter initialEntries={initialEntries}>
+        <Routes>
+          <Route path="/docs/:category?" element={ui} />
+          <Route path="/docs" element={ui} />
+        </Routes>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 };
@@ -240,7 +243,8 @@ describe("DocsPage", () => {
   });
 
   it("renders genre descriptions", () => {
-    renderWithProviders(<DocsPage />);
+    // Navigate to writing category to see genres section
+    renderWithProviders(<DocsPage />, ["/docs/writing"]);
     
     // Check for some genre names (may appear multiple times)
     const literaryFiction = screen.getAllByText("Literary Fiction");
@@ -271,7 +275,8 @@ describe("DocsPage", () => {
   });
 
   it("renders section papers with proper structure", () => {
-    renderWithProviders(<DocsPage />);
+    // Navigate to getting-started category to see those sections
+    renderWithProviders(<DocsPage />, ["/docs/getting-started"]);
     
     // Check that sections are rendered - look for section IDs in the DOM
     // Sections have IDs like "getting-started", "stories-dashboard", etc.
@@ -280,6 +285,27 @@ describe("DocsPage", () => {
     
     const storiesDashboardSection = document.getElementById("stories-dashboard");
     expect(storiesDashboardSection).toBeInTheDocument();
+  });
+
+  it("shows overview page when no category is selected", () => {
+    renderWithProviders(<DocsPage />, ["/docs"]);
+    
+    // Should show category cards on overview page
+    // Check for h3 heading specifically (not the h5 in header or footer link)
+    const userGuideHeading = screen.getByRole("heading", { level: 3, name: "User Guide" });
+    expect(userGuideHeading).toBeInTheDocument();
+    expect(screen.getByText(/Welcome to the Yarny User Guide/i)).toBeInTheDocument();
+    
+    // Check that category cards are present (text appears in multiple places, use getAllByText)
+    const overviewElements = screen.getAllByText("Overview");
+    expect(overviewElements.length).toBeGreaterThan(0);
+    
+    const writingElements = screen.getAllByText("Writing Workflow");
+    expect(writingElements.length).toBeGreaterThan(0);
+    
+    // Check for category card links
+    const overviewLink = screen.getByRole("link", { name: /Overview/i });
+    expect(overviewLink).toHaveAttribute("href", "/docs/getting-started");
   });
 });
 

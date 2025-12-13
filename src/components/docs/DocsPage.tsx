@@ -33,8 +33,8 @@ import {
   useTheme
 } from "@mui/material";
 import type { JSX, MouseEvent } from "react";
-import { Fragment, useCallback, useMemo, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Link as RouterLink, useParams } from "react-router-dom";
 
 import { useAuth } from "../../hooks/useAuth";
 import { useUptimeStatus } from "../../hooks/useUptimeStatus";
@@ -248,12 +248,22 @@ function BulletList({
   );
 }
 
+// Map URL category slugs to section group labels
+const CATEGORY_TO_GROUP: Record<string, string> = {
+  "getting-started": "Overview",
+  "writing": "Writing Workflow",
+  "goals": "Goals & Metrics",
+  "operations": "Operations & Sync",
+  "support": "Support & Resources"
+};
+
 export function DocsPage(): JSX.Element {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { user } = useAuth();
   const uptimeStatus = useUptimeStatus();
+  const { category } = useParams<{ category?: string }>();
 
   const sections: SectionDefinition[] = useMemo(
     () => [
@@ -293,7 +303,7 @@ export function DocsPage(): JSX.Element {
               <Typography variant="body2" component="div">
                 <strong>Local Projects:</strong> Yarny also supports local-first projects that edit files directly on your computer. 
                 Click "Import Local" on the Stories dashboard to import an existing novel project. See the{" "}
-                <RouterLink to="/docs#local-projects" style={{ color: "inherit", textDecoration: "underline" }}>
+                <RouterLink to="/docs/getting-started#local-projects" style={{ color: "inherit", textDecoration: "underline" }}>
                   Local Projects
                 </RouterLink>{" "}
                 section for details.
@@ -781,22 +791,27 @@ Please:
   const sectionGroups = useMemo(
     () => [
       {
+        id: "getting-started",
         label: "Overview",
         sectionIds: ["getting-started", "stories-dashboard", "local-projects"]
       },
       {
+        id: "writing",
         label: "Writing Workflow",
         sectionIds: ["genres", "writing-editor", "people-places-things"]
       },
       {
+        id: "goals",
         label: "Goals & Metrics",
         sectionIds: ["word-count-goals"]
       },
       {
+        id: "operations",
         label: "Operations & Sync",
         sectionIds: ["exporting-backups", "drive-integration", "offline-sync"]
       },
       {
+        id: "support",
         label: "Support & Resources",
         sectionIds: ["troubleshooting", "tips", "support"]
       }
@@ -804,22 +819,58 @@ Please:
     []
   );
 
+  // Determine which sections to show based on category
+  const visibleSections = useMemo(() => {
+    if (!category) {
+      // No category = show overview (all categories as links)
+      return [];
+    }
+    
+    const group = sectionGroups.find(g => g.id === category);
+    if (!group) {
+      // Invalid category, show all
+      return sections;
+    }
+    
+    // Show only sections in this category
+    return sections.filter(s => group.sectionIds.includes(s.id));
+  }, [category, sections, sectionGroups]);
+
   const handleSectionNav = useCallback(
     (event: MouseEvent<HTMLDivElement> | MouseEvent<HTMLAnchorElement>, id: string) => {
       event.preventDefault();
-      const node = document.getElementById(id);
-      if (node) {
-        node.scrollIntoView({
-          block: "start",
-          behavior: "smooth"
-        });
-      }
+      // Small delay to ensure DOM is updated if we navigated to a new category
+      setTimeout(() => {
+        const node = document.getElementById(id);
+        if (node) {
+          node.scrollIntoView({
+            block: "start",
+            behavior: "smooth"
+          });
+        }
+      }, 100);
       if (!isMdUp) {
         setMobileNavOpen(false);
       }
     },
     [isMdUp]
   );
+
+  // Handle hash scrolling on mount/route change
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.slice(1);
+      setTimeout(() => {
+        const node = document.getElementById(id);
+        if (node) {
+          node.scrollIntoView({
+            block: "start",
+            behavior: "smooth"
+          });
+        }
+      }, 300);
+    }
+  }, [category]);
 
   const drawerContent = (
     <Box
@@ -928,6 +979,26 @@ Please:
         </Paper>
       </Box>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
+      {category && (
+        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+          <Button
+            component={RouterLink}
+            to="/docs"
+            startIcon={<NavigateNextIcon sx={{ transform: "rotate(180deg)" }} />}
+            sx={{
+              color: "rgba(255, 255, 255, 0.8)",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.05)",
+                color: "rgba(255, 255, 255, 1)"
+              }
+            }}
+          >
+            Back to Overview
+          </Button>
+        </Box>
+      )}
       <List
         sx={{
           flex: 1,
@@ -936,59 +1007,101 @@ Please:
           py: 1
         }}
       >
-        {sectionGroups.map((group) => (
-          <Box key={group.label} sx={{ mb: 2 }}>
-            <ListSubheader
-              component="div"
-              disableSticky
-              sx={{
-                lineHeight: 1.6,
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: 0.6,
-                fontSize: "0.75rem",
-                bgcolor: "transparent",
-                color: "rgba(148, 163, 184, 0.9)",
-                px: 2,
-                pb: 0.5
-              }}
-            >
-              {group.label}
-            </ListSubheader>
-            {group.sectionIds.map((sectionId) => {
-              const section = sectionMap[sectionId];
-              if (!section) {
-                return null;
-              }
-
-              return (
-                <ListItemButton
-                  key={section.id}
-                  onClick={(event) => handleSectionNav(event, section.id)}
+        {sectionGroups.map((group) => {
+          const isActive = category === group.id;
+          return (
+            <Box key={group.id || group.label} sx={{ mb: 2 }}>
+              {category ? (
+                <ListSubheader
+                  component="div"
+                  disableSticky
                   sx={{
-                    borderRadius: 2,
-                    mb: 0.5,
-                    color: "rgba(255, 255, 255, 0.8)",
+                    lineHeight: 1.6,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.6,
+                    fontSize: "0.75rem",
+                    bgcolor: "transparent",
+                    color: isActive ? "rgba(16, 185, 129, 1)" : "rgba(148, 163, 184, 0.9)",
+                    px: 2,
+                    pb: 0.5
+                  }}
+                >
+                  {group.label}
+                </ListSubheader>
+              ) : (
+                <ListSubheader
+                  component={RouterLink}
+                  to={`/docs/${group.id}`}
+                  disableSticky
+                  sx={{
+                    lineHeight: 1.6,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.6,
+                    fontSize: "0.75rem",
+                    bgcolor: "transparent",
+                    color: "rgba(148, 163, 184, 0.9)",
+                    px: 2,
+                    pb: 0.5,
+                    cursor: "pointer",
+                    textDecoration: "none",
                     "&:hover": {
-                      bgcolor: "rgba(255, 255, 255, 0.05)",
-                      color: "rgba(255, 255, 255, 1)"
+                      color: "rgba(16, 185, 129, 0.8)"
                     }
                   }}
                 >
-                  <ListItemIcon
+                  {group.label}
+                </ListSubheader>
+              )}
+              {(!category || isActive) && group.sectionIds.map((sectionId) => {
+                const section = sectionMap[sectionId];
+                if (!section) {
+                  return null;
+                }
+
+                const sectionUrl = category 
+                  ? `/docs/${category}#${section.id}`
+                  : `/docs/${group.id}#${section.id}`;
+
+                return (
+                  <ListItemButton
+                    key={section.id}
+                    component={RouterLink}
+                    to={sectionUrl}
+                    onClick={(event) => {
+                      // If we're already on the correct category page, handle scroll
+                      // Otherwise, let RouterLink handle navigation first
+                      if (category === group.id && window.location.hash === `#${section.id}`) {
+                        event.preventDefault();
+                        handleSectionNav(event, section.id);
+                      }
+                    }}
                     sx={{
-                      minWidth: 32,
-                      color: "rgba(16, 185, 129, 1)"
+                      borderRadius: 2,
+                      mb: 0.5,
+                      color: "rgba(255, 255, 255, 0.8)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 0.05)",
+                        color: "rgba(255, 255, 255, 1)"
+                      }
                     }}
                   >
-                    {section.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={section.title} />
-                </ListItemButton>
-              );
-            })}
-          </Box>
-        ))}
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 32,
+                        color: "rgba(16, 185, 129, 1)"
+                      }}
+                    >
+                      {section.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={section.title} />
+                  </ListItemButton>
+                );
+              })}
+            </Box>
+          );
+        })}
       </List>
     </Box>
   );
@@ -1221,57 +1334,79 @@ Please:
             </Typography>
           </Alert>
 
-          <SectionPaper id="getting-started" title="Getting Started">
-            {sections.find((section) => section.id === "getting-started")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="stories-dashboard" title="Managing Stories">
-            {sections.find((section) => section.id === "stories-dashboard")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="local-projects" title="Local Projects">
-            {sections.find((section) => section.id === "local-projects")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="genres" title="Story Genres">
-            {sections.find((section) => section.id === "genres")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="writing-editor" title="Writing in the Editor">
-            {sections.find((section) => section.id === "writing-editor")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="people-places-things" title="Characters & Worldbuilding">
-            {sections.find((section) => section.id === "people-places-things")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="word-count-goals" title="Word Count & Goals">
-            {sections.find((section) => section.id === "word-count-goals")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="exporting-backups" title="Exporting & Backups">
-            {sections.find((section) => section.id === "exporting-backups")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="drive-integration" title="Google Drive Integration">
-            {sections.find((section) => section.id === "drive-integration")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="offline-sync" title="Offline & Sync Health">
-            {sections.find((section) => section.id === "offline-sync")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="troubleshooting" title="Troubleshooting">
-            {sections.find((section) => section.id === "troubleshooting")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="tips" title="Tips & Best Practices">
-            {sections.find((section) => section.id === "tips")?.body ?? null}
-          </SectionPaper>
-
-          <SectionPaper id="support" title="Support & Feedback">
-            {sections.find((section) => section.id === "support")?.body ?? null}
-          </SectionPaper>
+          {!category ? (
+            // Overview page - show category cards
+            <>
+              <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
+                User Guide
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 4, color: "rgba(255, 255, 255, 0.8)" }}>
+                Welcome to the Yarny User Guide. Select a category below to get started.
+              </Typography>
+              <Stack spacing={3}>
+                {sectionGroups.map((group) => (
+                  <Paper
+                    key={group.id}
+                    component={RouterLink}
+                    to={`/docs/${group.id}`}
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      bgcolor: "rgba(255, 255, 255, 0.1)",
+                      backdropFilter: "blur(10px)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      cursor: "pointer",
+                      textDecoration: "none",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 0.15)",
+                        borderColor: "rgba(255, 255, 255, 0.3)",
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
+                      }
+                    }}
+                  >
+                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: "white" }}>
+                      {group.label}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                      {group.sectionIds.length} {group.sectionIds.length === 1 ? "section" : "sections"}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Stack>
+            </>
+          ) : (
+            // Category page - show filtered sections with breadcrumb
+            <>
+              <Box sx={{ mb: 3 }}>
+                <Button
+                  component={RouterLink}
+                  to="/docs"
+                  startIcon={<NavigateNextIcon sx={{ transform: "rotate(180deg)" }} />}
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.8)",
+                    textTransform: "none",
+                    mb: 1,
+                    "&:hover": {
+                      bgcolor: "rgba(255, 255, 255, 0.05)"
+                    }
+                  }}
+                >
+                  User Guide
+                </Button>
+                <Typography variant="h3" sx={{ fontWeight: 700, color: "white" }}>
+                  {sectionGroups.find(g => g.id === category)?.label || category}
+                </Typography>
+              </Box>
+              {visibleSections.map((section) => (
+                <SectionPaper key={section.id} id={section.id} title={section.title}>
+                  {section.body}
+                </SectionPaper>
+              ))}
+            </>
+          )}
         </Stack>
         </Box>
       </Box>
