@@ -435,7 +435,7 @@ describe("Round-Trip Validation with Google Docs", () => {
   beforeEach(async () => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
-    const storeProvider = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+    const storeProvider = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
     storeProvider.__setSnippetContent("Initial content");
   });
 
