@@ -5,13 +5,25 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { StorageSettingsSection } from "./StorageSettingsSection";
 
+type SettingsTab = {
+  label: string;
+  value: string;
+  path: string;
+};
+
+type NavigationLink = {
+  label: string;
+  path: string;
+  icon: typeof AutoStoriesOutlined;
+};
+
 const SETTINGS_TABS = [
   {
     label: "Storage",
     value: "storage",
     path: "/settings/storage"
   }
-] as const;
+] satisfies readonly SettingsTab[];
 
 const NAVIGATION_LINKS = [
   {
@@ -24,7 +36,7 @@ const NAVIGATION_LINKS = [
     path: "/editor",
     icon: EditNoteOutlined
   }
-] as const;
+] satisfies readonly NavigationLink[];
 
 export function SettingsPage(): JSX.Element {
   const navigate = useNavigate();

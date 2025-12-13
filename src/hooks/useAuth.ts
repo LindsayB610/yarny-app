@@ -20,6 +20,30 @@ interface AuthState {
   isLoading: boolean;
 }
 
+// Validate AuthUser from unknown data
+function validateAuthUser(data: unknown): AuthUser | null {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const obj = data as Record<string, unknown>;
+  if (
+    typeof obj.email === "string" &&
+    typeof obj.token === "string" &&
+    (obj.name === undefined || typeof obj.name === "string") &&
+    (obj.picture === undefined || typeof obj.picture === "string")
+  ) {
+    return {
+      email: obj.email,
+      token: obj.token,
+      name: typeof obj.name === "string" ? obj.name : undefined,
+      picture: typeof obj.picture === "string" ? obj.picture : undefined
+    };
+  }
+
+  return null;
+}
+
 // Check if user is authenticated by looking for session token
 function checkAuthFromStorage(): AuthUser | null {
   try {
@@ -27,8 +51,8 @@ function checkAuthFromStorage(): AuthUser | null {
     const userData = localStorage.getItem("yarny_user");
 
     if (authToken && userData) {
-      const user = JSON.parse(userData) as AuthUser;
-      return user;
+      const parsed: unknown = JSON.parse(userData);
+      return validateAuthUser(parsed);
     }
   } catch (error) {
     console.error("Error reading auth from storage:", error);
