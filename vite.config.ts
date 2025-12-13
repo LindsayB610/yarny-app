@@ -20,6 +20,7 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
     exclude: ["tests/e2e/**/*"],
     pool: "forks",
+    watch: false, // Explicitly disable watch mode to prevent CPU issues
     coverage: {
       reporter: ["text", "json-summary", "html"]
     }
