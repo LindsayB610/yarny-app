@@ -1,16 +1,18 @@
 import { Box, Paper } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/react";
-import type { JSX } from "react";
+import { useRef, type JSX } from "react";
 
 interface EditorContentAreaProps {
   editor: Editor | null;
 }
 
 export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Element {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   if (!editor) {
-    console.log('OOOOOOO')
-    return <></>}
+    return <></>;
+  }
 
   return (
     <Paper
@@ -30,11 +32,12 @@ export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Eleme
       }}
       onClick={() => {
         if (editor && !editor.isDestroyed && editor.isEditable && !editor.isFocused) {
-          editor.commands.focus("end");
+          editor.commands.focus("start");
         }
       }}
     >
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           overflow: "auto",

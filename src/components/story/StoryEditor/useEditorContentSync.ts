@@ -54,12 +54,17 @@ export function useEditorContentSync(
       if (activeContentId && editor.isEditable) {
         const tryFocus = () => {
           if (editor.isDestroyed) return;
-          editor.commands.focus("end");
+          // Scroll to top when content changes, then focus at start
+          const scrollContainer = editor.view.dom.closest('[style*="overflow"]') || editor.view.dom.parentElement?.parentElement;
+          if (scrollContainer && scrollContainer instanceof HTMLElement) {
+            scrollContainer.scrollTop = 0;
+          }
+          editor.commands.focus("start");
           const contentToCheck = activeContent?.content ?? activeSnippet?.content ?? "";
           if (!editor.isFocused && (!contentToCheck || contentToCheck.trim() === "")) {
             setTimeout(() => {
               if (!editor.isDestroyed && editor.isEditable) {
-                editor.commands.focus("end");
+                editor.commands.focus("start");
               }
             }, 50);
           }

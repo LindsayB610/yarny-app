@@ -222,13 +222,15 @@ export function AppLayout(): JSX.Element {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        height: "100vh",
+        maxHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "background.default"
+        bgcolor: "background.default",
+        overflow: "hidden"
       }}
     >
-      <Box sx={{ flex: 1, display: "flex", minHeight: 0, position: "relative" }}>
+      <Box sx={{ flex: 1, display: "flex", minHeight: 0, position: "relative", overflow: "hidden" }}>
         {/* Left Drawer: Projects & Stories */}
         {isMobile ? (
           <Drawer
