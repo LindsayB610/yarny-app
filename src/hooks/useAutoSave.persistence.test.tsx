@@ -53,7 +53,11 @@ describe("useAutoSave - Session Persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    vi.mocked(useNetworkStatus).mockReturnValue({ 
+      isOnline: true, 
+      isSlowConnection: false, 
+      wasOffline: false 
+    });
     vi.useFakeTimers();
   });
 
@@ -64,7 +68,11 @@ describe("useAutoSave - Session Persistence", () => {
 
   describe("Queued Saves Persistence", () => {
     it("should queue save to localStorage when offline", async () => {
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: false, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
 
       const { result, rerender } = renderHook(
         ({ content }) =>
@@ -97,7 +105,11 @@ describe("useAutoSave - Session Persistence", () => {
     });
 
     it("should persist multiple queued saves", async () => {
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: false, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
 
       const { result: result1, rerender: rerender1 } = renderHook(
         ({ content }) =>
@@ -156,14 +168,18 @@ describe("useAutoSave - Session Persistence", () => {
       localStorage.setItem("yarny_queued_saves", JSON.stringify([queuedSave]));
 
       // Start offline
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: false, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
 
-      const { result } = renderHook(
+      const { result, rerender } = renderHook(
         () =>
           useAutoSave("file-1", "queued content", {
             enabled: true,
             debounceMs: 100,
-            snippetId: "snippet-1",
+            localBackupSnippetId: "snippet-1",
             parentFolderId: "folder-1"
           }),
         {
@@ -177,15 +193,19 @@ describe("useAutoSave - Session Persistence", () => {
       }, { timeout: 500 });
 
       // Come back online - this should trigger processing
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: true, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
       
       // Re-render the same hook instance to trigger the effect
-      result.rerender();
+      rerender();
 
       await waitFor(
         () => {
           // Should process queued saves via queuedSaveProcessor
-          expect(processQueuedSavesDirectly).toHaveBeenCalled();
+          expect(mockProcessQueuedSavesDirectly).toHaveBeenCalled();
         },
         { timeout: 2000 }
       );
@@ -220,7 +240,11 @@ describe("useAutoSave - Session Persistence", () => {
       // Set invalid JSON in localStorage
       localStorage.setItem("yarny_queued_saves", "invalid json");
 
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: false, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
 
       const { result, rerender } = renderHook(
         ({ content }) =>
@@ -252,7 +276,11 @@ describe("useAutoSave - Session Persistence", () => {
 
   describe("beforeunload Persistence", () => {
     it("should queue save on beforeunload when content has changed", async () => {
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: true, 
+        isSlowConnection: false, 
+        wasOffline: false 
+      });
 
       const { result, rerender } = renderHook(
         ({ content }) =>
@@ -287,9 +315,15 @@ describe("useAutoSave - Session Persistence", () => {
     });
 
     it("should not queue save on beforeunload when content is already saved", async () => {
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: true, 
+        isSlowConnection: false, 
+        wasOffline: false 
+      });
       vi.mocked(apiClient.writeDriveFile).mockResolvedValue({
-        fileId: "file-1"
+        id: "file-1",
+        name: "test-file",
+        modifiedTime: new Date().toISOString()
       });
 
       const { result, rerender } = renderHook(
@@ -340,9 +374,15 @@ describe("useAutoSave - Session Persistence", () => {
         modifiedTime: new Date().toISOString()
       });
 
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: true, 
+        isSlowConnection: false, 
+        wasOffline: false 
+      });
       vi.mocked(apiClient.writeDriveFile).mockResolvedValue({
-        fileId: "file-1"
+        id: "file-1",
+        name: "test-file",
+        modifiedTime: new Date().toISOString()
       });
 
       const { result, rerender } = renderHook(
@@ -350,7 +390,7 @@ describe("useAutoSave - Session Persistence", () => {
           useAutoSave("file-1", content, {
             enabled: true,
             debounceMs: 10000, // Long debounce
-            snippetId: "snippet-1",
+            localBackupSnippetId: "snippet-1",
             parentFolderId: "folder-1"
           }),
         {
@@ -391,7 +431,11 @@ describe("useAutoSave - Session Persistence", () => {
     });
 
     it("should queue save when tab becomes hidden and offline", async () => {
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: false, 
+        isSlowConnection: false, 
+        wasOffline: true 
+      });
 
       const { result, rerender } = renderHook(
         ({ content }) =>
@@ -446,9 +490,15 @@ describe("useAutoSave - Session Persistence", () => {
       localStorage.setItem("yarny_queued_saves", JSON.stringify(queuedSaves));
 
       vi.mocked(apiClient.writeDriveFile).mockResolvedValue({
-        fileId: "file-1"
+        id: "file-1",
+        name: "test-file",
+        modifiedTime: new Date().toISOString()
       });
-      vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+      vi.mocked(useNetworkStatus).mockReturnValue({ 
+        isOnline: true, 
+        isSlowConnection: false, 
+        wasOffline: false 
+      });
 
       const { result } = renderHook(
         () =>
@@ -471,7 +521,7 @@ describe("useAutoSave - Session Persistence", () => {
       await waitFor(
         () => {
           // Should process queued saves via queuedSaveProcessor
-          expect(processQueuedSavesDirectly).toHaveBeenCalled();
+          expect(mockProcessQueuedSavesDirectly).toHaveBeenCalled();
         },
         { timeout: 2000 }
       );
