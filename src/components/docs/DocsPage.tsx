@@ -158,7 +158,7 @@ function SectionPaper({
 }: {
   id: string;
   title: string;
-  children: JSX.Element;
+  children: React.ReactNode;
 }): JSX.Element {
   const theme = useTheme();
   return (
