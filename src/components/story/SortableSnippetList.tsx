@@ -24,6 +24,7 @@ import { useState, useRef, type JSX } from "react";
 export interface Snippet {
   id: string;
   title: string;
+  description?: string;
   wordCount?: number;
 }
 

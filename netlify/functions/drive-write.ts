@@ -9,8 +9,7 @@ import {
 } from "./contract";
 import {
   getAuthenticatedDriveClient,
-  getTokens,
-  type DriveClientWithAuth
+  getTokens
 } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
@@ -322,7 +321,7 @@ export const handler: NetlifyFunctionHandler = async (
         });
 
         // Add content to the Google Doc
-        if (content && content.trim()) {
+        if (content?.trim()) {
           const docs = google.docs({ version: "v1", auth: oauth2Client });
 
           // Small delay to ensure the document is fully initialized

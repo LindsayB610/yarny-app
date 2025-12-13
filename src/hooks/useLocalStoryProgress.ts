@@ -26,7 +26,7 @@ function calculateLocalStoryWordCount(snippets: Array<{ content: string }>): num
 async function readLocalJsonFile(
   storyId: string,
   fileName: "project.json" | "goal.json"
-): Promise<any> {
+): Promise<unknown> {
   try {
     const handle = await getPersistedDirectoryHandle();
     if (!handle) {

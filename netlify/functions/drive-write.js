@@ -265,7 +265,7 @@ const handler = async (event, context) => {
                     fields: "id, name, modifiedTime"
                 });
                 // Add content to the Google Doc
-                if (content && content.trim()) {
+                if (content?.trim()) {
                     const docs = googleapis_1.google.docs({ version: "v1", auth: oauth2Client });
                     // Small delay to ensure the document is fully initialized
                     await new Promise((resolve) => setTimeout(resolve, 1000));

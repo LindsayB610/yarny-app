@@ -88,7 +88,7 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
   const { apiClient } = clientModule;
 
   // Store reference to the store module so we can access it in save()
-  let storeModule: typeof import("../../src/store/provider") | null = null;
+  let storeModule: (typeof import("../../src/store/provider")) | null = null;
 
   const useAutoSaveMock = vi.fn((fileId: string | undefined, content: string) => {
     const lastContentRef = useRef<string | undefined>(undefined);
@@ -572,7 +572,7 @@ Paragraph 3 with quotes: "double" and 'single'
 
 Paragraph 4 with em dashes: — and en dashes: –`;
 
-      const storeProviderComplex = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderComplex = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderComplex.__setSnippetContent(complexContent);
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
@@ -606,7 +606,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       let savedContent = "";
 
       // Set content in store BEFORE rendering so it's available when component mounts
-      const storeProviderEmpty = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderEmpty = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderEmpty.__setSnippetContent(contentWithEmptyParagraphs);
       
       // Verify content is set before rendering
@@ -734,7 +734,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       let savedContent = "";
 
       // Set content in store BEFORE rendering
-      const storeProviderMixed = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderMixed = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderMixed.__setSnippetContent(contentWithMixedEndings);
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({

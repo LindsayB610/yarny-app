@@ -245,7 +245,9 @@ export function DeleteStoryModal({
           Cancel
         </Button>
         <Button
-          onClick={handleDelete}
+          onClick={() => {
+            void handleDelete();
+          }}
           disabled={!isDeleteEnabled || isDeleting}
           variant="contained"
           sx={{

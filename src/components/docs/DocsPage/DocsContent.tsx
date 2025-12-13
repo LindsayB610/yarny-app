@@ -1,5 +1,5 @@
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Alert, Box, Button, Paper, Stack, Toolbar, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import type { JSX } from "react";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -91,7 +91,7 @@ export function DocsContent({
         <SectionPaper id="workflow-overview" title="Your Writing Workflow">
           <Stack spacing={3}>
             <Typography variant="body1">
-              Here's how a typical writing session works in Yarny:
+              Here&apos;s how a typical writing session works in Yarny:
             </Typography>
             <BulletList
               items={[

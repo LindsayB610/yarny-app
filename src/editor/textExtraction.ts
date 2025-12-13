@@ -39,11 +39,11 @@ export const markdownToPlainText = (markdown: string): string => {
   text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, "$1");
 
   // Remove links ([text](url) or [text][ref])
-  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
   text = text.replace(/\[([^\]]+)\]\[[^\]]+\]/g, "$1");
 
   // Remove images (![alt](url))
-  text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
+  text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1");
 
   // Remove strikethrough (~~text~~)
   text = text.replace(/~~([^~]+)~~/g, "$1");

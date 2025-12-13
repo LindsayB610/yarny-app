@@ -42,7 +42,6 @@ export function GoalsPanelModal({
   initialWordGoal = 3000,
   onSave
 }: GoalsPanelModalProps): JSX.Element {
-  const [wordGoal, setWordGoal] = useState(initialWordGoal);
   const [wordGoalInput, setWordGoalInput] = useState(String(initialWordGoal));
   const [goalTarget, setGoalTarget] = useState(initialGoal?.target || 3000);
   const [goalDeadline, setGoalDeadline] = useState(
@@ -63,7 +62,6 @@ export function GoalsPanelModal({
   // Sync input state when modal opens or initialWordGoal changes
   useEffect(() => {
     if (open) {
-      setWordGoal(initialWordGoal);
       setWordGoalInput(String(initialWordGoal));
     }
   }, [open, initialWordGoal]);
@@ -115,7 +113,6 @@ export function GoalsPanelModal({
   };
 
   const handleClose = () => {
-    setWordGoal(initialWordGoal);
     setWordGoalInput(String(initialWordGoal));
     setGoalTarget(initialGoal?.target || 3000);
     setGoalDeadline(initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : "");
@@ -144,7 +141,11 @@ export function GoalsPanelModal({
       <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
         Writing Goals
       </DialogTitle>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          void handleSubmit(e);
+        }}
+      >
         <DialogContent>
           {error && (
             <Box
@@ -173,10 +174,6 @@ export function GoalsPanelModal({
               // Allow empty string or valid numbers
               if (value === "" || /^\d+$/.test(value)) {
                 setWordGoalInput(value);
-                const numValue = parseInt(value);
-                if (!isNaN(numValue)) {
-                  setWordGoal(numValue);
-                }
               }
             }}
             inputProps={{ min: 1 }}

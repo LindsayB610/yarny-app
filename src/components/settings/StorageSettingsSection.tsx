@@ -279,7 +279,9 @@ export function StorageSettingsSection(): JSX.Element {
                   <Switch
                     inputProps={{ "aria-label": "Enable local story backups" }}
                     checked={enabled}
-                    onChange={handleToggle}
+                    onChange={(event, checked) => {
+                      void handleToggle(event, checked);
+                    }}
                     disabled={toggleDisabled || isInitializing}
                   />
                 </span>
@@ -292,7 +294,9 @@ export function StorageSettingsSection(): JSX.Element {
               <span style={{ display: "inline-flex" }}>
                 <Button
                   variant="contained"
-                  onClick={runEnable}
+                  onClick={() => {
+                    void runEnable();
+                  }}
                   disabled={isProcessing || !isSupported}
                   sx={{
                     ...actionButtonSx,
@@ -311,7 +315,9 @@ export function StorageSettingsSection(): JSX.Element {
               <span style={{ display: "inline-flex" }}>
                 <Button
                   variant="outlined"
-                  onClick={handleOpenFolder}
+                  onClick={() => {
+                    void handleOpenFolder();
+                  }}
                   disabled={isProcessing || !enabled || permission !== "granted"}
                   aria-label="Open the local backup folder"
                   sx={{
@@ -337,7 +343,9 @@ export function StorageSettingsSection(): JSX.Element {
                 <Button
                   color="error"
                   variant="text"
-                  onClick={runDisable}
+                  onClick={() => {
+                    void runDisable();
+                  }}
                   disabled={isProcessing || !enabled}
                   aria-label="Disconnect from the local backup folder"
                   sx={{
@@ -359,7 +367,9 @@ export function StorageSettingsSection(): JSX.Element {
               <span style={{ display: "inline-flex" }}>
                 <Button
                   variant="text"
-                  onClick={handleReconnect}
+                  onClick={() => {
+                    void handleReconnect();
+                  }}
                   disabled={isProcessing || !enabled}
                   aria-label="Reconnect to the local backup folder"
                   sx={{

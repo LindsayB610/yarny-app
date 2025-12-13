@@ -7,6 +7,7 @@ import { darkenColor, getReadableTextColor, getSoftVariant } from "../../../util
 interface SnippetItemProps {
   snippetId: string;
   title: string;
+  description?: string;
   wordCount?: number;
   isActive: boolean;
   onClick: () => void;
@@ -18,6 +19,7 @@ interface SnippetItemProps {
 export function SnippetItem({
   snippetId,
   title,
+  description,
   wordCount,
   isActive,
   onClick,
@@ -49,8 +51,8 @@ export function SnippetItem({
       onClick={onClick}
       sx={{
         display: "flex",
-        alignItems: "center",
-        gap: 1,
+        flexDirection: "column",
+        gap: 0.5,
         p: 1,
         borderRadius: 1,
         cursor: "pointer",
@@ -63,41 +65,60 @@ export function SnippetItem({
         }
       }}
     >
-      <Description fontSize="small" sx={{ color: snippetTextColor, opacity: 0.85 }} />
-      <Typography
-        variant="body2"
-        sx={{
-          flex: 1,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          color: "inherit"
-        }}
-      >
-        {title}
-      </Typography>
-      {wordCount !== undefined && (
-        <Typography variant="caption" sx={{ color: snippetTextColor, opacity: 0.7 }}>
-          {wordCount}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Description fontSize="small" sx={{ color: snippetTextColor, opacity: 0.85 }} />
+        <Typography
+          variant="body2"
+          sx={{
+            flex: 1,
+            fontWeight: "bold",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            color: "inherit"
+          }}
+        >
+          {title}
+        </Typography>
+        {wordCount !== undefined && (
+          <Typography variant="caption" sx={{ color: snippetTextColor, opacity: 0.7 }}>
+            {wordCount}
+          </Typography>
+        )}
+        <IconButton
+          size="small"
+          onClick={(event) => {
+            event.stopPropagation();
+            onMenuOpen?.(event);
+          }}
+          sx={{
+            p: 0.5,
+            color: snippetTextColor,
+            "&:hover": {
+              bgcolor: darkenColor(chapterColor, 0.2),
+              color: getReadableTextColor(darkenColor(chapterColor, 0.2))
+            }
+          }}
+        >
+          <MoreVert fontSize="small" />
+        </IconButton>
+      </Box>
+      {description && (
+        <Typography
+          variant="caption"
+          sx={{
+            color: snippetTextColor,
+            opacity: 0.75,
+            fontSize: "0.75rem",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            pl: 4 // Align with title text (icon + gap)
+          }}
+        >
+          {description}
         </Typography>
       )}
-      <IconButton
-        size="small"
-        onClick={(event) => {
-          event.stopPropagation();
-          onMenuOpen?.(event);
-        }}
-        sx={{
-          p: 0.5,
-          color: snippetTextColor,
-          "&:hover": {
-            bgcolor: darkenColor(chapterColor, 0.2),
-            color: getReadableTextColor(darkenColor(chapterColor, 0.2))
-          }
-        }}
-      >
-        <MoreVert fontSize="small" />
-      </IconButton>
     </Box>
   );
 }

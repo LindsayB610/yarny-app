@@ -173,14 +173,13 @@ describe("useConflictDetection", () => {
         jsonContent
       );
 
-      await waitFor(async () => {
-        const conflictResult = await conflict;
-        expect(conflictResult).not.toBeNull();
-        expect(conflictResult?.snippetId).toBe("snippet-1");
-        expect(conflictResult?.localModifiedTime).toBe(localTime);
-        expect(conflictResult?.driveModifiedTime).toBe(driveTime);
-        expect(conflictResult?.driveContent).toBe(driveContent);
-        expect(conflictResult?.localContent).toBe(jsonContent);
+      await waitFor(() => {
+        expect(conflict).not.toBeNull();
+        expect(conflict?.snippetId).toBe("snippet-1");
+        expect(conflict?.localModifiedTime).toBe(localTime);
+        expect(conflict?.driveModifiedTime).toBe(driveTime);
+        expect(conflict?.driveContent).toBe(driveContent);
+        expect(conflict?.localContent).toBe(jsonContent);
       });
     });
 

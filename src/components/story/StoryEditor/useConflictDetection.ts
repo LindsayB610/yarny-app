@@ -49,10 +49,14 @@ export function useConflictDetectionHook(
       }
     };
 
-    const timeoutId = setTimeout(checkConflicts, 1000);
+    const timeoutId = setTimeout(() => {
+      void checkConflicts();
+    }, 1000);
     const handleVisibilityChange = () => {
       if (!document.hidden && isEditorOpen) {
-        setTimeout(checkConflicts, 500);
+        setTimeout(() => {
+          void checkConflicts();
+        }, 500);
       }
     };
     
