@@ -38,11 +38,15 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   const activeSnippet = useActiveSnippet(); // Keep for backward compatibility
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   const chaptersById = useYarnyStore((state) => state.entities.chapters);
+  const projects = useYarnyStore((state) => state.entities.projects);
   const isSyncing = useYarnyStore(selectIsSyncing);
   const lastSyncedAt = useYarnyStore(selectLastSyncedAt);
   const setSyncing = useYarnyStore((state) => state.setSyncing);
   const setLastSyncedAtAction = useYarnyStore((state) => state.setLastSyncedAt);
   const { data: storyMetadata } = useStoryMetadata(story?.driveFileId);
+  
+  // Check if this is a local project
+  const isLocalProject = story ? projects[story.projectId]?.storageType === "local" : false;
 
   // Determine if we have a snippet or note
   const isSnippet = activeContent && "chapterId" in activeContent;
