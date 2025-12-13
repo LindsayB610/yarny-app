@@ -2,7 +2,7 @@ import { Box, CircularProgress, Stack, Typography, useTheme } from "@mui/materia
 import type { JSX } from "react";
 
 interface EmptyStateProps {
-  variant: "loading" | "no-story" | "no-snippet" | "note-active";
+  variant: "loading" | "no-story" | "no-snippet" | "note-active" | "no-note";
 }
 
 export function EmptyState({ variant }: EmptyStateProps): JSX.Element {
@@ -50,6 +50,7 @@ export function EmptyState({ variant }: EmptyStateProps): JSX.Element {
         {variant === "no-story" && "Select a story to start writing"}
         {variant === "no-snippet" && "Create a snippet to start writing"}
         {variant === "note-active" && "Select a snippet to start writing"}
+        {variant === "no-note" && "Select a note to start writing"}
       </Typography>
       <Typography variant="body2">
         {variant === "no-story" &&
@@ -58,6 +59,8 @@ export function EmptyState({ variant }: EmptyStateProps): JSX.Element {
           "Add a snippet from the sidebar, then select it to begin writing."}
         {variant === "note-active" &&
           "Pick a chapter snippet from the sidebar to edit your story content. Characters and worldbuilding notes open in the notes editor."}
+        {variant === "no-note" &&
+          "Choose a character or worldbuilding note from the notes sidebar to edit it."}
       </Typography>
     </Stack>
   );

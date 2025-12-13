@@ -215,7 +215,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
 
   if (!activeContent) {
     if (noteId) {
-      return <EmptyState variant="no-snippet" />; // TODO: Add note-specific empty state
+      return <EmptyState variant="no-note" />;
     }
     return <EmptyState variant="no-snippet" />;
   }
