@@ -32,6 +32,11 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
+        // Use projectService for better performance (TypeScript 5.9+)
+        // Falls back to traditional project option if projectService not supported
+        projectService: {
+          allowDefaultProject: ["*.js", "*.cjs"]
+        },
         project: ["./tsconfig.eslint.json"],
         tsconfigRootDir: import.meta.dirname || process.cwd(),
         jsxPragma: "React",
@@ -70,6 +75,11 @@ export default [
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/switch-exhaustiveness-check": "error",
+      // Additional helpful type-checked rules
+      "@typescript-eslint/await-thenable": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
+      "@typescript-eslint/prefer-optional-chain": "error",
       "import/order": [
         "error",
         {
