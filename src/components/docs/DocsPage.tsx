@@ -282,7 +282,7 @@ export function DocsPage(): JSX.Element {
                   from the Google address you plan to use.
                 </Typography>,
                 "Sign in with Google from the Yarny login screen. We request the minimal Drive scope so Yarny can only see the files it creates.",
-                "After signing in for the first time, Yarny creates a \"Yarny Stories\" folder in Drive with subfolders for chapters, people, places, and things."
+                "After signing in for the first time, Yarny creates a \"Yarny Stories\" folder in Drive with subfolders for chapters, characters, and worldbuilding."
               ]}
             />
             <Typography variant="body1">
@@ -502,7 +502,7 @@ Please:
             <Typography variant="body1">
               Yarny separates structure from drafting so you can focus on the words:
               chapters live in the left rail, the canvas holds the active snippet, and the
-              right rail tracks your people, places, and things.
+              right rail tracks your characters and worldbuilding notes.
             </Typography>
             <BulletList
               items={[
@@ -524,7 +524,7 @@ Please:
       },
       {
         id: "people-places-things",
-        title: "People, Places, and Things",
+        title: "Characters & Worldbuilding",
         icon: <EditNoteIcon fontSize="small" />,
         body: (
           <Stack spacing={3}>
@@ -600,7 +600,7 @@ Please:
           <Stack spacing={3}>
             <Typography variant="body1">
               Each Yarny story is represented as a Drive folder with subfolders for chapters,
-              people, places, things, assets, and metadata files like <code>goal.json</code>.
+              characters, worldbuilding, assets, and metadata files like <code>goal.json</code>.
               Snippet content is stored in hidden JSON files (<code>.{"{snippetId}"}.yarny.json</code>) for fast saves,
               then synced to Google Docs in the background for compatibility and collaboration.
             </Typography>
@@ -674,7 +674,7 @@ Please:
               items={[
                 "Use chapter colors to group POVs, timelines, or revisions at a glance.",
                 "Create short snippets—they are easier to rearrange and help autosave stay lightning fast.",
-                "Give People/Places/Things notes descriptive titles so you can jump directly from search results.",
+                "Give Characters and Worldbuilding notes descriptive titles so you can jump directly from search results.",
                 "Set a realistic daily goal and celebrate streaks. Elastic mode is forgiving when life happens.",
                 "Run a quick export when you finish a milestone to create a Drive snapshot or Markdown backup."
               ]}
@@ -1188,7 +1188,7 @@ Please:
             {sections.find((section) => section.id === "writing-editor")?.body ?? null}
           </SectionPaper>
 
-          <SectionPaper id="people-places-things" title="People, Places, and Things">
+          <SectionPaper id="people-places-things" title="Characters & Worldbuilding">
             {sections.find((section) => section.id === "people-places-things")?.body ?? null}
           </SectionPaper>
 

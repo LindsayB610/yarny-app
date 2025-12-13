@@ -57,7 +57,7 @@ export function EmptyState({ variant }: EmptyStateProps): JSX.Element {
         {variant === "no-snippet" &&
           "Add a snippet from the sidebar, then select it to begin writing."}
         {variant === "note-active" &&
-          "Pick a chapter snippet from the sidebar to edit your story content. People, places, and things notes open in the notes editor."}
+          "Pick a chapter snippet from the sidebar to edit your story content. Characters and worldbuilding notes open in the notes editor."}
       </Typography>
     </Stack>
   );
