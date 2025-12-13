@@ -1,15 +1,13 @@
 import { Box, Paper } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/react";
-import { useRef, type JSX } from "react";
+import type { JSX } from "react";
 
 interface EditorContentAreaProps {
   editor: Editor | null;
 }
 
 export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Element {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
   if (!editor) {
     return <></>;
   }
@@ -37,7 +35,6 @@ export function EditorContentArea({ editor }: EditorContentAreaProps): JSX.Eleme
       }}
     >
       <Box
-        ref={scrollContainerRef}
         sx={{
           flex: 1,
           overflow: "auto",
