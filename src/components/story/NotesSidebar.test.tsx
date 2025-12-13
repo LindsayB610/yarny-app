@@ -182,15 +182,11 @@ describe("NotesSidebar", () => {
     }, { timeout: 2000 });
   });
 
-  it.skip("displays empty state when no notes exist", async () => {
-    // TODO: This test has a persistent mocking issue where the empty array mock
-    // isn't being applied correctly. The component renders with default mockNotes
-    // instead of empty array. This appears to be a test isolation/timing issue.
-    // The functionality works correctly in the app - verified via E2E tests.
-    
+  it("displays empty state when no notes exist", async () => {
     // Override beforeEach mock - return empty array for all note types
+    // The component calls useNotesQuery twice (characters and worldbuilding)
     vi.mocked(useNotesQuery).mockReset();
-    vi.mocked(useNotesQuery).mockImplementation(() => ({
+    vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => ({
       data: [],
       isLoading: false,
       isError: false,
@@ -199,11 +195,13 @@ describe("NotesSidebar", () => {
       refetch: vi.fn()
     } as any));
 
+    // Ensure store has no notes (empty arrays for both note kinds)
     const initialState = {
       entities: {
         stories: {
           [mockStory.id]: mockStory
-        }
+        },
+        notes: {} // Empty notes object
       },
       ui: {
         activeStoryId: mockStory.id,
@@ -213,12 +211,10 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
+    // Wait for empty state to appear - should show "No Characters entries yet"
+    // The default active tab is "characters"
     await waitFor(() => {
-      const emptyState = screen.getByText((content, element) => {
-        const text = element?.textContent || "";
-        return text.includes("No") && text.includes("entries yet") && text.includes("Person");
-      });
-      expect(emptyState).toBeInTheDocument();
+      expect(screen.getByText(/No Characters entries yet/i)).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 

@@ -12,6 +12,16 @@ vi.mock("@dnd-kit/utilities", () => ({
   }
 }));
 
+// Mock @dnd-kit/sortable
+const mockUseSortable = vi.fn();
+vi.mock("@dnd-kit/sortable", async () => {
+  const actual = await vi.importActual("@dnd-kit/sortable");
+  return {
+    ...actual,
+    useSortable: (args: { id: string }) => mockUseSortable(args)
+  };
+});
+
 const mockSnippets: Snippet[] = [
   {
     id: "snippet-1",
@@ -62,6 +72,15 @@ const renderSnippetList = (
 describe("SortableSnippetList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock for useSortable - not dragging
+    mockUseSortable.mockImplementation(() => ({
+      attributes: {},
+      listeners: {},
+      setNodeRef: vi.fn(),
+      transform: null,
+      transition: undefined,
+      isDragging: false
+    }));
   });
 
   describe("Rendering", () => {
@@ -136,8 +155,42 @@ describe("SortableSnippetList", () => {
       const snippet1 = screen.getByTestId("snippet-snippet-1");
       expect(snippet1).toBeInTheDocument();
       
-      // TODO: Test that opacity changes when isDragging is true
-      // This requires mocking useSortable hook or using E2E tests
+      // The opacity style is applied to the parent Box element
+      const parentBox = snippet1.parentElement;
+      expect(parentBox).toHaveStyle({ opacity: "1" });
+    });
+
+    it("applies reduced opacity when dragging", () => {
+      // Mock useSortable to return isDragging: true for snippet-1
+      mockUseSortable.mockImplementation((args: { id: string }) => {
+        if (args.id === "snippet-1") {
+          return {
+            attributes: {},
+            listeners: {},
+            setNodeRef: vi.fn(),
+            transform: null,
+            transition: undefined,
+            isDragging: true
+          };
+        }
+        return {
+          attributes: {},
+          listeners: {},
+          setNodeRef: vi.fn(),
+          transform: null,
+          transition: undefined,
+          isDragging: false
+        };
+      });
+
+      renderSnippetList(mockSnippets);
+
+      const snippet1 = screen.getByTestId("snippet-snippet-1");
+      expect(snippet1).toBeInTheDocument();
+      
+      // The opacity style is applied to the parent Box element
+      const parentBox = snippet1.parentElement;
+      expect(parentBox).toHaveStyle({ opacity: "0.5" });
     });
 
     it("calls onMoveToChapter when snippet is moved to different chapter", () => {

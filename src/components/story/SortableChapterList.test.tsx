@@ -13,6 +13,16 @@ vi.mock("@dnd-kit/utilities", () => ({
   }
 }));
 
+// Mock @dnd-kit/sortable
+const mockUseSortable = vi.fn();
+vi.mock("@dnd-kit/sortable", async () => {
+  const actual = await vi.importActual("@dnd-kit/sortable");
+  return {
+    ...actual,
+    useSortable: (args: { id: string }) => mockUseSortable(args)
+  };
+});
+
 const mockChapters: Chapter[] = [
   {
     id: "chapter-1",
@@ -55,6 +65,15 @@ const renderChapterList = (
 describe("SortableChapterList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock for useSortable - not dragging
+    mockUseSortable.mockImplementation(() => ({
+      attributes: {},
+      listeners: {},
+      setNodeRef: vi.fn(),
+      transform: null,
+      transition: undefined,
+      isDragging: false
+    }));
   });
 
   describe("Rendering", () => {
@@ -115,15 +134,47 @@ describe("SortableChapterList", () => {
     });
 
     it("applies drag styles when dragging", () => {
-      // This test would require mocking the drag state
-      // For now, we verify the component structure
       renderChapterList(mockChapters);
 
       const chapter1 = screen.getByTestId("chapter-chapter-1");
       expect(chapter1).toBeInTheDocument();
       
-      // TODO: Test that opacity changes when isDragging is true
-      // This requires mocking useSortable hook or using E2E tests
+      // The opacity style is applied to the parent Box element
+      const parentBox = chapter1.parentElement;
+      expect(parentBox).toHaveStyle({ opacity: "1" });
+    });
+
+    it("applies reduced opacity when dragging", () => {
+      // Mock useSortable to return isDragging: true for chapter-1
+      mockUseSortable.mockImplementation((args: { id: string }) => {
+        if (args.id === "chapter-1") {
+          return {
+            attributes: {},
+            listeners: {},
+            setNodeRef: vi.fn(),
+            transform: null,
+            transition: undefined,
+            isDragging: true
+          };
+        }
+        return {
+          attributes: {},
+          listeners: {},
+          setNodeRef: vi.fn(),
+          transform: null,
+          transition: undefined,
+          isDragging: false
+        };
+      });
+
+      renderChapterList(mockChapters);
+
+      const chapter1 = screen.getByTestId("chapter-chapter-1");
+      expect(chapter1).toBeInTheDocument();
+      
+      // The opacity style is applied to the parent Box element
+      const parentBox = chapter1.parentElement;
+      expect(parentBox).toHaveStyle({ opacity: "0.5" });
     });
   });
 

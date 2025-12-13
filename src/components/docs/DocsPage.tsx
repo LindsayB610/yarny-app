@@ -1237,7 +1237,7 @@ Please:
           }}
         >
           <Toolbar sx={{ minHeight: 88 }} />
-          <Stack spacing={{ xs: 4, md: 6 }} sx={{ mt: { md: -12 } }}>
+          <Stack spacing={{ xs: 4, md: 6 }}>
           <Alert
             severity="warning"
             variant="filled"
@@ -1257,7 +1257,6 @@ Please:
               px: 5,
               maxWidth: "1000px",
               mx: "auto",
-              mt: { xs: -2, md: 0 },
               "& .MuiAlert-icon": {
                 color: "#F59E0B",
                 fontSize: "1.5rem",
@@ -1453,22 +1452,23 @@ Please:
                         sx={{
                           p: 2.5,
                           borderRadius: 2,
-                          bgcolor: "rgba(255, 255, 255, 0.05)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          bgcolor: "rgba(0, 0, 0, 0.02)",
+                          border: "1px solid rgba(148, 163, 184, 0.2)",
                           cursor: "pointer",
                           textDecoration: "none",
                           transition: "all 0.2s",
                           "&:hover": {
-                            bgcolor: "rgba(255, 255, 255, 0.1)",
-                            borderColor: "rgba(255, 255, 255, 0.2)",
-                            transform: "translateX(4px)"
+                            bgcolor: "rgba(0, 0, 0, 0.04)",
+                            borderColor: "rgba(148, 163, 184, 0.4)",
+                            transform: "translateX(4px)",
+                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
                           }
                         }}
                       >
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, color: "white" }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, color: "text.primary" }}>
                           {group.label}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           {group.sectionIds.length} {group.sectionIds.length === 1 ? "section" : "sections"} covering {group.label.toLowerCase()}
                         </Typography>
                       </Paper>
