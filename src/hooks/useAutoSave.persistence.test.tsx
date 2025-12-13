@@ -29,6 +29,11 @@ vi.mock("./useNetworkStatus", () => ({
   useNetworkStatus: vi.fn(() => ({ isOnline: true }))
 }));
 
+const mockProcessQueuedSavesDirectly = vi.fn().mockResolvedValue(undefined);
+vi.mock("../services/queuedSaveProcessor", () => ({
+  processQueuedSavesDirectly: mockProcessQueuedSavesDirectly
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -137,14 +142,8 @@ describe("useAutoSave - Session Persistence", () => {
       expect(queued2.length).toBeGreaterThanOrEqual(1);
     });
 
-    it.skip("should process queued saves when coming back online", async () => {
-      // TODO(fix-test): hook now delegates queued-save processing to queuedSaveProcessor;
-      // update this test to mock processQueuedSavesDirectly instead of spying on writeSnippetJson.
-      const { writeSnippetJson } = await import("../services/jsonStorage");
-      vi.mocked(writeSnippetJson).mockResolvedValue({
-        fileId: "json-file-1",
-        modifiedTime: new Date().toISOString()
-      });
+    it("should process queued saves when coming back online", async () => {
+      mockProcessQueuedSavesDirectly.mockClear();
 
       // Manually queue a save
       const queuedSave = {
@@ -179,31 +178,14 @@ describe("useAutoSave - Session Persistence", () => {
 
       // Come back online - this should trigger processing
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
-
-      // Re-render hook to trigger online processing effect
-      const { result: result2 } = renderHook(
-        () =>
-          useAutoSave("file-1", "queued content", {
-            enabled: true,
-            debounceMs: 100,
-            snippetId: "snippet-1",
-            parentFolderId: "folder-1"
-          }),
-        {
-          wrapper: createWrapper()
-        }
-      );
+      
+      // Re-render the same hook instance to trigger the effect
+      result.rerender();
 
       await waitFor(
         () => {
-          // Should process queued saves
-          expect(writeSnippetJson).toHaveBeenCalledWith(
-            "snippet-1",
-            "queued content",
-            "folder-1",
-            "file-1",
-            undefined
-          );
+          // Should process queued saves via queuedSaveProcessor
+          expect(processQueuedSavesDirectly).toHaveBeenCalled();
         },
         { timeout: 2000 }
       );
@@ -450,9 +432,9 @@ describe("useAutoSave - Session Persistence", () => {
   });
 
   describe("Manual Retry Event", () => {
-    it.skip("should process queued saves when retry event is dispatched", async () => {
-      // TODO(fix-test): hook now imports queuedSaveProcessor dynamically; refactor to spy on that module
-      // or expose a test seam before reenabling this coverage.
+    it("should process queued saves when retry event is dispatched", async () => {
+      mockProcessQueuedSavesDirectly.mockClear();
+      
       // Queue some saves
       const queuedSaves = [
         {
@@ -468,7 +450,7 @@ describe("useAutoSave - Session Persistence", () => {
       });
       vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
-      renderHook(
+      const { result } = renderHook(
         () =>
           useAutoSave("file-1", "current content", {
             enabled: true
@@ -478,14 +460,20 @@ describe("useAutoSave - Session Persistence", () => {
         }
       );
 
+      // Wait for hook to initialize and set up event listener
+      await waitFor(() => {
+        expect(result.current).toBeDefined();
+      }, { timeout: 500 });
+
       // Dispatch retry event
       window.dispatchEvent(new Event("yarny:retry-queued-saves"));
 
       await waitFor(
         () => {
-          expect(apiClient.writeDriveFile).toHaveBeenCalled();
+          // Should process queued saves via queuedSaveProcessor
+          expect(processQueuedSavesDirectly).toHaveBeenCalled();
         },
-        { timeout: 1000 }
+        { timeout: 2000 }
       );
     });
   });
