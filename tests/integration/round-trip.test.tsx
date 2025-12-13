@@ -9,6 +9,22 @@ import { AppLayout } from "../../src/components/layout/AppLayout";
 import * as useAutoSaveModule from "../../src/hooks/useAutoSave";
 import * as useConflictDetectionModule from "../../src/hooks/useConflictDetection";
 
+// Mock useLoaderData for AppLayout
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useLoaderData: vi.fn(() => ({
+      projects: {
+        projects: [],
+        stories: [],
+        chapters: [],
+        snippets: []
+      }
+    }))
+  };
+});
+
 // Mock TipTap editor - create a mock that works with our EditorContent mock
 let editorContent = "";
 
