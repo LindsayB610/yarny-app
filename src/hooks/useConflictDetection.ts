@@ -112,8 +112,8 @@ export function useConflictDetection() {
     },
     onSuccess: (response, driveFileId) => {
       // Invalidate related queries after resolving conflict
-      queryClient.invalidateQueries({ queryKey: ["drive", "file", driveFileId] });
-      queryClient.invalidateQueries({ queryKey: ["snippet"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "file", driveFileId] });
+      void queryClient.invalidateQueries({ queryKey: ["snippet"] });
     }
   });
 

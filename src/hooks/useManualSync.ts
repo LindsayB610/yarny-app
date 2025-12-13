@@ -111,9 +111,9 @@ export function useManualSync() {
       await Promise.allSettled(syncPromises);
 
       // Invalidate queries to refresh UI
-      queryClient.invalidateQueries({ queryKey: ["snippet"] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "file"] });
-      queryClient.invalidateQueries({ queryKey: ["snippet-json"] });
+      void queryClient.invalidateQueries({ queryKey: ["snippet"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "file"] });
+      void queryClient.invalidateQueries({ queryKey: ["snippet-json"] });
 
       // Update sync status
       localStorage.setItem("yarny_last_sync_time", new Date().toISOString());

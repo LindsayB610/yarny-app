@@ -9,7 +9,7 @@ export function BackToStoriesLink(): JSX.Element {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
-      navigate("/stories");
+      void navigate("/stories");
     },
     [navigate]
   );

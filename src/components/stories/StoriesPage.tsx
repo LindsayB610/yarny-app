@@ -154,7 +154,7 @@ export function StoriesPage(): JSX.Element {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    void navigate("/login");
   };
 
   const handleRefresh = async () => {
@@ -162,7 +162,7 @@ export function StoriesPage(): JSX.Element {
   };
 
   if (!user) {
-    navigate("/login");
+    void navigate("/login");
     return <></>;
   }
 

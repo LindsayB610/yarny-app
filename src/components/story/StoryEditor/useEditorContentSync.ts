@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 
 import { buildPlainTextDocument, extractPlainTextFromDocument } from "../../../editor/textExtraction";
-import type { Content, Note, Snippet } from "../../../store/types";
+import type { Content, Snippet } from "../../../store/types";
 
 export function useEditorContentSync(
   editor: Editor | null,

@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/react";
 import { useEffect, useRef, useState } from "react";
 
 import { extractPlainTextFromDocument } from "../../../editor/textExtraction";
-import type { Content, NormalizedPayload, Note, Snippet } from "../../../store/types";
+import type { Content, NormalizedPayload } from "../../../store/types";
 
 type UpsertEntitiesFn = (payload: NormalizedPayload) => void;
 

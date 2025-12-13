@@ -10,7 +10,6 @@ import {
   selectIsSyncing,
   selectLastSyncedAt
 } from "../../../store/selectors";
-import type { Note, Snippet } from "../../../store/types";
 import { ConflictResolutionModal } from "../ConflictResolutionModal";
 import { EditorContentArea } from "./EditorContentArea";
 import { EditorHeader } from "./EditorHeader";

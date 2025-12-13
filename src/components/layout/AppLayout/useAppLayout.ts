@@ -99,7 +99,7 @@ export function useAppLayout() {
   const handleSnippetClick = useCallback(
     (clickedSnippetId: string) => {
       if (storyId && clickedSnippetId !== snippetId) {
-        navigate(`/stories/${storyId}/snippets/${clickedSnippetId}`);
+        void navigate(`/stories/${storyId}/snippets/${clickedSnippetId}`);
       }
     },
     [navigate, storyId, snippetId]

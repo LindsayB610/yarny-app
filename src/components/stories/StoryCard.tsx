@@ -50,7 +50,7 @@ export const StoryCard = memo(function StoryCard({ story, searchQuery = "" }: St
 
   const handleClick = useCallback(() => {
     // Navigate to story editor - loader will redirect to first snippet
-    navigate(`/stories/${story.id}/snippets`);
+    void navigate(`/stories/${story.id}/snippets`);
   }, [story.id, navigate]);
 
   const handleDelete = useCallback((e: MouseEvent) => {

@@ -1,7 +1,7 @@
 import { immer } from "zustand/middleware/immer";
 import { createStore } from "zustand/vanilla";
 
-import type { Chapter, EntityId, NormalizedPayload, Note, YarnyStore } from "./types";
+import type { Chapter, EntityId, NormalizedPayload, YarnyStore } from "./types";
 import type { YarnyState } from "./types";
 
 const createDefaultState = (): YarnyState => ({

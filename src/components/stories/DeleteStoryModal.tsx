@@ -114,8 +114,8 @@ export function DeleteStoryModal({
         }
         
         // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
-        queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+        void queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
+        void queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
         
         setIsDeletingLocal(false);
         onClose();
