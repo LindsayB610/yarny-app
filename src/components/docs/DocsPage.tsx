@@ -1,4 +1,3 @@
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import BackupIcon from "@mui/icons-material/Backup";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -932,52 +931,6 @@ Please:
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ px: 2, pt: 1, pb: 2 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            border: "1px solid rgba(16, 185, 129, 0.3)",
-            backgroundColor: "rgba(16, 185, 129, 0.1)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 1.5
-          }}
-        >
-          <Typography
-            variant="overline"
-            sx={{
-              letterSpacing: 1.2,
-              fontWeight: 700,
-              color: "rgba(16, 185, 129, 1)"
-            }}
-          >
-            QA resources
-          </Typography>
-          <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.85)" }}>
-            Open the Testing Workbook to log smoke tests, validation steps, and status.
-          </Typography>
-          <Button
-            component="a"
-            href="/migration-plan/testing-workbook.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            color="secondary"
-            variant="contained"
-            startIcon={<AssignmentTurnedInIcon />}
-            sx={{
-              width: "100%",
-              borderRadius: 2,
-              textTransform: "none",
-              fontWeight: 600,
-              boxShadow: "0 10px 24px rgba(15, 118, 110, 0.25)"
-            }}
-          >
-            Testing Workbook
-          </Button>
-        </Paper>
-      </Box>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
       {category && (
         <Box sx={{ px: 2, pt: 2, pb: 1 }}>
@@ -1335,47 +1288,237 @@ Please:
           </Alert>
 
           {!category ? (
-            // Overview page - show category cards
+            // Overview page - show getting started guide
             <>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-                User Guide
+              <Typography variant="h3" sx={{ fontWeight: 700, mb: 2, color: "white" }}>
+                Getting Started with Yarny
               </Typography>
-              <Typography variant="body1" sx={{ mb: 4, color: "rgba(255, 255, 255, 0.8)" }}>
-                Welcome to the Yarny User Guide. Select a category below to get started.
+              <Typography variant="body1" sx={{ mb: 4, color: "rgba(255, 255, 255, 0.9)", fontSize: "1.125rem", lineHeight: 1.7 }}>
+                Yarny is a focused writing environment designed for novelists. Store your stories in Google Drive or work locally with markdown files. 
+                Organize chapters, track progress, and write without distractions.
               </Typography>
-              <Stack spacing={3}>
-                {sectionGroups.map((group) => (
-                  <Paper
-                    key={group.id}
-                    component={RouterLink}
-                    to={`/docs/${group.id}`}
-                    elevation={0}
-                    sx={{
-                      p: 3,
-                      borderRadius: 3,
-                      bgcolor: "rgba(255, 255, 255, 0.1)",
-                      backdropFilter: "blur(10px)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                      cursor: "pointer",
-                      textDecoration: "none",
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        bgcolor: "rgba(255, 255, 255, 0.15)",
-                        borderColor: "rgba(255, 255, 255, 0.3)",
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
-                      }
-                    }}
-                  >
-                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: "white" }}>
-                      {group.label}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
-                      {group.sectionIds.length} {group.sectionIds.length === 1 ? "section" : "sections"}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Stack>
+
+              <SectionPaper id="quick-start" title="Quick Start">
+                <Stack spacing={3}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mt: -1 }}>
+                    First Steps
+                  </Typography>
+                  <BulletList
+                    items={[
+                      <Typography key="access" component="span" variant="body1">
+                        <strong>Get access:</strong> Yarny is invitation-only during development. Email{" "}
+                        <Typography
+                          component="a"
+                          href="mailto:lb@lindsaybrunner.com"
+                          sx={{ color: "primary.main", textDecoration: "none" }}
+                        >
+                          lb@lindsaybrunner.com
+                        </Typography>{" "}
+                        from your Google account to request access.
+                      </Typography>,
+                      "Sign in with Google from the Yarny login screen. Yarny only requests minimal Drive permissions to see files it creates.",
+                      "After your first sign-in, Yarny creates a \"Yarny Stories\" folder in your Google Drive with organized subfolders for your projects.",
+                      "On the Stories dashboard, click \"New Story\" to create your first project, or use \"Import Local\" to work with existing markdown files on your computer."
+                    ]}
+                  />
+                </Stack>
+              </SectionPaper>
+
+              <SectionPaper id="key-features" title="Key Features">
+                <Stack spacing={3}>
+                  <Typography variant="body1">
+                    Yarny is built around a simple, powerful structure that separates organization from writing:
+                  </Typography>
+                  <BulletList
+                    items={[
+                      <Typography key="structure" component="span" variant="body1">
+                        <strong>Chapters & Snippets:</strong> Organize your novel into chapters, each containing multiple snippets. 
+                        Drag and drop to reorder, create new snippets instantly, and focus on one piece at a time.
+                      </Typography>,
+                      <Typography key="notes" component="span" variant="body1">
+                        <strong>Characters & Worldbuilding:</strong> Keep reference material in dedicated notes that sync independently. 
+                        Access them from the sidebar without leaving your writing.
+                      </Typography>,
+                      <Typography key="goals" component="span" variant="body1">
+                        <strong>Word Count Goals:</strong> Set project targets and daily writing goals with flexible scheduling. 
+                        Track progress on the dashboard and in the editor.
+                      </Typography>,
+                      <Typography key="sync" component="span" variant="body1">
+                        <strong>Fast, Reliable Saves:</strong> Yarny saves to JSON files first (under 50ms), then syncs to Google Docs in the background. 
+                        Work offline and sync when you reconnect.
+                      </Typography>,
+                      <Typography key="local" component="span" variant="body1">
+                        <strong>Local Projects:</strong> Import existing markdown projects and edit files directly on your computer. 
+                        Perfect for Git workflows or using with other editors like Cursor.
+                      </Typography>
+                    ]}
+                  />
+                </Stack>
+              </SectionPaper>
+
+              <SectionPaper id="workflow-overview" title="Your Writing Workflow">
+                <Stack spacing={3}>
+                  <Typography variant="body1">
+                    Here's how a typical writing session works in Yarny:
+                  </Typography>
+                  <BulletList
+                    items={[
+                      "Start on the Stories dashboard—create a new story or open an existing one.",
+                      "In the editor, create chapters and add snippets. Each snippet is a focused piece of writing.",
+                      "Use the left sidebar to navigate between chapters and snippets. Drag to reorder as your story evolves.",
+                      "Add character and worldbuilding notes in the right sidebar. These stay accessible while you write.",
+                      "Set a word count goal to track progress. Yarny shows your daily progress and remaining days.",
+                      "Your work saves automatically. Changes sync to Google Drive (or save locally for local projects).",
+                      "Export your story when ready—create a combined Google Doc or export chapters as Markdown."
+                    ]}
+                  />
+                </Stack>
+              </SectionPaper>
+
+              <SectionPaper id="choose-your-path" title="Choose Your Path">
+                <Stack spacing={3}>
+                  <Typography variant="body1">
+                    Yarny supports two ways to work with your stories:
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
+                        borderRadius: 2,
+                        bgcolor: "rgba(16, 185, 129, 0.1)",
+                        border: "1px solid rgba(16, 185, 129, 0.3)"
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: "primary.main" }}>
+                        Google Drive Projects
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Store everything in Google Drive for cloud sync, collaboration, and automatic backups. 
+                        Perfect if you want to access your stories from multiple devices or share with collaborators.
+                      </Typography>
+                      <Button
+                        component={RouterLink}
+                        to="/docs/getting-started#getting-started"
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: "none" }}
+                      >
+                        Learn More →
+                      </Button>
+                    </Paper>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
+                        borderRadius: 2,
+                        bgcolor: "rgba(59, 130, 246, 0.1)",
+                        border: "1px solid rgba(59, 130, 246, 0.3)"
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: "info.main" }}>
+                        Local Projects
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Work with markdown files directly on your computer. Import existing projects, use Git for version control, 
+                        or edit with other tools. Changes save directly to your files.
+                      </Typography>
+                      <Button
+                        component={RouterLink}
+                        to="/docs/getting-started#local-projects"
+                        variant="outlined"
+                        size="small"
+                        color="info"
+                        sx={{ textTransform: "none" }}
+                      >
+                        Learn More →
+                      </Button>
+                    </Paper>
+                  </Box>
+                </Stack>
+              </SectionPaper>
+
+              <SectionPaper id="explore-docs" title="Explore the Documentation">
+                <Stack spacing={2}>
+                  <Typography variant="body1">
+                    Ready to dive deeper? Explore these sections:
+                  </Typography>
+                  <Stack spacing={2} sx={{ mt: 2 }}>
+                    {sectionGroups.map((group) => (
+                      <Paper
+                        key={group.id}
+                        component={RouterLink}
+                        to={`/docs/${group.id}`}
+                        elevation={0}
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 2,
+                          bgcolor: "rgba(255, 255, 255, 0.05)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          cursor: "pointer",
+                          textDecoration: "none",
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: "rgba(255, 255, 255, 0.1)",
+                            borderColor: "rgba(255, 255, 255, 0.2)",
+                            transform: "translateX(4px)"
+                          }
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, color: "white" }}>
+                          {group.label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                          {group.sectionIds.length} {group.sectionIds.length === 1 ? "section" : "sections"} covering {group.label.toLowerCase()}
+                        </Typography>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Stack>
+              </SectionPaper>
+
+              <SectionPaper id="need-help" title="Need Help?">
+                <Stack spacing={2}>
+                  <Typography variant="body1">
+                    Yarny is in active development. If you run into issues or have questions:
+                  </Typography>
+                  <BulletList
+                    items={[
+                      <Typography key="email" component="span" variant="body1">
+                        Email{" "}
+                        <Typography
+                          component="a"
+                          href="mailto:lb@lindsaybrunner.com"
+                          sx={{ color: "primary.main", textDecoration: "none" }}
+                        >
+                          lb@lindsaybrunner.com
+                        </Typography>{" "}
+                        with questions, bug reports, or feature ideas.
+                      </Typography>,
+                      "Check the Troubleshooting section for common issues and solutions.",
+                      "Review the Tips & Best Practices section for workflow suggestions."
+                    ]}
+                  />
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      component={RouterLink}
+                      to="/docs/support#troubleshooting"
+                      variant="outlined"
+                      sx={{ textTransform: "none", mr: 2 }}
+                    >
+                      Troubleshooting Guide
+                    </Button>
+                    <Button
+                      component={RouterLink}
+                      to="/docs/support#support"
+                      variant="outlined"
+                      sx={{ textTransform: "none" }}
+                    >
+                      Contact Support
+                    </Button>
+                  </Box>
+                </Stack>
+              </SectionPaper>
             </>
           ) : (
             // Category page - show filtered sections with breadcrumb
@@ -1510,22 +1653,6 @@ Please:
             }}
           >
             Migration Plan
-          </Link>
-          <Link
-            component="a"
-            href="/migration-plan/testing-workbook.html"
-            sx={{
-              color: "rgba(34, 211, 238, 0.9)",
-              textDecoration: "none",
-              fontSize: "0.8125rem",
-              fontWeight: 600,
-              transition: "color 0.2s ease",
-              "&:hover": {
-                color: "rgba(165, 243, 252, 0.95)"
-              }
-            }}
-          >
-            Testing Workbook
           </Link>
           {!user && (
             <Link
