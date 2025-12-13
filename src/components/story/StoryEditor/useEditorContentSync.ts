@@ -55,9 +55,15 @@ export function useEditorContentSync(
         const tryFocus = () => {
           if (editor.isDestroyed) return;
           // Scroll to top when content changes, then focus at start
-          const scrollContainer = editor.view.dom.closest('[style*="overflow"]') || editor.view.dom.parentElement?.parentElement;
-          if (scrollContainer && scrollContainer instanceof HTMLElement) {
-            scrollContainer.scrollTop = 0;
+          // Find the scrollable container (parent with overflow: auto)
+          let scrollContainer: HTMLElement | null = editor.view.dom.parentElement;
+          while (scrollContainer) {
+            const style = window.getComputedStyle(scrollContainer);
+            if (style.overflow === "auto" || style.overflowY === "auto") {
+              scrollContainer.scrollTop = 0;
+              break;
+            }
+            scrollContainer = scrollContainer.parentElement;
           }
           editor.commands.focus("start");
           const contentToCheck = activeContent?.content ?? activeSnippet?.content ?? "";
