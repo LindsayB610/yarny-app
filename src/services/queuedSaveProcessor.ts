@@ -212,7 +212,7 @@ export async function processQueuedSavesDirectly(): Promise<void> {
             
             // Register background sync if Service Worker is available
             if ("serviceWorker" in navigator && "sync" in ServiceWorkerRegistration.prototype) {
-              navigator.serviceWorker.ready.then((registration) => {
+              void navigator.serviceWorker.ready.then((registration) => {
                 registration.sync.register("sync-json-to-gdoc").catch((error) => {
                   console.warn("Failed to register background sync:", error);
                 });

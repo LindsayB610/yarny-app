@@ -22,7 +22,7 @@ export function useWindowFocusReconciliation(): void {
 
       // If tokens don't match, invalidate all queries to trigger re-fetch
       if (currentToken !== storedToken) {
-        queryClient.invalidateQueries();
+        void queryClient.invalidateQueries();
 
         // If user logged out in another tab, clear all data
         if (!storedToken && currentToken) {
@@ -30,7 +30,7 @@ export function useWindowFocusReconciliation(): void {
         }
 
         // Only refetch if auth actually changed
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           type: "active"
         });
       }

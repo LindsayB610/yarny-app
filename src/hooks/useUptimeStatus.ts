@@ -45,10 +45,12 @@ export function useUptimeStatus(): UptimeStatus & { isLoading: boolean } {
 
   useEffect(() => {
     // Fetch immediately on mount
-    fetchStatus();
+    void fetchStatus();
 
     // Set up polling every 5 minutes
-    const interval = setInterval(fetchStatus, POLL_INTERVAL_MS);
+    const interval = setInterval(() => {
+      void fetchStatus();
+    }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [fetchStatus]);

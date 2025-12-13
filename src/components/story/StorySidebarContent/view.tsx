@@ -138,21 +138,25 @@ export function StorySidebarContentView({
     handlers.isMovingSnippet,
     handlers.openRenameDialog,
     handlers.openChapterColorPicker,
-    handlers.handleDuplicateChapter,
-    handlers.handleDuplicateSnippet,
+    (chapterId: string) => {
+      void handlers.handleDuplicateChapter(chapterId);
+    },
+    (snippetId: string) => {
+      void handlers.handleDuplicateSnippet(snippetId);
+    },
     handlers.openMoveSnippetDialog,
     handlers.openDeleteDialog
   );
 
   const handleMoveSnippetConfirm = useCallback(
-    async (targetChapterId: string) => {
-      await handlers.handleMoveSnippetConfirm(targetChapterId, moveSnippetDialog);
+    (targetChapterId: string) => {
+      void handlers.handleMoveSnippetConfirm(targetChapterId, moveSnippetDialog);
     },
     [handlers, moveSnippetDialog]
   );
 
-  const handleDeleteConfirm = useCallback(async () => {
-    await handlers.handleDeleteConfirm(deleteDialog);
+  const handleDeleteConfirm = useCallback(() => {
+    void handlers.handleDeleteConfirm(deleteDialog);
   }, [handlers, deleteDialog]);
 
   const handleRenameSubmit = useCallback(
@@ -201,7 +205,9 @@ export function StorySidebarContentView({
         chapter={chapter}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => toggleChapterCollapse(chapter.id)}
-        onAddSnippet={() => handlers.handleAddSnippet(chapter.id)}
+        onAddSnippet={() => {
+          void handlers.handleAddSnippet(chapter.id);
+        }}
         onMenuOpen={(event) => handleChapterMenuOpen(chapter.id, event)}
         onReorder={handlers.handleSnippetReorder(chapter.id)}
         onMoveToChapter={handlers.handleSnippetMoveToChapter}
@@ -250,7 +256,9 @@ export function StorySidebarContentView({
           variant="outlined"
           startIcon={<Add />}
           fullWidth
-          onClick={handlers.handleCreateChapter}
+          onClick={() => {
+            void handlers.handleCreateChapter();
+          }}
           disabled={handlers.isCreatingChapter}
         >
           {handlers.isCreatingChapter ? "Creating…" : "New Chapter"}

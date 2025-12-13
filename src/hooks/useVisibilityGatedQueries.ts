@@ -130,7 +130,7 @@ export function useVisibilityGatedSnippetQueries(
       const snippetId = snippetIds[i];
       const fileId = fileIds[snippetId];
       if (fileId && !queryClient.getQueryData(["snippet", snippetId])) {
-        queryClient.prefetchQuery({
+        void queryClient.prefetchQuery({
           queryKey: ["snippet", snippetId],
           queryFn: async () => {
             const response = await apiClient.readDriveFile({ fileId });

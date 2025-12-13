@@ -80,7 +80,9 @@ export function LoginPage(): JSX.Element {
 
     window.google.accounts.id.initialize({
       client_id: config.clientId,
-      callback: handleGoogleSignIn
+      callback: (response) => {
+        void handleGoogleSignIn(response);
+      }
     });
   }, [bypassActive, config?.clientId, handleGoogleSignIn]);
 

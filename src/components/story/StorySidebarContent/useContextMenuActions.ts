@@ -43,7 +43,9 @@ export function useContextMenuActions(
         },
         {
           label: "Duplicate Chapter",
-          onClick: () => handleDuplicateChapter(contextMenu.id!),
+          onClick: () => {
+            void handleDuplicateChapter(contextMenu.id!);
+          },
           disabled: isDuplicatingChapter
         },
         {
@@ -63,7 +65,9 @@ export function useContextMenuActions(
       },
       {
         label: "Duplicate Snippet",
-        onClick: () => handleDuplicateSnippet(contextMenu.id!),
+        onClick: () => {
+          void handleDuplicateSnippet(contextMenu.id!);
+        },
         disabled: isDuplicatingSnippet
       },
       {
