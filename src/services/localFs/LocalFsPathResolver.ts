@@ -1,4 +1,4 @@
-export type NoteCategory = "people" | "places" | "things";
+export type NoteCategory = "characters" | "worldbuilding";
 
 const ROOT_FOLDER = "stories";
 const NOTES_FOLDER = "notes";

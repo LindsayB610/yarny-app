@@ -200,23 +200,21 @@ export async function editorLoader(
 
     if (noteId && noteType) {
       // Validate note exists in story
-      const noteKindMap: Record<string, "person" | "place" | "thing"> = {
-        people: "person",
-        places: "place",
-        things: "thing",
-      };
-      const kind = noteKindMap[noteType] ?? "person";
+        const noteKindMap: Record<string, "character" | "worldbuilding"> = {
+          characters: "character",
+          worldbuilding: "worldbuilding",
+        };
+        const kind = noteKindMap[noteType] ?? "character";
       const noteExists = storyData.notes?.some((n) => n.id === noteId && n.kind === kind);
       if (!noteExists) {
         // Redirect to first note of that type if note doesn't exist
         const firstNote = storyData.notes?.find((n) => n.kind === kind);
         if (firstNote) {
-          const noteTypeMap: Record<string, string> = {
-            person: "people",
-            place: "places",
-            thing: "things",
-          };
-          const routeNoteType = noteTypeMap[kind] ?? "people";
+            const noteTypeMap: Record<string, string> = {
+              character: "characters",
+              worldbuilding: "worldbuilding",
+            };
+            const routeNoteType = noteTypeMap[kind] ?? "characters";
           throw redirect(`/stories/${storyId}/${routeNoteType}/${firstNote.id}`);
         } else {
           // No notes of this type, redirect to first snippet

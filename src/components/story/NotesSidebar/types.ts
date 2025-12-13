@@ -18,8 +18,7 @@ export interface SortableNoteItemProps {
 }
 
 export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
-  people: "Person",
-  places: "Place",
-  things: "Thing"
+  characters: "Character",
+  worldbuilding: "Worldbuilding"
 };
 

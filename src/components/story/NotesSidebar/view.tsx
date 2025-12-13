@@ -30,31 +30,29 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
   // Detect note type from route pathname
   const noteTypeFromPath = useMemo(() => {
     const pathname = location.pathname;
-    if (pathname.includes("/people/")) return "people";
-    if (pathname.includes("/places/")) return "places";
-    if (pathname.includes("/things/")) return "things";
+    if (pathname.includes("/characters/")) return "characters";
+    if (pathname.includes("/worldbuilding/")) return "worldbuilding";
     return undefined;
   }, [location.pathname]);
   
   // Use store notes if available, otherwise fall back to query
   const storeNotes = useYarnyStore((state) => 
-    story ? selectNotesByKind(state, story.id, "person") : []
+    story ? selectNotesByKind(state, story.id, "character") : []
   );
   const hasStoreNotes = storeNotes.length > 0;
 
   const storyFolderId = story?.id;
 
-  const peopleQuery = useNotesQuery(storyFolderId, "people", Boolean(story) && !hasStoreNotes);
-  const placesQuery = useNotesQuery(storyFolderId, "places", Boolean(story) && !hasStoreNotes);
-  const thingsQuery = useNotesQuery(storyFolderId, "things", Boolean(story) && !hasStoreNotes);
+  const charactersQuery = useNotesQuery(storyFolderId, "characters", Boolean(story) && !hasStoreNotes);
+  const worldbuildingQuery = useNotesQuery(storyFolderId, "worldbuilding", Boolean(story) && !hasStoreNotes);
 
-  const [activeTab, setActiveTab] = useState<NoteType>("people");
+  const [activeTab, setActiveTab] = useState<NoteType>("characters");
 
   const createNoteMutation = useCreateNoteMutation(storyFolderId);
   const reorderNotesMutation = useReorderNotesMutation(storyFolderId);
 
   const handleTabChange = useCallback((tabId: string) => {
-    if (tabId === "people" || tabId === "places" || tabId === "things") {
+    if (tabId === "characters" || tabId === "worldbuilding") {
       setActiveTab(tabId);
     }
   }, []);
@@ -97,89 +95,61 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
   );
 
   // Get notes from store
-  const peopleNotesFromStore = useYarnyStore((state) => 
-    story ? selectNotesByKind(state, story.id, "person") : []
+  const charactersNotesFromStore = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "character") : []
   );
-  const placesNotesFromStore = useYarnyStore((state) => 
-    story ? selectNotesByKind(state, story.id, "place") : []
-  );
-  const thingsNotesFromStore = useYarnyStore((state) => 
-    story ? selectNotesByKind(state, story.id, "thing") : []
+  const worldbuildingNotesFromStore = useYarnyStore((state) => 
+    story ? selectNotesByKind(state, story.id, "worldbuilding") : []
   );
 
   const tabs: TabItem[] = useMemo(
     () => [
       {
-        id: "people",
-        label: "People",
+        id: "characters",
+        label: "Characters",
         content: (
           <NotesList
             notes={hasStoreNotes && story 
-              ? peopleNotesFromStore.map(note => {
+              ? charactersNotesFromStore.map(note => {
                   const firstLine = note.content.split("\n")[0]?.trim();
                   return {
                     id: note.id,
-                    name: firstLine || "New Person",
+                    name: firstLine || "New Character",
                     content: note.content,
                     modifiedTime: note.updatedAt
                   };
                 })
-              : (peopleQuery.data || [])}
-            isLoading={peopleQuery.isLoading}
-            noteType="people"
+              : (charactersQuery.data || [])}
+            isLoading={charactersQuery.isLoading}
+            noteType="characters"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
-            activeNoteId={noteTypeFromPath === "people" && noteId ? noteId : undefined}
+            activeNoteId={noteTypeFromPath === "characters" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
           />
         )
       },
       {
-        id: "places",
-        label: "Places",
+        id: "worldbuilding",
+        label: "Worldbuilding",
         content: (
           <NotesList
             notes={hasStoreNotes && story
-              ? placesNotesFromStore.map(note => {
+              ? worldbuildingNotesFromStore.map(note => {
                   const firstLine = note.content.split("\n")[0]?.trim();
                   return {
                     id: note.id,
-                    name: firstLine || "New Place",
+                    name: firstLine || "New Worldbuilding",
                     content: note.content,
                     modifiedTime: note.updatedAt
                   };
                 })
-              : (placesQuery.data || [])}
-            isLoading={placesQuery.isLoading}
-            noteType="places"
+              : (worldbuildingQuery.data || [])}
+            isLoading={worldbuildingQuery.isLoading}
+            noteType="worldbuilding"
             onReorder={handleReorderNotes}
             isReordering={reorderNotesMutation.isPending}
-            activeNoteId={noteTypeFromPath === "places" && noteId ? noteId : undefined}
-            onNoteClick={handleNoteClick}
-          />
-        )
-      },
-      {
-        id: "things",
-        label: "Things",
-        content: (
-          <NotesList
-            notes={hasStoreNotes && story
-              ? thingsNotesFromStore.map(note => {
-                  const firstLine = note.content.split("\n")[0]?.trim();
-                  return {
-                    id: note.id,
-                    name: firstLine || "New Thing",
-                    content: note.content,
-                    modifiedTime: note.updatedAt
-                  };
-                })
-              : (thingsQuery.data || [])}
-            isLoading={thingsQuery.isLoading}
-            noteType="things"
-            onReorder={handleReorderNotes}
-            isReordering={reorderNotesMutation.isPending}
-            activeNoteId={noteTypeFromPath === "things" && noteId ? noteId : undefined}
+            activeNoteId={noteTypeFromPath === "worldbuilding" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
           />
         )
@@ -188,15 +158,12 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
     [
       hasStoreNotes,
       story,
-      peopleNotesFromStore,
-      peopleQuery.data,
-      peopleQuery.isLoading,
-      placesNotesFromStore,
-      placesQuery.data,
-      placesQuery.isLoading,
-      thingsNotesFromStore,
-      thingsQuery.data,
-      thingsQuery.isLoading,
+      charactersNotesFromStore,
+      charactersQuery.data,
+      charactersQuery.isLoading,
+      worldbuildingNotesFromStore,
+      worldbuildingQuery.data,
+      worldbuildingQuery.isLoading,
       handleReorderNotes,
       reorderNotesMutation.isPending,
       handleNoteClick,
@@ -209,7 +176,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
 
   const renderActions = useCallback(
     (tabId: string) => {
-      if (tabId !== "people" && tabId !== "places" && tabId !== "things") {
+      if (tabId !== "characters" && tabId !== "worldbuilding") {
         return null;
       }
 
@@ -273,7 +240,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         }}
       >
         <Typography variant="body2" textAlign="center">
-          Select a story to view its people, places, and things
+          Select a story to view its characters and worldbuilding
         </Typography>
       </Box>
     );

@@ -16,15 +16,13 @@ interface CreateNoteResult {
 }
 
 const NOTE_FOLDER_NAMES: Record<NoteType, string> = {
-  people: "People",
-  places: "Places",
-  things: "Things"
+  characters: "Characters",
+  worldbuilding: "Worldbuilding"
 };
 
 const NOTE_FILE_PREFIX: Record<NoteType, string> = {
-  people: "Person",
-  places: "Place",
-  things: "Thing"
+  characters: "Character",
+  worldbuilding: "Worldbuilding"
 };
 
 export async function ensureNotesFolder(

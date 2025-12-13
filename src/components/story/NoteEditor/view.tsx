@@ -17,7 +17,7 @@ export function NoteEditorView(): JSX.Element {
   const story = useActiveStory();
   const activeNote = useYarnyStore(selectActiveNote);
 
-  const noteType = activeNote?.type ?? "people";
+  const noteType = activeNote?.type ?? "characters";
   const notesQuery = useNotesQuery(
     story?.id,
     noteType,

@@ -318,20 +318,41 @@ export const createDriveClient = (): DriveClient => ({
       // Ensure snippets sorted within chapters
       const snippetsSorted = snippets.sort((a, b) => a.order - b.order);
 
-      // Load notes from People/Places/Things folders
+      // Load notes from Characters/Worldbuilding folders
+      // Also support legacy People/Places/Things folders and map them accordingly
       const notes: Note[] = [];
-      const noteFolders = ["People", "Places", "Things"];
+      const noteFolders = [
+        { name: "Characters", kind: "character" as NoteKind },
+        { name: "Worldbuilding", kind: "worldbuilding" as NoteKind },
+        // Legacy support: map old folders to new structure
+        { name: "People", kind: "character" as NoteKind },
+        { name: "Places", kind: "worldbuilding" as NoteKind },
+        { name: "Things", kind: "worldbuilding" as NoteKind }
+      ];
       const noteKindMap: Record<string, NoteKind> = {
-        People: "person",
-        Places: "place",
-        Things: "thing"
+        Characters: "character",
+        Worldbuilding: "worldbuilding",
+        People: "character", // Legacy: map People to characters
+        Places: "worldbuilding", // Legacy: map Places to worldbuilding
+        Things: "worldbuilding" // Legacy: map Things to worldbuilding
       };
 
-      for (const folderName of noteFolders) {
+      // Track which folders we've processed to avoid duplicates when legacy folders exist
+      const processedFolders = new Set<string>();
+      
+      for (const { name: folderName, kind: defaultKind } of noteFolders) {
         const notesFolder = fileMap.get(folderName);
         if (!notesFolder?.id || notesFolder.mimeType !== "application/vnd.google-apps.folder") {
           continue;
         }
+        
+        // Skip if we've already processed a newer version of this folder
+        // (e.g., skip "People" if "Characters" exists)
+        if (processedFolders.has(defaultKind)) {
+          continue;
+        }
+        
+        processedFolders.add(defaultKind);
 
         try {
           const notesFiles = await listAllDriveFiles(notesFolder.id);
@@ -362,7 +383,7 @@ export const createDriveClient = (): DriveClient => ({
             try {
               const contentResponse = await apiClient.readDriveFile({ fileId: file.id });
               const noteName = file.name.replace(/\.txt$/, "").replace(/\.md$/, "");
-              const kind = noteKindMap[folderName] ?? "person";
+              const kind = noteKindMap[folderName] ?? defaultKind;
 
               // Determine order
               const orderIndex = noteOrder.indexOf(file.id);

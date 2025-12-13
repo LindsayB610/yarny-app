@@ -117,14 +117,13 @@ export const createYarnyStore = (initialState?: Partial<YarnyState>) => {
             // Note: activeNote structure will be deprecated, but keeping for compatibility
             const note = draft.entities.notes[contentId ?? ""];
             if (note) {
-              const noteTypeMap: Record<string, "people" | "places" | "things"> = {
-                person: "people",
-                place: "places",
-                thing: "things"
+              const noteTypeMap: Record<string, "characters" | "worldbuilding"> = {
+                character: "characters",
+                worldbuilding: "worldbuilding"
               };
               draft.ui.activeNote = {
                 id: contentId ?? "",
-                type: noteTypeMap[note.kind] ?? "people"
+                type: noteTypeMap[note.kind] ?? "characters"
               };
             }
           }

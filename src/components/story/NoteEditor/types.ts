@@ -1,7 +1,7 @@
 export type SavePayload = {
   storyId: string;
   noteId: string;
-  noteType: "people" | "places" | "things";
+  noteType: "characters" | "worldbuilding";
   content: string;
 };
 

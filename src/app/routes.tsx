@@ -78,33 +78,23 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />
   },
   {
-    path: "/stories/:storyId/people/:noteId?",
+    path: "/stories/:storyId/characters/:noteId?",
     element: (
       <ProtectedRoute>
         <AppLayout />
       </ProtectedRoute>
     ),
-    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "people" }),
+    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "characters" }),
     errorElement: <RouteErrorBoundary />
   },
   {
-    path: "/stories/:storyId/places/:noteId?",
+    path: "/stories/:storyId/worldbuilding/:noteId?",
     element: (
       <ProtectedRoute>
         <AppLayout />
       </ProtectedRoute>
     ),
-    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "places" }),
-    errorElement: <RouteErrorBoundary />
-  },
-  {
-    path: "/stories/:storyId/things/:noteId?",
-    element: (
-      <ProtectedRoute>
-        <AppLayout />
-      </ProtectedRoute>
-    ),
-    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "things" }),
+    loader: ({ params }) => editorLoader(queryClient, { ...params, noteType: "worldbuilding" }),
     errorElement: <RouteErrorBoundary />
   },
   {

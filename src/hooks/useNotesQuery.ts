@@ -9,10 +9,10 @@ export interface Note {
   modifiedTime: string;
 }
 
-export type NoteType = "people" | "places" | "things";
+export type NoteType = "characters" | "worldbuilding";
 
 /**
- * Hook to fetch notes of a specific type (People, Places, or Things) from a story folder
+ * Hook to fetch notes of a specific type (Characters or Worldbuilding) from a story folder
  */
 export function useNotesQuery(
   storyFolderId: string | undefined,
@@ -26,8 +26,13 @@ export function useNotesQuery(
         return [];
       }
 
-      // First, find the notes folder (People, Places, or Things)
-      const folderName = noteType.charAt(0).toUpperCase() + noteType.slice(1);
+      // First, find the notes folder (Characters or Worldbuilding)
+      // Map noteType to folder name
+      const folderNameMap: Record<NoteType, string> = {
+        characters: "Characters",
+        worldbuilding: "Worldbuilding"
+      };
+      const folderName = folderNameMap[noteType];
       const filesResponse = await apiClient.listDriveFiles({
         folderId: storyFolderId
       });

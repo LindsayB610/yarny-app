@@ -46,7 +46,7 @@ export interface Snippet extends BaseContent {
   driveRevisionId?: string;
 }
 
-export type NoteKind = "person" | "place" | "thing";
+export type NoteKind = "character" | "worldbuilding";
 
 export interface Note extends BaseContent {
   kind: NoteKind;
@@ -76,7 +76,7 @@ export interface YarnyUIState {
   activeSnippetId?: EntityId;
   activeNote?: {
     id: EntityId;
-    type: "people" | "places" | "things";
+    type: "characters" | "worldbuilding";
   };
   isSyncing: boolean;
   lastSyncedAt?: string;
@@ -105,7 +105,7 @@ export interface YarnyActions {
     selection:
       | {
           id: EntityId;
-          type: "people" | "places" | "things";
+          type: "characters" | "worldbuilding";
         }
       | undefined
   ) => void;

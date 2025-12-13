@@ -4,7 +4,7 @@ import type { SavePayload } from "./types";
 
 export function useNoteAutoSave(
   storyId: string | undefined,
-  activeNote: { id: string; type: "people" | "places" | "things" } | undefined,
+  activeNote: { id: string; type: "characters" | "worldbuilding" } | undefined,
   note: { id: string; content: string } | undefined,
   editorContent: string,
   lastSavedContentRef: React.MutableRefObject<string>,
