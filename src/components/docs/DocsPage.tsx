@@ -439,6 +439,59 @@ Please:
                 "Can't edit in Yarny: Make sure you granted read/write permissions when selecting the directory."
               ]}
             />
+            <Typography variant="h6">For AI Assistants & Cursor</Typography>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              <strong>Understanding Yarny's Structure:</strong> When working with Yarny projects, it's important to understand how Yarny organizes content and how it maps to the file system.
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Yarny's Data Model</Typography>
+            <Typography variant="body2" component="div" sx={{ mb: 2 }}>
+              Yarny uses a hierarchical structure:
+              <ul style={{ marginTop: "0.5rem", marginLeft: "1.5rem" }}>
+                <li><strong>Project</strong> → Contains one or more Stories</li>
+                <li><strong>Story</strong> → Contains Chapters, Snippets, and Notes</li>
+                <li><strong>Chapter</strong> → Container for Snippets (ordered list)</li>
+                <li><strong>Snippet</strong> → Individual writing segments (the actual content you write)</li>
+                <li><strong>Notes</strong> → Characters and Worldbuilding reference material</li>
+              </ul>
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>File Structure Mapping</Typography>
+            <Typography variant="body2" component="div" sx={{ mb: 2 }}>
+              For <strong>local projects</strong>, the structure maps directly:
+              <ul style={{ marginTop: "0.5rem", marginLeft: "1.5rem" }}>
+                <li><code>drafts/chapter-1/</code> → A Chapter folder</li>
+                <li><code>drafts/chapter-1/01-opening.md</code> → A Snippet file</li>
+                <li><code>characters/nav.md</code> → A Character note (future support)</li>
+                <li><code>worldbuilding/the-vireo-ship.md</code> → A Worldbuilding note (future support)</li>
+                <li><code>yarny-story.json</code> → Story metadata (chapter order, snippet IDs, colors)</li>
+                <li><code>yarny-project.json</code> → Project metadata</li>
+              </ul>
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>What Cursor Should Know</Typography>
+            <BulletList
+              items={[
+                "Yarny edits markdown files directly—changes you make in Yarny are written to the `.md` files on disk",
+                "Snippet filenames should be descriptive and human-readable (e.g., `01-opening.md` not `01.md`)",
+                "Chapter folders must be named `chapter-1`, `chapter-2`, etc. (numeric ordering matters)",
+                "Snippet files are ordered by filename—use leading zeros (01, 02, 03...) to maintain proper order",
+                "Yarny strips markdown syntax when displaying content—files store plain text, not formatted markdown",
+                "Don't edit `yarny-project.json` or `yarny-story.json` manually—Yarny manages these metadata files",
+                "When creating new snippets, Yarny generates numbered filenames automatically based on snippet order",
+                "Chapter colors are stored in `yarny-story.json` and persist across sessions",
+                "For notes (characters/worldbuilding), use the existing `characters/` and `worldbuilding/` folders in the project root (future: Yarny will support these)"
+              ]}
+            />
+            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Best Practices for AI Assistants</Typography>
+            <BulletList
+              items={[
+                "When organizing a project for Yarny, preserve existing content and structure as much as possible",
+                "Use `.yarnyignore` to exclude folders that shouldn't be imported (like `notes/`, `plot/`, `images/`)",
+                "If reorganizing snippets, maintain the numbered prefix system to preserve order",
+                "When suggesting content changes, work with the plain text format—don't add markdown formatting",
+                "Respect the chapter-snippet hierarchy—snippets belong to chapters, which belong to stories",
+                "For Drive projects: Yarny stores content in hidden JSON files (`.{snippetId}.yarny.json`) and syncs to Google Docs in the background",
+                "For local projects: Content is in plain markdown files that you can edit directly in any editor"
+              ]}
+            />
           </Stack>
         )
       },

@@ -97,7 +97,7 @@ describe("DocsPage", () => {
       "Managing Stories",
       "Story Genres",
       "Writing in the Editor",
-      "People, Places, and Things",
+      "Characters & Worldbuilding",
       "Word Count & Goals",
       "Exporting & Backups",
       "Google Drive Integration",
