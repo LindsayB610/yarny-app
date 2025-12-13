@@ -50,9 +50,16 @@ export function parseSessionFromEvent(event: NetlifyFunctionEvent): UserSession 
   if (!sessionCookie) return null;
 
   try {
-    const sessionToken = sessionCookie.split("=")[1].trim();
+    const cookieValue = sessionCookie.split("=")[1];
+    if (!cookieValue) {
+      return null;
+    }
+    const sessionToken = cookieValue.trim();
     const decoded = Buffer.from(sessionToken, "base64").toString();
     const parts = decoded.split(":");
+    if (parts.length === 0 || !parts[0]) {
+      return null;
+    }
     return {
       email: parts[0],
       token: sessionToken

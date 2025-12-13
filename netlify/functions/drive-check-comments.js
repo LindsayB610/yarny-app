@@ -37,7 +37,7 @@ const handler = async (event) => {
                 commentCount: 0
             });
         }
-        const auth = drive._auth;
+        const auth = (drive)._auth;
         if (!auth) {
             throw new Error("Drive client auth not available");
         }

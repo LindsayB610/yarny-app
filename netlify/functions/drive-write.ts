@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client, type Credentials } from "google-auth-library";
 import { google } from "googleapis";
 import { Readable } from "stream";
 
@@ -115,10 +115,13 @@ export const handler: NetlifyFunctionHandler = async (
         }
 
         oauth2Client = new OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
-        oauth2Client.setCredentials({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token
-        });
+        const credentials: Credentials = {
+          access_token: tokens.access_token
+        };
+        if (tokens.refresh_token) {
+          credentials.refresh_token = tokens.refresh_token;
+        }
+        oauth2Client.setCredentials(credentials);
 
         console.log("Created new OAuth client");
       }
@@ -209,10 +212,14 @@ export const handler: NetlifyFunctionHandler = async (
           // Get current document
           const doc = await docs.documents.get({ documentId: fileId });
           const bodyContent = doc.data.body?.content;
-          const endIndex =
-            bodyContent && bodyContent.length > 0
-              ? (bodyContent[bodyContent.length - 1].endIndex || 2) - 1
-              : 1;
+          if (!bodyContent || bodyContent.length === 0) {
+            throw new Error("Document has no content");
+          }
+          const lastElement = bodyContent[bodyContent.length - 1];
+          if (!lastElement) {
+            throw new Error("Document content is empty");
+          }
+          const endIndex = (lastElement.endIndex || 2) - 1;
 
           // Delete all content except first paragraph
           if (endIndex > 1) {
@@ -331,10 +338,13 @@ export const handler: NetlifyFunctionHandler = async (
 
             // Find the end of the document body
             let endIndex = 1;
-            if (doc.data.body?.content && doc.data.body.content.length > 0) {
-              const lastElement = doc.data.body.content[doc.data.body.content.length - 1];
-              endIndex = (lastElement.endIndex || 2) - 1;
-              console.log("Document endIndex:", endIndex);
+            const bodyContent = doc.data.body?.content;
+            if (bodyContent && bodyContent.length > 0) {
+              const lastElement = bodyContent[bodyContent.length - 1];
+              if (lastElement) {
+                endIndex = (lastElement.endIndex || 2) - 1;
+                console.log("Document endIndex:", endIndex);
+              }
             }
 
             // Strategy: Delete everything from index 1 to end, then insert our text at index 1

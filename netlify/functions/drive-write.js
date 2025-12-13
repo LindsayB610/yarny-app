@@ -60,22 +60,25 @@ const handler = async (event, context) => {
         let oauth2Client = null;
         if (isGoogleDoc) {
             // Try to get auth from drive._auth (should be attached by getAuthenticatedDriveClient)
-            if (drive._auth) {
-                oauth2Client = drive._auth;
+            if ((drive)._auth) {
+                oauth2Client = (drive)._auth;
                 console.log("Using auth client from drive._auth");
             }
             else {
                 // Fallback: recreate the OAuth client from stored tokens
                 console.log("drive._auth not found, creating new OAuth client from tokens");
                 const tokens = await (0, drive_client_1.getTokens)(session.email);
-                if (!tokens || !tokens.access_token) {
+                if (!tokens?.access_token) {
                     throw new Error("No tokens available for Google Docs API");
                 }
                 oauth2Client = new google_auth_library_1.OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
-                oauth2Client.setCredentials({
-                    access_token: tokens.access_token,
-                    refresh_token: tokens.refresh_token
-                });
+                const credentials = {
+                    access_token: tokens.access_token
+                };
+                if (tokens.refresh_token) {
+                    credentials.refresh_token = tokens.refresh_token;
+                }
+                oauth2Client.setCredentials(credentials);
                 console.log("Created new OAuth client");
             }
             // Check if credentials are set
@@ -83,16 +86,16 @@ const handler = async (event, context) => {
                 throw new Error("OAuth client not initialized for Google Docs");
             }
             let credentials = oauth2Client.credentials;
-            if (!credentials || !credentials.access_token) {
+            if (!credentials?.access_token) {
                 console.log("Credentials missing or expired, attempting to get access token...");
                 // Try to get/refresh access token
                 try {
                     const authCredentials = await oauth2Client.getAccessToken();
-                    if (authCredentials && authCredentials.token) {
+                    if (authCredentials?.token) {
                         console.log("Successfully retrieved access token");
                         // Credentials should now be set by getAccessToken
                         credentials = oauth2Client.credentials;
-                        if (!credentials || !credentials.access_token) {
+                        if (!credentials?.access_token) {
                             throw new Error("Access token retrieved but credentials not set");
                         }
                     }
@@ -158,9 +161,14 @@ const handler = async (event, context) => {
                     // Get current document
                     const doc = await docs.documents.get({ documentId: fileId });
                     const bodyContent = doc.data.body?.content;
-                    const endIndex = bodyContent && bodyContent.length > 0
-                        ? (bodyContent[bodyContent.length - 1].endIndex || 2) - 1
-                        : 1;
+                    if (!bodyContent || bodyContent.length === 0) {
+                        throw new Error("Document has no content");
+                    }
+                    const lastElement = bodyContent[bodyContent.length - 1];
+                    if (!lastElement) {
+                        throw new Error("Document content is empty");
+                    }
+                    const endIndex = (lastElement.endIndex || 2) - 1;
                     // Delete all content except first paragraph
                     if (endIndex > 1) {
                         await docs.documents.batchUpdate({
@@ -267,10 +275,13 @@ const handler = async (event, context) => {
                         console.log("Google Doc structure (first 500 chars):", JSON.stringify(doc.data.body, null, 2).substring(0, 500));
                         // Find the end of the document body
                         let endIndex = 1;
-                        if (doc.data.body?.content && doc.data.body.content.length > 0) {
-                            const lastElement = doc.data.body.content[doc.data.body.content.length - 1];
-                            endIndex = (lastElement.endIndex || 2) - 1;
-                            console.log("Document endIndex:", endIndex);
+                        const bodyContent = doc.data.body?.content;
+                        if (bodyContent && bodyContent.length > 0) {
+                            const lastElement = bodyContent[bodyContent.length - 1];
+                            if (lastElement) {
+                                endIndex = (lastElement.endIndex || 2) - 1;
+                                console.log("Document endIndex:", endIndex);
+                            }
                         }
                         // Strategy: Delete everything from index 1 to end, then insert our text at index 1
                         const requests = [];
@@ -341,7 +352,7 @@ const handler = async (event, context) => {
                             // Check if tokens actually have the Docs scope before clearing
                             const tokens = await (0, drive_client_1.getTokens)(session.email);
                             let hasDocsScope = false;
-                            if (tokens && tokens.scope) {
+                            if (tokens?.scope) {
                                 hasDocsScope =
                                     tokens.scope.includes("documents") ||
                                         tokens.scope.includes("https://www.googleapis.com/auth/documents");

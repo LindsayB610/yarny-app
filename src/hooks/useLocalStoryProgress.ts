@@ -3,9 +3,7 @@ import { useMemo } from "react";
 
 import type { StoryProgress } from "./useStoriesQuery";
 import {
-  calculateDailyGoalInfo,
-  getPacificDate,
-  countWritingDaysForGoal
+  calculateDailyGoalInfo
 } from "./useStoryProgress";
 import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 import { LocalFsPathResolver } from "../services/localFs/LocalFsPathResolver";
@@ -71,9 +69,6 @@ async function readLocalJsonFile(
 export function useLocalStoryProgress(storyId: string | undefined) {
   const story = useYarnyStore((state) =>
     storyId ? state.entities.stories[storyId] : undefined
-  );
-  const project = useYarnyStore((state) =>
-    story ? state.entities.projects[story.projectId] : undefined
   );
   const snippets = useYarnyStore((state) =>
     storyId ? selectStorySnippets(state, storyId) : []

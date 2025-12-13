@@ -33,7 +33,7 @@ const handler = async (event) => {
         // Handle Google Docs differently
         if (fileMetadata.data.mimeType === "application/vnd.google-apps.document") {
             // Export Google Doc as plain text
-            const auth = drive._auth;
+            const auth = (drive)._auth;
             if (!auth) {
                 throw new Error("Drive client auth not available");
             }

@@ -1,4 +1,4 @@
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client, type Credentials } from "google-auth-library";
 import { google } from "googleapis";
 
 import { getAuthenticatedDriveClient, getTokens } from "./drive-client";
@@ -65,10 +65,13 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
         throw new Error("No tokens available for Google Docs API");
       }
       oauth2Client = new OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
-      oauth2Client.setCredentials({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token
-      });
+      const credentials: Credentials = {
+        access_token: tokens.access_token
+      };
+      if (tokens.refresh_token) {
+        credentials.refresh_token = tokens.refresh_token;
+      }
+      oauth2Client.setCredentials(credentials);
     }
 
     // Verify credentials
@@ -130,9 +133,14 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
     // Get current document structure
     const doc = await docs.documents.get({ documentId: gdocFileId });
     const bodyContent = doc.data.body?.content;
-    const endIndex = bodyContent && bodyContent.length > 0
-      ? (bodyContent[bodyContent.length - 1].endIndex || 2) - 1
-      : 1;
+    if (!bodyContent || bodyContent.length === 0) {
+      throw new Error("Document has no content");
+    }
+    const lastElement = bodyContent[bodyContent.length - 1];
+    if (!lastElement) {
+      throw new Error("Document content is empty");
+    }
+    const endIndex = (lastElement.endIndex || 2) - 1;
 
     // Delete existing content and insert new content
     const requests = [];

@@ -29,13 +29,19 @@ const handler = async (event) => {
         const query = folderId
             ? `'${folderId}' in parents and trashed=false`
             : "trashed=false";
-        const response = await drive.files.list({
+        const listParams = {
             q: query,
             fields: "nextPageToken, files(id, name, mimeType, modifiedTime, size, trashed)",
             pageSize: 100,
-            pageToken: pageToken || undefined,
             orderBy: "modifiedTime desc"
-        });
+        };
+        if (pageToken) {
+            listParams.pageToken = pageToken;
+        }
+        const response = await drive.files.list(listParams);
+        if (!response.data) {
+            throw new Error("Drive API returned no data");
+        }
         return (0, types_1.createSuccessResponse)(response.data);
     }
     catch (error) {

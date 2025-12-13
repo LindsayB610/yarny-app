@@ -54,23 +54,26 @@ const handler = async (event, context) => {
         }
         else {
             const tokens = await (0, drive_client_1.getTokens)(session.email);
-            if (!tokens || !tokens.access_token) {
+            if (!tokens?.access_token) {
                 throw new Error("No tokens available for Google Docs API");
             }
             oauth2Client = new google_auth_library_1.OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
-            oauth2Client.setCredentials({
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token
-            });
+            const credentials = {
+                access_token: tokens.access_token
+            };
+            if (tokens.refresh_token) {
+                credentials.refresh_token = tokens.refresh_token;
+            }
+            oauth2Client.setCredentials(credentials);
         }
         // Verify credentials
         if (!oauth2Client) {
             throw new Error("OAuth client not initialized for Google Docs");
         }
         let credentials = oauth2Client.credentials;
-        if (!credentials || !credentials.access_token) {
+        if (!credentials?.access_token) {
             const authCredentials = await oauth2Client.getAccessToken();
-            if (!authCredentials || !authCredentials.token) {
+            if (!authCredentials?.token) {
                 throw new Error("Failed to get access token");
             }
             credentials = oauth2Client.credentials;
@@ -118,9 +121,14 @@ const handler = async (event, context) => {
         // Get current document structure
         const doc = await docs.documents.get({ documentId: gdocFileId });
         const bodyContent = doc.data.body?.content;
-        const endIndex = bodyContent && bodyContent.length > 0
-            ? (bodyContent[bodyContent.length - 1].endIndex || 2) - 1
-            : 1;
+        if (!bodyContent || bodyContent.length === 0) {
+            throw new Error("Document has no content");
+        }
+        const lastElement = bodyContent[bodyContent.length - 1];
+        if (!lastElement) {
+            throw new Error("Document content is empty");
+        }
+        const endIndex = (lastElement.endIndex || 2) - 1;
         // Delete existing content and insert new content
         const requests = [];
         if (endIndex > 1) {

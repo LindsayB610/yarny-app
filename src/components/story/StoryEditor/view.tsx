@@ -79,14 +79,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   } = useAutoSaveConfig(activeSnippetForEditor, editorContent, story, activeChapter);
 
   // Auto-save for notes (similar to snippets)
-  const noteType = useMemo(() => {
-    if (!noteId) return undefined;
-    const path = window.location.pathname;
-    if (path.includes("/people/")) return "people";
-    if (path.includes("/places/")) return "places";
-    if (path.includes("/things/")) return "things";
-    return undefined;
-  }, [noteId]);
+  // Note: noteType was computed but not used - removed to fix lint error
 
   const noteFileName = useMemo(() => {
     if (!activeNoteForEditor || !editorContent) return undefined;
@@ -289,7 +282,9 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
       <EditorHeader
         title={displayTitle}
         statusText={statusText}
-        onSave={handleSave}
+        onSave={() => {
+          void handleSave();
+        }}
         isSaving={isAutoSaving || isNoteAutoSaving}
         isSyncing={isSyncing}
         hasUnsavedChanges={hasAnyUnsavedChanges}
@@ -303,7 +298,9 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
       <ConflictResolutionModal
         open={conflictModal.open}
         conflict={conflictModal.conflict}
-        onResolve={handleConflictResolve}
+        onResolve={(action) => {
+          void handleConflictResolve(action);
+        }}
       />
     </Stack>
   );

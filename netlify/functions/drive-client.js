@@ -153,13 +153,17 @@ async function getAuthenticatedDriveClient(email) {
             const newTokens = await refreshAccessToken(email, tokens.refresh_token);
             // Update stored tokens - preserve scope from original tokens
             // Refresh tokens maintain the original scopes, so new access token has same scopes
-            tokens = {
-                access_token: newTokens.access_token,
+            const updatedTokens = {
+                access_token: newTokens.access_token ?? null,
                 refresh_token: tokens.refresh_token, // Keep original refresh token
-                expiry_date: newTokens.expiry_date,
-                scope: tokens.scope || newTokens.scope // Preserve scope from original or use from refresh
+                expiry_date: newTokens.expiry_date ?? null
             };
-            console.log("Refreshed tokens - scope preserved:", tokens.scope);
+            const preservedScope = tokens.scope || newTokens.scope;
+            if (preservedScope) {
+                updatedTokens.scope = preservedScope;
+            }
+            console.log("Refreshed tokens - scope preserved:", updatedTokens.scope);
+            tokens = updatedTokens;
             await saveTokens(email, tokens);
         }
         catch (refreshError) {
@@ -205,10 +209,13 @@ async function getAuthenticatedDriveClient(email) {
     const oauth2Client = new google_auth_library_1.OAuth2Client(GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET);
     // Set credentials including access token and refresh token
     // The refresh token will automatically refresh the access token if it expires
-    oauth2Client.setCredentials({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token
-    });
+    const credentials = {
+        access_token: tokens.access_token ?? null
+    };
+    if (tokens.refresh_token) {
+        credentials.refresh_token = tokens.refresh_token;
+    }
+    oauth2Client.setCredentials(credentials);
     // Enable automatic token refresh
     oauth2Client.on("tokens", (newTokens) => {
         if (newTokens.access_token) {

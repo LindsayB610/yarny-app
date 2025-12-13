@@ -3,6 +3,7 @@ import {
   validateQueryParams
 } from "./contract";
 import { getAuthenticatedDriveClient } from "./drive-client";
+import type { drive_v3 } from "googleapis";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
@@ -49,14 +50,21 @@ export const handler: NetlifyFunctionHandler = async (
       ? `'${folderId}' in parents and trashed=false`
       : "trashed=false";
 
-    const response = await drive.files.list({
+    const listParams: drive_v3.Params$Resource$Files$List = {
       q: query,
       fields: "nextPageToken, files(id, name, mimeType, modifiedTime, size, trashed)",
       pageSize: 100,
-      pageToken: pageToken || undefined,
       orderBy: "modifiedTime desc"
-    });
+    };
+    if (pageToken) {
+      listParams.pageToken = pageToken;
+    }
 
+    const response = await drive.files.list(listParams);
+
+    if (!response.data) {
+      throw new Error("Drive API returned no data");
+    }
     return createSuccessResponse(response.data);
   } catch (error) {
     console.error("Drive list error:", error);

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 
-import { saveTokens, getAuthenticatedDriveClient } from "./drive-client";
+import { saveTokens, getAuthenticatedDriveClient, type DriveTokens } from "./drive-client";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,
@@ -187,6 +187,12 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   const [emailEncoded, randomState] = stateParts;
+  if (!emailEncoded) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Invalid state parameter format" })
+    };
+  }
   let email: string;
   try {
     email = Buffer.from(emailEncoded, "base64").toString("utf8");
@@ -210,8 +216,16 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   // Extract cookie value (handle potential attributes after the value)
-  const cookieState = stateCookie.split("=")[1].split(";")[0].trim();
-  if (cookieState !== randomState) {
+  const cookieValue = stateCookie.split("=")[1];
+  if (!cookieValue) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Invalid state cookie format" })
+    };
+  }
+  const cookieParts = cookieValue.split(";");
+  const cookieState = cookieParts[0];
+  if (!cookieState || cookieState.trim() !== randomState) {
     console.error("State mismatch. Expected:", randomState, "Got:", cookieState);
     return {
       statusCode: 400,
@@ -305,12 +319,20 @@ export const handler: NetlifyFunctionHandler = async (
     }
 
     // Save tokens (access_token, refresh_token, expiry_date, scope)
-    await saveTokens(email, {
-      access_token: tokens.access_token || undefined,
-      refresh_token: tokens.refresh_token || undefined,
-      expiry_date: tokens.expiry_date || undefined,
-      scope: tokens.scope || undefined // Store scope for verification
-    });
+    // With exactOptionalPropertyTypes, we can't set optional properties to undefined
+    const tokensToSave: DriveTokens = {
+      access_token: tokens.access_token ?? ""
+    };
+    if (tokens.refresh_token) {
+      tokensToSave.refresh_token = tokens.refresh_token;
+    }
+    if (tokens.expiry_date) {
+      tokensToSave.expiry_date = tokens.expiry_date;
+    }
+    if (tokens.scope) {
+      tokensToSave.scope = tokens.scope;
+    }
+    await saveTokens(email, tokensToSave);
 
     console.log("Tokens saved successfully for:", email);
 
