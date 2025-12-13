@@ -1,8 +1,27 @@
 # Local Save Feature Plan
 
 **Date**: 2025-11-08  
+**Last Updated**: 2025-01-XX  
+**Status**: ✅ Implemented  
 **Owners**: Frontend Platform (React migration)  
 **Goal**: Allow users to opt into saving their Yarny stories to a local folder that mirrors the existing Google Drive hierarchy, enabling offline work and unblock testing when Google Auth is unavailable.
+
+## Quick Status Summary
+
+✅ **Core feature is implemented and functional**
+- Settings UI available in Settings → Storage
+- File System Access API integration complete
+- Auto-save mirroring integrated into all mutation hooks
+- Comprehensive test coverage (unit/integration)
+- Error handling and permission management implemented
+
+⚠️ **Future enhancements possible**
+- E2E tests for local backup workflows
+- Feature flag for gradual rollout
+- Enhanced telemetry/event logging
+- Encryption option for sensitive projects
+
+See [Section 9: Implementation Status](#9-implementation-status) for detailed breakdown.
 
 ---
 
@@ -113,21 +132,118 @@ Fallback: If API unsupported, toggle is disabled with explanatory tooltip and li
 
 ## 8. Open Questions & Follow-Ups
 
-1. Browser support expectations? Chrome-only initially or require polyfill?
-2. Should local files be encrypted at rest?
-3. How do we handle large binary attachments (size cap? chunking?).
-4. Need UX copy review for settings explanations.
+1. ✅ **Browser support**: Currently Chrome/Edge-only (File System Access API). Progressive enhancement implemented - feature unavailable in unsupported browsers with clear messaging.
+2. ⚠️ **Encryption at rest**: Not implemented - files are stored as plain text (matches Drive behavior for readability).
+3. ⚠️ **Large binary attachments**: Basic attachment support exists via `writeAttachment()` but size limits/chunking not explicitly implemented.
+4. ✅ **UX copy**: Settings UI includes descriptive copy and error messaging.
+
+### Future Enhancements
+
+- Consider adding encryption option for sensitive projects
+- Add attachment size limits and chunking for large files
+- Implement app focus-based permission revalidation
+- Add E2E tests for local backup workflows
+- Consider feature flag for gradual rollout
 
 ---
 
-## 9. Deliverable Checklist
+## 9. Implementation Status
 
-- [ ] Capability detection & permission management utilities.
-- [ ] Local FS repository mirroring Drive structure.
-- [ ] Zustand store updates + persistence layer.
-- [ ] Settings UI with opt-in/out flow.
-- [ ] Auto-save and mutation pipelines writing to local FS.
-- [ ] Tests (unit/integration/e2e) and manual QA checklist.
-- [ ] Telemetry, error handling, and rollout flag.
-- [ ] Generate deterministic local test corpus via repository APIs for manual/Drive testing (align with `test-corpus/README.md` corpus requirements).
+### ✅ Completed Deliverables
+
+- [x] **Capability detection & permission management utilities**
+  - Implemented in `src/services/localFs/LocalFsCapability.ts`
+  - Feature detection via `isFileSystemAccessSupported()`
+  - Permission helpers: `requestDirectoryHandle()`, `ensureDirectoryPermission()`, `queryDirectoryPermission()`
+
+- [x] **Local FS repository mirroring Drive structure**
+  - Implemented in `src/services/localFs/LocalFsRepository.ts`
+  - Methods: `writeStoryDocument()`, `writeDataJson()`, `writeProjectJson()`, `writeGoalJson()`, `writeSnippet()`, `writeNote()`, `deleteEntry()`
+  - Path resolution in `src/services/localFs/LocalFsPathResolver.ts`
+  - Directory structure mirrors Drive layout (stories, notes, snippets, metadata, attachments)
+
+- [x] **Zustand store updates + persistence layer**
+  - Implemented in `src/store/localBackupStore.ts` and `src/store/localBackupProvider.tsx`
+  - State: `enabled`, `isSupported`, `permission`, `rootHandle`, `repository`, `error`, `lastSyncedAt`, `refreshStatus`
+  - Directory handle persisted via IndexedDB using `structuredClone`
+  - Enabled preference persisted in localStorage
+
+- [x] **Settings UI with opt-in/out flow**
+  - Implemented in `src/components/settings/StorageSettingsSection.tsx`
+  - Toggle for enabling/disabling backups
+  - "Choose Folder", "Open Folder", and "Disconnect" buttons
+  - Status indicators for last sync time, errors, and refresh status
+  - Support detection with fallback messaging
+
+- [x] **Auto-save and mutation pipelines writing to local FS**
+  - Mirror functions in `src/services/localFs/localBackupMirror.ts`
+  - `mirrorSnippetWrite()` - mirrors snippet content writes
+  - `mirrorStoryDocument()` - mirrors story document writes
+  - `refreshAllStoriesToLocal()` - full refresh of all stories
+  - Integrated into `useAutoSave.ts` hook
+  - Integrated into mutation hooks: `useStoryMutations.ts`, `useSnippetMutations.ts`, `useChapterMutations.ts`, `useNotesMutations.ts`
+  - Hook `useLocalBackups()` in `src/hooks/useLocalBackups.ts` provides UI integration
+
+- [x] **Tests (unit/integration)**
+  - `src/hooks/useLocalBackups.test.tsx` - Hook tests (260 lines, comprehensive coverage)
+  - `src/components/settings/StorageSettingsSection.test.tsx` - UI component tests
+  - `src/services/localFs/localBackupMirror.test.ts` - Mirror service tests
+  - `src/store/localBackupProvider.test.tsx` - Store provider tests
+  - `src/hooks/useAutoSave.persistence.test.tsx` - Auto-save integration tests include local backup mirroring
+
+- [x] **Error handling**
+  - Error state management in store
+  - Error messages displayed in UI
+  - Permission errors handled gracefully
+  - DOMException handling for file system errors
+
+### ⚠️ Partial Implementation
+
+- [ ] **E2E tests**
+  - Playwright E2E tests not yet implemented for local backup feature
+  - Manual QA documented but could be expanded
+
+- [ ] **Telemetry/Event logging**
+  - Error reporting exists but structured telemetry events may not be fully implemented
+  - Consider integrating with `useEventLogger` if available
+
+- [ ] **Feature flag**
+  - No environment-configurable toggle found (e.g., `REACT_APP_ENABLE_LOCAL_BACKUPS`)
+  - Feature is always available when browser supports File System Access API
+
+- [ ] **Test corpus generation**
+  - Deterministic local test corpus generation not explicitly implemented
+  - Could leverage repository APIs for test corpus creation
+
+### 📝 Implementation Notes
+
+- **File Structure**: The implementation follows the planned structure:
+  - `stories/{storyId}/` - Story documents, metadata, notes, snippets
+  - Mirrors Drive naming conventions via `LocalFsPathResolver`
+  - UTF-8 encoding with proper MIME types (text/markdown, application/json)
+
+- **Permission Lifecycle**: 
+  - Permissions checked before writes
+  - Permission state tracked in store
+  - Manual refresh available via `refreshPermission()`
+  - App focus-based permission revalidation could be added
+
+- **Integration Approach**:
+  - Mirroring happens after Drive writes (not in parallel)
+  - Errors are tracked but don't block Drive saves
+  - Manual refresh available via Settings UI
+
+## 10. Deliverable Checklist (Historical Reference)
+
+- [x] Capability detection & permission management utilities.
+- [x] Local FS repository mirroring Drive structure.
+- [x] Zustand store updates + persistence layer.
+- [x] Settings UI with opt-in/out flow.
+- [x] Auto-save and mutation pipelines writing to local FS.
+- [x] Tests (unit/integration) and manual QA checklist.
+- [x] Error handling and basic observability.
+- [ ] E2E tests (Playwright scenarios).
+- [ ] Telemetry/event logging integration.
+- [ ] Environment feature flag.
+- [ ] Generate deterministic local test corpus via repository APIs.
 

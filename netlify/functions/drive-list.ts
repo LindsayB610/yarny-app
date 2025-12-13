@@ -1,9 +1,10 @@
+import type { drive_v3 } from "googleapis";
+
 import {
   DriveListQueryParamsSchema,
   validateQueryParams
 } from "./contract";
 import { getAuthenticatedDriveClient } from "./drive-client";
-import type { drive_v3 } from "googleapis";
 import type {
   NetlifyFunctionEvent,
   NetlifyFunctionHandler,

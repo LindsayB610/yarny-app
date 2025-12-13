@@ -51,7 +51,7 @@ export function createSections(): SectionDefinition[] {
           <Alert severity="info" sx={{ mt: 2 }}>
             <Typography variant="body2" component="div">
               <strong>Local Projects:</strong> Yarny also supports local-first projects that edit files directly on your computer. 
-              Click "Import Local" on the Stories dashboard to import an existing novel project. See the{" "}
+              Click &quot;Import Local&quot; on the Stories dashboard to import an existing novel project. See the{" "}
               <RouterLink to="/docs/getting-started#local-projects" style={{ color: "inherit", textDecoration: "underline" }}>
                 Local Projects
               </RouterLink>{" "}
@@ -69,7 +69,7 @@ export function createSections(): SectionDefinition[] {
         <Stack spacing={3}>
           <Typography variant="body1">
             Yarny supports local-first projects that edit files directly on your computer. 
-            This is perfect for writers who want to use Yarny's editor while keeping their files in a local repository 
+            This is perfect for writers who want to use Yarny&apos;s editor while keeping their files in a local repository 
             (like Git) or editing with other tools like Cursor.
           </Typography>
           <Typography variant="h6">Project Structure</Typography>
@@ -147,7 +147,7 @@ backup-*
           </Typography>
           <Typography variant="h6">Setting Up with Cursor (or AI Assistants)</Typography>
           <Typography variant="body1">
-            If you're using Cursor or another AI assistant to organize your project, use this prompt:
+            If you&apos;re using Cursor or another AI assistant to organize your project, use this prompt:
           </Typography>
           <Box 
             component="pre" 
@@ -200,9 +200,9 @@ Please:
           />
           <Typography variant="h6">For AI Assistants & Cursor</Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            <strong>Understanding Yarny's Structure:</strong> When working with Yarny projects, it's important to understand how Yarny organizes content and how it maps to the file system.
+            <strong>Understanding Yarny&apos;s Structure:</strong> When working with Yarny projects, it&apos;s important to understand how Yarny organizes content and how it maps to the file system.
           </Typography>
-          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Yarny's Data Model</Typography>
+          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Yarny&apos;s Data Model</Typography>
           <Typography variant="body2" component="div" sx={{ mb: 2 }}>
             Yarny uses a hierarchical structure:
             <ul style={{ marginTop: "0.5rem", marginLeft: "1.5rem" }}>
