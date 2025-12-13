@@ -90,8 +90,12 @@ export function useReorderSnippetsMutation() {
     },
     onSuccess: () => {
       // Invalidate story queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory?.driveFileId] });
+      if (activeStory?.id) {
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+      }
+      if (activeStory?.driveFileId) {
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory.driveFileId] });
+      }
     }
   });
 }
@@ -296,8 +300,8 @@ export function useCreateSnippetMutation() {
         
         // Only invalidate Drive queries for Drive projects
         if (!isLocalProject) {
-          queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+          void queryClient.invalidateQueries({
             queryKey: ["drive", "story-progress", activeStory.driveFileId]
           });
         }
@@ -441,8 +445,8 @@ export function useDuplicateSnippetMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
       }
@@ -499,8 +503,8 @@ export function useDeleteSnippetMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
       }
@@ -588,8 +592,8 @@ export function useRenameSnippetMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
       }
@@ -756,8 +760,12 @@ export function useMoveSnippetToChapterMutation() {
     },
     onSuccess: () => {
       // Invalidate story queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory?.driveFileId] });
+      if (activeStory?.id) {
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+      }
+      if (activeStory?.driveFileId) {
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory.driveFileId] });
+      }
     }
   });
 }

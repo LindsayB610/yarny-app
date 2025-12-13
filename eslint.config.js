@@ -99,7 +99,6 @@ export default [
       "**/*.test.{ts,tsx}",
       "**/*.spec.{ts,tsx}",
       "tests/**/*.{ts,tsx}",
-      "tests/**/*.{ts}",
       "test-corpus/**/*.{js,ts,tsx}"
     ],
     rules: {

@@ -5,6 +5,7 @@ import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { useRouteError } from "react-router-dom";
 
 // Mock react-router-dom
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
@@ -38,7 +39,7 @@ describe("RouteErrorBoundary", () => {
     };
     vi.mocked(useRouteError).mockReturnValue(mockError as any);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     // Heading shows "Page Not Found" (capital N)
     expect(screen.getByText("Page Not Found")).toBeInTheDocument();
@@ -50,7 +51,7 @@ describe("RouteErrorBoundary", () => {
     const mockError = new Error("Something went wrong");
     vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     // Heading shows "Something went wrong"
     const headings = screen.getAllByText("Something went wrong");
@@ -65,9 +66,9 @@ describe("RouteErrorBoundary", () => {
 
   it("detects chunk load errors", () => {
     const mockError = new Error("Failed to fetch dynamically imported module");
-    vi.mocked(useRouteError).mockReturnValue(mockError);
+    void vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     expect(screen.getByText(/we published an update/i)).toBeInTheDocument();
   });
@@ -76,7 +77,7 @@ describe("RouteErrorBoundary", () => {
     const mockError = new Error("ChunkLoadError: Loading chunk failed");
     vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     expect(screen.getByText(/we published an update/i)).toBeInTheDocument();
   });
@@ -92,9 +93,9 @@ describe("RouteErrorBoundary", () => {
     } as any;
 
     const mockError = new Error("Failed to fetch dynamically imported module");
-    vi.mocked(useRouteError).mockReturnValue(mockError);
+    void vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     // Should set reload flag and call replace
     expect(sessionStorage.getItem("yarny_chunk_reload_attempted")).toBe("true");
@@ -116,9 +117,9 @@ describe("RouteErrorBoundary", () => {
     } as any;
 
     const mockError = new Error("Failed to fetch dynamically imported module");
-    vi.mocked(useRouteError).mockReturnValue(mockError);
+    void vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     // Should not call replace again
     expect(mockReplace).not.toHaveBeenCalled();
@@ -138,9 +139,9 @@ describe("RouteErrorBoundary", () => {
     } as any;
 
     const mockError = new Error("Failed to fetch dynamically imported module");
-    vi.mocked(useRouteError).mockReturnValue(mockError);
+    void vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     const reloadButton = screen.getByText(/reload page/i);
     await user.click(reloadButton);
@@ -166,7 +167,7 @@ describe("RouteErrorBoundary", () => {
     const mockError = new Error("Generic error");
     vi.mocked(useRouteError).mockReturnValue(mockError);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     const reloadButton = screen.getByText(/reload page/i);
     await user.click(reloadButton);
@@ -183,7 +184,7 @@ describe("RouteErrorBoundary", () => {
     };
     vi.mocked(useRouteError).mockReturnValue(mockError as any);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
   });
@@ -199,7 +200,7 @@ describe("RouteErrorBoundary", () => {
     
     vi.mocked(useRouteError).mockReturnValue(mockError as any);
 
-    render(<RouteErrorBoundary />);
+    void render(<RouteErrorBoundary />);
 
     // Check what's actually rendered - the component should detect this as a route error
     // and show "Page Not Found" for 404 status

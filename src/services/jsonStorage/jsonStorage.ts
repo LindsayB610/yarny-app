@@ -60,7 +60,7 @@ export async function findSnippetJsonFile(
  */
 export function invalidateFileIdCache(snippetId: string, parentFolderId: string): void {
   const queryClient = getQueryClient();
-  queryClient.invalidateQueries({
+  void queryClient.invalidateQueries({
     queryKey: ["snippet-json-file", snippetId, parentFolderId]
   });
 }

@@ -189,7 +189,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
             <IconButton
               size="small"
               color="primary"
-              onClick={() => handleCreateNote(noteType)}
+              onClick={() => void handleCreateNote(noteType)}
               aria-label={`Add new ${label}`}
               disabled={isCreateDisabled}
             >

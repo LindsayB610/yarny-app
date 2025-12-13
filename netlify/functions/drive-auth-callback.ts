@@ -340,7 +340,7 @@ export const handler: NetlifyFunctionHandler = async (
     // This saves a round trip when the user first lands on the stories page
     // We do this in the background and don't wait for it to complete
     // The folder will be created/retrieved on stories page load anyway
-    (async () => {
+    void (async () => {
       try {
         const drive = await getAuthenticatedDriveClient(email);
         const YARNY_STORIES_FOLDER = "Yarny Stories";

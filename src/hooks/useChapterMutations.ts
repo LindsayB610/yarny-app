@@ -223,11 +223,11 @@ export function useUpdateChapterColorMutation() {
           );
 
           setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStoryId] });
+            void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStoryId] });
           }, 750);
         } else {
           // For local projects, invalidate local projects query
-          queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
+          void queryClient.invalidateQueries({ queryKey: ["local", "projects"] });
         }
       }
     },
@@ -329,8 +329,8 @@ export function useReorderChaptersMutation() {
     },
     onSuccess: () => {
       // Invalidate story queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory?.driveFileId] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "story-progress", activeStory?.driveFileId] });
     }
   });
 }
@@ -491,11 +491,11 @@ export function useCreateChapterMutation() {
         
         // Only invalidate Drive queries for Drive projects
         if (!isLocalProject) {
-          queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+          void queryClient.invalidateQueries({
             queryKey: ["drive", "story-progress", activeStory.driveFileId]
           });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ["drive", "story-metadata", activeStory.driveFileId]
           });
         }
@@ -684,11 +684,11 @@ export function useDuplicateChapterMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-metadata", activeStory.driveFileId]
         });
       }
@@ -751,11 +751,11 @@ export function useDeleteChapterMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-metadata", activeStory.driveFileId]
         });
       }
@@ -813,8 +813,8 @@ export function useRenameChapterMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey: ["drive", "story", activeStory.id] });
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
       }

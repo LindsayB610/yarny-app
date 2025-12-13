@@ -166,7 +166,7 @@ export async function initializeStoryStructure(
 
   // Create data.json and Opening Scene doc in parallel
   try {
-    if (chapter1Folder && chapter1Folder.id) {
+    if (chapter1Folder?.id) {
       const [docResult] = await Promise.all([
         apiClient.writeDriveFile({
           fileName: "Opening Scene.doc",

@@ -104,17 +104,6 @@ async function getOrCreateDirectory(
 }
 
 /**
- * Extracts snippet name from filename (removes leading numbers and .md extension)
- * Example: "01-opening-scene.md" -> "opening-scene"
- */
-function extractSnippetName(fileName: string): string {
-  const withoutExt = fileName.replace(/\.md$/, "");
-  // Remove leading numbers and dashes: "01-opening-scene" -> "opening-scene"
-  const match = withoutExt.match(/^\d+-(.+)$/);
-  return match ? match[1] : withoutExt;
-}
-
-/**
  * Generates a numbered filename for a snippet
  * Example: order=0, name="opening-scene" -> "01-opening-scene.md"
  */
@@ -232,9 +221,6 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
         // Generate snippet ID from filename (remove .md extension)
         const snippetId = fileName.replace(/\.md$/, "");
         snippetIds.push(snippetId);
-
-        // Extract snippet name for display
-        const snippetName = extractSnippetName(fileName);
 
         snippets.push({
           id: snippetId,

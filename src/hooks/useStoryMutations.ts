@@ -65,18 +65,18 @@ export function useCreateStory() {
 
       return storyFolder;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data, _variables) => {
       // If storyFolder is null, it means we redirected for re-auth
       if (data === null) {
         return;
       }
 
       // Invalidate stories query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
 
       // Navigate to story editor - loader will redirect to first snippet
-      navigate(`/stories/${data.id}/snippets`);
+      void navigate(`/stories/${data.id}/snippets`);
     }
   });
 }
@@ -93,10 +93,10 @@ export function useDeleteStory() {
     },
     onSuccess: () => {
       // Invalidate queries to refresh the stories list
-      queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
-      queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "yarny-stories-folder"] });
       // Also invalidate progress queries for all stories
-      queryClient.invalidateQueries({ queryKey: ["drive", "story-progress"] });
+      void queryClient.invalidateQueries({ queryKey: ["drive", "story-progress"] });
     }
   });
 }
@@ -147,7 +147,7 @@ export function useUpdateStoryMetadataMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-metadata", activeStory.driveFileId]
         });
       }
@@ -185,10 +185,7 @@ export function useUpdateStoryGoalsMutation() {
       // Handle local projects
       if (isLocalProject) {
         // Try to get root handle from local backup store first, then fall back to persisted handle
-        let rootHandle = localBackupRootHandle;
-        if (!rootHandle) {
-          rootHandle = await getPersistedDirectoryHandle();
-        }
+        const rootHandle = localBackupRootHandle ?? await getPersistedDirectoryHandle();
         if (!rootHandle) {
           throw new Error("No directory handle found for local project. Please ensure local backups are enabled or re-import the project.");
         }
@@ -234,15 +231,15 @@ export function useUpdateStoryGoalsMutation() {
           parentFolderId: activeStory.driveFileId
         });
         await mirrorGoalJsonWrite(activeStory.id, goalContent);
-      } catch (error) {
-        console.warn("Failed to write goal.json (non-fatal):", error);
+      } catch (_error) {
+        console.warn("Failed to write goal.json (non-fatal):", _error);
       } finally {
         clearStoryProgress(activeStory.driveFileId);
       }
     },
     onSuccess: () => {
       if (activeStory) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: ["drive", "story-progress", activeStory.driveFileId]
         });
       }
