@@ -203,8 +203,8 @@ describe("RouteErrorBoundary", () => {
 
     // Check what's actually rendered - the component should detect this as a route error
     // and show "Page Not Found" for 404 status
-    const pageNotFound = screen.queryByText("Page Not Found");
-    const somethingWrong = screen.queryByText("Something went wrong");
+    const _pageNotFound = screen.queryByText("Page Not Found");
+    const _somethingWrong = screen.queryByText("Something went wrong");
     
     // Should show either "Page Not Found" (if recognized as route error) or fallback
     // The important part is that it shows the custom message

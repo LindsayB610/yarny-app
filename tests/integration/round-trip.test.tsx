@@ -298,9 +298,8 @@ vi.mock("@tiptap/react", async () => {
         "data-testid": "editor-content",
         contentEditable: true,
         className: "plain-text-editor",
-        suppressContentEditableWarning: true,
-        children: content
-      });
+        suppressContentEditableWarning: true
+      }, content);
     }
   };
 });
@@ -824,7 +823,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       let roundTripCount = 0;
       let savedContent = originalContent;
 
-      const storeProvider = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProvider = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProvider.__setSnippetContent(originalContent);
 
       vi.mocked(apiClient.readDriveFile).mockImplementation(async () => {
@@ -925,7 +924,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
     it("handles very large content (1MB+) in round-trip", async () => {
       const largeContent = "A".repeat(1_000_000) + "\n\n" + "B".repeat(500_000);
 
-      const storeProviderLarge = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderLarge = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderLarge.__setSnippetContent(largeContent);
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
@@ -959,7 +958,7 @@ Emoji: 🎉 🚀 📝 ✨`;
       let savedContent = "";
 
       // Set content in store BEFORE rendering
-      const storeProviderUnicode = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderUnicode = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderUnicode.__setSnippetContent(unicodeContent);
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
@@ -1016,7 +1015,7 @@ Emoji: 🎉 🚀 📝 ✨`;
     it("handles content with only whitespace", async () => {
       const whitespaceContent = "   \n\n   \t\t  \n\n   ";
 
-      const storeProviderWhitespace = await import("../../src/store/provider") as typeof import("../../src/store/provider") & { __setSnippetContent: (content: string) => void };
+      const storeProviderWhitespace = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
       storeProviderWhitespace.__setSnippetContent(whitespaceContent);
 
       vi.mocked(apiClient.readDriveFile).mockResolvedValue({
