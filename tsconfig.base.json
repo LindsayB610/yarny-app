@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    // --- Type safety ---
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
+
+    // --- Modules / ESM correctness ---
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    // Makes `import "some-module"` fail if it can't be resolved (avoids silent typos)
+    "noUncheckedSideEffectImports": true,
+
+    // --- Project hygiene ---
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  }
+}
+

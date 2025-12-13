@@ -1,18 +1,20 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    // --- Node.js runtime settings (emits JS) ---
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
+    "moduleResolution": "node",
     "outDir": "./netlify/functions",
     "rootDir": "./netlify/functions",
-    "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "types": ["node"]
+    "types": ["node"],
+    // Disable verbatimModuleSyntax for CommonJS output compatibility
+    // This is a documented exception: Netlify functions must emit CommonJS
+    "verbatimModuleSyntax": false
+    // Note: noEmit is not set here because this config emits JS
   },
   "include": ["netlify/functions/**/*.ts"],
   "exclude": ["node_modules", "dist"]

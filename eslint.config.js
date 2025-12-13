@@ -21,19 +21,19 @@ export default [
       "test-corpus/**",
       "playwright-report/**",
       "test-results/**",
-      "tests/**",
       "vitest.setup.ts",
       "*.config.js",
-      "*.config.ts",
       "*.config.cjs"
     ]
   },
+  js.configs.recommended,
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: ["./tsconfig.app.json", "./tsconfig.node.json", "./tsconfig.functions.json"],
+        project: ["./tsconfig.eslint.json"],
+        tsconfigRootDir: import.meta.dirname || process.cwd(),
         jsxPragma: "React",
         ecmaFeatures: {
           jsx: true
@@ -57,14 +57,19 @@ export default [
       }
     },
     rules: {
-      ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
+      // Note: recommended-type-checked rules are included via the configs above
+      // Individual typed rules are enabled below
       ...reactPlugin.configs.recommended.rules,
       ...jsxA11y.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       "no-undef": "off",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      // Typed linting rules (require type information)
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": "error",
       "import/order": [
         "error",
         {
@@ -93,7 +98,9 @@ export default [
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "react/display-name": "off",
       "import/order": "off",
-      "@typescript-eslint/ban-ts-comment": "off"
+      "@typescript-eslint/ban-ts-comment": "off",
+      // Allow floating promises in tests (test utilities often fire-and-forget)
+      "@typescript-eslint/no-floating-promises": "off"
     }
   }
 ];

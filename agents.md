@@ -195,6 +195,131 @@ Yarny supports both Google Drive projects and local-first projects. Local projec
 - Use `getPersistedDirectoryHandle()` and `persistDirectoryHandle()` for directory access
 - Test files: `importLocalProject.test.ts`, `loadLocalProject.test.ts`, `yarnyIgnore.test.ts`
 
+## TypeScript Production Standards
+
+**IMPORTANT**: All TypeScript code in this repository must follow production-grade type safety standards. These rules prevent expensive runtime bugs while keeping the codebase maintainable.
+
+### Non-Negotiable Standards
+
+1. **Strictness Enabled**: `strict: true` must be enabled in all tsconfig files
+2. **Critical Compiler Options** (must be enabled):
+   - `noUncheckedIndexedAccess: true` - Index access types include `undefined` unless proven otherwise
+   - `exactOptionalPropertyTypes: true` - Optional means "may be absent", not "present with value undefined"
+   - `useUnknownInCatchVariables: true` - Caught errors are `unknown` and must be narrowed
+   - `verbatimModuleSyntax: true` - Forces correct type-only imports/exports
+   - `isolatedModules: true` - Warns about patterns that break under single-file transpilers
+   - `moduleDetection: "force"` - Treats every file as a module
+   - `noUncheckedSideEffectImports: true` - Makes `import "some-module"` fail if it can't be resolved
+   - `forceConsistentCasingInFileNames: true` - Avoids import casing issues across platforms
+
+3. **Type Safety Rules**:
+   - **No `any` in app code** (except isolated, documented interop shims)
+   - **Treat boundaries as `unknown`** - All external inputs (fetch, localStorage, user input, third-party libs) must be validated before use
+   - **Use `satisfies` for config objects/maps** - Validates shape without losing inference
+   - **Prefer discriminated unions** for state machines and API responses
+   - **Index access must handle `undefined`** - With `noUncheckedIndexedAccess`, always check for undefined
+
+4. **Import Standards**:
+   - **Use `import type` for types** - Do not rely on import elision
+   - **Runtime imports**: `import { x } from "y"`
+   - **Type imports**: `import type { X } from "y"`
+
+5. **Async/Promise Rules**:
+   - **No floating promises** - Always `await`, `return`, `.catch`, or `void`
+   - **Intentional fire-and-forget**: `void telemetry.send(event);` (with comment explaining why)
+
+6. **Error Handling**:
+   - **Catch blocks use `unknown`** - Must narrow before use (enforced by `useUnknownInCatchVariables`)
+   - **Normalize errors early** - Convert `unknown` errors at boundaries into consistent `Error` shapes
+   - **Don't throw strings** - Use `Error` instances
+
+7. **ESLint Typed Rules** (required):
+   - Use `typescript-eslint` typed linting (`recommendedTypeChecked` + `projectService: true`)
+   - Enforce:
+     - `@typescript-eslint/consistent-type-imports` - Enforces `import type` usage
+     - `@typescript-eslint/no-floating-promises` - Flags unhandled promises
+     - `@typescript-eslint/no-misused-promises` - Catches async mistakes
+     - `@typescript-eslint/switch-exhaustiveness-check` - Ensures exhaustive union handling
+
+### TSConfig Structure
+
+The project uses a multi-config structure:
+- `tsconfig.base.json` - Shared compiler options (strictness, module rules, safety flags)
+- `tsconfig.json` - Root config with project references
+- `tsconfig.app.json` - App code (type-check only, `noEmit: true`)
+- `tsconfig.node.json` - Node tooling (vite.config, vitest.config, etc.)
+- `tsconfig.functions.json` - Netlify functions (emits JS)
+- `tsconfig.eslint.json` - Includes all files ESLint should type-check (src + tests + configs)
+
+### Coding Patterns
+
+#### Boundary Validation Pattern
+```typescript
+// Boundary: unknown input
+function handlePayload(payload: unknown) {
+  // Validate / narrow here (schema validation or custom guards)
+  const data = parsePayload(payload);
+  
+  // Domain logic only sees validated types
+  return doDomainWork(data);
+}
+```
+
+#### Discriminated Union Pattern
+```typescript
+type LoadState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: User }
+  | { status: "error"; error: AppError };
+
+function render(state: LoadState) {
+  switch (state.status) {
+    case "idle":
+      return null;
+    case "loading":
+      return "Loading...";
+    case "success":
+      return state.data.name;
+    case "error":
+      return state.error.message;
+  }
+}
+```
+
+#### Index Access Pattern (with noUncheckedIndexedAccess)
+```typescript
+const value = map[key];
+if (value === undefined) {
+  // handle missing
+  return;
+}
+// value is now proven to be defined
+```
+
+#### Satisfies Pattern for Config Objects
+```typescript
+type Route = "/home" | "/settings";
+
+const routes = {
+  "/home": { auth: false },
+  "/settings": { auth: true }
+} satisfies Record<Route, { auth: boolean }>;
+```
+
+### PR Review Checklist
+
+When reviewing TypeScript code, verify:
+- ✅ `strict: true` stays enabled
+- ✅ `verbatimModuleSyntax: true` + type-only imports where appropriate
+- ✅ `noUncheckedIndexedAccess` isn't bypassed with `!` unless there's a proof comment
+- ✅ No `any` at boundaries - Use `unknown` + validation/narrowing
+- ✅ `satisfies` used for config/maps where it improves safety
+- ✅ Optional properties aren't assigned `undefined` accidentally
+- ✅ No floating promises - intentional fire-and-forget uses `void`
+- ✅ Switches over unions stay exhaustive
+- ✅ Catch blocks treat errors as `unknown` and normalize
+
 ## Additional Notes
 
 - Vitest tests are configured in `vite.config.ts` under the `test` section
