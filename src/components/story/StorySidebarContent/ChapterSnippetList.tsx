@@ -15,6 +15,7 @@ interface ChapterSnippetListProps {
   registerElement: (snippetId: string, element: HTMLElement | null) => void;
   visibleSnippetIds?: string[];
   onSnippetMenuOpen?: (snippetId: string, event: MouseEvent<HTMLElement>) => void;
+  searchTerm: string;
 }
 
 export function ChapterSnippetList({
@@ -26,7 +27,8 @@ export function ChapterSnippetList({
   activeSnippetId,
   registerElement,
   visibleSnippetIds,
-  onSnippetMenuOpen
+  onSnippetMenuOpen,
+  searchTerm
 }: ChapterSnippetListProps): JSX.Element {
   const snippets = useYarnyStore((state) => selectSnippetsForChapter(state, chapterId));
 
@@ -43,8 +45,8 @@ export function ChapterSnippetList({
   const sortableSnippets: SortableSnippet[] = filteredSnippets.map((snippet) => {
     const content = snippet.content ?? "";
     const lines = content.split("\n");
-    const firstLine = lines[0] || "";
-    const title = firstLine.trim() || "Untitled";
+    const firstLine = lines[0] ?? "";
+    const title = firstLine.trim() || "Untitled"; // trim() can return empty string, || is correct here
     
     // Extract description: match original 2013 behavior
     // Get preview text from content, prioritizing continuation of first line or next line
@@ -70,7 +72,7 @@ export function ChapterSnippetList({
     return {
       id: snippet.id,
       title,
-      description: description || undefined,
+      description: description || undefined, // Empty string should become undefined, || is correct
       wordCount: content.split(/\s+/).filter((w) => w.length > 0).length
     };
   });
@@ -92,6 +94,7 @@ export function ChapterSnippetList({
           registerElement={registerElement}
           chapterColor={chapterColor}
           onMenuOpen={(event) => onSnippetMenuOpen?.(snippet.id, event)}
+          searchTerm={searchTerm}
         />
       )}
     />

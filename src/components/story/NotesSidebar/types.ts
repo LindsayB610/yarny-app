@@ -8,6 +8,7 @@ export interface NotesListProps {
   isReordering?: boolean;
   activeNoteId?: string;
   onNoteClick?: (noteType: NoteType, noteId: string) => void;
+  searchTerm: string;
 }
 
 export interface SortableNoteItemProps {
@@ -15,6 +16,7 @@ export interface SortableNoteItemProps {
   disabled?: boolean;
   isActive?: boolean;
   onClick?: () => void;
+  searchTerm: string;
 }
 
 export const NOTE_TYPE_LABELS: Record<NoteType, string> = {

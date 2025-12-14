@@ -1,12 +1,13 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DragIndicator } from "@mui/icons-material";
-import { ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Box, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useRef, type JSX, type CSSProperties } from "react";
 
+import { highlightSearchText } from "../../../utils/highlightSearch";
 import type { SortableNoteItemProps } from "./types";
 
-export function SortableNoteItem({ note, disabled, isActive, onClick }: SortableNoteItemProps): JSX.Element {
+export function SortableNoteItem({ note, disabled, isActive, onClick, searchTerm }: SortableNoteItemProps): JSX.Element {
   const {
     attributes,
     listeners,
@@ -24,6 +25,8 @@ export function SortableNoteItem({ note, disabled, isActive, onClick }: Sortable
     transform: CSS.Transform.toString(transform),
     transition
   };
+
+  const nameParts = highlightSearchText(note.name, searchTerm);
 
   return (
     <ListItem
@@ -79,7 +82,26 @@ export function SortableNoteItem({ note, disabled, isActive, onClick }: Sortable
       <ListItemText
         primary={
           <Typography component="span" variant="subtitle2" sx={{ fontWeight: 500 }}>
-            {note.name}
+            {nameParts.map((part, index) =>
+              part.highlight ? (
+                <Box
+                  key={index}
+                  component="span"
+                  sx={{
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 193, 7, 0.3)"
+                        : "rgba(255, 193, 7, 0.4)",
+                    color: "inherit",
+                    fontWeight: "bold"
+                  }}
+                >
+                  {part.text}
+                </Box>
+              ) : (
+                <span key={index}>{part.text}</span>
+              )
+            )}
           </Typography>
         }
       />

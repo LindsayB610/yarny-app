@@ -3,6 +3,7 @@ import { Box, IconButton, Typography } from "@mui/material";
 import { useEffect, useRef, type JSX, type MouseEvent } from "react";
 
 import { darkenColor, getReadableTextColor, getSoftVariant } from "../../../utils/contrastChecker";
+import { highlightSearchText } from "../../../utils/highlightSearch";
 
 interface SnippetItemProps {
   snippetId: string;
@@ -14,6 +15,7 @@ interface SnippetItemProps {
   registerElement: (snippetId: string, element: HTMLElement | null) => void;
   chapterColor: string;
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
+  searchTerm: string;
 }
 
 export function SnippetItem({
@@ -25,7 +27,8 @@ export function SnippetItem({
   onClick,
   registerElement,
   chapterColor,
-  onMenuOpen
+  onMenuOpen,
+  searchTerm
 }: SnippetItemProps): JSX.Element {
   const elementRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +46,9 @@ export function SnippetItem({
   const snippetActiveColor = darkenColor(softColor, 0.16);
   const snippetBorderColor = darkenColor(softColor, 0.2);
   const snippetTextColor = getReadableTextColor(softColor, { minimumRatio: 4 });
+
+  const titleParts = highlightSearchText(title, searchTerm);
+  const descriptionParts = description ? highlightSearchText(description, searchTerm) : null;
 
   return (
     <Box
@@ -78,7 +84,23 @@ export function SnippetItem({
             color: "inherit"
           }}
         >
-          {title}
+          {titleParts.map((part, index) =>
+            part.highlight ? (
+              <Box
+                key={index}
+                component="span"
+                sx={{
+                  bgcolor: darkenColor(chapterColor, 0.3),
+                  color: "inherit",
+                  fontWeight: "bold"
+                }}
+              >
+                {part.text}
+              </Box>
+            ) : (
+              <span key={index}>{part.text}</span>
+            )
+          )}
         </Typography>
         {wordCount !== undefined && (
           <Typography variant="caption" sx={{ color: snippetTextColor, opacity: 0.7 }}>
@@ -103,7 +125,7 @@ export function SnippetItem({
           <MoreVert fontSize="small" />
         </IconButton>
       </Box>
-      {description && (
+      {description && descriptionParts && (
         <Typography
           variant="caption"
           sx={{
@@ -116,7 +138,23 @@ export function SnippetItem({
             pl: 4 // Align with title text (icon + gap)
           }}
         >
-          {description}
+          {descriptionParts.map((part, index) =>
+            part.highlight ? (
+              <Box
+                key={index}
+                component="span"
+                sx={{
+                  bgcolor: darkenColor(chapterColor, 0.3),
+                  color: "inherit",
+                  fontWeight: "bold"
+                }}
+              >
+                {part.text}
+              </Box>
+            ) : (
+              <span key={index}>{part.text}</span>
+            )
+          )}
         </Typography>
       )}
     </Box>

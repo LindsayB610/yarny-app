@@ -20,6 +20,7 @@ interface ChapterItemProps {
   visibleSnippetIds?: string[];
   onSnippetMenuOpen?: (snippetId: string, event: MouseEvent<HTMLElement>) => void;
   isCreatingSnippet: boolean;
+  searchTerm: string;
 }
 
 export function ChapterItem({
@@ -35,9 +36,10 @@ export function ChapterItem({
   registerElement,
   visibleSnippetIds,
   onSnippetMenuOpen,
-  isCreatingSnippet
+  isCreatingSnippet,
+  searchTerm
 }: ChapterItemProps): JSX.Element {
-  const baseColor = chapter.color || "#3B82F6";
+  const baseColor = chapter.color ?? "#3B82F6";
   const headerTextColor = getReadableTextColor(baseColor);
   const headerHoverColor = darkenColor(baseColor, 0.1);
   const iconHoverColor =
@@ -132,6 +134,7 @@ export function ChapterItem({
             registerElement={registerElement}
             visibleSnippetIds={visibleSnippetIds}
             onSnippetMenuOpen={onSnippetMenuOpen}
+            searchTerm={searchTerm}
           />
         </Box>
       </Collapse>

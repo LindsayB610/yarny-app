@@ -148,6 +148,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
             isReordering={reorderNotesMutation.isPending}
             activeNoteId={noteTypeFromPath === "characters" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
+            searchTerm={searchTerm}
           />
         )
       },
@@ -177,6 +178,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
             isReordering={reorderNotesMutation.isPending}
             activeNoteId={noteTypeFromPath === "worldbuilding" && noteId ? noteId : undefined}
             onNoteClick={handleNoteClick}
+            searchTerm={searchTerm}
           />
         )
       }

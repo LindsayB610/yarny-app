@@ -217,6 +217,7 @@ export function StorySidebarContentView({
         visibleSnippetIds={visibleSnippetIds}
         onSnippetMenuOpen={handleSnippetMenuOpen}
         isCreatingSnippet={handlers.isCreatingSnippet}
+        searchTerm={searchTerm}
       />
     );
   };

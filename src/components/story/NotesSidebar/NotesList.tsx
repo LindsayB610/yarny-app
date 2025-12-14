@@ -29,7 +29,8 @@ export const NotesList = memo(function NotesList({
   onReorder,
   isReordering,
   activeNoteId,
-  onNoteClick
+  onNoteClick,
+  searchTerm
 }: NotesListProps): JSX.Element {
   const noteTypeLabel = noteType.charAt(0).toUpperCase() + noteType.slice(1);
   const [localNotes, setLocalNotes] = useState(notes);
@@ -132,6 +133,7 @@ export const NotesList = memo(function NotesList({
               disabled={isReordering}
               isActive={activeNoteId === note.id}
               onClick={() => onNoteClick?.(noteType, note.id)}
+              searchTerm={searchTerm}
             />
           ))}
         </List>
