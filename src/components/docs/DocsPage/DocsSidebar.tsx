@@ -34,21 +34,21 @@ export function DocsSidebar({
         pt: { md: 11 } // 88px header height (11 * 8px = 88px)
       }}
     >
-      <Box sx={{ px: 2, pb: 1 }}>
+      <Box sx={{ px: 1.5, pb: 0.75 }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 0.75,
             color: "rgba(255, 255, 255, 0.9)",
-            fontSize: "0.875rem",
+            fontSize: "0.8125rem",
             fontWeight: 500
           }}
         >
           <Box
             sx={{
-              width: 10,
-              height: 10,
+              width: 8,
+              height: 8,
               borderRadius: "50%",
               flexShrink: 0,
               backgroundColor:
@@ -74,8 +74,8 @@ export function DocsSidebar({
             variant="body2"
             sx={{
               color: "rgba(255, 255, 255, 0.9)",
-              fontSize: "0.875rem",
-              lineHeight: 1.4
+              fontSize: "0.8125rem",
+              lineHeight: 1.3
             }}
           >
             {uptimeStatus.label}
@@ -84,15 +84,18 @@ export function DocsSidebar({
       </Box>
       <Divider sx={{ borderColor: "rgba(148, 163, 184, 0.25)" }} />
       {category && (
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Box sx={{ px: 1.5, pt: 1.5, pb: 0.75 }}>
           <Button
             component={RouterLink}
             to="/docs"
-            startIcon={<NavigateNextIcon sx={{ transform: "rotate(180deg)" }} />}
+            startIcon={<NavigateNextIcon sx={{ transform: "rotate(180deg)", fontSize: "1rem" }} />}
             sx={{
               color: "rgba(255, 255, 255, 0.8)",
               textTransform: "none",
-              fontSize: "0.875rem",
+              fontSize: "0.8125rem",
+              py: 0.5,
+              px: 1,
+              minHeight: "auto",
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.05)",
                 color: "rgba(255, 255, 255, 1)"
@@ -107,28 +110,29 @@ export function DocsSidebar({
         sx={{
           flex: 1,
           overflowY: "auto",
-          px: 1,
-          py: 1
+          px: 0.75,
+          py: 0.5
         }}
       >
         {sectionGroups.map((group) => {
           const isActive = category === group.id;
           return (
-            <Box key={group.id || group.label} sx={{ mb: 2 }}>
+            <Box key={group.id || group.label} sx={{ mb: 1.25 }}>
               {category ? (
                 <ListSubheader
                   component="div"
                   disableSticky
                   sx={{
-                    lineHeight: 1.6,
+                    lineHeight: 1.4,
                     fontWeight: 600,
                     textTransform: "uppercase",
-                    letterSpacing: 0.6,
-                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    fontSize: "0.6875rem",
                     bgcolor: "transparent",
                     color: isActive ? "rgba(16, 185, 129, 1)" : "rgba(148, 163, 184, 0.9)",
-                    px: 2,
-                    pb: 0.5
+                    px: 1.5,
+                    pb: 0.375,
+                    pt: 0.5
                   }}
                 >
                   {group.label}
@@ -139,15 +143,16 @@ export function DocsSidebar({
                   to={`/docs/${group.id}`}
                   disableSticky
                   sx={{
-                    lineHeight: 1.6,
+                    lineHeight: 1.4,
                     fontWeight: 600,
                     textTransform: "uppercase",
-                    letterSpacing: 0.6,
-                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                    fontSize: "0.6875rem",
                     bgcolor: "transparent",
                     color: "rgba(148, 163, 184, 0.9)",
-                    px: 2,
-                    pb: 0.5,
+                    px: 1.5,
+                    pb: 0.375,
+                    pt: 0.5,
                     cursor: "pointer",
                     textDecoration: "none",
                     "&:hover": {
@@ -182,9 +187,11 @@ export function DocsSidebar({
                       }
                     }}
                     sx={{
-                      borderRadius: 2,
-                      mb: 0.5,
+                      borderRadius: 1.5,
+                      mb: 0.25,
+                      py: 0.5,
                       color: "rgba(255, 255, 255, 0.8)",
+                      fontSize: "0.8125rem",
                       "&:hover": {
                         bgcolor: "rgba(255, 255, 255, 0.05)",
                         color: "rgba(255, 255, 255, 1)"
@@ -193,13 +200,22 @@ export function DocsSidebar({
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: 32,
-                        color: "rgba(16, 185, 129, 1)"
+                        minWidth: 28,
+                        color: "rgba(16, 185, 129, 1)",
+                        "& svg": {
+                          fontSize: "1.125rem"
+                        }
                       }}
                     >
                       {section.icon}
                     </ListItemIcon>
-                    <ListItemText primary={section.title} />
+                    <ListItemText 
+                      primary={section.title}
+                      primaryTypographyProps={{
+                        fontSize: "0.8125rem",
+                        lineHeight: 1.3
+                      }}
+                    />
                   </ListItemButton>
                 );
               })}
