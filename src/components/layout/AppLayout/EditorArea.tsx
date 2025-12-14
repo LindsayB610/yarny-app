@@ -1,4 +1,4 @@
-import { Menu, Notes } from "@mui/icons-material";
+import { Menu, Notes, Search } from "@mui/icons-material";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import type { JSX } from "react";
 
@@ -12,6 +12,7 @@ interface EditorAreaProps {
   rightDrawerOpen: boolean;
   onLeftDrawerToggle: () => void;
   onRightDrawerToggle: () => void;
+  onGlobalSearchOpen: () => void;
   isLoading: boolean;
 }
 
@@ -21,6 +22,7 @@ export function EditorArea({
   rightDrawerOpen,
   onLeftDrawerToggle,
   onRightDrawerToggle,
+  onGlobalSearchOpen,
   isLoading
 }: EditorAreaProps): JSX.Element {
   return (
@@ -90,6 +92,34 @@ export function EditorArea({
             </Tooltip>
           </Box>
         </>
+      )}
+
+      {/* Global Search Button - Desktop */}
+      {!isMobile && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1200
+          }}
+        >
+          <Tooltip title="Search (⌘K or Ctrl+K)">
+            <IconButton
+              onClick={onGlobalSearchOpen}
+              size="small"
+              sx={{
+                bgcolor: "background.paper",
+                boxShadow: 2,
+                "&:hover": {
+                  bgcolor: "action.hover"
+                }
+              }}
+            >
+              <Search />
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
 
       <OfflineBanner />

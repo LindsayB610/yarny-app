@@ -34,6 +34,7 @@ export function useAppLayout() {
   const { isOnline } = useNetworkStatus();
   const [sidebarSearch, setSidebarSearch] = useState("");
   const [isResizing, setIsResizing] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   // Drawer state with persistence
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(() => {
@@ -135,7 +136,7 @@ export function useAppLayout() {
     }
   }, [storyData, upsertEntities]);
 
-  const hasActiveContent = Boolean(snippetId || noteId);
+  const hasActiveContent = Boolean(Boolean(snippetId) || Boolean(noteId));
   const showEditorLoading =
     !hasActiveContent &&
     Boolean(storyId) &&
@@ -204,7 +205,9 @@ export function useAppLayout() {
     handleRightResize,
     handleSnippetClick,
     snippetId,
-    showEditorLoading
+    showEditorLoading,
+    globalSearchOpen,
+    setGlobalSearchOpen
   };
 }
 

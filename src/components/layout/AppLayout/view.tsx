@@ -8,7 +8,9 @@ import { LeftDrawer } from "./LeftDrawer";
 import { RightDrawer } from "./RightDrawer";
 import { useAppLayout } from "./useAppLayout";
 
+import { GlobalSearchModal } from "@/components/search/GlobalSearchModal";
 import { EditorFooterContainer } from "@/components/story/EditorFooterContainer";
+import { useGlobalSearchShortcut } from "@/hooks/useGlobalSearchShortcut";
 import { useYarnyStore } from "@/store/provider";
 
 export function AppLayoutView(): JSX.Element {
@@ -29,8 +31,13 @@ export function AppLayoutView(): JSX.Element {
     handleRightResize,
     handleSnippetClick,
     snippetId,
-    showEditorLoading
+    showEditorLoading,
+    globalSearchOpen,
+    setGlobalSearchOpen
   } = useAppLayout();
+
+  // Handle keyboard shortcut for global search
+  useGlobalSearchShortcut(() => setGlobalSearchOpen(true));
 
   // Handle local project data from loader
   const loaderData = useLoaderData();
@@ -74,6 +81,7 @@ export function AppLayoutView(): JSX.Element {
           rightDrawerOpen={rightDrawerOpen}
           onLeftDrawerToggle={() => setLeftDrawerOpen(!leftDrawerOpen)}
           onRightDrawerToggle={() => setRightDrawerOpen(!rightDrawerOpen)}
+          onGlobalSearchOpen={() => setGlobalSearchOpen(true)}
           isLoading={showEditorLoading}
         />
 
@@ -98,6 +106,10 @@ export function AppLayoutView(): JSX.Element {
       >
         <EditorFooterContainer />
       </Box>
+      <GlobalSearchModal
+        open={globalSearchOpen}
+        onClose={() => setGlobalSearchOpen(false)}
+      />
     </Box>
   );
 }
