@@ -1,5 +1,5 @@
-import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { Add, ChevronLeft, ChevronRight, Search } from "@mui/icons-material";
+import { Box, IconButton, InputAdornment, TextField, Tooltip, Typography } from "@mui/material";
 import { useMemo, useState, useCallback, type JSX } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 
@@ -33,7 +33,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
     if (pathname.includes("/characters/")) return "characters";
     if (pathname.includes("/worldbuilding/")) return "worldbuilding";
     return undefined;
-  }, [location.pathname]);
+  }, [location]);
   
   // Use store notes if available, otherwise fall back to query
   const storeNotes = useYarnyStore((state) => 
@@ -47,6 +47,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
   const worldbuildingQuery = useNotesQuery(storyFolderId, "worldbuilding", Boolean(story) && !hasStoreNotes);
 
   const [activeTab, setActiveTab] = useState<NoteType>("characters");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const createNoteMutation = useCreateNoteMutation(storyFolderId);
   const reorderNotesMutation = useReorderNotesMutation(storyFolderId);
@@ -102,6 +103,22 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
     story ? selectNotesByKind(state, story.id, "worldbuilding") : []
   );
 
+  // Filter notes based on search term
+  const filterNotes = useCallback(
+    (notes: Array<{ id: string; name: string; content: string; modifiedTime: string }>) => {
+      if (!searchTerm.trim()) {
+        return notes;
+      }
+      const searchValue = searchTerm.trim().toLowerCase();
+      return notes.filter((note) => {
+        const nameMatch = note.name.toLowerCase().includes(searchValue);
+        const contentMatch = note.content.toLowerCase().includes(searchValue);
+        return nameMatch || contentMatch;
+      });
+    },
+    [searchTerm]
+  );
+
   const tabs: TabItem[] = useMemo(
     () => [
       {
@@ -109,19 +126,21 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         label: "Characters",
         content: (
           <NotesList
-            notes={hasStoreNotes && story 
-              ? charactersNotesFromStore.map(note => {
-                  const firstLine = note.content.split("\n")[0]?.trim();
-                  // Strip markdown headers (leading # and whitespace)
-                  const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
-                  return {
-                    id: note.id,
-                    name: nameWithoutMarkdown || "New Character",
-                    content: note.content,
-                    modifiedTime: note.updatedAt
-                  };
-                })
-              : (charactersQuery.data ?? [])}
+            notes={filterNotes(
+              hasStoreNotes && story 
+                ? charactersNotesFromStore.map(note => {
+                    const firstLine = note.content.split("\n")[0]?.trim();
+                    // Strip markdown headers (leading # and whitespace)
+                    const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() ?? "";
+                    return {
+                      id: note.id,
+                      name: nameWithoutMarkdown || "New Character",
+                      content: note.content,
+                      modifiedTime: note.updatedAt
+                    };
+                  })
+                : (charactersQuery.data ?? [])
+            )}
             isLoading={charactersQuery.isLoading}
             noteType="characters"
             onReorder={handleReorderNotes}
@@ -136,19 +155,21 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         label: "Worldbuilding",
         content: (
           <NotesList
-            notes={hasStoreNotes && story
-              ? worldbuildingNotesFromStore.map(note => {
-                  const firstLine = note.content.split("\n")[0]?.trim();
-                  // Strip markdown headers (leading # and whitespace)
-                  const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
-                  return {
-                    id: note.id,
-                    name: nameWithoutMarkdown || "New Worldbuilding",
-                    content: note.content,
-                    modifiedTime: note.updatedAt
-                  };
-                })
-              : (worldbuildingQuery.data ?? [])}
+            notes={filterNotes(
+              hasStoreNotes && story
+                ? worldbuildingNotesFromStore.map(note => {
+                    const firstLine = note.content.split("\n")[0]?.trim();
+                    // Strip markdown headers (leading # and whitespace)
+                    const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() ?? "";
+                    return {
+                      id: note.id,
+                      name: nameWithoutMarkdown || "New Worldbuilding",
+                      content: note.content,
+                      modifiedTime: note.updatedAt
+                    };
+                  })
+                : (worldbuildingQuery.data ?? [])
+            )}
             isLoading={worldbuildingQuery.isLoading}
             noteType="worldbuilding"
             onReorder={handleReorderNotes}
@@ -172,7 +193,8 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
       reorderNotesMutation.isPending,
       handleNoteClick,
       noteTypeFromPath,
-      noteId
+      noteId,
+      filterNotes
     ]
   );
 
@@ -283,7 +305,23 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
           </Tooltip>
         </Box>
       )}
-      <Box sx={{ flex: 1, overflow: "auto", p: 2, pt: Boolean(Boolean(onClose) || Boolean(onToggle)) ? 0 : 2 }}>
+      <Box sx={{ px: 2, pb: 2 }}>
+        <TextField
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Search notes..."
+          size="small"
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search fontSize="small" />
+              </InputAdornment>
+            )
+          }}
+        />
+      </Box>
+      <Box sx={{ flex: 1, overflow: "auto", p: 2, pt: 0 }}>
         <StoryTabs
           tabs={tabs}
           value={activeTab}
