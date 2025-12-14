@@ -103,11 +103,13 @@ Visit `http://localhost:8888`. The Drive auth callback must be registered in Goo
 ### Testing Commands
 
 - `npm run test` – unit + integration suites (Vitest, runs once and exits).
-- `npm run test:watch` – watch mode for development.
+- `npm run test:ui` – Run tests with Vitest UI (runs once and exits).
 - `npm run test:coverage` – HTML + text coverage reports.
 - `npm run test:e2e` – Playwright end-to-end tests (requires seeded Google credentials or MSW mocks).
 - `npm run test:all` – Run all tests (unit/integration + e2e) sequentially.
 - `npm run lint` / `npm run format` – ESLint and Prettier automation.
+
+**Note**: Watch mode is disabled to prevent CPU issues. All test commands run once and exit. See `agents.md` for details.
 
 ### Building & Deploying
 
@@ -150,7 +152,6 @@ Production builds publish the React SPA to `/` and continue to serve the vanilla
 - **Plans Folder** (`plans/`) – Architecture documentation, testing guides, and ongoing project plans:
   - `plans/GOOGLE_DRIVE_SETUP.md` – Step-by-step guide for creating Google Cloud OAuth clients, enabling APIs, configuring consent screens, and setting up credentials for both Sign-In and Drive server authentication.
   - `plans/LOCAL_PROJECT_SETUP.md` – Guide for organizing local novel projects to work with Yarny, including project structure, `.yarnyignore` patterns, and instructions for Cursor/AI assistants.
-  - `plans/DEPLOY.md` – Netlify deployment checklist and environment configuration tips (note: some content may be outdated; see main README for current deployment steps).
   - `plans/JSON_PRIMARY_ARCHITECTURE.md` – Complete architecture documentation for the JSON primary storage system, including design decisions, implementation phases, file structure, sync mechanisms, and conflict detection strategies.
   - `plans/JSON_PRIMARY_TESTING.md` – Testing strategies and guidelines specifically for JSON primary features, including unit tests, integration tests, and E2E scenarios.
   - `plans/LOCAL_SAVE_FEATURE_PLAN.md` – Implementation plan for local filesystem backups using the File System Access API, including architecture, user experience flows, and technical specifications.

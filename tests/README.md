@@ -29,18 +29,17 @@ tests/
 ### Unit & Integration Tests (Vitest)
 
 ```bash
-# Run all tests
+# Run all tests (runs once and exits)
 npm run test
 
-# Run in watch mode
-npm run test:watch
-
-# Run with UI
+# Run with UI (runs once and exits)
 npm run test:ui
 
 # Run with coverage
 npm run test:coverage
 ```
+
+**Note**: Watch mode is disabled to prevent CPU issues. All test commands run once and exit. See `agents.md` for details.
 
 ### End-to-End Tests (Playwright)
 
