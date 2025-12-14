@@ -19,6 +19,7 @@ import {
   useUpdateStoryGoalsMutation,
   useUpdateStoryMetadataMutation
 } from "../../hooks/useStoryMutations";
+import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
 
 interface StorySidebarHeaderProps {
@@ -39,7 +40,9 @@ export function StorySidebarHeader({
   // Skip Drive API calls for local projects
   const storyFolderId = story?.driveFileId;
   const isLocalProject = story?.id.startsWith("local-story_");
-  const { data: progress } = useStoryProgress(isLocalProject ? undefined : storyFolderId);
+  const driveProgress = useStoryProgress(isLocalProject ? undefined : storyFolderId);
+  const localProgress = useLocalStoryProgress(isLocalProject ? story?.id : undefined);
+  const progress = isLocalProject ? localProgress.data : driveProgress.data;
   const { data: metadata } = useStoryMetadata(isLocalProject ? undefined : storyFolderId);
   const updateGoalsMutation = useUpdateStoryGoalsMutation();
   const updateMetadataMutation = useUpdateStoryMetadataMutation();
@@ -48,8 +51,8 @@ export function StorySidebarHeader({
     return <></>;
   }
 
-  const wordGoal = progress?.wordGoal || 3000;
-  const totalWords = progress?.totalWords || 0;
+  const wordGoal = progress?.wordGoal ?? 3000;
+  const totalWords = progress?.totalWords ?? 0;
   const dailyInfo = progress?.dailyInfo;
 
   const handleSaveGoals = async (newWordGoal: number, goal?: Goal) => {

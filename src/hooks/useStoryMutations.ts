@@ -193,7 +193,7 @@ export function useUpdateStoryGoalsMutation() {
         // Read yarny-project.json
         const projectData = await readJsonFile<ProjectJson>(rootHandle, "yarny-project.json");
         const updatedProject: ProjectJson = {
-          ...(projectData || {}),
+          ...(projectData ?? {}),
           wordGoal,
           updatedAt: new Date().toISOString()
         };
@@ -239,9 +239,21 @@ export function useUpdateStoryGoalsMutation() {
     },
     onSuccess: () => {
       if (activeStory) {
-        void queryClient.invalidateQueries({
-          queryKey: ["drive", "story-progress", activeStory.driveFileId]
-        });
+        const isLocalProject = activeStory.id.startsWith("local-story_");
+        if (isLocalProject) {
+          // Invalidate local progress queries
+          void queryClient.invalidateQueries({
+            queryKey: ["local", "story-project", activeStory.id]
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ["local", "story-goal", activeStory.id]
+          });
+        } else {
+          // Invalidate Drive progress queries
+          void queryClient.invalidateQueries({
+            queryKey: ["drive", "story-progress", activeStory.driveFileId]
+          });
+        }
       }
     }
   });

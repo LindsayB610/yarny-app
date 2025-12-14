@@ -21,7 +21,9 @@ function calculateLocalStoryWordCount(snippets: Array<{ content: string }>): num
 }
 
 /**
- * Read a JSON file from local file system (backup mirror structure)
+ * Read a JSON file from local file system
+ * For local-first projects, files are in the root directory (yarny-project.json, goal.json)
+ * For local backup projects, files are in the backup mirror structure
  */
 async function readLocalJsonFile(
   storyId: string,
@@ -33,6 +35,25 @@ async function readLocalJsonFile(
       return undefined;
     }
 
+    // Try local-first project structure first (files at root level)
+    // Map project.json -> yarny-project.json for local-first projects
+    const localFirstFileName = fileName === "project.json" ? "yarny-project.json" : fileName;
+    try {
+      const fileHandle = await handle.getFileHandle(localFirstFileName);
+      const fileContent = await fileHandle.getFile();
+      const content = await fileContent.text();
+      if (content) {
+        return JSON.parse(content);
+      }
+      return undefined;
+    } catch (error) {
+      // If not found, try the backup mirror structure
+      if ((error as DOMException).name !== "NotFoundError") {
+        throw error; // Re-throw if it's not a "not found" error
+      }
+    }
+
+    // Try backup mirror structure
     const pathSegments =
       fileName === "project.json"
         ? LocalFsPathResolver.projectFile(storyId)

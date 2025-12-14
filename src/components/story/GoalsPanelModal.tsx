@@ -43,18 +43,18 @@ export function GoalsPanelModal({
   onSave
 }: GoalsPanelModalProps): JSX.Element {
   const [wordGoalInput, setWordGoalInput] = useState(String(initialWordGoal));
-  const [goalTarget, setGoalTarget] = useState(initialGoal?.target || 3000);
+  const [goalTarget, setGoalTarget] = useState(initialGoal?.target ?? 3000);
   const [goalDeadline, setGoalDeadline] = useState(
     initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : ""
   );
   const [goalMode, setGoalMode] = useState<"elastic" | "strict">(
-    initialGoal?.mode || "elastic"
+    initialGoal?.mode ?? "elastic"
   );
   const [writingDays, setWritingDays] = useState(
-    initialGoal?.writingDays || [true, true, true, true, true, true, true]
+    initialGoal?.writingDays ?? [true, true, true, true, true, true, true]
   );
   const [daysOff, setDaysOff] = useState(
-    initialGoal?.daysOff?.join(", ") || ""
+    initialGoal?.daysOff?.join(", ") ?? ""
   );
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,7 +95,7 @@ export function GoalsPanelModal({
       // Build goal metadata if deadline is provided
       const goalMetadata = goalDeadline
         ? {
-            target: goalTarget,
+            target: parsedWordGoal, // Use the parsed word goal from input, not the separate goalTarget state
             deadline: goalDeadline + "T23:59:59", // End of day
             writingDays,
             daysOff: daysOffArray,
@@ -114,11 +114,11 @@ export function GoalsPanelModal({
 
   const handleClose = () => {
     setWordGoalInput(String(initialWordGoal));
-    setGoalTarget(initialGoal?.target || 3000);
+    setGoalTarget(initialGoal?.target ?? 3000);
     setGoalDeadline(initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : "");
-    setGoalMode(initialGoal?.mode || "elastic");
-    setWritingDays(initialGoal?.writingDays || [true, true, true, true, true, true, true]);
-    setDaysOff(initialGoal?.daysOff?.join(", ") || "");
+    setGoalMode(initialGoal?.mode ?? "elastic");
+    setWritingDays(initialGoal?.writingDays ?? [true, true, true, true, true, true, true]);
+    setDaysOff(initialGoal?.daysOff?.join(", ") ?? "");
     setError(null);
     onClose();
   };
