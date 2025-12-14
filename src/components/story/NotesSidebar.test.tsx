@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, waitFor, act } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react"; // act unused
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { NotesSidebar } from "./NotesSidebar";
@@ -83,7 +83,7 @@ describe("NotesSidebar", () => {
     mockUseParams.mockReturnValue({ storyId: mockStory.id });
 
     // Mock useNotesQuery - needs to return different values based on noteType parameter
-    vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => {
+    vi.mocked(useNotesQuery).mockImplementation((_storyId, _noteType) => {
       return {
         data: mockNotes,
         isLoading: false,
@@ -160,7 +160,7 @@ describe("NotesSidebar", () => {
     }, { timeout: 2000 });
   });
 
-  it("displays note content preview", async () => {
+  it("displays note titles only (no content preview)", async () => {
     const initialState = {
       entities: {
         stories: {
@@ -176,8 +176,13 @@ describe("NotesSidebar", () => {
     renderWithProviders(<NotesSidebar />, { initialState });
 
     await waitFor(() => {
-      expect(screen.getByText("Main character")).toBeInTheDocument();
-      expect(screen.getByText("Supporting character")).toBeInTheDocument();
+      // Should show note titles
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+      expect(screen.getByText("Jane Smith")).toBeInTheDocument();
+      expect(screen.getByText("Bob Johnson")).toBeInTheDocument();
+      // Should NOT show content preview
+      expect(screen.queryByText("Main character")).not.toBeInTheDocument();
+      expect(screen.queryByText("Supporting character")).not.toBeInTheDocument();
     }, { timeout: 2000 });
   });
 
@@ -185,7 +190,7 @@ describe("NotesSidebar", () => {
     // Override beforeEach mock - return empty array for all note types
     // The component calls useNotesQuery twice (characters and worldbuilding)
     vi.mocked(useNotesQuery).mockReset();
-    vi.mocked(useNotesQuery).mockImplementation((storyId, noteType) => ({
+    vi.mocked(useNotesQuery).mockImplementation((_storyId, _noteType) => ({
       data: [],
       isLoading: false,
       isError: false,
@@ -514,7 +519,7 @@ describe("NotesSidebar", () => {
     expect(noteItems.length).toBeGreaterThan(0);
   });
 
-  it("displays empty content indicator", () => {
+  it("displays note title only (no content preview)", () => {
     const notesWithEmptyContent = [
       {
         id: "note-1",
@@ -547,7 +552,10 @@ describe("NotesSidebar", () => {
 
     renderWithProviders(<NotesSidebar />, { initialState });
 
-    expect(screen.getByText("(empty)")).toBeInTheDocument();
+    // Should show the note title
+    expect(screen.getByText("Empty Note")).toBeInTheDocument();
+    // Should NOT show the "(empty)" content indicator
+    expect(screen.queryByText("(empty)")).not.toBeInTheDocument();
   });
 });
 

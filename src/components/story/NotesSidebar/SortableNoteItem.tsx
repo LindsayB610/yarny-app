@@ -82,28 +82,6 @@ export function SortableNoteItem({ note, disabled, isActive, onClick }: Sortable
             {note.name}
           </Typography>
         }
-        secondary={
-          <>
-            <Typography
-              component="span"
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mt: 0.5,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
-              }}
-            >
-              {note.content || "(empty)"}
-            </Typography>
-            <Typography component="span" variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-              {new Date(note.modifiedTime).toLocaleDateString()}
-            </Typography>
-          </>
-        }
       />
     </ListItem>
   );
