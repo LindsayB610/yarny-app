@@ -42,12 +42,17 @@ export function useNotesQuery(
         const notes = await loadNotesFromLocal(rootHandle, noteType);
         
         // Convert Note[] (store type) to Note[] (query return type)
-        return notes.map(note => ({
-          id: note.id,
-          name: note.content.split("\n")[0]?.trim() || note.id, // Use first line as name
-          content: note.content,
-          modifiedTime: note.updatedAt
-        }));
+        return notes.map(note => {
+          const firstLine = note.content.split("\n")[0]?.trim();
+          // Strip markdown headers (leading # and whitespace)
+          const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
+          return {
+            id: note.id,
+            name: nameWithoutMarkdown || note.id, // Use first line as name, without markdown
+            content: note.content,
+            modifiedTime: note.updatedAt
+          };
+        });
       }
 
       // Drive project - use existing Drive API logic

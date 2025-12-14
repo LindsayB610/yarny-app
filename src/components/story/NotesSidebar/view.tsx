@@ -112,14 +112,16 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
             notes={hasStoreNotes && story 
               ? charactersNotesFromStore.map(note => {
                   const firstLine = note.content.split("\n")[0]?.trim();
+                  // Strip markdown headers (leading # and whitespace)
+                  const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
                   return {
                     id: note.id,
-                    name: firstLine || "New Character",
+                    name: nameWithoutMarkdown || "New Character",
                     content: note.content,
                     modifiedTime: note.updatedAt
                   };
                 })
-              : (charactersQuery.data || [])}
+              : (charactersQuery.data ?? [])}
             isLoading={charactersQuery.isLoading}
             noteType="characters"
             onReorder={handleReorderNotes}
@@ -137,14 +139,16 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
             notes={hasStoreNotes && story
               ? worldbuildingNotesFromStore.map(note => {
                   const firstLine = note.content.split("\n")[0]?.trim();
+                  // Strip markdown headers (leading # and whitespace)
+                  const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
                   return {
                     id: note.id,
-                    name: firstLine || "New Worldbuilding",
+                    name: nameWithoutMarkdown || "New Worldbuilding",
                     content: note.content,
                     modifiedTime: note.updatedAt
                   };
                 })
-              : (worldbuildingQuery.data || [])}
+              : (worldbuildingQuery.data ?? [])}
             isLoading={worldbuildingQuery.isLoading}
             noteType="worldbuilding"
             onReorder={handleReorderNotes}
@@ -279,7 +283,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
           </Tooltip>
         </Box>
       )}
-      <Box sx={{ flex: 1, overflow: "auto", p: 2, pt: (onClose || onToggle) ? 0 : 2 }}>
+      <Box sx={{ flex: 1, overflow: "auto", p: 2, pt: Boolean(Boolean(onClose) || Boolean(onToggle)) ? 0 : 2 }}>
         <StoryTabs
           tabs={tabs}
           value={activeTab}
