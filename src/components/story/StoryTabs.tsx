@@ -22,13 +22,13 @@ export function StoryTabs({
   onChange,
   renderActions
 }: StoryTabsProps): JSX.Element {
-  const [internalTab, setInternalTab] = useState(defaultTab || tabs[0]?.id || "");
+  const [internalTab, setInternalTab] = useState(defaultTab ?? tabs[0]?.id ?? "");
   const isControlled = typeof value === "string";
   const activeTab = isControlled ? (value ?? "") : internalTab;
 
   useEffect(() => {
     if (!isControlled) {
-      const nextDefault = defaultTab || tabs[0]?.id || "";
+      const nextDefault = defaultTab ?? tabs[0]?.id ?? "";
       if (nextDefault && !tabs.some((tab) => tab.id === internalTab)) {
         setInternalTab(nextDefault);
       }
@@ -69,7 +69,7 @@ export function StoryTabs({
             borderBottom: 1,
             borderColor: "divider",
             "& .MuiTab-root": {
-              color: "rgba(255, 255, 255, 0.7)",
+              color: "text.secondary",
               minWidth: 0,
               padding: "12px 16px",
               fontSize: "0.875rem",
