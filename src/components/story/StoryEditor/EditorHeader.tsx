@@ -59,14 +59,14 @@ export function EditorHeader({
       <Stack direction="row" spacing={1}>
         {!isLocalProject && <ManualSyncButton />}
         <Tooltip
-          title={isLocalProject ? "Local projects save automatically. Manual save is not available." : ""}
-          disableHoverListener={!isLocalProject}
+          title={isLocalProject && !hasUnsavedChanges ? "All changes are saved. Local projects also save automatically." : ""}
+          disableHoverListener={!(isLocalProject && !hasUnsavedChanges)}
         >
           <span>
             <Button
               onClick={onSave}
               variant="contained"
-              disabled={isLocalProject || isSaving || isSyncing || !canSave || !hasUnsavedChanges}
+              disabled={isSaving || isSyncing || !canSave || !hasUnsavedChanges}
               startIcon={isSaving || isSyncing ? <CircularProgress size={16} color="inherit" /> : undefined}
             >
               {isSyncing || isSaving 
