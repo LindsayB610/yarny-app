@@ -59,12 +59,14 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
   ensureAuthenticated();
   
   // Load local projects first (they don't require Drive auth)
+  // Use cached data if available, otherwise load from file system
   try {
-    const localProjects = await loadAllLocalProjects();
-    if (localProjects.projects.length > 0) {
-      // Store local projects in query cache so they're available to components
-      queryClient.setQueryData(["local", "projects"], localProjects);
-    }
+    const localProjects = await queryClient.ensureQueryData({
+      queryKey: ["local", "projects"],
+      queryFn: loadAllLocalProjects,
+      staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    });
+    // Data is now in cache and available to components
   } catch (error) {
     console.warn("[Loader] Failed to load local projects:", error);
     // Continue - local projects are optional
@@ -161,17 +163,17 @@ export async function editorLoader(
       // The component (AppLayout) will handle upserting via useDriveStoryQuery
       // Use the loaded data for validation
       projects = {
-        projects: localData.projects || [],
-        stories: localData.stories || [],
-        chapters: localData.chapters || [],
-        snippets: localData.snippets || []
+        projects: localData.projects ?? [],
+        stories: localData.stories ?? [],
+        chapters: localData.chapters ?? [],
+        snippets: localData.snippets ?? []
       };
       
       const story = localData.stories.find((s) => s.id === storyId);
       storyData = {
         stories: story ? [story] : [],
-        chapters: localData.chapters || [],
-        snippets: localData.snippets || [],
+        chapters: localData.chapters ?? [],
+        snippets: localData.snippets ?? [],
         notes: []
       };
     } else {

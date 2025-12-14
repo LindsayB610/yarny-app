@@ -28,13 +28,13 @@ export function StoriesPage(): JSX.Element {
   const allProjectsFromStore = useYarnyStore((state) => state.entities.projects);
   const upsertEntities = useYarnyStore((state) => state.upsertEntities);
   
-  // Load local projects on mount - always refetch to ensure we have the latest data
+  // Load local projects - use cached data from loader, only refetch if stale
   const { data: localProjectsData } = useQuery({
     queryKey: ["local", "projects"],
     queryFn: loadAllLocalProjects,
-    staleTime: 0, // Always consider stale so it refetches on mount
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: Infinity, // Keep in cache forever once loaded
-    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnMount: false, // Use cached data from loader instead of refetching
     refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false
   });
@@ -102,7 +102,7 @@ export function StoriesPage(): JSX.Element {
 
   // Combine Drive stories with local stories from store
   const allStories = useMemo(() => {
-    const driveStoriesList = driveStories || [];
+    const driveStoriesList = driveStories ?? [];
     
     // Convert local stories from store to StoryFolder format
     const localStories = allStoriesFromStore
@@ -122,8 +122,8 @@ export function StoriesPage(): JSX.Element {
     // Sort combined list by modified time (newest first)
     const combined = [...driveStoriesList, ...localStories];
     combined.sort((a, b) => {
-      const timeA = new Date(a.modifiedTime || 0).getTime();
-      const timeB = new Date(b.modifiedTime || 0).getTime();
+      const timeA = new Date(a.modifiedTime ?? 0).getTime();
+      const timeB = new Date(b.modifiedTime ?? 0).getTime();
       return timeB - timeA;
     });
 
