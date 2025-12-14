@@ -1,6 +1,7 @@
 import { parseYarnyIgnore } from "./yarnyIgnore";
 import { markdownToPlainText } from "../../editor/textExtraction";
-import type { Chapter, NormalizedPayload, Project, Snippet, Story } from "../../store/types";
+import type { Chapter, NormalizedPayload, Note, Project, Snippet, Story } from "../../store/types";
+import { loadNotesFromLocal } from "./loadNotesFromLocal";
 
 function generateId(prefix: string): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -162,6 +163,16 @@ export async function importLocalProject(
     updatedAt: nowIso
   };
 
+  // Load notes from Characters/ and Worldbuilding/ folders
+  const charactersNotes = await loadNotesFromLocal(rootHandle, "characters");
+  const worldbuildingNotes = await loadNotesFromLocal(rootHandle, "worldbuilding");
+  
+  // Set storyId on all notes
+  const allNotes: Note[] = [
+    ...charactersNotes.map(note => ({ ...note, storyId })),
+    ...worldbuildingNotes.map(note => ({ ...note, storyId }))
+  ];
+
   // Write metadata files
   await writeProjectMetadata(rootHandle, project);
   await writeStoryMetadata(rootHandle, story, chapters);
@@ -170,7 +181,8 @@ export async function importLocalProject(
     projects: [project],
     stories: [story],
     chapters,
-    snippets
+    snippets,
+    notes: allNotes
   };
 }
 
@@ -206,7 +218,8 @@ function createEmptyProject(
     projects: [project],
     stories: [story],
     chapters: [],
-    snippets: []
+    snippets: [],
+    notes: []
   };
 }
 

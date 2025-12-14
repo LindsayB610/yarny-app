@@ -84,6 +84,7 @@ export function ImportLocalProjectModal({
       // Invalidate queries to refresh the UI
       await queryClient.invalidateQueries({ queryKey: ["drive", "projects"] });
       await queryClient.invalidateQueries({ queryKey: ["drive", "stories"] });
+      await queryClient.invalidateQueries({ queryKey: ["notes"] });
       console.log("[ImportLocalProject] Queries invalidated");
 
       // Navigate to the imported story

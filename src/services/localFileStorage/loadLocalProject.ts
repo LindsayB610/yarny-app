@@ -1,5 +1,6 @@
 import type { NormalizedPayload, Project, Story } from "../../store/types";
 import { getPersistedDirectoryHandle } from "../localFs/LocalFsCapability";
+import { loadNotesFromLocal } from "./loadNotesFromLocal";
 
 /**
  * Loads a local project from a directory handle by reading yarny-project.json and yarny-story.json
@@ -50,7 +51,8 @@ export async function loadLocalProjectFromHandle(
           projects: [project],
           stories: [],
           chapters: [],
-          snippets: []
+          snippets: [],
+          notes: []
         };
       }
       throw error;
@@ -77,6 +79,16 @@ export async function loadLocalProjectFromHandle(
       storyData.id
     );
 
+    // Load notes from Characters/ and Worldbuilding/ folders
+    const charactersNotes = await loadNotesFromLocal(rootHandle, "characters");
+    const worldbuildingNotes = await loadNotesFromLocal(rootHandle, "worldbuilding");
+    
+    // Set storyId on all notes
+    const allNotes = [
+      ...charactersNotes.map(note => ({ ...note, storyId: storyData.id })),
+      ...worldbuildingNotes.map(note => ({ ...note, storyId: storyData.id }))
+    ];
+
     const project: Project = {
       id: projectData.id,
       name: projectData.name,
@@ -100,7 +112,8 @@ export async function loadLocalProjectFromHandle(
       projects: [project],
       stories: [story],
       chapters,
-      snippets
+      snippets,
+      notes: allNotes
     };
   } catch (error) {
     console.error("[loadLocalProject] Failed to load local project:", error);
@@ -144,7 +157,8 @@ export async function loadAllLocalProjects(): Promise<NormalizedPayload> {
     projects: [],
     stories: [],
     chapters: [],
-    snippets: []
+    snippets: [],
+    notes: []
   };
 }
 

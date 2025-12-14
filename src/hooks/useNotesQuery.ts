@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
+import { loadNotesFromLocal } from "../services/localFileStorage/loadNotesFromLocal";
 
 export interface Note {
   id: string;
@@ -26,6 +28,29 @@ export function useNotesQuery(
         return [];
       }
 
+      // Check if this is a local project
+      const isLocalProject = storyFolderId.startsWith("local-story_");
+      
+      if (isLocalProject) {
+        // Load notes from local file storage
+        const rootHandle = await getPersistedDirectoryHandle();
+        if (!rootHandle) {
+          console.warn("[useNotesQuery] No root handle found for local project");
+          return [];
+        }
+
+        const notes = await loadNotesFromLocal(rootHandle, noteType);
+        
+        // Convert Note[] (store type) to Note[] (query return type)
+        return notes.map(note => ({
+          id: note.id,
+          name: note.content.split("\n")[0]?.trim() || note.id, // Use first line as name
+          content: note.content,
+          modifiedTime: note.updatedAt
+        }));
+      }
+
+      // Drive project - use existing Drive API logic
       // First, find the notes folder (Characters or Worldbuilding)
       // Map noteType to folder name
       const folderNameMap: Record<NoteType, string> = {
@@ -65,7 +90,7 @@ export function useNotesQuery(
           const orderResponse = await apiClient.readDriveFile({
             fileId: orderFile.id
           });
-          const parsed = JSON.parse(orderResponse.content || "{}") as {
+          const parsed = JSON.parse(orderResponse.content ?? "{}") as {
             order?: unknown;
           };
           if (Array.isArray(parsed.order)) {
@@ -88,8 +113,8 @@ export function useNotesQuery(
             return {
               id: file.id,
               name: file.name.replace(/\.txt$/, "").replace(/\.md$/, ""), // Remove file extension
-              content: contentResponse.content || "",
-              modifiedTime: file.modifiedTime || new Date().toISOString()
+              content: contentResponse.content ?? "",
+              modifiedTime: file.modifiedTime ?? new Date().toISOString()
             };
           } catch (error) {
             console.error(`Error reading note file ${file.id}:`, error);
