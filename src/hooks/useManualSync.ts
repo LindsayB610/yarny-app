@@ -15,6 +15,7 @@ import { selectStorySnippets } from "../store/selectors";
 export function useManualSync() {
   const queryClient = useQueryClient();
   const story = useActiveStory();
+  const projects = useYarnyStore((state) => state.entities.projects);
   const snippets = useYarnyStore((state) => 
     story ? selectStorySnippets(state, story.id) : []
   );
@@ -23,6 +24,12 @@ export function useManualSync() {
     mutationFn: async () => {
       if (!story) {
         throw new Error("No active story");
+      }
+
+      // Check if this is a local project - sync only works for Drive projects
+      const project = projects[story.projectId];
+      if (project?.storageType === "local") {
+        throw new Error("Sync is not available for local projects. Local projects save automatically.");
       }
 
       const storyId = story.id;
@@ -50,8 +57,8 @@ export function useManualSync() {
         snippets?: Record<string, { driveFileId?: string; groupId?: string; chapterId?: string }>;
       };
 
-      const groups = parsedData.groups || {};
-      const snippetsData = parsedData.snippets || {};
+      const groups = parsedData.groups ?? {};
+      const snippetsData = parsedData.snippets ?? {};
 
       // Sync each snippet
       const syncPromises: Promise<void>[] = [];
@@ -62,9 +69,9 @@ export function useManualSync() {
           continue;
         }
 
-        const chapterId = snippetData.groupId || snippetData.chapterId;
+        const chapterId = snippetData.groupId ?? snippetData.chapterId;
         const chapter = chapterId ? groups[chapterId] : null;
-        const parentFolderId = chapter?.driveFolderId || storyId;
+        const parentFolderId = chapter?.driveFolderId ?? storyId;
 
         // Read JSON file
         const jsonData = await readSnippetJson(snippet.id, parentFolderId);

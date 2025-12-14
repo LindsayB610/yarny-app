@@ -1,4 +1,4 @@
-import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Stack, Tooltip, Typography } from "@mui/material";
 import type { JSX } from "react";
 
 import { ManualSyncButton } from "../ManualSyncButton";
@@ -58,18 +58,25 @@ export function EditorHeader({
       </Box>
       <Stack direction="row" spacing={1}>
         {!isLocalProject && <ManualSyncButton />}
-        <Button
-          onClick={onSave}
-          variant="contained"
-          disabled={isSaving || isSyncing || !canSave || !hasUnsavedChanges}
-          startIcon={isSaving || isSyncing ? <CircularProgress size={16} color="inherit" /> : undefined}
+        <Tooltip
+          title={isLocalProject ? "Local projects save automatically. Manual save is not available." : ""}
+          disableHoverListener={!isLocalProject}
         >
-          {isSyncing || isSaving 
-            ? "Saving..." 
-            : isLocalProject 
-              ? "Save to Local Files" 
-              : "Save to Drive"}
-        </Button>
+          <span>
+            <Button
+              onClick={onSave}
+              variant="contained"
+              disabled={isLocalProject || isSaving || isSyncing || !canSave || !hasUnsavedChanges}
+              startIcon={isSaving || isSyncing ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              {isSyncing || isSaving 
+                ? "Saving..." 
+                : isLocalProject 
+                  ? "Save to Local Files" 
+                  : "Save to Drive"}
+            </Button>
+          </span>
+        </Tooltip>
       </Stack>
     </Stack>
   );

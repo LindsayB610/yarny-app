@@ -117,8 +117,8 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   );
 
   // Combine saving states for both snippets and notes
-  const isSaving = isAutoSaving || isNoteAutoSaving || isSyncing;
-  const hasAnyUnsavedChanges = hasUnsavedChanges || hasNoteUnsavedChanges;
+  const isSaving = Boolean(isAutoSaving || isNoteAutoSaving || isSyncing);
+  const hasAnyUnsavedChanges = Boolean(hasUnsavedChanges || hasNoteUnsavedChanges);
   
   // Warn before page unload/refresh when saving
   useEffect(() => {
@@ -215,15 +215,22 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   const handleSave = async () => {
     if (isSnippet && activeSnippetForEditor?.id && (isLocalProject || activeChapter?.driveFolderId)) {
       try {
+        // Capture content at save time to ensure we mark the correct content as saved
+        const contentToSave = editorContent;
         await saveSnippet();
-        markContentAsSaved(editorContent);
+        // Mark as saved with the content that was actually saved
+        // The save hook also updates lastSavedContentRef in onSuccess, but this ensures
+        // immediate UI update and handles the case where content might have changed
+        markContentAsSaved(contentToSave);
       } catch (error) {
         console.error("Manual save failed:", error);
       }
     } else if (isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId) {
       try {
+        // Capture content at save time to ensure we mark the correct content as saved
+        const contentToSave = editorContent;
         await saveNote();
-        markNoteAsSaved(editorContent);
+        markNoteAsSaved(contentToSave);
       } catch (error) {
         console.error("Note save failed:", error);
       }
@@ -285,12 +292,12 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
         onSave={() => {
           void handleSave();
         }}
-        isSaving={isAutoSaving || isNoteAutoSaving}
+        isSaving={Boolean(isAutoSaving || isNoteAutoSaving)}
         isSyncing={isSyncing}
         hasUnsavedChanges={hasAnyUnsavedChanges}
         canSave={Boolean(
-          (isSnippet && activeSnippetForEditor?.id && (isLocalProject || activeChapter?.driveFolderId)) ||
-          (isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId)
+          Boolean(isSnippet && activeSnippetForEditor?.id && Boolean(isLocalProject || activeChapter?.driveFolderId)) ||
+          Boolean(isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId)
         )}
         isLocalProject={isLocalProject}
       />
