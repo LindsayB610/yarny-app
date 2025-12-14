@@ -282,7 +282,9 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
         ? "Unsaved changes"
         : lastSyncedAt
           ? `Last saved ${new Date(lastSyncedAt).toLocaleString()}`
-          : "Not yet saved";
+          : activeContent?.updatedAt
+            ? `Last saved ${new Date(activeContent.updatedAt).toLocaleString()}`
+            : "Not yet saved";
 
   return (
     <Stack spacing={3} sx={{ height: "100%" }}>

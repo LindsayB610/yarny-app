@@ -134,7 +134,9 @@ export function NoteEditorView(): JSX.Element {
       ? "Unsaved changes"
       : lastSavedAt
         ? `Last saved ${new Date(lastSavedAt).toLocaleString()}`
-        : "Not yet saved";
+        : note?.updatedAt
+          ? `Last saved ${new Date(note.updatedAt).toLocaleString()}`
+          : "Not yet saved";
 
   const handleManualSave = () => {
     if (!story || !activeNote || !note) {
