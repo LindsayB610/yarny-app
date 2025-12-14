@@ -33,7 +33,8 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
     if (pathname.includes("/characters/")) return "characters";
     if (pathname.includes("/worldbuilding/")) return "worldbuilding";
     return undefined;
-  }, [location]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
   
   // Use store notes if available, otherwise fall back to query
   const storeNotes = useYarnyStore((state) => 
@@ -282,7 +283,7 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
       }}
     >
       {onToggle && (
-        <Box sx={{ p: 2, pb: 1, display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{ p: 2, pb: 1, display: "flex", justifyContent: "flex-start" }}>
           <Tooltip title="Collapse notes">
             <IconButton
               onClick={onToggle}
@@ -294,13 +295,13 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
         </Box>
       )}
       {onClose && !onToggle && (
-        <Box sx={{ p: 2, pb: 1, display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{ p: 2, pb: 1, display: "flex", justifyContent: "flex-start" }}>
           <Tooltip title="Close notes">
             <IconButton
               onClick={onClose}
               size="small"
             >
-              <ChevronLeft fontSize="small" />
+              <ChevronRight fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
