@@ -48,10 +48,13 @@ export function useCreateStory() {
         // Check if this is a scope issue that requires re-authorization
         if (error instanceof Error) {
           const scopedError = error as Error & { code?: string; requiresReauth?: boolean };
-          const requiresReauth =
+          // Logical OR for truthy check (not default assignment)
+          const requiresReauth = Boolean(
             scopedError.code === "MISSING_DOCS_SCOPE" ||
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             scopedError.requiresReauth ||
-            scopedError.message.includes("MISSING_DOCS_SCOPE");
+            scopedError.message.includes("MISSING_DOCS_SCOPE")
+          );
           if (requiresReauth) {
             // Redirect to Drive auth
             window.location.href = "/.netlify/functions/drive-auth";

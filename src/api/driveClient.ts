@@ -86,7 +86,7 @@ export const createDriveClient = (): DriveClient => ({
         (file) => file.mimeType === "application/vnd.google-apps.folder" && !file.trashed
       );
 
-      const projectId = yarnyFolder.id || "yarny-stories";
+      const projectId = yarnyFolder.id ?? "yarny-stories";
       const stories: Story[] = storyFolders.map((folder) => {
         const updatedAt = folder.modifiedTime ?? new Date().toISOString();
         return {
@@ -134,7 +134,7 @@ export const createDriveClient = (): DriveClient => ({
           if (projectContent.content) {
             projectMetadata = JSON.parse(projectContent.content) as Record<string, unknown>;
             const name = extractStoryTitleFromMetadata(projectMetadata);
-            storyTitle = name || storyTitle;
+            storyTitle = name ?? storyTitle;
             groupOrder = extractGroupOrderFromMetadata(projectMetadata) ?? groupOrder;
           }
         } catch (projectError) {
@@ -244,7 +244,7 @@ export const createDriveClient = (): DriveClient => ({
             : chapter?.snippetIds?.indexOf(snippetId) ?? 0;
 
         // Determine parent folder for JSON file lookup
-        const parentFolderId = chapter?.driveFolderId || storyId;
+        const parentFolderId = chapter?.driveFolderId ?? storyId;
 
         // Try to read from JSON file first (JSON primary)
         let snippetContent = "";
@@ -282,7 +282,7 @@ export const createDriveClient = (): DriveClient => ({
         }
 
         // Use gdocFileId from JSON file if available, otherwise fall back to data.json
-        const effectiveDriveFileId = jsonGdocFileId || 
+        const effectiveDriveFileId = jsonGdocFileId ?? 
           (typeof snippet.driveFileId === "string" ? snippet.driveFileId : undefined);
 
         snippets.push({
@@ -303,7 +303,7 @@ export const createDriveClient = (): DriveClient => ({
         nowIso;
 
       const projectId =
-        (typeof projectMetadata.projectId === "string" && projectMetadata.projectId) ||
+        (typeof projectMetadata.projectId === "string" && projectMetadata.projectId) ??
         `project-${storyId}`;
 
       const story: Story = {
@@ -366,7 +366,7 @@ export const createDriveClient = (): DriveClient => ({
           if (orderFile?.id) {
             try {
               const orderResponse = await apiClient.readDriveFile({ fileId: orderFile.id });
-              const parsed = JSON.parse(orderResponse.content || "{}") as { order?: unknown };
+              const parsed = JSON.parse(orderResponse.content ?? "{}") as { order?: unknown };
               if (Array.isArray(parsed.order)) {
                 noteOrder = parsed.order.filter((id): id is string => typeof id === "string");
               }
@@ -393,9 +393,9 @@ export const createDriveClient = (): DriveClient => ({
                 storyId,
                 kind,
                 order: noteOrderValue,
-                content: contentResponse.content || "",
+                content: contentResponse.content ?? "",
                 driveFileId: file.id,
-                updatedAt: file.modifiedTime || nowIso
+                updatedAt: file.modifiedTime ?? nowIso
               });
             } catch (error) {
               console.error(`Error reading note file ${file.id}:`, error);
@@ -419,8 +419,8 @@ export const createDriveClient = (): DriveClient => ({
           } else {
             // Sort by name if no order file
             folderNotes.sort((a, b) => {
-              const nameA = a.content.split("\n")[0] || a.id;
-              const nameB = b.content.split("\n")[0] || b.id;
+              const nameA = a.content.split("\n")[0] ?? a.id;
+              const nameB = b.content.split("\n")[0] ?? b.id;
               return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
             });
           }

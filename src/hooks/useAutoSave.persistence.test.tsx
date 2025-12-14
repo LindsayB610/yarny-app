@@ -74,7 +74,7 @@ describe("useAutoSave - Session Persistence", () => {
         wasOffline: true 
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -96,7 +96,7 @@ describe("useAutoSave - Session Persistence", () => {
       await vi.advanceTimersByTimeAsync(150);
 
       const queued = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued.length).toBeGreaterThan(0);
       expect(queued[0].fileId).toBe("file-1");
@@ -111,7 +111,7 @@ describe("useAutoSave - Session Persistence", () => {
         wasOffline: true 
       });
 
-      const { result: result1, rerender: rerender1 } = renderHook(
+      const { rerender: rerender1 } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -128,11 +128,11 @@ describe("useAutoSave - Session Persistence", () => {
       await vi.advanceTimersByTimeAsync(150);
 
       const queued1 = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued1.length).toBeGreaterThan(0);
 
-      const { result: result2, rerender: rerender2 } = renderHook(
+      const { rerender: rerender2 } = renderHook(
         ({ content }) =>
           useAutoSave("file-2", content, {
             enabled: true,
@@ -149,7 +149,7 @@ describe("useAutoSave - Session Persistence", () => {
       await vi.advanceTimersByTimeAsync(150);
 
       const queued2 = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued2.length).toBeGreaterThanOrEqual(1);
     });
@@ -229,7 +229,7 @@ describe("useAutoSave - Session Persistence", () => {
 
       // Verify persistence
       const restored = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(restored).toHaveLength(2);
       expect(restored[0].fileId).toBe("file-1");
@@ -246,7 +246,7 @@ describe("useAutoSave - Session Persistence", () => {
         wasOffline: true 
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -269,7 +269,7 @@ describe("useAutoSave - Session Persistence", () => {
       const queued = localStorage.getItem("yarny_queued_saves");
       expect(queued).toBeDefined();
       // Should be valid JSON now (either empty array or array with new save)
-      const parsed = JSON.parse(queued || "[]");
+      const parsed = JSON.parse(queued ?? "[]");
       expect(Array.isArray(parsed)).toBe(true);
     });
   });
@@ -282,7 +282,7 @@ describe("useAutoSave - Session Persistence", () => {
         wasOffline: false 
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -307,7 +307,7 @@ describe("useAutoSave - Session Persistence", () => {
 
       // Check that save was queued
       const queued = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued.length).toBeGreaterThan(0);
       expect(queued[0].fileId).toBe("file-1");
@@ -326,7 +326,7 @@ describe("useAutoSave - Session Persistence", () => {
         modifiedTime: new Date().toISOString()
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -360,7 +360,7 @@ describe("useAutoSave - Session Persistence", () => {
 
       // Should not queue save since content is already saved
       const queued = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued.length).toBe(0);
     });
@@ -385,7 +385,7 @@ describe("useAutoSave - Session Persistence", () => {
         modifiedTime: new Date().toISOString()
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -437,7 +437,7 @@ describe("useAutoSave - Session Persistence", () => {
         wasOffline: true 
       });
 
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -467,7 +467,7 @@ describe("useAutoSave - Session Persistence", () => {
 
       // Check that save was queued
       const queued = JSON.parse(
-        localStorage.getItem("yarny_queued_saves") || "[]"
+        localStorage.getItem("yarny_queued_saves") ?? "[]"
       );
       expect(queued.length).toBeGreaterThan(0);
       expect(queued[0].fileId).toBe("file-1");

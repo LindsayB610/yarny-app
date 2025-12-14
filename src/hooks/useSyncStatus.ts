@@ -56,11 +56,11 @@ export function useSyncStatus(): {
     if (syncError) {
       setStatus("failed");
       setErrorMessage(syncError);
-      setLastSyncedAt(lastSyncTime || undefined);
+      setLastSyncedAt(lastSyncTime ?? undefined);
     } else if (queued.length > 0) {
       setStatus("pending");
       setErrorMessage(undefined);
-      setLastSyncedAt(lastSyncTime || undefined);
+      setLastSyncedAt(lastSyncTime ?? undefined);
     } else if (lastSyncTime) {
       setStatus("synced");
       setErrorMessage(undefined);

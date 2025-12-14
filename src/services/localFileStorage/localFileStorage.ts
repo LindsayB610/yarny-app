@@ -193,9 +193,9 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       }>;
     }>(rootHandle, "yarny-story.json");
 
-    const projectId = projectData?.id || storyId;
-    const projectName = projectData?.name || rootHandle.name;
-    const storyTitle = storyData?.title || rootHandle.name;
+    const projectId = projectData?.id ?? storyId;
+    const projectName = projectData?.name ?? rootHandle.name;
+    const storyTitle = storyData?.title ?? rootHandle.name;
 
     // Scan chapters from drafts/ directory
     const chapterEntries = await scanChapters(rootHandle);
@@ -228,13 +228,13 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
           chapterId,
           order: snippetIndex,
           content: markdownToPlainText(content),
-          updatedAt: storyData?.updatedAt || nowIso
+          updatedAt: storyData?.updatedAt ?? nowIso
         });
       }
 
         // Get color from metadata if available
         const chapterMetadata = storyData?.chapters?.find((ch) => ch.id === chapterId);
-        const defaultColor = chapterMetadata?.color || "#3B82F6"; // Default blue if not set
+        const defaultColor = chapterMetadata?.color ?? "#3B82F6"; // Default blue if not set
         
         chapters.push({
           id: chapterId,
@@ -244,7 +244,7 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
           order: chapterIndex,
           snippetIds,
           driveFolderId: "", // Not used for local projects
-          updatedAt: storyData?.updatedAt || nowIso
+          updatedAt: storyData?.updatedAt ?? nowIso
         });
     }
 
@@ -263,7 +263,7 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       name: projectName,
       driveFolderId: "", // Not used for local projects
       storyIds: [storyId],
-      updatedAt: projectData?.updatedAt || nowIso,
+      updatedAt: projectData?.updatedAt ?? nowIso,
       storageType: "local",
       localPath: rootHandle.name
     };
@@ -274,7 +274,7 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       title: storyTitle,
       driveFileId: "", // Not used for local projects
       chapterIds,
-      updatedAt: storyData?.updatedAt || nowIso
+      updatedAt: storyData?.updatedAt ?? nowIso
     };
 
     return {
@@ -343,9 +343,9 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       throw new Error("Story metadata not found");
     }
 
-    const existingChapters = storyData.chapters || [];
+    const existingChapters = storyData.chapters ?? [];
     const chapterNumber = existingChapters.length + 1;
-    const chapterTitle = title?.trim() || `Chapter ${chapterNumber}`;
+    const chapterTitle = title?.trim() ?? `Chapter ${chapterNumber}`;
     const chapterId = `chapter-${chapterNumber}`;
 
     // Create chapter folder
@@ -407,14 +407,14 @@ export const createLocalFileStorage = (): LocalFileStorage => ({
       throw new Error("Story metadata not found");
     }
 
-    const chapters = storyData.chapters || [];
+    const chapters = storyData.chapters ?? [];
     const chapter = chapters.find((ch) => ch.id === chapterId);
     if (!chapter) {
       throw new Error(`Chapter ${chapterId} not found`);
     }
 
     const existingSnippetCount = chapter.snippetIds.length;
-    const snippetTitle = title?.trim() || `Snippet ${existingSnippetCount + 1}`;
+    const snippetTitle = title?.trim() ?? `Snippet ${existingSnippetCount + 1}`;
     const snippetOrder = existingSnippetCount;
     
     // Generate filename

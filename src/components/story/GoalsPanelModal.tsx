@@ -43,7 +43,6 @@ export function GoalsPanelModal({
   onSave
 }: GoalsPanelModalProps): JSX.Element {
   const [wordGoalInput, setWordGoalInput] = useState(String(initialWordGoal));
-  const [goalTarget, setGoalTarget] = useState(initialGoal?.target ?? 3000);
   const [goalDeadline, setGoalDeadline] = useState(
     initialGoal?.deadline ? initialGoal.deadline.split("T")[0] : ""
   );

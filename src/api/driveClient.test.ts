@@ -132,9 +132,9 @@ describe("driveClient", () => {
 
     it("falls back to placeholder data on error", async () => {
       const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const error = new Error("API Error");
+      const _error = new Error("API Error");
 
-      vi.mocked(apiClient.getOrCreateYarnyStories).mockRejectedValue(error);
+      vi.mocked(apiClient.getOrCreateYarnyStories).mockRejectedValue(_error);
 
       const result = await driveClient.listProjects();
 
@@ -144,7 +144,7 @@ describe("driveClient", () => {
       expect(result.stories[0].id).toBe("placeholder-story");
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining("Falling back to local sample data"),
-        error
+        _error
       );
 
       consoleWarnSpy.mockRestore();
@@ -423,16 +423,16 @@ describe("driveClient", () => {
 
     it("falls back to placeholder data on error", async () => {
       const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const error = new Error("API Error");
+      const _error = new Error("API Error");
 
-      vi.mocked(listAllDriveFiles).mockRejectedValue(error);
+      vi.mocked(listAllDriveFiles).mockRejectedValue(_error);
 
       const result = await driveClient.getStory("story-id");
 
       expect(result.stories[0].id).toBe("placeholder-story");
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         expect.stringContaining("Falling back to local sample story"),
-        error
+        _error
       );
 
       consoleWarnSpy.mockRestore();
@@ -571,8 +571,6 @@ describe("driveClient", () => {
 
     it("handles save errors", async () => {
       // Mock axios to throw error
-      const error = new Error("Save failed");
-      
       // Since axios is created inside the module, we need to mock at a different level
       // For now, just verify the function signature accepts the input
       await expect(

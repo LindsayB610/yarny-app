@@ -29,15 +29,15 @@ function withTimeout<T>(
     promise,
     new Promise<T>((_, reject) =>
       setTimeout(
-        () => reject(new Error(errorMessage || "Operation timed out")),
+        () => reject(new Error(errorMessage ?? "Operation timed out")),
         timeoutMs
       )
     )
   ]);
 }
 
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 const STORAGE_KEY = "drive_tokens.json";
 
 export const handler: NetlifyFunctionHandler = async (
@@ -73,7 +73,7 @@ export const handler: NetlifyFunctionHandler = async (
       fileName = validated.fileName;
       content = validated.content;
       parentFolderId = validated.parentFolderId;
-      mimeType = validated.mimeType || "text/plain";
+      mimeType = validated.mimeType ?? "text/plain"; // Using ?? for default value assignment
     } catch (validationError) {
       return createErrorResponse(
         400,
@@ -176,11 +176,12 @@ export const handler: NetlifyFunctionHandler = async (
       } catch (error) {
         // File not found (404) or other error - treat as if file doesn't exist
         const err = error as { code?: number | string; response?: { status?: number }; message?: string };
-        const errorCode = err.code || err.response?.status;
+        const errorCode = err.code ?? err.response?.status;
+        const errorMessage = err.message ?? "";
         if (
           errorCode === 404 ||
-          err.message?.includes("not found") ||
-          err.message?.includes("does not exist")
+          errorMessage.includes("not found") ||
+          errorMessage.includes("does not exist")
         ) {
           fileExists = false;
           console.log(`File ${fileId} not found or deleted, will create new file`);
@@ -218,7 +219,7 @@ export const handler: NetlifyFunctionHandler = async (
           if (!lastElement) {
             throw new Error("Document content is empty");
           }
-          const endIndex = (lastElement.endIndex || 2) - 1;
+          const endIndex = (lastElement.endIndex ?? 2) - 1;
 
           // Delete all content except first paragraph
           if (endIndex > 1) {
@@ -294,9 +295,9 @@ export const handler: NetlifyFunctionHandler = async (
       });
 
       return createSuccessResponse({
-        id: fileMetadata.data.id || "",
-        name: fileMetadata.data.name || "",
-        modifiedTime: fileMetadata.data.modifiedTime || ""
+        id: fileMetadata.data.id ?? "",
+        name: fileMetadata.data.name ?? "",
+        modifiedTime: fileMetadata.data.modifiedTime ?? ""
       });
     } else {
       // Create new file
@@ -329,7 +330,7 @@ export const handler: NetlifyFunctionHandler = async (
 
           try {
             // Get the document structure
-            const doc = await docs.documents.get({ documentId: response.data.id || "" });
+            const doc = await docs.documents.get({ documentId: response.data.id ?? "" });
             console.log(
               "Google Doc structure (first 500 chars):",
               JSON.stringify(doc.data.body, null, 2).substring(0, 500)
@@ -341,7 +342,7 @@ export const handler: NetlifyFunctionHandler = async (
             if (bodyContent && bodyContent.length > 0) {
               const lastElement = bodyContent[bodyContent.length - 1];
               if (lastElement) {
-                endIndex = (lastElement.endIndex || 2) - 1;
+                endIndex = (lastElement.endIndex ?? 2) - 1;
                 console.log("Document endIndex:", endIndex);
               }
             }
@@ -384,7 +385,7 @@ export const handler: NetlifyFunctionHandler = async (
 
             // Execute both operations in a single batchUpdate
             await docs.documents.batchUpdate({
-              documentId: response.data.id || "",
+              documentId: response.data.id ?? "",
               requestBody: {
                 requests: requests
               }
@@ -394,7 +395,7 @@ export const handler: NetlifyFunctionHandler = async (
             await new Promise((resolve) => setTimeout(resolve, 500));
 
             // Verify the content was inserted
-            const verifyDoc = await docs.documents.get({ documentId: response.data.id || "" });
+            const verifyDoc = await docs.documents.get({ documentId: response.data.id ?? "" });
             if (verifyDoc.data.body?.content) {
               const textContent = verifyDoc.data.body.content
                 .map((element) => {
@@ -444,8 +445,10 @@ export const handler: NetlifyFunctionHandler = async (
               let hasDocsScope = false;
               if (tokens?.scope) {
                 hasDocsScope =
-                  tokens.scope.includes("documents") ||
-                  tokens.scope.includes("https://www.googleapis.com/auth/documents");
+                  Boolean(
+                    tokens.scope.includes("documents") ||
+                    tokens.scope.includes("https://www.googleapis.com/auth/documents")
+                  );
                 console.log("Checking token scope:", tokens.scope);
                 console.log("Has Docs scope in stored tokens:", hasDocsScope);
               }
@@ -454,7 +457,7 @@ export const handler: NetlifyFunctionHandler = async (
               if (!hasDocsScope) {
                 console.log("Tokens do not have Docs scope - clearing to force re-authorization");
                 try {
-                  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+                  const siteID = process.env.NETLIFY_SITE_ID ?? process.env.SITE_ID;
                   const token = process.env.NETLIFY_AUTH_TOKEN;
 
                   const storeOptions: { name: string; siteID?: string; token?: string } = {
@@ -498,9 +501,9 @@ export const handler: NetlifyFunctionHandler = async (
         }
 
         return createSuccessResponse({
-          id: response.data.id || "",
-          name: response.data.name || "",
-          modifiedTime: response.data.modifiedTime || ""
+          id: response.data.id ?? "",
+          name: response.data.name ?? "",
+          modifiedTime: response.data.modifiedTime ?? ""
         });
       } else {
         // Create regular file
@@ -529,9 +532,9 @@ export const handler: NetlifyFunctionHandler = async (
         });
 
         return createSuccessResponse({
-          id: response.data.id || "",
-          name: response.data.name || "",
-          modifiedTime: response.data.modifiedTime || ""
+          id: response.data.id ?? "",
+          name: response.data.name ?? "",
+          modifiedTime: response.data.modifiedTime ?? ""
         });
       }
     }

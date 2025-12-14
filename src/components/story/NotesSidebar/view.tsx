@@ -197,7 +197,8 @@ export function NotesSidebarView({ onClose, isCollapsed = false, onToggle }: Not
       handleNoteClick,
       noteTypeFromPath,
       noteId,
-      filterNotes
+      filterNotes,
+      searchTerm
     ]
   );
 

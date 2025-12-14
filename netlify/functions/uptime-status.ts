@@ -99,8 +99,8 @@ export const handler: NetlifyFunctionHandler = async (
             status,
             label,
             color,
-            uptime: monitor.all_time_uptime_ratio || null,
-            responseTime: monitor.average_response_time || null
+            uptime: monitor.all_time_uptime_ratio ?? null,
+            responseTime: monitor.average_response_time ?? null
           },
           200,
           {
@@ -121,7 +121,7 @@ export const handler: NetlifyFunctionHandler = async (
         createSuccessResponse({
           status: "unknown",
           label: "Unable to Fetch Status",
-          error: data.error?.message || data.message || "Unknown error",
+          error: data.error?.message ?? data.message ?? "Unknown error",
           ...(process.env.NODE_ENV === "development" && { debug: data })
         })
       );

@@ -34,8 +34,7 @@ export function useNoteAutoSave(
         return;
       }
 
-      const contentToSave =
-        overrideContent !== undefined ? overrideContent : editorContent;
+      const contentToSave = overrideContent ?? editorContent;
 
       if (contentToSave === lastSavedContentRef.current) {
         return;
@@ -78,6 +77,7 @@ export function useNoteAutoSave(
         debounceRef.current = undefined;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNote, editorContent, note, scheduleSave, storyId]);
 
   useEffect(() => {
@@ -95,6 +95,7 @@ export function useNoteAutoSave(
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNote, scheduleSave, storyId]);
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export function useNoteAutoSave(
     }
 
     previousActiveNoteRef.current = activeNote ?? undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNote, saveMutation, storyId]);
 
   useEffect(() => {
@@ -125,6 +127,8 @@ export function useNoteAutoSave(
       const currentStoryId = storyIdRef.current;
       const currentActiveNote = activeNoteRef.current;
       const currentContent = editorContentRef.current;
+      // Copy ref value to variable for cleanup function (refs don't need to be in deps)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const lastSaved = lastSavedContentRef.current;
       if (
         currentStoryId &&
@@ -143,6 +147,7 @@ export function useNoteAutoSave(
         });
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveMutation]);
 
   return { scheduleSave };

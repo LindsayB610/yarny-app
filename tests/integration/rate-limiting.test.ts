@@ -1,5 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { waitFor } from "@testing-library/react";
+import { QueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -93,10 +92,11 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
     });
     await vi.runAllTimersAsync();
-    const result = await resultPromise;
+    const _result = await resultPromise;
 
     // Should eventually succeed after retries
-    expect(result.files).toBeDefined();
+    expect(_result.files).toBeDefined();
+    // result is used above
     expect(attemptCount).toBe(maxAttempts);
   });
 
@@ -407,9 +407,9 @@ describe("Rate Limiting Handling (429 Backoff)", () => {
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
     });
     await vi.runAllTimersAsync();
-    const result = await resultPromise;
+    const _result = await resultPromise;
 
-    expect(result.id).toBe("file-1");
+    expect(_result.id).toBe("file-1");
     expect(attemptCount).toBe(3);
   });
 });

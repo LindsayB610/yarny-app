@@ -77,13 +77,13 @@ export function GlobalSearchModalView({ open, onClose }: GlobalSearchModalProps)
 
     if (result.type === "chapter") {
       // Navigate to first snippet in chapter, or just the story
-      navigate(`/stories/${storyId}`);
+      void navigate(`/stories/${storyId}`);
     } else if (result.type === "snippet") {
-      navigate(`/stories/${storyId}/snippets/${result.id}`);
+      void navigate(`/stories/${storyId}/snippets/${result.id}`);
     } else if (result.type === "character") {
-      navigate(`/stories/${storyId}/characters/${result.id}`);
+      void navigate(`/stories/${storyId}/characters/${result.id}`);
     } else if (result.type === "worldbuilding") {
-      navigate(`/stories/${storyId}/worldbuilding/${result.id}`);
+      void navigate(`/stories/${storyId}/worldbuilding/${result.id}`);
     } else if (result.type === "editor") {
       // Already viewing this, just close the modal
     }
@@ -121,7 +121,6 @@ export function GlobalSearchModalView({ open, onClose }: GlobalSearchModalProps)
           placeholder="Search chapters, snippets, notes..."
           size="medium"
           fullWidth
-          autoFocus
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

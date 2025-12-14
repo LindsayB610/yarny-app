@@ -39,7 +39,7 @@ const createMockEditor = () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "text", text: editorContent || "" }]
+          content: [{ type: "text", text: editorContent ?? "" }]
         }
       ]
     })),
@@ -88,11 +88,11 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
   const { apiClient } = clientModule;
 
   // Store reference to the store module so we can access it in save()
-  let storeModule: (typeof import("../../src/store/provider")) | null = null;
+  // Note: Currently not used, but kept for future reference
 
   const useAutoSaveMock = vi.fn((fileId: string | undefined, content: string) => {
     const lastContentRef = useRef<string | undefined>(undefined);
-    const contentRef = useRef<string>(content || "");
+    const contentRef = useRef<string>(content ?? "");
 
     // Capture store module when hook is called
     if (!storeModule) {
@@ -103,11 +103,12 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
 
     // Update content ref synchronously when content changes (not in useEffect)
     // This ensures save() always has the latest content
-    contentRef.current = content || "";
+    contentRef.current = content ?? "";
 
     // Also update in useEffect for React's benefit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
-      contentRef.current = content || "";
+      contentRef.current = content ?? "";
     }, [content]);
 
     useEffect(() => {
@@ -127,7 +128,8 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
         fileName: "",
         content: normalizedContent
       });
-    }, [fileId, content]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fileId, content]); // lastContentRef is a ref, doesn't need to be in deps
 
     return {
       save: async () => {
@@ -155,7 +157,7 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
         const normalizedContent = currentContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
         // For JSON-primary saves, fileId might be empty string - still save
         // Use "drive-file-1" as fallback for tests if fileId is empty
-        const effectiveFileId = fileId || "drive-file-1";
+        const effectiveFileId = fileId ?? "drive-file-1";
         await apiClient.writeDriveFile({
           fileId: effectiveFileId,
           fileName: "",
@@ -164,7 +166,7 @@ vi.mock("../../src/hooks/useAutoSave", async () => {
       },
       isSaving: false,
       hasUnsavedChanges: false,
-      lastSavedContent: content || "",
+      lastSavedContent: content ?? "",
       markAsSaved: () => {}
     };
   });
@@ -293,7 +295,7 @@ vi.mock("@tiptap/react", async () => {
         return null;
       }
       // Render a contenteditable div that matches what TipTap creates
-      const content = editor.getJSON?.()?.content?.[0]?.content?.[0]?.text || "";
+      const content = editor.getJSON?.()?.content?.[0]?.content?.[0]?.text ?? "";
       return React.createElement("div", {
         "data-testid": "editor-content",
         contentEditable: true,
@@ -593,7 +595,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
       // Verify content is preserved in store (special characters are tested via store state)
       const storeProvider = await import("../../src/store/provider");
       const store = storeProvider.useYarnyStoreApi().getState();
-      const snippetContent = store.entities.snippets["snippet-1"]?.content || "";
+      const snippetContent = store.entities.snippets["snippet-1"]?.content ?? "";
       expect(snippetContent).toContain("—");
       expect(snippetContent).toContain("…");
       expect(snippetContent).toContain('"double"');
@@ -820,7 +822,7 @@ Paragraph 4 with em dashes: — and en dashes: –`;
   describe("Round-Trip Integrity", () => {
     it("maintains integrity across multiple round-trips (Yarny → Docs → Yarny → Docs → Yarny)", async () => {
       const originalContent = "Original content with special chars: — — …";
-      let roundTripCount = 0;
+      // let roundTripCount = 0; // Unused
       let savedContent = originalContent;
 
       const storeProvider = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };

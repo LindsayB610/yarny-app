@@ -15,9 +15,9 @@ import {
 } from "./reset-utilities";
 import {
   createMockState,
-  createMockStory,
-  createMockSnippet,
-  createMockProject
+  createMockStory
+  // createMockProject - unused, commented out
+  // createMockSnippet - unused
 } from "./test-fixtures";
 import { createYarnyStore } from "../../src/store/createStore";
 

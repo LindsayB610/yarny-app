@@ -4,8 +4,8 @@ import { DragIndicator } from "@mui/icons-material";
 import { Box, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useRef, type JSX, type CSSProperties } from "react";
 
-import { highlightSearchText } from "../../../utils/highlightSearch";
 import type { SortableNoteItemProps } from "./types";
+import { highlightSearchText } from "../../../utils/highlightSearch";
 
 export function SortableNoteItem({ note, disabled, isActive, onClick, searchTerm }: SortableNoteItemProps): JSX.Element {
   const {

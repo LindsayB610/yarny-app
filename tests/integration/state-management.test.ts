@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createYarnyStore } from "../../src/store/createStore";
-import type { YarnyState } from "../../src/store/types";
+// import type { YarnyState } from "../../src/store/types"; // Unused
 import { createMockState, createMockStory, createMockSnippet } from "../utils/test-fixtures";
 
 describe("State Management", () => {

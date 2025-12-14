@@ -2,8 +2,8 @@ import { getStore } from "@netlify/blobs";
 import { OAuth2Client, type Credentials } from "google-auth-library";
 import { google, type drive_v3 } from "googleapis";
 
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 const STORAGE_KEY = "drive_tokens.json";
 
 interface ValidationResult {
@@ -59,7 +59,7 @@ interface StoreOptions {
 }
 
 function getStoreOptions(): StoreOptions {
-  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+  const siteID = process.env.NETLIFY_SITE_ID ?? process.env.SITE_ID;
   const token = process.env.NETLIFY_AUTH_TOKEN;
 
   const storeOptions: StoreOptions = { name: "drive-tokens" };
@@ -89,7 +89,7 @@ export async function getTokens(email: string): Promise<DriveTokens | null> {
 
     console.log("getTokens - looking for email:", email);
     console.log("getTokens - available emails:", Object.keys(allTokens));
-    const tokens = allTokens[email] || null;
+    const tokens = allTokens[email] ?? null;
     console.log("getTokens - found tokens:", !!tokens);
     return tokens;
   } catch (error) {
@@ -219,7 +219,7 @@ export async function getAuthenticatedDriveClient(
         refresh_token: tokens.refresh_token, // Keep original refresh token
         expiry_date: newTokens.expiry_date ?? null
       };
-      const preservedScope = tokens.scope || newTokens.scope;
+      const preservedScope = tokens.scope ?? newTokens.scope;
       if (preservedScope) {
         updatedTokens.scope = preservedScope;
       }

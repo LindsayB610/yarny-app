@@ -11,7 +11,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("NoteEditor Integration Tests", () => {
   const testStoryId = "story-1";
-  const testStoryFolderId = "folder-1";
   const testNoteId = "note-1";
   const testNoteName = "Test Note";
   const initialContent = "Initial content";
@@ -63,7 +62,7 @@ test.describe("NoteEditor Integration Tests", () => {
       // Also check query params
       if (!folderId) {
         const urlObj = new URL(url);
-        folderId = urlObj.searchParams.get("folderId") || undefined;
+        folderId = urlObj.searchParams.get("folderId") ?? undefined;
       }
       
       // Return test story when listing stories (yarny folder)
@@ -168,7 +167,7 @@ test.describe("NoteEditor Integration Tests", () => {
       if (!fileId) {
         const url = request.url();
         const urlObj = new URL(url);
-        fileId = urlObj.searchParams.get("fileId") || undefined;
+        fileId = urlObj.searchParams.get("fileId") ?? undefined;
       }
       
       // Return note content (must match DriveReadResponseSchema: id, name, content required)
@@ -239,7 +238,7 @@ test.describe("NoteEditor Integration Tests", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: fileId || "unknown",
+          id: fileId ?? "unknown",
           name: "unknown.txt",
           content: "",
           modifiedTime: new Date().toISOString(),
@@ -257,7 +256,7 @@ test.describe("NoteEditor Integration Tests", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -290,7 +289,6 @@ test.describe("NoteEditor Integration Tests", () => {
     if (currentUrl.includes("/stories") && !currentUrl.includes("/people")) {
       console.log("Page redirected to stories page - loader may have failed");
       // Try to see what's on the page
-      const pageContent = await page.content();
       console.log(`Page title: ${await page.title()}`);
     }
   });
@@ -343,15 +341,15 @@ test.describe("NoteEditor Integration Tests", () => {
       const postData = request.postDataJSON();
       
       writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
+        fileId: postData?.fileId ?? "",
+        content: postData?.content ?? ""
       });
 
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -384,15 +382,15 @@ test.describe("NoteEditor Integration Tests", () => {
       const postData = request.postDataJSON();
       
       writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
+        fileId: postData?.fileId ?? "",
+        content: postData?.content ?? ""
       });
 
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -434,15 +432,15 @@ test.describe("NoteEditor Integration Tests", () => {
       const postData = request.postDataJSON();
       
       writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
+        fileId: postData?.fileId ?? "",
+        content: postData?.content ?? ""
       });
 
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -488,15 +486,15 @@ test.describe("NoteEditor Integration Tests", () => {
       const postData = request.postDataJSON();
       
       writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
+        fileId: postData?.fileId ?? "",
+        content: postData?.content ?? ""
       });
 
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -557,15 +555,15 @@ test.describe("NoteEditor Integration Tests", () => {
       const postData = request.postDataJSON();
       
       writeRequests.push({
-        fileId: postData?.fileId || "",
-        content: postData?.content || ""
+        fileId: postData?.fileId ?? "",
+        content: postData?.content ?? ""
       });
 
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: postData?.fileId || testNoteId,
+          id: postData?.fileId ?? testNoteId,
           name: postData?.fileId === secondNoteId ? secondNoteName : testNoteName,
           modifiedTime: new Date().toISOString()
         })
@@ -592,7 +590,7 @@ test.describe("NoteEditor Integration Tests", () => {
       // Also check query params
       if (!folderId) {
         const urlObj = new URL(url);
-        folderId = urlObj.searchParams.get("folderId") || undefined;
+        folderId = urlObj.searchParams.get("folderId") ?? undefined;
       }
       
       // Return test story when listing stories (yarny folder)
@@ -703,7 +701,7 @@ test.describe("NoteEditor Integration Tests", () => {
       if (!fileId) {
         const url = request.url();
         const urlObj = new URL(url);
-        fileId = urlObj.searchParams.get("fileId") || undefined;
+        fileId = urlObj.searchParams.get("fileId") ?? undefined;
       }
       
       // Return first note content
@@ -796,7 +794,7 @@ test.describe("NoteEditor Integration Tests", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: fileId || "unknown",
+          id: fileId ?? "unknown",
           name: "unknown.txt",
           content: "",
           modifiedTime: new Date().toISOString(),
@@ -884,9 +882,7 @@ test.describe("NoteEditor Integration Tests", () => {
     // Note: The exact error message format may vary, so we check for any error
     // In a real scenario, you might want to check for a specific error message
     // or check for an error indicator in the UI
-    const hasError = consoleErrors.some(err => 
-      err.includes("Failed to save") || err.includes("Save failed") || err.includes("error")
-    );
+    // Error checking is optional - just verify the editor is still functional
     
     // The component should handle the error gracefully (not crash)
     // We verify the editor is still functional

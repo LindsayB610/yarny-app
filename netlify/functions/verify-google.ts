@@ -8,13 +8,13 @@ import type {
 } from "./types";
 import { addCorsHeaders, createErrorResponse } from "./types";
 
-const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || "lindsayb82@gmail.com";
+const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL ?? "lindsayb82@gmail.com";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const LOCAL_BYPASS_SECRET = (process.env.LOCAL_DEV_BYPASS_SECRET || "").trim();
-const LOCAL_BYPASS_EMAIL = (process.env.LOCAL_DEV_BYPASS_EMAIL || "").trim();
-const LOCAL_BYPASS_NAME = (process.env.LOCAL_DEV_BYPASS_NAME || "").trim();
+const LOCAL_BYPASS_SECRET = (process.env.LOCAL_DEV_BYPASS_SECRET ?? "").trim();
+const LOCAL_BYPASS_EMAIL = (process.env.LOCAL_DEV_BYPASS_EMAIL ?? "").trim();
+const LOCAL_BYPASS_NAME = (process.env.LOCAL_DEV_BYPASS_NAME ?? "").trim();
 const LOCAL_BYPASS_PICTURE =
-  (process.env.LOCAL_DEV_BYPASS_PICTURE || "").trim();
+  (process.env.LOCAL_DEV_BYPASS_PICTURE ?? "").trim();
 
 const LOCAL_HOST_PATTERN = /(localhost|127\.0\.0\.1|::1)(:\d+)?(\/|$)/i;
 
@@ -112,7 +112,7 @@ export const handler: NetlifyFunctionHandler = async (
       }
 
       const email =
-        LOCAL_BYPASS_EMAIL || allowedEmails[0] || "dev@localhost.test";
+        LOCAL_BYPASS_EMAIL ?? allowedEmails[0] ?? "dev@localhost.test";
 
       if (!allowedEmails.includes(email.toLowerCase())) {
         return addCorsHeaders(
@@ -145,8 +145,8 @@ export const handler: NetlifyFunctionHandler = async (
         body: JSON.stringify({
           verified: true,
           user: email,
-          name: LOCAL_BYPASS_NAME || email,
-          picture: LOCAL_BYPASS_PICTURE || undefined,
+          name: LOCAL_BYPASS_NAME || email, // Empty string should use email, || is correct
+          picture: LOCAL_BYPASS_PICTURE || undefined, // Empty string should become undefined, || is correct
           token: sessionToken
         })
       };

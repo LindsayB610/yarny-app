@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { screen, waitFor, act } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { StoryEditor } from "./StoryEditor";
 import { useAutoSave } from "../../hooks/useAutoSave";
@@ -245,8 +245,8 @@ describe("StoryEditor", () => {
 
       // Verify initial call
       const initialCalls = vi.mocked(useAutoSave).mock.calls;
-      const initialCall = initialCalls.find(call => call[1] === "Initial content");
-      expect(initialCall).toBeDefined();
+      const _initialCall = initialCalls.find(call => call[1] === "Initial content");
+      expect(_initialCall).toBeDefined();
 
       // Simulate editorContent change
       currentContent = "Updated content";
@@ -254,8 +254,8 @@ describe("StoryEditor", () => {
 
       // Verify useAutoSave was called again with updated content
       const updatedCalls = vi.mocked(useAutoSave).mock.calls;
-      const updatedCall = updatedCalls.find(call => call[1] === "Updated content");
-      expect(updatedCall).toBeDefined();
+      const _updatedCall = updatedCalls.find(call => call[1] === "Updated content");
+      expect(_updatedCall).toBeDefined();
     });
 
     it("enables auto-save when snippet and chapter are available", () => {
@@ -289,9 +289,11 @@ describe("StoryEditor", () => {
       const calls = vi.mocked(useAutoSave).mock.calls;
       const callWithSnippetContent = calls.find(call => call[1] === mockSnippet.content);
       expect(callWithSnippetContent).toBeDefined();
-      expect(callWithSnippetContent![2]).toMatchObject({
-        debounceMs: 2000
-      });
+      if (callWithSnippetContent) {
+        expect(callWithSnippetContent[2]).toMatchObject({
+          debounceMs: 2000
+        });
+      }
     });
   });
 
@@ -299,7 +301,7 @@ describe("StoryEditor", () => {
     it("calls useEditorContent hook with active snippet", () => {
       // Mock useEditorContent to return content based on snippet
       vi.mocked(useEditorContent).mockImplementation((snippet) => {
-        return [snippet?.content || "", vi.fn()] as any;
+        return [snippet?.content ?? "", vi.fn()] as any;
       });
 
       const initialState = {

@@ -213,7 +213,7 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
   }
 
   const handleSave = async () => {
-    if (isSnippet && activeSnippetForEditor?.id && (isLocalProject || activeChapter?.driveFolderId)) {
+    if (isSnippet && activeSnippetForEditor?.id && Boolean(isLocalProject || activeChapter?.driveFolderId)) {
       try {
         // Capture content at save time to ensure we mark the correct content as saved
         const contentToSave = editorContent;
@@ -295,10 +295,12 @@ export function StoryEditorView({ isLoading }: StoryEditorProps): JSX.Element {
         isSaving={Boolean(isAutoSaving || isNoteAutoSaving)}
         isSyncing={isSyncing}
         hasUnsavedChanges={hasAnyUnsavedChanges}
-        canSave={Boolean(
-          Boolean(isSnippet && activeSnippetForEditor?.id && Boolean(isLocalProject || activeChapter?.driveFolderId)) ||
-          Boolean(isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId)
-        )}
+        canSave={(() => {
+          const hasLocalProjectOrFolder = Boolean(isLocalProject) || Boolean(activeChapter?.driveFolderId);
+          const canSaveSnippet = Boolean(isSnippet && activeSnippetForEditor?.id && hasLocalProjectOrFolder);
+          const canSaveNote = Boolean(isNote && activeNoteForEditor?.id && activeNoteForEditor?.driveFileId);
+          return Boolean(canSaveSnippet || canSaveNote);
+        })()}
         isLocalProject={isLocalProject}
       />
       <EditorContentArea editor={editor} />

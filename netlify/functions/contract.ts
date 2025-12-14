@@ -52,7 +52,7 @@ export const DriveCreateFolderRequestSchema = z.object({
   (data) => data.name !== undefined || data.folderName !== undefined,
   { message: "Either 'name' or 'folderName' is required" }
 ).transform((data) => ({
-  name: data.name || data.folderName || "",
+  name: data.name ?? data.folderName ?? "",
   parentFolderId: data.parentFolderId
 })) as z.ZodType<
   { name: string; parentFolderId?: string },
@@ -79,7 +79,7 @@ export const DriveRenameFileRequestSchema = z.object({
   { message: "Either 'newName' or 'fileName' is required" }
 ).transform((data) => ({
   fileId: data.fileId,
-  newName: data.newName || data.fileName || ""
+  newName: data.newName ?? data.fileName ?? ""
 })) as z.ZodType<
   { fileId: string; newName: string },
   z.ZodTypeDef,
@@ -151,7 +151,7 @@ export function validateQueryParams<T>(
   errorMessage = "Invalid query parameters"
 ): T {
   try {
-    return schema.parse(params || {});
+    return schema.parse(params ?? {});
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorDetails = error.errors

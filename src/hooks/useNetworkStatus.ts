@@ -51,8 +51,8 @@ export function useNetworkStatus(): NetworkStatus {
     // Check connection quality using Network Information API if available
     const checkConnectionQuality = () => {
       const connection =
-        (navigator as NavigatorWithConnection).connection ||
-        (navigator as NavigatorWithConnection).mozConnection ||
+        (navigator as NavigatorWithConnection).connection ??
+        (navigator as NavigatorWithConnection).mozConnection ??
         (navigator as NavigatorWithConnection).webkitConnection;
 
       if (connection) {
@@ -76,8 +76,8 @@ export function useNetworkStatus(): NetworkStatus {
     // Listen for connection changes
     const navigatorWithConnection = navigator as NavigatorWithConnection;
     const connection =
-      navigatorWithConnection.connection ||
-      navigatorWithConnection.mozConnection ||
+      navigatorWithConnection.connection ??
+      navigatorWithConnection.mozConnection ??
       navigatorWithConnection.webkitConnection;
 
     if (connection) {

@@ -21,7 +21,7 @@ function withTimeout<T>(
     promise,
     new Promise<T>((_, reject) =>
       setTimeout(
-        () => reject(new Error(errorMessage || "Operation timed out")),
+        () => reject(new Error(errorMessage ?? "Operation timed out")),
         timeoutMs
       )
     )
@@ -97,7 +97,7 @@ export const handler: NetlifyFunctionHandler = async (
         console.log("Folder already exists:", existingFolder.id);
         return createSuccessResponse({
           id: existingFolder.id,
-          name: existingFolder.name || folderName,
+          name: existingFolder.name ?? folderName,
           created: false
         });
       }
@@ -129,8 +129,8 @@ export const handler: NetlifyFunctionHandler = async (
 
     console.log("Folder created successfully:", response.data.id);
     return createSuccessResponse({
-      id: response.data.id || "",
-      name: response.data.name || folderName,
+      id: response.data.id ?? "",
+      name: response.data.name ?? folderName,
       created: true
     });
   } catch (error) {

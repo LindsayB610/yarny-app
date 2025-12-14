@@ -90,7 +90,6 @@ describe("contrastChecker", () => {
       
       // Some colors should meet AA on white (darker colors)
       // Note: Bright colors like yellow may not meet AA on white
-      const meetingAA = results.filter((r) => r.meetsAA);
       // At least some colors should have contrast data
       expect(results.length).toBeGreaterThan(0);
       // Verify we're checking all 12 colors

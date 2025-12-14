@@ -51,11 +51,11 @@ export async function fetchStories(queryClient: QueryClient): Promise<StoryFolde
       (file) =>
         file.mimeType === "application/vnd.google-apps.folder" &&
         !file.trashed
-    ) || [];
+    ) ?? [];
 
   storyFolders.sort((a, b) => {
-    const timeA = new Date(a.modifiedTime || 0).getTime();
-    const timeB = new Date(b.modifiedTime || 0).getTime();
+    const timeA = new Date(a.modifiedTime ?? 0).getTime();
+    const timeB = new Date(b.modifiedTime ?? 0).getTime();
     return timeB - timeA;
   });
 

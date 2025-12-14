@@ -99,7 +99,7 @@ export async function setupReactAppMocks(
         content: snippet.content,
         driveRevisionId: snippet.modifiedTime,
         driveFileId: `${snippet.id}-file`,
-        updatedAt: snippet.modifiedTime || "2025-01-01T00:00:00.000Z"
+        updatedAt: snippet.modifiedTime ?? "2025-01-01T00:00:00.000Z"
       }))
     )
   });
@@ -163,7 +163,7 @@ export async function setupReactAppMocks(
               id: snippet.id,
               name: snippet.title,
               content: snippet.content,
-              modifiedTime: snippet.modifiedTime || "2025-01-01T00:00:00.000Z",
+              modifiedTime: snippet.modifiedTime ?? "2025-01-01T00:00:00.000Z",
               mimeType: "application/vnd.google-apps.document"
             })
           });
@@ -186,8 +186,8 @@ export async function setupReactAppMocks(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: body.storyId || body.fileId || "new-file-id",
-        name: body.fileName || "New File",
+        id: body.storyId ?? body.fileId ?? "new-file-id",
+        name: body.fileName ?? "New File",
         modifiedTime: new Date().toISOString()
       })
     });
@@ -200,7 +200,7 @@ export async function setupReactAppMocks(
 export async function navigateToReactEditor(
   page: Page,
   storyId: string,
-  storyName: string
+  _storyName: string // Unused parameter
 ): Promise<void> {
   // Navigate to story editor - loader will redirect to first snippet
   await page.goto(`/stories/${storyId}/snippets`);

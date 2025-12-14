@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { useRouteError } from "react-router-dom";
@@ -204,8 +204,7 @@ describe("RouteErrorBoundary", () => {
 
     // Check what's actually rendered - the component should detect this as a route error
     // and show "Page Not Found" for 404 status
-    const _pageNotFound = screen.queryByText("Page Not Found");
-    const _somethingWrong = screen.queryByText("Something went wrong");
+    // Variables removed - they were only used for debugging
     
     // Should show either "Page Not Found" (if recognized as route error) or fallback
     // The important part is that it shows the custom message

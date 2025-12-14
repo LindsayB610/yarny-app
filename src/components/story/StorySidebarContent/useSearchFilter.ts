@@ -47,7 +47,7 @@ export function useSearchFilter(
       const matchingSnippetIds = snippetList
         .filter((snippet) => {
           const content = snippet.content ?? "";
-          const firstLine = content.split("\n")[0] || "";
+          const firstLine = content.split("\n")[0] ?? "";
           const lowerContent = content.toLowerCase();
           return (
             firstLine.toLowerCase().includes(searchValue) || lowerContent.includes(searchValue)

@@ -115,7 +115,7 @@ describe("useSyncStatus", () => {
       configurable: true
     });
 
-    const { result } = renderHook(() => useSyncStatus());
+    renderHook(() => useSyncStatus());
 
     await waitFor(() => {
       expect(messageHandler).not.toBeNull();
@@ -196,7 +196,7 @@ describe("useSyncStatus", () => {
   });
 
   it("should handle custom sync-success event", async () => {
-    const { result } = renderHook(() => useSyncStatus());
+    renderHook(() => useSyncStatus());
 
     act(() => {
       window.dispatchEvent(new CustomEvent("yarny:sync-success"));

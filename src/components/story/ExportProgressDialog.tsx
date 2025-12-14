@@ -47,7 +47,7 @@ export function ExportProgressDialog({
           ? "Local export completed!"
           : "Export completed!";
       case "error":
-        return `Error: ${error || "Export failed"}`;
+        return `Error: ${error ?? "Export failed"}`;
       default:
         return destination === "local"
           ? "Preparing local export..."
@@ -97,7 +97,7 @@ export function ExportProgressDialog({
           ) : status === "error" ? (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="error">
-                {error || "An error occurred during export"}
+                {error ?? "An error occurred during export"}
               </Typography>
             </Box>
           ) : (

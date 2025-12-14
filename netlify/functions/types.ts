@@ -45,7 +45,7 @@ export interface UserSession {
 }
 
 export function parseSessionFromEvent(event: NetlifyFunctionEvent): UserSession | null {
-  const cookies = event.headers.cookie?.split(";") || [];
+  const cookies = event.headers.cookie?.split(";") ?? [];
   const sessionCookie = cookies.find((c) => c.trim().startsWith("session="));
   if (!sessionCookie) return null;
 

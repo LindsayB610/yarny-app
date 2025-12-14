@@ -1,6 +1,6 @@
+import { loadNotesFromLocal } from "./loadNotesFromLocal";
 import type { NormalizedPayload, Project, Story } from "../../store/types";
 import { getPersistedDirectoryHandle } from "../localFs/LocalFsCapability";
-import { loadNotesFromLocal } from "./loadNotesFromLocal";
 
 /**
  * Loads a local project from a directory handle by reading yarny-project.json and yarny-story.json

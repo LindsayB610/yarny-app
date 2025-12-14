@@ -41,8 +41,8 @@ export function useConflictDetection() {
       try {
         // Read JSON file (primary source)
         const jsonData = await readSnippetJson(snippetId, parentFolderId);
-        const jsonModifiedTime = jsonData?.modifiedTime || localModifiedTime;
-        const jsonContent = jsonData?.content || localContent || "";
+        const jsonModifiedTime = jsonData?.modifiedTime ?? localModifiedTime;
+        const jsonContent = jsonData?.content ?? localContent ?? "";
 
         // Get Google Doc metadata
         const filesResponse = await queryClient.fetchQuery({
@@ -77,7 +77,7 @@ export function useConflictDetection() {
             staleTime: 30 * 1000 // 30 seconds - conflict checks need fresh data
           });
 
-          const driveContent = driveContentResponse.content || "";
+          const driveContent = driveContentResponse.content ?? "";
 
           // Compare content (normalized) - only show conflict if content actually differs
           if (compareContent(jsonContent, driveContent)) {
@@ -123,7 +123,7 @@ export function useConflictDetection() {
   const resolveConflictWithDrive = useCallback(
     async (driveFileId: string): Promise<string> => {
       const response = await resolveConflictMutation.mutateAsync(driveFileId);
-      return response.content || "";
+      return response.content ?? "";
     },
     [resolveConflictMutation]
   );

@@ -8,8 +8,8 @@ import type {
 } from "./types";
 import { parseSessionFromEvent, createErrorResponse } from "./types";
 
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const DOCS_SCOPE = "https://www.googleapis.com/auth/documents";
 
@@ -132,11 +132,11 @@ export const handler: NetlifyFunctionHandler = async (
   const stateCookie = `drive_auth_state=${randomState}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`;
 
   // Determine redirect URI - must match exactly what's configured in Google Cloud Console
-  const host = event.headers.host || event.headers["x-forwarded-host"];
+  const host = event.headers.host ?? event.headers["x-forwarded-host"];
   const protocol = host?.includes("localhost") ? "http" : "https";
   const redirectUri =
-    process.env.GDRIVE_REDIRECT_URI ||
-    process.env.GOOGLE_REDIRECT_URI ||
+    process.env.GDRIVE_REDIRECT_URI ??
+    process.env.GOOGLE_REDIRECT_URI ??
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
 
   console.log("Drive auth initiated - Redirect URI:", redirectUri);

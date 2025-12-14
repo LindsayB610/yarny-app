@@ -85,7 +85,6 @@ describe("LoginPage", () => {
   });
 
   it("shows error message when authentication fails", async () => {
-    const user = userEvent.setup();
     const errorMessage = "Authentication failed";
     
     vi.mocked(apiClient.verifyGoogle).mockRejectedValue(new Error(errorMessage));

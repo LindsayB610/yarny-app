@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react"; // waitFor unused
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { useAuth } from "../../hooks/useAuth";

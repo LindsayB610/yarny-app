@@ -79,7 +79,7 @@ export function useReorderSnippetsMutation() {
               storyId: activeStory.id,
               title: updatedChapter.title ?? "Untitled",
               color: updatedChapter.color,
-              order: updatedChapter.position || 0,
+              order: updatedChapter.position ?? 0,
               snippetIds: newOrder,
               driveFolderId: updatedChapter.driveFolderId ?? "",
               updatedAt: new Date().toISOString()
@@ -186,7 +186,7 @@ export function useCreateSnippetMutation() {
       const existingSnippetCount = chapter.snippetIds?.length ?? 0;
 
       const snippetId = generateId("snippet");
-      const snippetTitle = title?.trim() || `Snippet ${existingSnippetCount + 1}`;
+      const snippetTitle = title?.trim() ?? `Snippet ${existingSnippetCount + 1}`;
       const snippetOrder = existingSnippetCount;
 
       let driveFileId: string | undefined;
@@ -353,7 +353,7 @@ export function useDuplicateSnippetMutation() {
 
       let driveFileId: string | undefined;
       if (chapter.driveFolderId) {
-        const snippetFirstLine = snippetBody.split("\n")[0] || "Snippet";
+        const snippetFirstLine = snippetBody.split("\n")[0] ?? "Snippet";
         try {
           const driveFile = await apiClient.writeDriveFile({
             fileName: `${snippetFirstLine} (Copy).doc`,
@@ -693,7 +693,7 @@ export function useMoveSnippetToChapterMutation() {
 
           if (targetFolderId) {
             const snippetContent = snippet.body ?? snippet.content ?? "";
-            const fallbackName = `Snippet-${snippetId.slice(0, 8) || "moved"}`;
+            const fallbackName = `Snippet-${snippetId.slice(0, 8) || "moved"}`; // slice always returns string, || is correct for empty string
             const fileName = createSnippetFileName(snippetContent, fallbackName);
 
             const createdFile = await apiClient.writeDriveFile({
@@ -726,8 +726,8 @@ export function useMoveSnippetToChapterMutation() {
             storyId: activeStory.id,
             title: sourceChapter.title ?? "Untitled",
             color: sourceChapter.color,
-            order: sourceChapter.position || 0,
-            snippetIds: sourceChapter.snippetIds || [],
+            order: sourceChapter.position ?? 0,
+            snippetIds: sourceChapter.snippetIds ?? [],
             driveFolderId: sourceChapter.driveFolderId ?? "",
             updatedAt: new Date().toISOString()
           },
@@ -736,8 +736,8 @@ export function useMoveSnippetToChapterMutation() {
             storyId: activeStory.id,
             title: targetChapter.title ?? "Untitled",
             color: targetChapter.color,
-            order: targetChapter.position || 0,
-            snippetIds: targetChapter.snippetIds || [],
+            order: targetChapter.position ?? 0,
+            snippetIds: targetChapter.snippetIds ?? [],
             driveFolderId: targetChapter.driveFolderId ?? "",
             updatedAt: new Date().toISOString()
           }
@@ -748,7 +748,7 @@ export function useMoveSnippetToChapterMutation() {
                 id: snippetId,
                 storyId: activeStory.id,
                 chapterId: targetChapterId,
-                order: (targetChapter.snippetIds?.length || 1) - 1,
+                order: (targetChapter.snippetIds?.length ?? 1) - 1,
                 content: snippet.body ?? snippet.content ?? "",
                 driveFileId: snippet.driveFileId,
                 driveRevisionId: snippet.driveRevisionId,

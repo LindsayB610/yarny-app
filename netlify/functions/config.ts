@@ -8,7 +8,7 @@ import { addCorsHeaders, createErrorResponse, createSuccessResponse } from "./ty
 export const handler: NetlifyFunctionHandler = async (
   _event: NetlifyFunctionEvent
 ): Promise<NetlifyFunctionResponse> => {
-  const clientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
+  const clientId = (process.env.GOOGLE_CLIENT_ID ?? "").trim();
 
   if (!clientId) {
     console.error("GOOGLE_CLIENT_ID environment variable is missing or empty");
@@ -24,16 +24,16 @@ export const handler: NetlifyFunctionHandler = async (
     clientId.substring(0, 20) + "...)"
   );
 
-  const localBypassSecret = (process.env.LOCAL_DEV_BYPASS_SECRET || "").trim();
+  const localBypassSecret = (process.env.LOCAL_DEV_BYPASS_SECRET ?? "").trim();
   const localBypassEnabled = Boolean(localBypassSecret);
 
   const localBypass = localBypassEnabled
     ? {
         enabled: true,
-        email: (process.env.LOCAL_DEV_BYPASS_EMAIL || "").trim(),
-        name: (process.env.LOCAL_DEV_BYPASS_NAME || "").trim(),
+        email: (process.env.LOCAL_DEV_BYPASS_EMAIL ?? "").trim(),
+        name: (process.env.LOCAL_DEV_BYPASS_NAME ?? "").trim(),
         picture:
-          (process.env.LOCAL_DEV_BYPASS_PICTURE || "").trim() || undefined
+          (process.env.LOCAL_DEV_BYPASS_PICTURE ?? "").trim() || undefined // Empty string should become undefined, || is correct
       }
     : { enabled: false };
 

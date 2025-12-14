@@ -49,7 +49,7 @@ export const handler: NetlifyFunctionHandler = async (
       console.log(`Found "${YARNY_STORIES_FOLDER}" folder: ${newFolder.id}`);
       return createSuccessResponse({
         id: newFolder.id,
-        name: newFolder.name || YARNY_STORIES_FOLDER,
+        name: newFolder.name ?? YARNY_STORIES_FOLDER,
         created: false
       });
     }
@@ -98,8 +98,8 @@ export const handler: NetlifyFunctionHandler = async (
     });
 
     return createSuccessResponse({
-      id: response.data.id || "",
-      name: response.data.name || YARNY_STORIES_FOLDER,
+      id: response.data.id ?? "",
+      name: response.data.name ?? YARNY_STORIES_FOLDER,
       created: true
     });
   } catch (error) {

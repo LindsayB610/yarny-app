@@ -95,7 +95,7 @@ export function useUpdateChapterColorMutation() {
           throw new Error("Story metadata not found");
         }
 
-        const chapters = storyData.chapters || [];
+        const chapters = storyData.chapters ?? [];
         const chapter = chapters.find((ch) => ch.id === chapterId);
         if (!chapter) {
           throw new Error(`Chapter ${chapterId} not found`);
@@ -414,7 +414,7 @@ export function useCreateChapterMutation() {
       const groupId = generateId("group");
       const defaultColor =
         ACCENT_COLORS[existingChapterCount % ACCENT_COLORS.length]?.value ?? "#3B82F6";
-      const chapterTitle = title?.trim() || `Chapter ${existingChapterCount + 1}`;
+      const chapterTitle = title?.trim() ?? `Chapter ${existingChapterCount + 1}`;
 
       let driveFolderId = "";
       const chaptersFolderId = await getChaptersFolderId(activeStory.driveFileId);
@@ -579,7 +579,7 @@ export function useDuplicateChapterMutation() {
         let newDriveFileId: string | undefined;
 
         if (driveFolderId) {
-          const snippetFirstLine = snippetBody.split("\n")[0] || "Snippet";
+          const snippetFirstLine = snippetBody.split("\n")[0] ?? "Snippet";
           try {
             const driveFile = await apiClient.writeDriveFile({
               fileName: `${snippetFirstLine} (Copy).doc`,

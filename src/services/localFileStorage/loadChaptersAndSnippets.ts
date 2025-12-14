@@ -77,7 +77,7 @@ export async function loadChaptersAndSnippets(
           id: chapterId,
           storyId,
           title: chapterMeta.title,
-          color: chapterMeta.color || "#3B82F6", // Default color if not set
+          color: chapterMeta.color ?? "#3B82F6", // Default color if not set
           order: chapterMeta.order,
           snippetIds: chapterMeta.snippetIds.filter((id) =>
             chapterSnippets.some((s) => s.id === id)

@@ -35,10 +35,7 @@ interface QueuedSync {
 const readQueuedSaves = (): QueuedSave[] => {
   try {
     const raw = localStorage.getItem("yarny_queued_saves");
-    if (!raw) {
-      return [];
-    }
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -168,7 +165,7 @@ export function useAutoSave(
   // Initialize lastSavedContentRef with initial content when switching to a new item
   // This ensures hasUnsavedChanges is false when content matches what was loaded
   // We track the item ID (fileId or snippetId) to detect when we switch items
-  const currentItemId = fileId || localBackupSnippetId || "";
+  const currentItemId = fileId ?? localBackupSnippetId ?? "";
   useEffect(() => {
     // If we switched to a different item, initialize lastSavedContentRef with its content
     if (currentItemId && currentItemId !== currentItemIdRef.current) {
@@ -350,7 +347,7 @@ export function useAutoSave(
         
         localStorage.setItem("yarny_queued_saves", JSON.stringify(queued));
         queuedSaveRef.current = queuedEntry;
-        if (payload.storyId || localBackupStoryId) {
+        if (payload.storyId ?? localBackupStoryId) {
           void writeLocalBackup(
             payload.content,
             payload.storyId ?? localBackupStoryId,
@@ -448,7 +445,7 @@ export function useAutoSave(
           payload.snippetId,
           payload.content,
           payload.parentFolderId,
-          payload.fileId || undefined, // gdocFileId (optional - can be empty string)
+          payload.fileId || undefined, // gdocFileId (optional - can be empty string) - using || because empty string should become undefined
           undefined // gdocModifiedTime - will be updated after sync
         );
         
@@ -604,7 +601,7 @@ export function useAutoSave(
         debounceTimerRef.current = null;
       }
     };
-  }, [enabled, content, debounceMs, isOnline, queueSave, buildPayload]);
+  }, [enabled, content, debounceMs, isOnline, queueSave, buildPayload, saveMutation]);
 
   // Note: Removed the useEffect that checked for pending content after save
   // This was causing save loops. The main useEffect will handle content changes naturally.

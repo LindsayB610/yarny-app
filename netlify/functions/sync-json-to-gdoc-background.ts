@@ -5,8 +5,8 @@ import { getAuthenticatedDriveClient, getTokens } from "./drive-client";
 import type { NetlifyFunctionContext, NetlifyFunctionEvent } from "./types";
 import { createErrorResponse, createSuccessResponse, parseSessionFromEvent } from "./types";
 
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 
 /**
  * Background function to sync JSON file content to Google Doc
@@ -140,7 +140,7 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
     if (!lastElement) {
       throw new Error("Document content is empty");
     }
-    const endIndex = (lastElement.endIndex || 2) - 1;
+    const endIndex = (lastElement.endIndex ?? 2) - 1;
 
     // Delete existing content and insert new content
     const requests = [];
@@ -185,7 +185,7 @@ export const handler = async (event: NetlifyFunctionEvent, context: NetlifyFunct
     return createSuccessResponse({
       success: true,
       gdocFileId,
-      modifiedTime: fileMetadata.data.modifiedTime || new Date().toISOString()
+      modifiedTime: fileMetadata.data.modifiedTime ?? new Date().toISOString()
     });
   } catch (error) {
     console.error("Background sync error:", error);

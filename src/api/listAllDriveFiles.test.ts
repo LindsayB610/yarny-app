@@ -87,7 +87,7 @@ describe("listAllDriveFiles", () => {
 
     vi.mocked(apiClient.listDriveFiles).mockResolvedValue(mockResponse);
 
-    const result = await listAllDriveFiles("folder-id");
+    await listAllDriveFiles("folder-id");
 
     // Should stop at MAX_PAGES (1000)
     expect(apiClient.listDriveFiles).toHaveBeenCalledTimes(1000);

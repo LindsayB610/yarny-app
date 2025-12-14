@@ -46,13 +46,13 @@ export async function findSnippetJsonFile(
         (file) => file.name === fileName && !file.trashed
       );
       
-      return jsonFile?.id || null; // Return null if not found (React Query can cache null)
+      return jsonFile?.id ?? null; // Return null if not found (React Query can cache null)
     },
     staleTime: 1000 * 60 * 5, // 5 minutes - same as default query staleTime
     gcTime: 1000 * 60 * 10 // 10 minutes - keep in cache
   });
   
-  return fileId || undefined;
+  return fileId ?? undefined;
 }
 
 /**

@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getSnippetJsonFileName,
-  compareContent,
-  type SnippetJsonData
+  compareContent
 } from "./jsonStorage";
-import * as apiClientModule from "../../api/client";
 
 vi.mock("../../api/client");
 

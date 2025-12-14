@@ -61,7 +61,7 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
   // Load local projects first (they don't require Drive auth)
   // Use cached data if available, otherwise load from file system
   try {
-    const localProjects = await queryClient.ensureQueryData({
+    await queryClient.ensureQueryData({
       queryKey: ["local", "projects"],
       queryFn: loadAllLocalProjects,
       staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes

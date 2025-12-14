@@ -202,7 +202,7 @@ export function useSidebarHandlers(
           : (() => {
               const snippet = snippetsById[id];
               const content = snippet?.content ?? "";
-              return content.split("\n")[0] || "Untitled Snippet";
+              return content.split("\n")[0] ?? "Untitled Snippet";
             })();
       setDeleteDialog({
         open: true,
@@ -302,7 +302,7 @@ export function useSidebarHandlers(
       } else {
         const snippet = snippetsById[id];
         const content = snippet?.content ?? "";
-        const firstLine = content.split("\n")[0] || "Untitled Snippet";
+        const firstLine = content.split("\n")[0] ?? "Untitled Snippet";
         setRenameDialog({
           type,
           id,

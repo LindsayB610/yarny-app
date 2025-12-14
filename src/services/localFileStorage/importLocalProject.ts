@@ -1,7 +1,7 @@
+import { loadNotesFromLocal } from "./loadNotesFromLocal";
 import { parseYarnyIgnore } from "./yarnyIgnore";
 import { markdownToPlainText } from "../../editor/textExtraction";
 import type { Chapter, NormalizedPayload, Note, Project, Snippet, Story } from "../../store/types";
-import { loadNotesFromLocal } from "./loadNotesFromLocal";
 
 function generateId(prefix: string): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {

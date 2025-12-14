@@ -112,9 +112,9 @@ export async function initializeStoryStructure(
     activeSnippetId: snippetId,
     snippetIds: [snippetId],
     groupIds: [groupId],
-    wordGoal: metadata.wordGoal || 3000,
-    genre: metadata.genre || "",
-    description: metadata.description || ""
+    wordGoal: metadata.wordGoal ?? 3000,
+    genre: metadata.genre ?? "",
+    description: metadata.description ?? ""
   };
 
   // Create Chapter 1 folder and project.json in parallel
@@ -228,10 +228,10 @@ export async function initializeStoryStructure(
   if (metadata.goal?.deadline) {
     const today = getPacificDate();
     const goalData = {
-      target: metadata.goal.target || metadata.wordGoal || 3000,
+      target: metadata.goal.target ?? metadata.wordGoal ?? 3000,
       deadline: metadata.goal.deadline,
       startDate: today,
-      writingDays: metadata.goal.writingDays || [
+      writingDays: metadata.goal.writingDays ?? [
         true,
         true,
         true,
@@ -240,8 +240,8 @@ export async function initializeStoryStructure(
         true,
         true
       ],
-      daysOff: metadata.goal.daysOff || [],
-      mode: metadata.goal.mode || "elastic",
+      daysOff: metadata.goal.daysOff ?? [],
+      mode: metadata.goal.mode ?? "elastic",
       ledger: {},
       lastCalculatedDate: today
     };

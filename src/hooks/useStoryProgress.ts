@@ -128,7 +128,7 @@ export function calculateDailyGoalInfo(
   if (goal.ledger) {
     Object.keys(goal.ledger).forEach((date) => {
       if (date !== today) {
-        ledgerWords += goal.ledger[date] || 0;
+        ledgerWords += goal.ledger[date] ?? 0;
       }
     });
   }
@@ -164,7 +164,7 @@ export function calculateDailyGoalInfo(
     };
   } else {
     // Strict: fixed daily target (calculate from original target and total days)
-    const startDate = goal.startDate || goal.lastCalculatedDate || today;
+    const startDate = goal.startDate ?? goal.lastCalculatedDate ?? today;
     const totalWritingDays = countWritingDaysForGoal(
       startDate.split("T")[0],
       deadline,
@@ -232,8 +232,8 @@ export function useStoryProgress(storyFolderId: string | undefined) {
               .then((projectData) => {
                 if (projectData.content) {
                   const project = JSON.parse(projectData.content);
-                  wordGoal = project.wordGoal || 3000;
-                  updatedAt = project.updatedAt || undefined;
+                  wordGoal = project.wordGoal ?? 3000;
+                  updatedAt = project.updatedAt;
                 }
               })
               .catch((error) => {

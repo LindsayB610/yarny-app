@@ -38,13 +38,8 @@ const mockStories = [
 
 const getStoryTitleNodes = (title: string) =>
   screen.getAllByText((_, node) => node?.textContent === title);
-const queryStoryTitleNodes = (title: string) =>
-  screen.queryAllByText((_, node) => node?.textContent === title);
 const expectStoryVisible = (title: string) => {
   expect(getStoryTitleNodes(title).length).toBeGreaterThan(0);
-};
-const expectStoryHidden = (title: string) => {
-  expect(queryStoryTitleNodes(title)).toHaveLength(0);
 };
 
 const renderStoriesPage = () => {

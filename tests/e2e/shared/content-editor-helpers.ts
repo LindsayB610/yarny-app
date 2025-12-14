@@ -67,7 +67,7 @@ export async function setupContentEditorMocks(
     // Also check query params
     if (!folderId) {
       const urlObj = new URL(url);
-      folderId = urlObj.searchParams.get("folderId") || undefined;
+      folderId = urlObj.searchParams.get("folderId") ?? undefined;
     }
     
     // Return test story when listing stories (yarny folder)
@@ -192,7 +192,7 @@ export async function setupContentEditorMocks(
     if (!fileId) {
       const url = request.url();
       const urlObj = new URL(url);
-      fileId = urlObj.searchParams.get("fileId") || undefined;
+      fileId = urlObj.searchParams.get("fileId") ?? undefined;
     }
     
     // Return content
@@ -290,7 +290,7 @@ export async function setupContentEditorMocks(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: fileId || "unknown",
+        id: fileId ?? "unknown",
         name: "unknown.txt",
         content: "",
         modifiedTime: new Date().toISOString(),
@@ -308,7 +308,7 @@ export async function setupContentEditorMocks(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: postData?.fileId || config.contentId,
+        id: postData?.fileId ?? config.contentId,
         name: config.contentName,
         modifiedTime: new Date().toISOString()
       })

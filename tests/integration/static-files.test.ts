@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs"; // statSync unused
 import { resolve, join } from "node:path";
 
 /**

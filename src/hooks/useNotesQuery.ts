@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "../api/client";
-import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 import { loadNotesFromLocal } from "../services/localFileStorage/loadNotesFromLocal";
+import { getPersistedDirectoryHandle } from "../services/localFs/LocalFsCapability";
 
 export interface Note {
   id: string;
@@ -45,10 +45,10 @@ export function useNotesQuery(
         return notes.map(note => {
           const firstLine = note.content.split("\n")[0]?.trim();
           // Strip markdown headers (leading # and whitespace)
-          const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() || "";
+          const nameWithoutMarkdown = firstLine?.replace(/^#+\s*/, "").trim() ?? "";
           return {
             id: note.id,
-            name: nameWithoutMarkdown || note.id, // Use first line as name, without markdown
+            name: nameWithoutMarkdown || note.id, // Use first line as name, without markdown (logical OR, not default)
             content: note.content,
             modifiedTime: note.updatedAt
           };

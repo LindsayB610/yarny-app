@@ -276,7 +276,7 @@ export function DocsContent({
           User Guide
         </Button>
         <Typography variant="h3" sx={{ fontWeight: 700, color: "white" }}>
-          {sectionGroups.find(g => g.id === category)?.label || category}
+          {sectionGroups.find(g => g.id === category)?.label ?? category}
         </Typography>
       </Box>
       {visibleSections.map((section) => (

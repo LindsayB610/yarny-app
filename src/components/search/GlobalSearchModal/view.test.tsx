@@ -123,7 +123,6 @@ describe("GlobalSearchModal", () => {
   });
 
   it("focuses input when opened", async () => {
-    const user = userEvent.setup();
     renderWithProviders(
       <GlobalSearchModal open={true} onClose={vi.fn()} />,
       { initialState }
@@ -316,7 +315,6 @@ describe("GlobalSearchModal", () => {
     }, { timeout: 3000 });
 
     // Check for highlighted spans (they may not always be present depending on rendering)
-    const highlighted = document.querySelectorAll('span[style*="background-color"]');
     // Highlighting is optional - just verify the search works
     expect(screen.getByText("Chapters")).toBeInTheDocument();
   });

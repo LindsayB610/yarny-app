@@ -14,12 +14,12 @@ import { GoalsPanelModal, type Goal } from "./GoalsPanelModal";
 import { StoryInfoModal } from "./StoryInfoModal";
 import { TodayChip } from "./TodayChip";
 import { useActiveStory } from "../../hooks/useActiveStory";
+import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
 import { useStoryMetadata } from "../../hooks/useStoryMetadata";
 import {
   useUpdateStoryGoalsMutation,
   useUpdateStoryMetadataMutation
 } from "../../hooks/useStoryMutations";
-import { useLocalStoryProgress } from "../../hooks/useLocalStoryProgress";
 import { useStoryProgress } from "../../hooks/useStoryProgress";
 
 interface StorySidebarHeaderProps {

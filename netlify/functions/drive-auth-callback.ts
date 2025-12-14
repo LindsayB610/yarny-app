@@ -9,8 +9,8 @@ import type {
 } from "./types";
 import { parseSessionFromEvent } from "./types";
 
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 
 interface ValidationResult {
   valid: boolean;
@@ -128,7 +128,7 @@ export const handler: NetlifyFunctionHandler = async (
   console.log("Client Secret length (after trim):", GDRIVE_CLIENT_SECRET?.length);
   console.log("Client Secret validation: PASSED");
 
-  const { code, state, error, error_description } = event.queryStringParameters || {};
+  const { code, state, error, error_description } = event.queryStringParameters ?? {};
 
   if (error) {
     let errorMessage = error;
@@ -204,7 +204,7 @@ export const handler: NetlifyFunctionHandler = async (
   }
 
   // Verify random state matches cookie (CSRF protection)
-  const cookies = event.headers.cookie?.split(";") || [];
+  const cookies = event.headers.cookie?.split(";") ?? [];
   const stateCookie = cookies.find((c) => c.trim().startsWith("drive_auth_state="));
 
   if (!stateCookie) {
@@ -249,11 +249,11 @@ export const handler: NetlifyFunctionHandler = async (
   // This allows OAuth to work even if session cookie isn't sent due to SameSite=Strict
 
   // Determine redirect URI - must match exactly what's configured in Google Cloud Console
-  const host = event.headers.host || event.headers["x-forwarded-host"];
+  const host = event.headers.host ?? event.headers["x-forwarded-host"];
   const protocol = host?.includes("localhost") ? "http" : "https";
   const redirectUri =
-    process.env.GDRIVE_REDIRECT_URI ||
-    process.env.GOOGLE_REDIRECT_URI ||
+    process.env.GDRIVE_REDIRECT_URI ??
+    process.env.GOOGLE_REDIRECT_URI ??
     `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
 
   console.log("Callback received - Redirect URI:", redirectUri);
@@ -303,12 +303,14 @@ export const handler: NetlifyFunctionHandler = async (
     console.log("Token scope:", tokens.scope);
 
     // Verify that tokens include the Docs API scope
-    const hasDriveScope =
-      tokens.scope?.includes("drive.file") ||
-      tokens.scope?.includes("https://www.googleapis.com/auth/drive.file");
-    const hasDocsScope =
-      tokens.scope?.includes("documents") ||
-      tokens.scope?.includes("https://www.googleapis.com/auth/documents");
+    const driveScopeVariants = ["drive.file", "https://www.googleapis.com/auth/drive.file"];
+    const docsScopeVariants = ["documents", "https://www.googleapis.com/auth/documents"];
+    const hasDriveScope = Boolean(
+      tokens.scope && driveScopeVariants.some((variant) => tokens.scope?.includes(variant))
+    );
+    const hasDocsScope = Boolean(
+      tokens.scope && docsScopeVariants.some((variant) => tokens.scope?.includes(variant))
+    );
 
     console.log("Has Drive scope:", hasDriveScope);
     console.log("Has Docs scope:", hasDocsScope);

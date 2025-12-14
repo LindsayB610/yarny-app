@@ -275,7 +275,7 @@ export const handlers = [
       })
     };
 
-    const content = contentMap[fileId] || "Test content";
+    const content = contentMap[fileId] ?? "Test content";
 
     const response: DriveReadResponse = {
       id: fileId,
@@ -291,10 +291,10 @@ export const handlers = [
   // Enhanced write handler to track writes and metadata
   http.post("/.netlify/functions/drive-write", async ({ request }) => {
     const body = await request.json();
-    const { fileName, fileId, content } = body as { fileName: string; fileId?: string; content?: string };
+    const { fileName, fileId } = body as { fileName: string; fileId?: string; content?: string }; // content unused
 
     const response: DriveWriteResponse = {
-      id: fileId || `new-file-${Date.now()}`,
+      id: fileId ?? `new-file-${Date.now()}`,
       name: fileName,
       modifiedTime: new Date().toISOString()
     };

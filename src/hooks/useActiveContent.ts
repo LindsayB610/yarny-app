@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { useYarnyStore } from "../store/provider";
 import { selectActiveContent } from "../store/selectors";
@@ -15,7 +15,6 @@ export function useActiveContent(): Content | undefined {
     snippetId?: string;
     noteId?: string;
   }>();
-  const location = useLocation();
   
   const storeContent = useYarnyStore(selectActiveContent);
   const snippets = useYarnyStore((state) => state.entities.snippets);
@@ -33,6 +32,6 @@ export function useActiveContent(): Content | undefined {
     
     // Fallback to store state
     return storeContent;
-  }, [snippetId, noteId, snippets, notes, storeContent, location.pathname]);
+  }, [snippetId, noteId, snippets, notes, storeContent]);
 }
 

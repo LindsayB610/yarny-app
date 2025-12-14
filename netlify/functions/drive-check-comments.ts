@@ -88,7 +88,7 @@ export const handler: NetlifyFunctionHandler = async (
         commentCount = commentsResponse.data.comments.length;
         hasComments = true;
         commentIds.push(
-          ...commentsResponse.data.comments.map((c) => c.id || "").filter(Boolean)
+          ...commentsResponse.data.comments.map((c) => c.id ?? "").filter(Boolean)
         );
       }
     } catch (commentError) {
@@ -133,10 +133,15 @@ export const handler: NetlifyFunctionHandler = async (
                   return contentElem.paragraph.elements.some((elem) => {
                     if (
                       elem.textRun &&
-                      ((elem.textRun.suggestedInsertionIds &&
-                        elem.textRun.suggestedInsertionIds.length > 0) ||
-                        (elem.textRun.suggestedDeletionIds &&
-                          elem.textRun.suggestedDeletionIds.length > 0))
+                      (() => {
+                        const hasInsertions = Boolean(
+                          elem.textRun.suggestedInsertionIds && elem.textRun.suggestedInsertionIds.length > 0
+                        );
+                        const hasDeletions = Boolean(
+                          elem.textRun.suggestedDeletionIds && elem.textRun.suggestedDeletionIds.length > 0
+                        );
+                        return Boolean(hasInsertions || hasDeletions);
+                      })()
                     ) {
                       return true;
                     }
@@ -180,7 +185,7 @@ export const handler: NetlifyFunctionHandler = async (
 
     // Consider tracked changes if we found suggestions or if there are multiple revisions
     // (though multiple revisions alone don't guarantee tracked changes, it's a good indicator)
-    const hasTrackedChangesFinal = hasTrackedChanges || (hasRevisions && hasComments);
+    const hasTrackedChangesFinal = Boolean(hasTrackedChanges || (hasRevisions && hasComments));
 
     return createSuccessResponse({
       hasComments: hasComments,

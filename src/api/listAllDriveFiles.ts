@@ -5,7 +5,10 @@ const MAX_PAGES = 1000;
 
 export async function listAllDriveFiles(folderId: string | undefined): Promise<DriveFile[]> {
   // Skip Drive API calls for local projects
-  if (folderId?.startsWith("local-story_") || folderId?.startsWith("local-project_")) {
+  const hasLocalStoryPrefix = folderId?.startsWith("local-story_") ?? false;
+  const hasLocalProjectPrefix = folderId?.startsWith("local-project_") ?? false;
+  const isLocalProject = Boolean(hasLocalStoryPrefix || hasLocalProjectPrefix);
+  if (isLocalProject) {
     return [];
   }
   if (!folderId) {

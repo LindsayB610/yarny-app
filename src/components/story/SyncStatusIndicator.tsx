@@ -40,7 +40,7 @@ export function SyncStatusIndicator({
           icon: <Error fontSize="small" />,
           label: "Sync failed",
           color: "error" as const,
-          tooltip: errorMessage || "Failed to sync changes. Click to retry."
+          tooltip: errorMessage ?? "Failed to sync changes. Click to retry."
         };
       case "pending":
         return {
