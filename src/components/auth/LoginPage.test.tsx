@@ -295,7 +295,7 @@ describe("LoginPage", () => {
     });
   });
 
-  it("disables button when Google Sign-In is not loaded", async () => {
+  it("shows error when Google Sign-In is not loaded", async () => {
     delete (window as any).google;
     
     renderWithProviders(<LoginPage />);
@@ -305,8 +305,11 @@ describe("LoginPage", () => {
     });
     
     const button = screen.getByRole("button", { name: /sign in with google/i });
-    // Button should be disabled when Google Sign-In is not ready
-    expect(button).toBeDisabled();
+    await userEvent.click(button);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/google sign-in not loaded/i)).toBeInTheDocument();
+    });
   });
 });
 
