@@ -26,6 +26,9 @@ export function LoginPage(): JSX.Element {
   const { data: config, isLoading: configLoading } = useAuthConfig();
   const { isAuthenticated, user, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
+  const [googleInitialized, setGoogleInitialized] = useState(false);
+  const [isPrompting, setIsPrompting] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -58,15 +61,28 @@ export function LoginPage(): JSX.Element {
   const handleGoogleSignIn = useCallback(
     async (response: { credential: string }) => {
       try {
+        setIsPrompting(false);
         setError(null);
         await login(response.credential);
         void navigate("/stories", { replace: true });
       } catch (err) {
+        setIsPrompting(false);
         setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
       }
     },
     [login, navigate]
   );
+
+  // Reset initialization state when clientId changes
+  useEffect(() => {
+    if (bypassActive) {
+      setGoogleInitialized(false);
+      return;
+    }
+    if (!config?.clientId) {
+      setGoogleInitialized(false);
+    }
+  }, [bypassActive, config?.clientId]);
 
   // Initialize Google Sign-In
   useEffect(() => {
@@ -74,17 +90,28 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    if (!config?.clientId || !window.google) {
+    if (!config?.clientId || !googleScriptLoaded || !window.google?.accounts?.id) {
       return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: config.clientId,
-      callback: (response) => {
-        void handleGoogleSignIn(response);
-      }
-    });
-  }, [bypassActive, config?.clientId, handleGoogleSignIn]);
+    // Prevent multiple initializations
+    if (googleInitialized) {
+      return;
+    }
+
+    try {
+      window.google.accounts.id.initialize({
+        client_id: config.clientId,
+        callback: (response) => {
+          void handleGoogleSignIn(response);
+        }
+      });
+      setGoogleInitialized(true);
+    } catch (err) {
+      console.error("[Auth] Failed to initialize Google Sign-In:", err);
+      setError("Failed to initialize Google Sign-In. Please refresh the page.");
+    }
+  }, [bypassActive, config?.clientId, googleScriptLoaded, googleInitialized, handleGoogleSignIn]);
 
   const resolveBypassSecret = useCallback(
     (forcePrompt: boolean) => {
@@ -137,18 +164,38 @@ export function LoginPage(): JSX.Element {
     [loginWithBypass, navigate, resolveBypassSecret]
   );
 
-  const handleSignInClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (bypassActive) {
-      void handleLocalBypass(event);
-      return;
-    }
+  const handleSignInClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      if (bypassActive) {
+        void handleLocalBypass(event);
+        return;
+      }
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setError("Google Sign-In not loaded. Please refresh the page.");
-    }
-  };
+      // Prevent multiple simultaneous prompts
+      if (isPrompting) {
+        return;
+      }
+
+      if (!googleInitialized || !window.google?.accounts?.id) {
+        setError("Google Sign-In not ready. Please wait a moment and try again.");
+        return;
+      }
+
+      try {
+        setIsPrompting(true);
+        window.google.accounts.id.prompt();
+        // Reset prompting state after a delay to allow the prompt to complete
+        setTimeout(() => {
+          setIsPrompting(false);
+        }, 1000);
+      } catch (err) {
+        setIsPrompting(false);
+        console.error("[Auth] Failed to show Google Sign-In prompt:", err);
+        setError("Failed to show sign-in prompt. Please try again.");
+      }
+    },
+    [bypassActive, googleInitialized, isPrompting, handleLocalBypass]
+  );
 
   // Load Google Sign-In script
   useEffect(() => {
@@ -157,22 +204,47 @@ export function LoginPage(): JSX.Element {
     }
 
     if (window.google?.accounts) {
+      setGoogleScriptLoaded(true);
       return; // Already loaded
+    }
+
+    // Check if script is already in the DOM
+    const existingScript = document.querySelector(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+    if (existingScript) {
+      // Script exists but google might not be loaded yet
+      const checkGoogle = setInterval(() => {
+        if (window.google?.accounts) {
+          clearInterval(checkGoogle);
+          setGoogleScriptLoaded(true);
+        }
+      }, 100);
+      return () => clearInterval(checkGoogle);
     }
 
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
+    
+    script.onload = () => {
+      setGoogleScriptLoaded(true);
+    };
+    
+    script.onerror = () => {
+      setError("Failed to load Google Sign-In. Please check your connection and try again.");
+    };
+
     document.head.appendChild(script);
 
     return () => {
       // Cleanup script on unmount
-      const existingScript = document.querySelector(
+      const scriptToRemove = document.querySelector(
         'script[src="https://accounts.google.com/gsi/client"]'
       );
-      if (existingScript) {
-        existingScript.remove();
+      if (scriptToRemove && scriptToRemove === script) {
+        scriptToRemove.remove();
       }
     };
   }, [bypassActive]);
@@ -282,7 +354,12 @@ export function LoginPage(): JSX.Element {
             fullWidth
             size="large"
             onClick={handleSignInClick}
-            disabled={(!config?.clientId && !bypassActive) || isLoading}
+            disabled={
+              (!config?.clientId && !bypassActive) ||
+              isLoading ||
+              isPrompting ||
+              (!bypassActive && (!googleScriptLoaded || !googleInitialized))
+            }
             sx={{
               py: 1.5,
               borderRadius: "9999px",
@@ -291,7 +368,11 @@ export function LoginPage(): JSX.Element {
               fontSize: "1rem"
             }}
           >
-            {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
+            {bypassActive
+              ? `Continue as ${bypassDisplayName}`
+              : isPrompting
+                ? "Signing in..."
+                : "Sign in with Google"}
           </Button>
 
           <Box sx={{ mt: 4 }}>
