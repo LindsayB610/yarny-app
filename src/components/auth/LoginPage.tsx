@@ -78,19 +78,38 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    if (!config?.clientId || !window.google) {
+    if (!config?.clientId) {
       return;
     }
 
-    // Use ref in callback to avoid re-initialization
-    window.google.accounts.id.initialize({
-      client_id: config.clientId,
-      callback: (response) => {
-        if (handleGoogleSignInRef.current) {
-          void handleGoogleSignInRef.current(response);
-        }
+    // Wait for Google script to load
+    const checkAndInit = () => {
+      if (!window.google?.accounts?.id) {
+        console.log("[Auth] Waiting for Google Sign-In script to load...");
+        setTimeout(checkAndInit, 100);
+        return;
       }
-    });
+
+      console.log("[Auth] Initializing Google Sign-In with clientId:", config.clientId.substring(0, 10) + "...");
+      
+      try {
+        window.google.accounts.id.initialize({
+          client_id: config.clientId,
+          callback: (response) => {
+            console.log("[Auth] Google Sign-In callback received");
+            if (handleGoogleSignInRef.current) {
+              void handleGoogleSignInRef.current(response);
+            }
+          }
+        });
+        console.log("[Auth] Google Sign-In initialized successfully");
+      } catch (err) {
+        console.error("[Auth] Failed to initialize Google Sign-In:", err);
+        setError("Failed to initialize Google Sign-In. Please refresh the page.");
+      }
+    };
+
+    checkAndInit();
   }, [bypassActive, config?.clientId]);
 
   const resolveBypassSecret = useCallback(
@@ -150,9 +169,22 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
+    console.log("[Auth] Sign-in button clicked");
+    console.log("[Auth] window.google exists:", !!window.google);
+    console.log("[Auth] window.google.accounts exists:", !!window.google?.accounts);
+    console.log("[Auth] window.google.accounts.id exists:", !!window.google?.accounts?.id);
+
     if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
+      try {
+        console.log("[Auth] Calling prompt()");
+        window.google.accounts.id.prompt();
+        console.log("[Auth] prompt() called successfully");
+      } catch (err) {
+        console.error("[Auth] Error calling prompt():", err);
+        setError("Failed to show sign-in prompt. Please try again.");
+      }
     } else {
+      console.error("[Auth] Google Sign-In not available");
       setError("Google Sign-In not loaded. Please refresh the page.");
     }
   };
