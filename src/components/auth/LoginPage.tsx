@@ -219,38 +219,17 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    // Try prompt() to show One Tap UI (or show it again if dismissed)
-    try {
-      isPromptingRef.current = true;
-      console.log("[Auth] Calling prompt() to show One Tap UI");
-      
-      window.google.accounts.id.prompt((notification) => {
-        isPromptingRef.current = false;
-        console.log("[Auth] Prompt notification:", notification);
+    // Use renderButton() to create a button that opens the account selector popup
+    // This is more reliable than prompt() which can fail if One Tap was dismissed
+    if (buttonRef.current && window.google.accounts.id.renderButton) {
+      try {
+        isPromptingRef.current = true;
+        console.log("[Auth] Using renderButton() to show account selector");
         
-        if (notification.isNotDisplayed) {
-          console.warn("[Auth] One Tap UI not displayed:", notification.notDisplayedReason);
-          // One Tap not available - this is expected if it was dismissed earlier
-          // The user can refresh the page or use incognito mode to see it again
-        }
-      });
-      
-      // Reset flag after timeout as fallback
-      setTimeout(() => {
-        isPromptingRef.current = false;
-      }, 3000);
-    } catch (err) {
-      isPromptingRef.current = false;
-      console.error("[Auth] Error calling prompt():", err);
-      
-      // If prompt() fails, try using renderButton() as fallback
-      if (buttonRef.current && window.google.accounts.id.renderButton) {
-        try {
-          console.log("[Auth] Prompt failed, trying renderButton() fallback");
-          const rect = buttonRef.current.getBoundingClientRect();
-          
-          // Create a temporary container for the Google button
-          const container = document.createElement("div");
+        // Create or reuse container for Google button
+        let container = googleButtonContainerRef.current;
+        if (!container && buttonRef.current.parentElement) {
+          container = document.createElement("div");
           container.style.position = "absolute";
           container.style.top = "0";
           container.style.left = "0";
@@ -262,35 +241,51 @@ export function LoginPage(): JSX.Element {
           container.style.cursor = "pointer";
           
           const parent = buttonRef.current.parentElement;
-          if (parent) {
-            parent.style.position = "relative";
-            parent.appendChild(container);
-            
-            window.google.accounts.id.renderButton(container, {
-              type: "standard",
-              theme: "outline",
-              size: "large",
-              text: "signin_with",
-              shape: "rectangular",
-              logo_alignment: "left",
-              width: rect.width
-            });
-            
-            // Trigger click on the rendered button
-            setTimeout(() => {
-              const iframe = container.querySelector("iframe");
-              if (iframe) {
-                iframe.click();
-              }
-            }, 100);
-          }
-        } catch (renderErr) {
-          console.error("[Auth] Error rendering Google button:", renderErr);
-          setError("Failed to show sign-in. Please refresh the page and try again.");
+          parent.style.position = "relative";
+          parent.appendChild(container);
+          googleButtonContainerRef.current = container;
         }
-      } else {
-        setError("Failed to show sign-in prompt. Please refresh the page and try again.");
+
+        if (container) {
+          // Clear any existing button
+          container.innerHTML = "";
+          
+          const rect = buttonRef.current.getBoundingClientRect();
+          window.google.accounts.id.renderButton(container, {
+            type: "standard",
+            theme: "outline",
+            size: "large",
+            text: "signin_with",
+            shape: "rectangular",
+            logo_alignment: "left",
+            width: rect.width
+          });
+          
+          // Trigger click on the rendered button after a short delay
+          setTimeout(() => {
+            const iframe = container.querySelector("iframe");
+            if (iframe) {
+              const clickEvent = new MouseEvent("click", {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              });
+              iframe.dispatchEvent(clickEvent);
+              console.log("[Auth] Clicked rendered Google button");
+            }
+            isPromptingRef.current = false;
+          }, 100);
+        } else {
+          isPromptingRef.current = false;
+          setError("Failed to create sign-in button. Please refresh the page.");
+        }
+      } catch (err) {
+        isPromptingRef.current = false;
+        console.error("[Auth] Error rendering Google button:", err);
+        setError("Failed to show sign-in. Please refresh the page and try again.");
       }
+    } else {
+      setError("Google Sign-In button rendering not available. Please refresh the page.");
     }
   };
 
