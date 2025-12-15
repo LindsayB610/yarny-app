@@ -4,6 +4,7 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import type { DriveFile } from "../api/contract";
 import { listAllDriveFiles } from "../api/listAllDriveFiles";
+import { useAuth } from "./useAuth";
 
 export interface StoryFolder extends DriveFile {
   // Story folders are Drive folders
@@ -67,11 +68,13 @@ export async function fetchStories(queryClient: QueryClient): Promise<StoryFolde
  */
 export function useStoriesQuery() {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
 
   return useQuery({
     queryKey: STORIES_QUERY_KEY,
     queryFn: () => fetchStories(queryClient),
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    enabled: isAuthenticated // Only fetch when authenticated
   });
 }
 
