@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Container, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState, type JSX, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
@@ -12,10 +12,6 @@ declare global {
           initialize: (config: {
             client_id: string;
             callback: (response: { credential: string }) => void;
-            auto_select?: boolean;
-            cancel_on_tap_outside?: boolean;
-            itp_support?: boolean;
-            use_fedcm_for_prompt?: boolean;
           }) => void;
           prompt: () => void;
         };
@@ -58,6 +54,8 @@ export function LoginPage(): JSX.Element {
     }
   }, [bypassActive, bypassDisplayName]);
 
+  const handleGoogleSignInRef = useRef<(response: { credential: string }) => Promise<void>>();
+  
   const handleGoogleSignIn = useCallback(
     async (response: { credential: string }) => {
       try {
@@ -71,7 +69,10 @@ export function LoginPage(): JSX.Element {
     [login, navigate]
   );
 
-  // Initialize Google Sign-In
+  // Keep ref updated
+  handleGoogleSignInRef.current = handleGoogleSignIn;
+
+  // Initialize Google Sign-In - only once per clientId
   useEffect(() => {
     if (bypassActive) {
       return;
@@ -81,17 +82,16 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
+    // Use ref in callback to avoid re-initialization
     window.google.accounts.id.initialize({
       client_id: config.clientId,
       callback: (response) => {
-        void handleGoogleSignIn(response);
-      },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      itp_support: true,
-      use_fedcm_for_prompt: true
+        if (handleGoogleSignInRef.current) {
+          void handleGoogleSignInRef.current(response);
+        }
+      }
     });
-  }, [bypassActive, config?.clientId, handleGoogleSignIn]);
+  }, [bypassActive, config?.clientId]);
 
   const resolveBypassSecret = useCallback(
     (forcePrompt: boolean) => {
