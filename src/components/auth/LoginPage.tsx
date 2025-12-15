@@ -36,6 +36,7 @@ export function LoginPage(): JSX.Element {
   const { data: config, isLoading: configLoading } = useAuthConfig();
   const { isAuthenticated, user, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const isPromptingRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const googleButtonContainerRef = useRef<HTMLDivElement>(null);
 
@@ -230,18 +231,40 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
+    // Prevent multiple simultaneous prompt() calls
+    if (isPromptingRef.current) {
+      console.log("[Auth] Prompt already in progress, ignoring click");
+      return;
+    }
+
     // Call prompt() to show One Tap UI (the corner account picker)
     if (window.google?.accounts?.id) {
       try {
+        isPromptingRef.current = true;
         console.log("[Auth] Calling prompt() to show One Tap UI");
+        
         window.google.accounts.id.prompt((notification) => {
+          isPromptingRef.current = false;
           console.log("[Auth] Prompt notification:", notification);
+          
           if (notification.isNotDisplayed) {
             console.warn("[Auth] One Tap UI not displayed:", notification.notDisplayedReason);
-            // If One Tap can't be shown, we could show an error or try alternative flow
+            setError("One Tap UI is not available. This might be because it was dismissed earlier. Please try refreshing the page or use an incognito window.");
+          } else if (notification.isSkippedMoment) {
+            console.log("[Auth] One Tap UI was skipped");
+            // User skipped it - that's okay
+          } else if (notification.isDismissedMoment) {
+            console.log("[Auth] One Tap UI was dismissed");
+            // User dismissed it - that's okay
           }
         });
+        
+        // Reset flag after a timeout as fallback
+        setTimeout(() => {
+          isPromptingRef.current = false;
+        }, 5000);
       } catch (err) {
+        isPromptingRef.current = false;
         console.error("[Auth] Error calling prompt():", err);
         setError("Failed to show sign-in prompt. Please try again.");
       }
