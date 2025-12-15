@@ -14,20 +14,17 @@ declare global {
           initialize: (config: {
             client_id: string;
             callback: (response: { credential: string }) => void;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+            itp_support?: boolean;
+            use_fedcm_for_prompt?: boolean;
           }) => void;
-          prompt: () => void;
-          renderButton: (
-            parent: HTMLElement,
-            options: {
-              type?: string;
-              theme?: string;
-              size?: string;
-              text?: string;
-              shape?: string;
-              logo_alignment?: string;
-              width?: number;
-            }
-          ) => void;
+          prompt: (notificationCallback?: (notification: {
+            isNotDisplayed?: boolean;
+            notDisplayedReason?: string;
+            isSkippedMoment?: boolean;
+            isDismissedMoment?: boolean;
+          }) => void) => void;
         };
       };
     };
@@ -116,7 +113,12 @@ export function LoginPage(): JSX.Element {
             if (handleGoogleSignInRef.current) {
               void handleGoogleSignInRef.current(response);
             }
-          }
+          },
+          // Enable One Tap UI (the corner account picker)
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          itp_support: true,
+          use_fedcm_for_prompt: true
         });
         console.log("[Auth] Google Sign-In initialized successfully");
       } catch (err) {
@@ -228,25 +230,17 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    // If Google button is rendered, let it handle the click
-    // Otherwise fall back to prompt()
-    if (googleButtonContainerRef.current?.querySelector("iframe")) {
-      // Google button will handle the click - trigger it programmatically
-      const iframe = googleButtonContainerRef.current.querySelector("iframe");
-      if (iframe) {
-        try {
-          (iframe as HTMLIFrameElement).click();
-        } catch {
-          // Cross-origin restrictions may prevent this
-        }
-      }
-      return;
-    }
-
-    // Fallback to prompt() if button not rendered
+    // Call prompt() to show One Tap UI (the corner account picker)
     if (window.google?.accounts?.id) {
       try {
-        window.google.accounts.id.prompt();
+        console.log("[Auth] Calling prompt() to show One Tap UI");
+        window.google.accounts.id.prompt((notification) => {
+          console.log("[Auth] Prompt notification:", notification);
+          if (notification.isNotDisplayed) {
+            console.warn("[Auth] One Tap UI not displayed:", notification.notDisplayedReason);
+            // If One Tap can't be shown, we could show an error or try alternative flow
+          }
+        });
       } catch (err) {
         console.error("[Auth] Error calling prompt():", err);
         setError("Failed to show sign-in prompt. Please try again.");
@@ -456,25 +450,22 @@ export function LoginPage(): JSX.Element {
               </Alert>
             )}
 
-            <Box sx={{ position: "relative", width: "100%" }}>
-              <Button
-                ref={buttonRef}
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={handleSignInClick}
-                disabled={(!config?.clientId && !bypassActive) || isLoading}
-                sx={{
-                  py: 1.5,
-                  borderRadius: "9999px",
-                  textTransform: "none",
-                  fontWeight: "bold",
-                  fontSize: "1rem"
-                }}
-              >
-                {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
-              </Button>
-            </Box>
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleSignInClick}
+              disabled={(!config?.clientId && !bypassActive) || isLoading}
+              sx={{
+                py: 1.5,
+                borderRadius: "9999px",
+                textTransform: "none",
+                fontWeight: "bold",
+                fontSize: "1rem"
+              }}
+            >
+              {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
+            </Button>
 
             <Box sx={{ mt: 4 }}>
             <Typography
