@@ -2,6 +2,8 @@ import { Alert, Box, Button, Container, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
+import { AppFooter } from "../layout/AppFooter";
+
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
 
 declare global {
@@ -14,6 +16,18 @@ declare global {
             callback: (response: { credential: string }) => void;
           }) => void;
           prompt: () => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: string;
+              theme?: string;
+              size?: string;
+              text?: string;
+              shape?: string;
+              logo_alignment?: string;
+              width?: number;
+            }
+          ) => void;
         };
       };
     };
@@ -25,6 +39,8 @@ export function LoginPage(): JSX.Element {
   const { data: config, isLoading: configLoading } = useAuthConfig();
   const { isAuthenticated, user, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const googleButtonContainerRef = useRef<HTMLDivElement>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -112,6 +128,49 @@ export function LoginPage(): JSX.Element {
     checkAndInit();
   }, [bypassActive, config?.clientId]);
 
+  // Render Google Sign-In button after initialization
+  useEffect(() => {
+    if (bypassActive || !config?.clientId || !window.google?.accounts?.id || !buttonRef.current) {
+      return;
+    }
+
+    // Create container for Google button if it doesn't exist
+    if (!googleButtonContainerRef.current && buttonRef.current.parentElement) {
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.top = "0";
+      container.style.left = "0";
+      container.style.width = "100%";
+      container.style.height = "100%";
+      container.style.opacity = "0";
+      container.style.pointerEvents = "auto";
+      container.style.zIndex = "1";
+      container.style.cursor = "pointer";
+      
+      buttonRef.current.parentElement.style.position = "relative";
+      buttonRef.current.parentElement.appendChild(container);
+      googleButtonContainerRef.current = container;
+    }
+
+    if (googleButtonContainerRef.current && !googleButtonContainerRef.current.querySelector("iframe")) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      try {
+        window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: rect.width
+        });
+        console.log("[Auth] Google Sign-In button rendered");
+      } catch (err) {
+        console.error("[Auth] Error rendering Google button:", err);
+      }
+    }
+  }, [bypassActive, config?.clientId]);
+
   const resolveBypassSecret = useCallback(
     (forcePrompt: boolean) => {
       if (typeof window === "undefined") {
@@ -164,37 +223,35 @@ export function LoginPage(): JSX.Element {
   );
 
   const handleSignInClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
     if (bypassActive) {
       void handleLocalBypass(event);
       return;
     }
 
-    console.log("[Auth] Sign-in button clicked");
-    console.log("[Auth] config?.clientId:", config?.clientId ? config.clientId.substring(0, 10) + "..." : "missing");
-    console.log("[Auth] window.google exists:", !!window.google);
-    console.log("[Auth] window.google.accounts exists:", !!window.google?.accounts);
-    console.log("[Auth] window.google.accounts.id exists:", !!window.google?.accounts?.id);
-
-    if (!config?.clientId) {
-      console.error("[Auth] No client ID configured");
-      setError("Google Sign-In not configured. Please refresh the page.");
+    // If Google button is rendered, let it handle the click
+    // Otherwise fall back to prompt()
+    if (googleButtonContainerRef.current?.querySelector("iframe")) {
+      // Google button will handle the click - trigger it programmatically
+      const iframe = googleButtonContainerRef.current.querySelector("iframe");
+      if (iframe) {
+        try {
+          (iframe as HTMLIFrameElement).click();
+        } catch {
+          // Cross-origin restrictions may prevent this
+        }
+      }
       return;
     }
 
+    // Fallback to prompt() if button not rendered
     if (window.google?.accounts?.id) {
       try {
-        console.log("[Auth] Calling prompt()");
         window.google.accounts.id.prompt();
-        console.log("[Auth] prompt() called successfully");
       } catch (err) {
         console.error("[Auth] Error calling prompt():", err);
         setError("Failed to show sign-in prompt. Please try again.");
       }
     } else {
-      console.error("[Auth] Google Sign-In not available - script may not be loaded");
       setError("Google Sign-In not loaded. Please wait a moment and try again.");
     }
   };
@@ -399,22 +456,25 @@ export function LoginPage(): JSX.Element {
               </Alert>
             )}
 
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              onClick={handleSignInClick}
-              disabled={(!config?.clientId && !bypassActive) || isLoading}
-              sx={{
-                py: 1.5,
-                borderRadius: "9999px",
-                textTransform: "none",
-                fontWeight: "bold",
-                fontSize: "1rem"
-              }}
-            >
-              {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
-            </Button>
+            <Box sx={{ position: "relative", width: "100%" }}>
+              <Button
+                ref={buttonRef}
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={handleSignInClick}
+                disabled={(!config?.clientId && !bypassActive) || isLoading}
+                sx={{
+                  py: 1.5,
+                  borderRadius: "9999px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  fontSize: "1rem"
+                }}
+              >
+                {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
+              </Button>
+            </Box>
 
             <Box sx={{ mt: 4 }}>
             <Typography
