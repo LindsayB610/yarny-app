@@ -37,7 +37,24 @@ export interface StoryProgress {
 const YARNY_FOLDER_QUERY_KEY = ["drive", "yarny-stories-folder"] as const satisfies QueryKey;
 export const STORIES_QUERY_KEY = ["drive", "stories"] as const satisfies QueryKey;
 
-const fetchYarnyStoriesFolder = () => apiClient.getOrCreateYarnyStories();
+function checkAuth(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  try {
+    const token = window.localStorage.getItem("yarny_auth");
+    return !!token;
+  } catch {
+    return false;
+  }
+}
+
+const fetchYarnyStoriesFolder = () => {
+  if (!checkAuth()) {
+    throw new Error("Not authenticated");
+  }
+  return apiClient.getOrCreateYarnyStories();
+};
 
 export async function fetchStories(queryClient: QueryClient): Promise<StoryFolder[]> {
   const yarnyFolder = await queryClient.ensureQueryData({

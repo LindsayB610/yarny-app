@@ -73,6 +73,12 @@ export async function storiesLoader(queryClient: QueryClient): Promise<StoriesLo
   }
   
   try {
+    // Double-check authentication before making Drive API calls
+    const token = window.localStorage.getItem("yarny_auth");
+    if (!token) {
+      throw redirect("/login");
+    }
+
     const yarnyStoriesFolder = await queryClient.ensureQueryData({
       queryKey: ["drive", "yarny-stories-folder"],
       queryFn: () => apiClient.getOrCreateYarnyStories(),
