@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState, type JSX, type MouseEvent } 
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
-import { AppFooter } from "../layout/AppFooter";
 
 declare global {
   interface Window {
@@ -251,13 +250,113 @@ export function LoginPage(): JSX.Element {
 
   if (configLoading) {
     return (
+      <>
+        <Box
+          sx={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            background:
+              "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)",
+            p: 3,
+            pb: { xs: 20, md: 12 }
+          }}
+        >
+          <Container
+            maxWidth="sm"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexGrow: 1
+            }}
+          >
+            <Typography>Loading...</Typography>
+          </Container>
+        </Box>
+        <Box
+          component="footer"
+          sx={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: "100%",
+            borderTop: "1px solid rgba(148, 163, 184, 0.25)",
+            backgroundColor: "rgba(15, 23, 42, 0.9)",
+            backdropFilter: "blur(10px)"
+          }}
+        >
+          <Box
+            sx={{
+              mx: "auto",
+              width: "100%",
+              maxWidth: 1280,
+              py: 3,
+              px: { xs: 3, md: 6 }
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(226, 232, 240, 0.78)",
+                  textAlign: "center"
+                }}
+              >
+                © {new Date().getFullYear()} Yarny. Your personal writing tool.
+              </Typography>
+              <Box
+                component="nav"
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: { xs: 2, md: 3 },
+                  flexWrap: "wrap",
+                  justifyContent: "center"
+                }}
+              >
+                <Box
+                  component={RouterLink}
+                  to="/docs"
+                  sx={{
+                    color: "rgba(34, 211, 238, 0.9)",
+                    textDecoration: "none",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    transition: "color 0.2s ease",
+                    "&:hover": {
+                      color: "rgba(165, 243, 252, 0.95)"
+                    }
+                  }}
+                >
+                  User Guide
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </>
+    );
+  }
+
+  return (
+    <>
       <Box
         sx={{
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-          background:
-            "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)"
+          background: "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)",
+          p: 3,
+          pb: { xs: 20, md: 12 }
         }}
       >
         <Container
@@ -266,135 +365,177 @@ export function LoginPage(): JSX.Element {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            flexGrow: 1,
-            p: 3
+            flexGrow: 1
           }}
         >
-          <Typography>Loading...</Typography>
-        </Container>
-        <AppFooter variant="dark" />
-      </Box>
-    );
-  }
+          <Box
+            sx={{
+              bgcolor: "rgba(31, 41, 55, 0.95)",
+              backdropFilter: "blur(10px)",
+              borderRadius: 3,
+              p: 6,
+              textAlign: "center",
+              boxShadow: 6
+            }}
+          >
+            <Box
+              component={RouterLink}
+              to={user ? "/stories" : "/login"}
+              sx={{
+                display: "inline-block",
+                textDecoration: "none",
+                mb: 2,
+                "&:hover": {
+                  opacity: 0.9
+                }
+              }}
+            >
+              <Box
+                component="img"
+                src="/yarny-wordmark-white.svg"
+                alt="Yarny"
+                sx={{
+                  height: "3rem"
+                }}
+              />
+            </Box>
+            <Typography variant="h5" sx={{ color: "white", mb: 1, fontWeight: "bold" }}>
+              Welcome back!
+            </Typography>
+            <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 4 }}>
+              Sign in to continue writing
+            </Typography>
 
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "linear-gradient(180deg, hsla(160, 84%, 39%, 1) 0%, hsla(180, 94%, 31%, 1) 100%)",
-        p: 3
-      }}
-    >
-      <Container
-        maxWidth="sm"
+            {bypassActive && (
+              <Alert
+                severity="success"
+                sx={{ mb: 3, bgcolor: "rgba(16, 185, 129, 0.2)" }}
+              >
+                Local bypass active – continue as {bypassDisplayName}. Hold Option/Alt while clicking to re-enter the secret.
+              </Alert>
+            )}
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239, 68, 68, 0.2)" }}>
+                {error}
+              </Alert>
+            )}
+
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleSignInClick}
+              disabled={
+                (!config?.clientId && !bypassActive) ||
+                isLoading ||
+                isPrompting ||
+                (!bypassActive && (!googleScriptLoaded || !googleInitialized))
+              }
+              sx={{
+                py: 1.5,
+                borderRadius: "9999px",
+                textTransform: "none",
+                fontWeight: "bold",
+                fontSize: "1rem"
+              }}
+            >
+              {bypassActive
+                ? `Continue as ${bypassDisplayName}`
+                : isPrompting
+                  ? "Signing in..."
+                  : "Sign in with Google"}
+            </Button>
+
+            <Box sx={{ mt: 4 }}>
+            <Typography
+              component={RouterLink}
+              to="/docs"
+                sx={{
+                  color: "primary.main",
+                  textDecoration: "underline",
+                  fontSize: "0.875rem",
+                  "&:hover": {
+                    color: "primary.dark"
+                  }
+                }}
+              >
+                View Docs
+              </Typography>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+      <Box
+        component="footer"
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexGrow: 1
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          width: "100%",
+          borderTop: "1px solid rgba(148, 163, 184, 0.25)",
+          backgroundColor: "rgba(15, 23, 42, 0.9)",
+          backdropFilter: "blur(10px)"
         }}
       >
         <Box
           sx={{
-            bgcolor: "rgba(31, 41, 55, 0.95)",
-            backdropFilter: "blur(10px)",
-            borderRadius: 3,
-            p: 6,
-            textAlign: "center",
-            boxShadow: 6
+            mx: "auto",
+            width: "100%",
+            maxWidth: 1280,
+            py: 3,
+            px: { xs: 3, md: 6 }
           }}
         >
           <Box
-            component={RouterLink}
-            to={user ? "/stories" : "/login"}
             sx={{
-              display: "inline-block",
-              textDecoration: "none",
-              mb: 2,
-              "&:hover": {
-                opacity: 0.9
-              }
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2
             }}
           >
-            <Box
-              component="img"
-              src="/yarny-wordmark-white.svg"
-              alt="Yarny"
+            <Typography
+              variant="body2"
               sx={{
-                height: "3rem"
-              }}
-            />
-          </Box>
-          <Typography variant="h5" sx={{ color: "white", mb: 1, fontWeight: "bold" }}>
-            Welcome back!
-          </Typography>
-          <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 4 }}>
-            Sign in to continue writing
-          </Typography>
-
-          {bypassActive && (
-            <Alert
-              severity="success"
-              sx={{ mb: 3, bgcolor: "rgba(16, 185, 129, 0.2)" }}
-            >
-              Local bypass active – continue as {bypassDisplayName}. Hold Option/Alt while clicking to re-enter the secret.
-            </Alert>
-          )}
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239, 68, 68, 0.2)" }}>
-              {error}
-            </Alert>
-          )}
-
-          <Button
-            variant="contained"
-            fullWidth
-            size="large"
-            onClick={handleSignInClick}
-            disabled={
-              (!config?.clientId && !bypassActive) ||
-              isLoading ||
-              isPrompting ||
-              (!bypassActive && (!googleScriptLoaded || !googleInitialized))
-            }
-            sx={{
-              py: 1.5,
-              borderRadius: "9999px",
-              textTransform: "none",
-              fontWeight: "bold",
-              fontSize: "1rem"
-            }}
-          >
-            {bypassActive
-              ? `Continue as ${bypassDisplayName}`
-              : isPrompting
-                ? "Signing in..."
-                : "Sign in with Google"}
-          </Button>
-
-          <Box sx={{ mt: 4 }}>
-          <Typography
-            component={RouterLink}
-            to="/docs"
-              sx={{
-                color: "primary.main",
-                textDecoration: "underline",
-                fontSize: "0.875rem",
-                "&:hover": {
-                  color: "primary.dark"
-                }
+                color: "rgba(226, 232, 240, 0.78)",
+                textAlign: "center"
               }}
             >
-              View Docs
+              © {new Date().getFullYear()} Yarny. Your personal writing tool.
             </Typography>
+            <Box
+              component="nav"
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                gap: { xs: 2, md: 3 },
+                flexWrap: "wrap",
+                justifyContent: "center"
+              }}
+            >
+              <Box
+                component={RouterLink}
+                to="/docs"
+                sx={{
+                  color: "rgba(34, 211, 238, 0.9)",
+                  textDecoration: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  transition: "color 0.2s ease",
+                  "&:hover": {
+                    color: "rgba(165, 243, 252, 0.95)"
+                  }
+                }}
+              >
+                User Guide
+              </Box>
+            </Box>
           </Box>
         </Box>
-      </Container>
-      <AppFooter variant="dark" />
-    </Box>
+      </Box>
+    </>
   );
 }
 
