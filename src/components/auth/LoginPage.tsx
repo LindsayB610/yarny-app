@@ -25,6 +25,18 @@ declare global {
             isSkippedMoment?: boolean;
             isDismissedMoment?: boolean;
           }) => void) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: string;
+              theme?: string;
+              size?: string;
+              text?: string;
+              shape?: string;
+              logo_alignment?: string;
+              width?: number;
+            }
+          ) => void;
         };
       };
     };
@@ -39,6 +51,7 @@ export function LoginPage(): JSX.Element {
   const isPromptingRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const googleButtonContainerRef = useRef<HTMLDivElement>(null);
+  const oneTapShownRef = useRef(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -122,6 +135,12 @@ export function LoginPage(): JSX.Element {
           use_fedcm_for_prompt: true
         });
         console.log("[Auth] Google Sign-In initialized successfully");
+        
+        // One Tap UI should appear automatically after initialization
+        // Track if it shows so we can use fallback if needed
+        setTimeout(() => {
+          oneTapShownRef.current = true;
+        }, 2000);
       } catch (err) {
         console.error("[Auth] Failed to initialize Google Sign-In:", err);
         setError("Failed to initialize Google Sign-In. Please refresh the page.");
@@ -131,48 +150,6 @@ export function LoginPage(): JSX.Element {
     checkAndInit();
   }, [bypassActive, config?.clientId]);
 
-  // Render Google Sign-In button after initialization
-  useEffect(() => {
-    if (bypassActive || !config?.clientId || !window.google?.accounts?.id || !buttonRef.current) {
-      return;
-    }
-
-    // Create container for Google button if it doesn't exist
-    if (!googleButtonContainerRef.current && buttonRef.current.parentElement) {
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.top = "0";
-      container.style.left = "0";
-      container.style.width = "100%";
-      container.style.height = "100%";
-      container.style.opacity = "0";
-      container.style.pointerEvents = "auto";
-      container.style.zIndex = "1";
-      container.style.cursor = "pointer";
-      
-      buttonRef.current.parentElement.style.position = "relative";
-      buttonRef.current.parentElement.appendChild(container);
-      googleButtonContainerRef.current = container;
-    }
-
-    if (googleButtonContainerRef.current && !googleButtonContainerRef.current.querySelector("iframe")) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      try {
-        window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "signin_with",
-          shape: "rectangular",
-          logo_alignment: "left",
-          width: rect.width
-        });
-        console.log("[Auth] Google Sign-In button rendered");
-      } catch (err) {
-        console.error("[Auth] Error rendering Google button:", err);
-      }
-    }
-  }, [bypassActive, config?.clientId]);
 
   const resolveBypassSecret = useCallback(
     (forcePrompt: boolean) => {
@@ -231,45 +208,89 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    // Prevent multiple simultaneous prompt() calls
+    // Prevent multiple simultaneous calls
     if (isPromptingRef.current) {
-      console.log("[Auth] Prompt already in progress, ignoring click");
+      console.log("[Auth] Already processing, ignoring click");
       return;
     }
 
-    // Call prompt() to show One Tap UI (the corner account picker)
-    if (window.google?.accounts?.id) {
-      try {
-        isPromptingRef.current = true;
-        console.log("[Auth] Calling prompt() to show One Tap UI");
-        
-        window.google.accounts.id.prompt((notification) => {
-          isPromptingRef.current = false;
-          console.log("[Auth] Prompt notification:", notification);
-          
-          if (notification.isNotDisplayed) {
-            console.warn("[Auth] One Tap UI not displayed:", notification.notDisplayedReason);
-            setError("One Tap UI is not available. This might be because it was dismissed earlier. Please try refreshing the page or use an incognito window.");
-          } else if (notification.isSkippedMoment) {
-            console.log("[Auth] One Tap UI was skipped");
-            // User skipped it - that's okay
-          } else if (notification.isDismissedMoment) {
-            console.log("[Auth] One Tap UI was dismissed");
-            // User dismissed it - that's okay
-          }
-        });
-        
-        // Reset flag after a timeout as fallback
-        setTimeout(() => {
-          isPromptingRef.current = false;
-        }, 5000);
-      } catch (err) {
-        isPromptingRef.current = false;
-        console.error("[Auth] Error calling prompt():", err);
-        setError("Failed to show sign-in prompt. Please try again.");
-      }
-    } else {
+    if (!window.google?.accounts?.id) {
       setError("Google Sign-In not loaded. Please wait a moment and try again.");
+      return;
+    }
+
+    // Try prompt() to show One Tap UI (or show it again if dismissed)
+    try {
+      isPromptingRef.current = true;
+      console.log("[Auth] Calling prompt() to show One Tap UI");
+      
+      window.google.accounts.id.prompt((notification) => {
+        isPromptingRef.current = false;
+        console.log("[Auth] Prompt notification:", notification);
+        
+        if (notification.isNotDisplayed) {
+          console.warn("[Auth] One Tap UI not displayed:", notification.notDisplayedReason);
+          // One Tap not available - this is expected if it was dismissed earlier
+          // The user can refresh the page or use incognito mode to see it again
+        }
+      });
+      
+      // Reset flag after timeout as fallback
+      setTimeout(() => {
+        isPromptingRef.current = false;
+      }, 3000);
+    } catch (err) {
+      isPromptingRef.current = false;
+      console.error("[Auth] Error calling prompt():", err);
+      
+      // If prompt() fails, try using renderButton() as fallback
+      if (buttonRef.current && window.google.accounts.id.renderButton) {
+        try {
+          console.log("[Auth] Prompt failed, trying renderButton() fallback");
+          const rect = buttonRef.current.getBoundingClientRect();
+          
+          // Create a temporary container for the Google button
+          const container = document.createElement("div");
+          container.style.position = "absolute";
+          container.style.top = "0";
+          container.style.left = "0";
+          container.style.width = "100%";
+          container.style.height = "100%";
+          container.style.opacity = "0";
+          container.style.pointerEvents = "auto";
+          container.style.zIndex = "1";
+          container.style.cursor = "pointer";
+          
+          const parent = buttonRef.current.parentElement;
+          if (parent) {
+            parent.style.position = "relative";
+            parent.appendChild(container);
+            
+            window.google.accounts.id.renderButton(container, {
+              type: "standard",
+              theme: "outline",
+              size: "large",
+              text: "signin_with",
+              shape: "rectangular",
+              logo_alignment: "left",
+              width: rect.width
+            });
+            
+            // Trigger click on the rendered button
+            setTimeout(() => {
+              const iframe = container.querySelector("iframe");
+              if (iframe) {
+                iframe.click();
+              }
+            }, 100);
+          }
+        } catch (renderErr) {
+          console.error("[Auth] Error rendering Google button:", renderErr);
+          setError("Failed to show sign-in. Please refresh the page and try again.");
+        }
+      } else {
+        setError("Failed to show sign-in prompt. Please refresh the page and try again.");
+      }
     }
   };
 
@@ -473,22 +494,25 @@ export function LoginPage(): JSX.Element {
               </Alert>
             )}
 
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              onClick={handleSignInClick}
-              disabled={(!config?.clientId && !bypassActive) || isLoading}
-              sx={{
-                py: 1.5,
-                borderRadius: "9999px",
-                textTransform: "none",
-                fontWeight: "bold",
-                fontSize: "1rem"
-              }}
-            >
-              {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
-            </Button>
+            <Box sx={{ position: "relative", width: "100%" }}>
+              <Button
+                ref={buttonRef}
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={handleSignInClick}
+                disabled={(!config?.clientId && !bypassActive) || isLoading}
+                sx={{
+                  py: 1.5,
+                  borderRadius: "9999px",
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  fontSize: "1rem"
+                }}
+              >
+                {bypassActive ? `Continue as ${bypassDisplayName}` : "Sign in with Google"}
+              </Button>
+            </Box>
 
             <Box sx={{ mt: 4 }}>
             <Typography

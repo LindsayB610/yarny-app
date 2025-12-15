@@ -27,7 +27,8 @@ const mockGoogleAccounts = {
   accounts: {
     id: {
       initialize: vi.fn(),
-      prompt: vi.fn()
+      prompt: vi.fn(),
+      renderButton: vi.fn()
     }
   }
 };
@@ -79,7 +80,11 @@ describe("LoginPage", () => {
     await waitFor(() => {
       expect(mockGoogleAccounts.accounts.id.initialize).toHaveBeenCalledWith({
         client_id: "test-client-id",
-        callback: expect.any(Function)
+        callback: expect.any(Function),
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        itp_support: true,
+        use_fedcm_for_prompt: true
       });
     });
   });
