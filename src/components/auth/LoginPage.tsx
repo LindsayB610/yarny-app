@@ -136,11 +136,56 @@ export function LoginPage(): JSX.Element {
         });
         console.log("[Auth] Google Sign-In initialized successfully");
         
-        // One Tap UI should appear automatically after initialization
-        // Track if it shows so we can use fallback if needed
-        setTimeout(() => {
-          oneTapShownRef.current = true;
-        }, 2000);
+        // Render Google button overlay once during initialization
+        // This matches the legacy approach that worked well
+        const setupButtonOverlay = () => {
+          if (!buttonRef.current) {
+            setTimeout(setupButtonOverlay, 100);
+            return;
+          }
+
+          // Create container for Google button overlay
+          if (!googleButtonContainerRef.current && buttonRef.current.parentElement) {
+            const container = document.createElement("div");
+            container.style.position = "absolute";
+            container.style.top = "0";
+            container.style.left = "0";
+            container.style.width = "100%";
+            container.style.height = "100%";
+            container.style.opacity = "0";
+            container.style.pointerEvents = "auto";
+            container.style.zIndex = "1";
+            container.style.cursor = "pointer";
+            container.style.overflow = "hidden";
+            
+            const parent = buttonRef.current.parentElement;
+            parent.style.position = "relative";
+            parent.appendChild(container);
+            googleButtonContainerRef.current = container;
+          }
+
+          // Render Google button into container
+          if (googleButtonContainerRef.current && !googleButtonContainerRef.current.querySelector("iframe")) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            try {
+              window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
+                type: "standard",
+                theme: "outline",
+                size: "large",
+                text: "signin_with",
+                shape: "rectangular",
+                logo_alignment: "left",
+                width: rect.width
+              });
+              console.log("[Auth] Google Sign-In button overlay rendered");
+            } catch (err) {
+              console.error("[Auth] Error rendering Google button:", err);
+            }
+          }
+        };
+
+        // Setup button overlay after a short delay to ensure button is mounted
+        setTimeout(setupButtonOverlay, 100);
       } catch (err) {
         console.error("[Auth] Failed to initialize Google Sign-In:", err);
         setError("Failed to initialize Google Sign-In. Please refresh the page.");
@@ -208,84 +253,46 @@ export function LoginPage(): JSX.Element {
       return;
     }
 
-    // Prevent multiple simultaneous calls
-    if (isPromptingRef.current) {
-      console.log("[Auth] Already processing, ignoring click");
-      return;
-    }
-
-    if (!window.google?.accounts?.id) {
-      setError("Google Sign-In not loaded. Please wait a moment and try again.");
-      return;
-    }
-
-    // Use renderButton() to create a button that opens the account selector popup
-    // This is more reliable than prompt() which can fail if One Tap was dismissed
-    if (buttonRef.current && window.google.accounts.id.renderButton) {
-      try {
-        isPromptingRef.current = true;
-        console.log("[Auth] Using renderButton() to show account selector");
-        
-        // Create or reuse container for Google button
-        let container = googleButtonContainerRef.current;
-        if (!container && buttonRef.current.parentElement) {
-          container = document.createElement("div");
-          container.style.position = "absolute";
-          container.style.top = "0";
-          container.style.left = "0";
-          container.style.width = "100%";
-          container.style.height = "100%";
-          container.style.opacity = "0";
-          container.style.pointerEvents = "auto";
-          container.style.zIndex = "1";
-          container.style.cursor = "pointer";
-          
-          const parent = buttonRef.current.parentElement;
-          parent.style.position = "relative";
-          parent.appendChild(container);
-          googleButtonContainerRef.current = container;
+    // The Google button overlay should be positioned over our custom button
+    // If the overlay exists, clicks should naturally go to it
+    // We just need to ensure the click propagates to the overlay
+    const container = googleButtonContainerRef.current;
+    
+    if (container) {
+      // Check if button is rendered
+      const iframe = container.querySelector("iframe");
+      const button = container.querySelector("div[role='button']");
+      
+      if (iframe || button) {
+        // Button is rendered - let the click pass through naturally
+        // The overlay is positioned over our button, so clicks should work
+        console.log("[Auth] Google button overlay exists, click should pass through");
+        return; // Let the natural click event handle it
+      } else {
+        // Button not rendered yet - try prompt() as fallback
+        console.log("[Auth] Google button not rendered yet, trying prompt()");
+        if (window.google?.accounts?.id) {
+          try {
+            window.google.accounts.id.prompt();
+          } catch (err) {
+            console.error("[Auth] Error calling prompt():", err);
+            setError("Sign-in not ready. Please wait a moment and try again.");
+          }
         }
-
-        if (container) {
-          // Clear any existing button
-          container.innerHTML = "";
-          
-          const rect = buttonRef.current.getBoundingClientRect();
-          window.google.accounts.id.renderButton(container, {
-            type: "standard",
-            theme: "outline",
-            size: "large",
-            text: "signin_with",
-            shape: "rectangular",
-            logo_alignment: "left",
-            width: rect.width
-          });
-          
-          // Trigger click on the rendered button after a short delay
-          setTimeout(() => {
-            const iframe = container.querySelector("iframe");
-            if (iframe) {
-              const clickEvent = new MouseEvent("click", {
-                bubbles: true,
-                cancelable: true,
-                view: window
-              });
-              iframe.dispatchEvent(clickEvent);
-              console.log("[Auth] Clicked rendered Google button");
-            }
-            isPromptingRef.current = false;
-          }, 100);
-        } else {
-          isPromptingRef.current = false;
-          setError("Failed to create sign-in button. Please refresh the page.");
-        }
-      } catch (err) {
-        isPromptingRef.current = false;
-        console.error("[Auth] Error rendering Google button:", err);
-        setError("Failed to show sign-in. Please refresh the page and try again.");
       }
     } else {
-      setError("Google Sign-In button rendering not available. Please refresh the page.");
+      // No overlay - try prompt() as fallback
+      console.log("[Auth] Google button overlay not found, trying prompt()");
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.prompt();
+        } catch (err) {
+          console.error("[Auth] Error calling prompt():", err);
+          setError("Google Sign-In not ready. Please refresh the page.");
+        }
+      } else {
+        setError("Google Sign-In not loaded. Please wait a moment and try again.");
+      }
     }
   };
 
