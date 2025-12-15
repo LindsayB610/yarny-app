@@ -12,6 +12,10 @@ declare global {
           initialize: (config: {
             client_id: string;
             callback: (response: { credential: string }) => void;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+            itp_support?: boolean;
+            use_fedcm_for_prompt?: boolean;
           }) => void;
           prompt: () => void;
         };
@@ -103,9 +107,14 @@ export function LoginPage(): JSX.Element {
         client_id: config.clientId,
         callback: (response) => {
           void handleGoogleSignIn(response);
-        }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        itp_support: true,
+        use_fedcm_for_prompt: true // Enable FedCM for better prompt support
       });
       setGoogleInitialized(true);
+      console.log("[Auth] Google Sign-In initialized with FedCM support");
     } catch (err) {
       console.error("[Auth] Failed to initialize Google Sign-In:", err);
       setError("Failed to initialize Google Sign-In. Please refresh the page.");
@@ -182,11 +191,17 @@ export function LoginPage(): JSX.Element {
 
       try {
         setIsPrompting(true);
+        console.log("[Auth] Calling Google Sign-In prompt()");
+        
+        // Call prompt() - this should show the account selector
+        // The prompt() method shows the One Tap or account selector UI
         window.google.accounts.id.prompt();
+        
         // Reset prompting state after a delay to allow the prompt to complete
+        // The callback in initialize() will handle the actual sign-in
         setTimeout(() => {
           setIsPrompting(false);
-        }, 1000);
+        }, 3000);
       } catch (err) {
         setIsPrompting(false);
         console.error("[Auth] Failed to show Google Sign-In prompt:", err);
