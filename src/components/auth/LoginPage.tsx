@@ -164,15 +164,25 @@ export function LoginPage(): JSX.Element {
   );
 
   const handleSignInClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (bypassActive) {
       void handleLocalBypass(event);
       return;
     }
 
     console.log("[Auth] Sign-in button clicked");
+    console.log("[Auth] config?.clientId:", config?.clientId ? config.clientId.substring(0, 10) + "..." : "missing");
     console.log("[Auth] window.google exists:", !!window.google);
     console.log("[Auth] window.google.accounts exists:", !!window.google?.accounts);
     console.log("[Auth] window.google.accounts.id exists:", !!window.google?.accounts?.id);
+
+    if (!config?.clientId) {
+      console.error("[Auth] No client ID configured");
+      setError("Google Sign-In not configured. Please refresh the page.");
+      return;
+    }
 
     if (window.google?.accounts?.id) {
       try {
@@ -184,8 +194,8 @@ export function LoginPage(): JSX.Element {
         setError("Failed to show sign-in prompt. Please try again.");
       }
     } else {
-      console.error("[Auth] Google Sign-In not available");
-      setError("Google Sign-In not loaded. Please refresh the page.");
+      console.error("[Auth] Google Sign-In not available - script may not be loaded");
+      setError("Google Sign-In not loaded. Please wait a moment and try again.");
     }
   };
 
