@@ -600,6 +600,24 @@ export function LoginPage(): JSX.Element {
               >
                 User Guide
               </Box>
+              <Box
+                component="a"
+                href="https://lindsaybrunner.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: "rgba(34, 211, 238, 0.9)",
+                  textDecoration: "none",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  transition: "color 0.2s ease",
+                  "&:hover": {
+                    color: "rgba(165, 243, 252, 0.95)"
+                  }
+                }}
+              >
+                lindsaybrunner.com
+              </Box>
             </Box>
           </Box>
         </Box>
