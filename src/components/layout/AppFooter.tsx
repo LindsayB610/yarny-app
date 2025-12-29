@@ -16,6 +16,9 @@ type FooterLink =
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: "User Guide", to: "/docs" },
+  { label: "Google Drive", href: "https://drive.google.com" },
+  { label: "Google Docs", href: "https://docs.google.com" },
+  { label: "Contact", href: "mailto:lb@lindsaybrunner.com" },
 ];
 
 export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JSX.Element {
@@ -82,26 +85,31 @@ export function AppFooter({ variant = "auto" }: { variant?: FooterVariant }): JS
             flexWrap="wrap"
             justifyContent={{ xs: "flex-start", md: "center" }}
           >
-            {FOOTER_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                component={"to" in link ? RouterLink : "a"}
-                to={"to" in link ? link.to : undefined}
-                href={"href" in link ? link.href : undefined}
-                underline="hover"
-                sx={{
-                  color: palette.primary,
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  transition: "color 0.2s ease",
-                  "&:hover": {
-                    color: palette.primaryHover
-                  }
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {FOOTER_LINKS.map((link) => {
+              const isExternal = "href" in link && link.href.startsWith("http");
+              return (
+                <Link
+                  key={link.label}
+                  component={"to" in link ? RouterLink : "a"}
+                  to={"to" in link ? link.to : undefined}
+                  href={"href" in link ? link.href : undefined}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                  underline="hover"
+                  sx={{
+                    color: palette.primary,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    transition: "color 0.2s ease",
+                    "&:hover": {
+                      color: palette.primaryHover
+                    }
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </Stack>
         </Stack>
       </Box>
