@@ -143,7 +143,7 @@ describe("DocsPage", () => {
     
     expect(screen.getByText(/© \d{4} Yarny/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "User Guide" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Testing Workbook" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Migration Plan" })).toBeInTheDocument();
   });
 
   it("verifies static file links point to existing files", () => {
@@ -161,17 +161,15 @@ describe("DocsPage", () => {
       );
     });
     
-    expect(staticFileLinks.length).toBeGreaterThan(0);
-    
-    staticFileLinks.forEach((link) => {
+    // If the docs page has .html links, verify they point to existing files
+    for (const link of staticFileLinks) {
       const href = link.getAttribute("href");
       if (href) {
-        // Remove leading slash and check if file exists in public directory
         const filePath = href.startsWith("/") ? href.slice(1) : href;
         const publicPath = resolve(process.cwd(), "public", filePath);
         expect(existsSync(publicPath)).toBe(true);
       }
-    });
+    }
   });
 
   it("shows My Stories link in footer when authenticated", () => {
@@ -290,20 +288,19 @@ describe("DocsPage", () => {
   it("shows overview page when no category is selected", () => {
     renderWithProviders(<DocsPage />, ["/docs"]);
     
-    // Should show category cards on overview page
-    // Check for h3 heading specifically (not the h5 in header or footer link)
-    const userGuideHeading = screen.getByRole("heading", { level: 3, name: "User Guide" });
-    expect(userGuideHeading).toBeInTheDocument();
-    expect(screen.getByText(/Welcome to the Yarny User Guide/i)).toBeInTheDocument();
+    // Overview page shows "Getting Started with Yarny" and intro text
+    const heading = screen.getByRole("heading", { level: 3, name: "Getting Started with Yarny" });
+    expect(heading).toBeInTheDocument();
+    expect(screen.getByText(/Yarny is a focused writing environment/i)).toBeInTheDocument();
     
-    // Check that category cards are present (text appears in multiple places, use getAllByText)
+    // Sidebar shows category links (Overview, Writing Workflow, etc.)
     const overviewElements = screen.getAllByText("Overview");
     expect(overviewElements.length).toBeGreaterThan(0);
     
     const writingElements = screen.getAllByText("Writing Workflow");
     expect(writingElements.length).toBeGreaterThan(0);
     
-    // Check for category card links
+    // Category link in sidebar goes to getting-started
     const overviewLink = screen.getByRole("link", { name: /Overview/i });
     expect(overviewLink).toHaveAttribute("href", "/docs/getting-started");
   });

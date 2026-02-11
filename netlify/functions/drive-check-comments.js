@@ -61,7 +61,7 @@ const handler = async (event) => {
             if (commentsResponse.data.comments && commentsResponse.data.comments.length > 0) {
                 commentCount = commentsResponse.data.comments.length;
                 hasComments = true;
-                commentIds.push(...commentsResponse.data.comments.map((c) => c.id || "").filter(Boolean));
+                commentIds.push(...commentsResponse.data.comments.map((c) => c.id ?? "").filter(Boolean));
             }
         }
         catch (commentError) {
@@ -94,10 +94,11 @@ const handler = async (event) => {
                         if (contentElem.paragraph?.elements) {
                             return contentElem.paragraph.elements.some((elem) => {
                                 if (elem.textRun &&
-                                    ((elem.textRun.suggestedInsertionIds &&
-                                        elem.textRun.suggestedInsertionIds.length > 0) ||
-                                        (elem.textRun.suggestedDeletionIds &&
-                                            elem.textRun.suggestedDeletionIds.length > 0))) {
+                                    (() => {
+                                        const hasInsertions = Boolean(elem.textRun.suggestedInsertionIds && elem.textRun.suggestedInsertionIds.length > 0);
+                                        const hasDeletions = Boolean(elem.textRun.suggestedDeletionIds && elem.textRun.suggestedDeletionIds.length > 0);
+                                        return Boolean(hasInsertions || hasDeletions);
+                                    })()) {
                                     return true;
                                 }
                                 return false;
@@ -132,7 +133,7 @@ const handler = async (event) => {
         }
         // Consider tracked changes if we found suggestions or if there are multiple revisions
         // (though multiple revisions alone don't guarantee tracked changes, it's a good indicator)
-        const hasTrackedChangesFinal = hasTrackedChanges || (hasRevisions && hasComments);
+        const hasTrackedChangesFinal = Boolean(hasTrackedChanges || (hasRevisions && hasComments));
         return (0, types_1.createSuccessResponse)({
             hasComments: hasComments,
             hasTrackedChanges: hasTrackedChangesFinal,

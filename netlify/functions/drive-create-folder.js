@@ -8,7 +8,7 @@ const types_1 = require("./types");
 function withTimeout(promise, timeoutMs, errorMessage) {
     return Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error(errorMessage || "Operation timed out")), timeoutMs))
+        new Promise((_, reject) => setTimeout(() => reject(new Error(errorMessage ?? "Operation timed out")), timeoutMs))
     ]);
 }
 const handler = async (event, context) => {
@@ -55,7 +55,7 @@ const handler = async (event, context) => {
                 console.log("Folder already exists:", existingFolder.id);
                 return (0, types_1.createSuccessResponse)({
                     id: existingFolder.id,
-                    name: existingFolder.name || folderName,
+                    name: existingFolder.name ?? folderName,
                     created: false
                 });
             }
@@ -75,8 +75,8 @@ const handler = async (event, context) => {
         }), 8000, "Folder creation timed out");
         console.log("Folder created successfully:", response.data.id);
         return (0, types_1.createSuccessResponse)({
-            id: response.data.id || "",
-            name: response.data.name || folderName,
+            id: response.data.id ?? "",
+            name: response.data.name ?? folderName,
             created: true
         });
     }

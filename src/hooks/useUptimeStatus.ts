@@ -40,7 +40,10 @@ export function useUptimeStatus(): UptimeStatus & { isLoading: boolean } {
       }
     }
 
-    return { status: "unknown", label: "Invalid status" };
+    return {
+      status: "unknown",
+      label: typeof obj.label === "string" ? obj.label : "Invalid status"
+    };
   };
 
   const fetchStatus = useCallback(async () => {

@@ -4,12 +4,12 @@ exports.handler = void 0;
 const google_auth_library_1 = require("google-auth-library");
 const contract_1 = require("./contract");
 const types_1 = require("./types");
-const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL || "lindsayb82@gmail.com";
+const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL ?? "lindsayb82@gmail.com";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const LOCAL_BYPASS_SECRET = (process.env.LOCAL_DEV_BYPASS_SECRET || "").trim();
-const LOCAL_BYPASS_EMAIL = (process.env.LOCAL_DEV_BYPASS_EMAIL || "").trim();
-const LOCAL_BYPASS_NAME = (process.env.LOCAL_DEV_BYPASS_NAME || "").trim();
-const LOCAL_BYPASS_PICTURE = (process.env.LOCAL_DEV_BYPASS_PICTURE || "").trim();
+const LOCAL_BYPASS_SECRET = (process.env.LOCAL_DEV_BYPASS_SECRET ?? "").trim();
+const LOCAL_BYPASS_EMAIL = (process.env.LOCAL_DEV_BYPASS_EMAIL ?? "").trim();
+const LOCAL_BYPASS_NAME = (process.env.LOCAL_DEV_BYPASS_NAME ?? "").trim();
+const LOCAL_BYPASS_PICTURE = (process.env.LOCAL_DEV_BYPASS_PICTURE ?? "").trim();
 const LOCAL_HOST_PATTERN = /(localhost|127\.0\.0\.1|::1)(:\d+)?(\/|$)/i;
 function isLocalRequest(event) {
     const headersToCheck = [
@@ -68,7 +68,7 @@ const handler = async (event) => {
                 console.warn("Local bypass provided invalid secret");
                 return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(401, "Invalid bypass credentials"));
             }
-            const email = LOCAL_BYPASS_EMAIL || allowedEmails[0] || "dev@localhost.test";
+            const email = LOCAL_BYPASS_EMAIL ?? allowedEmails[0] ?? "dev@localhost.test";
             if (!allowedEmails.includes(email.toLowerCase())) {
                 return (0, types_1.addCorsHeaders)((0, types_1.createErrorResponse)(403, "Access denied. Add the bypass email to ALLOWED_EMAIL."));
             }
@@ -91,8 +91,8 @@ const handler = async (event) => {
                 body: JSON.stringify({
                     verified: true,
                     user: email,
-                    name: LOCAL_BYPASS_NAME || email,
-                    picture: LOCAL_BYPASS_PICTURE || undefined,
+                    name: LOCAL_BYPASS_NAME || email, // Empty string should use email, || is correct
+                    picture: LOCAL_BYPASS_PICTURE || undefined, // Empty string should become undefined, || is correct
                     token: sessionToken
                 })
             };

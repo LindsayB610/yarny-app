@@ -8,8 +8,8 @@ const crypto_1 = __importDefault(require("crypto"));
 const google_auth_library_1 = require("google-auth-library");
 const drive_client_1 = require("./drive-client");
 const types_1 = require("./types");
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 // Validate client ID format
 function validateClientId(clientId) {
     if (!clientId)
@@ -98,7 +98,7 @@ const handler = async (event) => {
     console.log("Client Secret present:", !!GDRIVE_CLIENT_SECRET);
     console.log("Client Secret length (after trim):", GDRIVE_CLIENT_SECRET?.length);
     console.log("Client Secret validation: PASSED");
-    const { code, state, error, error_description } = event.queryStringParameters || {};
+    const { code, state, error, error_description } = event.queryStringParameters ?? {};
     if (error) {
         let errorMessage = error;
         if (error_description) {
@@ -169,7 +169,7 @@ const handler = async (event) => {
         };
     }
     // Verify random state matches cookie (CSRF protection)
-    const cookies = event.headers.cookie?.split(";") || [];
+    const cookies = event.headers.cookie?.split(";") ?? [];
     const stateCookie = cookies.find((c) => c.trim().startsWith("drive_auth_state="));
     if (!stateCookie) {
         console.error("State cookie not found. Available cookies:", cookies.map((c) => c.trim()));
@@ -209,10 +209,10 @@ const handler = async (event) => {
     // Use email from state parameter (not from session cookie)
     // This allows OAuth to work even if session cookie isn't sent due to SameSite=Strict
     // Determine redirect URI - must match exactly what's configured in Google Cloud Console
-    const host = event.headers.host || event.headers["x-forwarded-host"];
+    const host = event.headers.host ?? event.headers["x-forwarded-host"];
     const protocol = host?.includes("localhost") ? "http" : "https";
-    const redirectUri = process.env.GDRIVE_REDIRECT_URI ||
-        process.env.GOOGLE_REDIRECT_URI ||
+    const redirectUri = process.env.GDRIVE_REDIRECT_URI ??
+        process.env.GOOGLE_REDIRECT_URI ??
         `${protocol}://${host}/.netlify/functions/drive-auth-callback`;
     console.log("Callback received - Redirect URI:", redirectUri);
     console.log("Host:", host);
@@ -245,10 +245,10 @@ const handler = async (event) => {
         console.log("Has refresh_token:", !!tokens.refresh_token);
         console.log("Token scope:", tokens.scope);
         // Verify that tokens include the Docs API scope
-        const hasDriveScope = tokens.scope?.includes("drive.file") ||
-            tokens.scope?.includes("https://www.googleapis.com/auth/drive.file");
-        const hasDocsScope = tokens.scope?.includes("documents") ||
-            tokens.scope?.includes("https://www.googleapis.com/auth/documents");
+        const driveScopeVariants = ["drive.file", "https://www.googleapis.com/auth/drive.file"];
+        const docsScopeVariants = ["documents", "https://www.googleapis.com/auth/documents"];
+        const hasDriveScope = Boolean(tokens.scope && driveScopeVariants.some((variant) => tokens.scope?.includes(variant)));
+        const hasDocsScope = Boolean(tokens.scope && docsScopeVariants.some((variant) => tokens.scope?.includes(variant)));
         console.log("Has Drive scope:", hasDriveScope);
         console.log("Has Docs scope:", hasDocsScope);
         if (!hasDocsScope) {
@@ -275,7 +275,7 @@ const handler = async (event) => {
         // This saves a round trip when the user first lands on the stories page
         // We do this in the background and don't wait for it to complete
         // The folder will be created/retrieved on stories page load anyway
-        (async () => {
+        void (async () => {
             try {
                 const drive = await (0, drive_client_1.getAuthenticatedDriveClient)(email);
                 const YARNY_STORIES_FOLDER = "Yarny Stories";

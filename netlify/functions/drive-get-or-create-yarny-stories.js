@@ -34,7 +34,7 @@ const handler = async (event) => {
             console.log(`Found "${YARNY_STORIES_FOLDER}" folder: ${newFolder.id}`);
             return (0, types_1.createSuccessResponse)({
                 id: newFolder.id,
-                name: newFolder.name || YARNY_STORIES_FOLDER,
+                name: newFolder.name ?? YARNY_STORIES_FOLDER,
                 created: false
             });
         }
@@ -72,8 +72,8 @@ const handler = async (event) => {
             fields: "id, name, createdTime"
         });
         return (0, types_1.createSuccessResponse)({
-            id: response.data.id || "",
-            name: response.data.name || YARNY_STORIES_FOLDER,
+            id: response.data.id ?? "",
+            name: response.data.name ?? YARNY_STORIES_FOLDER,
             created: true
         });
     }

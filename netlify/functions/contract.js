@@ -41,7 +41,7 @@ exports.DriveCreateFolderRequestSchema = zod_1.z.object({
     folderName: zod_1.z.string().optional(), // Legacy field name
     parentFolderId: zod_1.z.string().optional()
 }).refine((data) => data.name !== undefined || data.folderName !== undefined, { message: "Either 'name' or 'folderName' is required" }).transform((data) => ({
-    name: data.name || data.folderName || "",
+    name: data.name ?? data.folderName ?? "",
     parentFolderId: data.parentFolderId
 }));
 exports.DriveDeleteFileRequestSchema = zod_1.z.object({
@@ -55,7 +55,7 @@ exports.DriveRenameFileRequestSchema = zod_1.z.object({
     fileName: zod_1.z.string().optional() // Legacy field name
 }).refine((data) => data.newName !== undefined || data.fileName !== undefined, { message: "Either 'newName' or 'fileName' is required" }).transform((data) => ({
     fileId: data.fileId,
-    newName: data.newName || data.fileName || ""
+    newName: data.newName ?? data.fileName ?? ""
 }));
 exports.DriveCheckCommentsRequestSchema = zod_1.z.object({
     fileId: zod_1.z.string()
@@ -101,7 +101,7 @@ function validateRequest(schema, body, errorMessage = "Invalid request") {
  */
 function validateQueryParams(schema, params, errorMessage = "Invalid query parameters") {
     try {
-        return schema.parse(params || {});
+        return schema.parse(params ?? {});
     }
     catch (error) {
         if (error instanceof zod_1.z.ZodError) {

@@ -1,6 +1,6 @@
 # Project Review - Test Coverage & Documentation Status
 
-**Review Date**: 2025-01-XX  
+**Review Date**: 2025-02-11  
 **Status**: Comprehensive review of test coverage gaps and documentation currency
 
 ## Executive Summary
@@ -13,14 +13,12 @@
 
 ### Current Test Status
 
-- **Total Tests**: 501 (478 passing, 23 skipped, 0 failing) - *Note: Some tests may be failing in current run*
-- **Pass Rate**: 95.4% (when all passing)
+- **Total Tests**: 607 (604 passing, 23 skipped, 3 failing)
+- **Pass Rate**: ~99.5%
 - **Coverage**: Good coverage for critical paths, gaps in secondary features
 
-**⚠️ Test Failures Detected**: 
-- `useNotesQuery.test.tsx` has 5 failing tests (out of 7 total)
-  - Tests appear to have mocking issues with API client
-  - Needs investigation and fix
+**⚠️ Remaining Test Failures** (as of 2025-02-11):
+- `tests/integration/round-trip.test.tsx`: 3 tests fail (preserves empty paragraphs, normalizes mixed line endings, handles Unicode). Failures are `savedContent` not set within timeout; may need mock or async adjustments.
 
 ### ✅ Well-Tested Areas
 
@@ -257,9 +255,9 @@ The project has **good test coverage** with **well-documented gaps**. The docume
 - ✅ Skipped tests are intentional and well-documented
 
 **Next Steps**:
-1. **URGENT**: Fix failing tests in `useNotesQuery.test.tsx` (5 tests failing)
-2. Prioritize testing high-priority hooks (`useLocalBackups`, `useManualSync`, `useStoryMutations`, `useNotesMutations`)
-3. Add tests for `AppLayout` and `EditorFooter` if time permits
-4. Continue monitoring test coverage as new features are added
-5. Update `TEST_COVERAGE_SUMMARY.md` when adding new tests or fixing failures
+1. Fix or relax the 3 failing round-trip integration tests (savedContent / timeout).
+2. Prioritize testing high-priority hooks that still lack tests (see TEST_COVERAGE_GAPS.md).
+3. Add tests for `AppLayout` if time permits (`EditorFooter` is now tested).
+4. Continue monitoring test coverage as new features are added.
+5. Update `TEST_COVERAGE_SUMMARY.md` when adding new tests or fixing failures.
 

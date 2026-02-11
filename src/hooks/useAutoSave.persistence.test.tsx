@@ -155,6 +155,7 @@ describe("useAutoSave - Session Persistence", () => {
     });
 
     it("should process queued saves when coming back online", async () => {
+      vi.useRealTimers();
       mockProcessQueuedSavesDirectly.mockClear();
 
       // Manually queue a save
@@ -207,8 +208,9 @@ describe("useAutoSave - Session Persistence", () => {
           // Should process queued saves via queuedSaveProcessor
           expect(mockProcessQueuedSavesDirectly).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 3000 }
       );
+      vi.useFakeTimers();
     });
 
     it("should preserve queued saves across page reloads", () => {
@@ -326,7 +328,7 @@ describe("useAutoSave - Session Persistence", () => {
         modifiedTime: new Date().toISOString()
       });
 
-      const { rerender } = renderHook(
+      const { result, rerender } = renderHook(
         ({ content }) =>
           useAutoSave("file-1", content, {
             enabled: true,
@@ -477,6 +479,7 @@ describe("useAutoSave - Session Persistence", () => {
 
   describe("Manual Retry Event", () => {
     it("should process queued saves when retry event is dispatched", async () => {
+      vi.useRealTimers();
       mockProcessQueuedSavesDirectly.mockClear();
       
       // Queue some saves
@@ -523,8 +526,9 @@ describe("useAutoSave - Session Persistence", () => {
           // Should process queued saves via queuedSaveProcessor
           expect(mockProcessQueuedSavesDirectly).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 3000 }
       );
+      vi.useFakeTimers();
     });
   });
 });

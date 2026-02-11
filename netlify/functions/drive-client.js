@@ -6,8 +6,8 @@ exports.getAuthenticatedDriveClient = getAuthenticatedDriveClient;
 const blobs_1 = require("@netlify/blobs");
 const google_auth_library_1 = require("google-auth-library");
 const googleapis_1 = require("googleapis");
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 const STORAGE_KEY = "drive_tokens.json";
 // Validate client ID format (shared validation)
 function validateClientId(clientId) {
@@ -42,7 +42,7 @@ function validateClientSecret(clientSecret) {
     return { valid: true };
 }
 function getStoreOptions() {
-    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const siteID = process.env.NETLIFY_SITE_ID ?? process.env.SITE_ID;
     const token = process.env.NETLIFY_AUTH_TOKEN;
     const storeOptions = { name: "drive-tokens" };
     if (siteID) {
@@ -69,7 +69,7 @@ async function getTokens(email) {
         }
         console.log("getTokens - looking for email:", email);
         console.log("getTokens - available emails:", Object.keys(allTokens));
-        const tokens = allTokens[email] || null;
+        const tokens = allTokens[email] ?? null;
         console.log("getTokens - found tokens:", !!tokens);
         return tokens;
     }
@@ -158,7 +158,7 @@ async function getAuthenticatedDriveClient(email) {
                 refresh_token: tokens.refresh_token, // Keep original refresh token
                 expiry_date: newTokens.expiry_date ?? null
             };
-            const preservedScope = tokens.scope || newTokens.scope;
+            const preservedScope = tokens.scope ?? newTokens.scope;
             if (preservedScope) {
                 updatedTokens.scope = preservedScope;
             }

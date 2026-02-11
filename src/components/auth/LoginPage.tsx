@@ -2,8 +2,6 @@ import { Alert, Box, Button, Container, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
-import { AppFooter } from "../layout/AppFooter";
-
 import { useAuth, useAuthConfig } from "../../hooks/useAuth";
 
 declare global {
@@ -48,10 +46,8 @@ export function LoginPage(): JSX.Element {
   const { data: config, isLoading: configLoading } = useAuthConfig();
   const { isAuthenticated, user, login, loginWithBypass, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const isPromptingRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const googleButtonContainerRef = useRef<HTMLDivElement>(null);
-  const oneTapShownRef = useRef(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -263,7 +259,7 @@ export function LoginPage(): JSX.Element {
       const iframe = container.querySelector("iframe");
       const button = container.querySelector("div[role='button']");
       
-      if (iframe || button) {
+      if (iframe ?? button) {
         // Button is rendered - let the click pass through naturally
         // The overlay is positioned over our button, so clicks should work
         console.log("[Auth] Google button overlay exists, click should pass through");

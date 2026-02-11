@@ -71,8 +71,8 @@ const handler = async (event) => {
                 status,
                 label,
                 color,
-                uptime: monitor.all_time_uptime_ratio || null,
-                responseTime: monitor.average_response_time || null
+                uptime: monitor.all_time_uptime_ratio ?? null,
+                responseTime: monitor.average_response_time ?? null
             }, 200, {
                 "Cache-Control": "public, max-age=60" // Cache for 1 minute
             }));
@@ -88,7 +88,7 @@ const handler = async (event) => {
             return (0, types_1.addCorsHeaders)((0, types_1.createSuccessResponse)({
                 status: "unknown",
                 label: "Unable to Fetch Status",
-                error: data.error?.message || data.message || "Unknown error",
+                error: data.error?.message ?? data.message ?? "Unknown error",
                 ...(process.env.NODE_ENV === "development" && { debug: data })
             }));
         }

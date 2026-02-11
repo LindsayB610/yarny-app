@@ -10,7 +10,7 @@ exports.createErrorResponse = createErrorResponse;
 exports.createSuccessResponse = createSuccessResponse;
 exports.addCorsHeaders = addCorsHeaders;
 function parseSessionFromEvent(event) {
-    const cookies = event.headers.cookie?.split(";") || [];
+    const cookies = event.headers.cookie?.split(";") ?? [];
     const sessionCookie = cookies.find((c) => c.trim().startsWith("session="));
     if (!sessionCookie)
         return null;

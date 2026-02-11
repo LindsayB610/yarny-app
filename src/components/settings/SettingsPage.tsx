@@ -1,4 +1,4 @@
-import { AutoStoriesOutlined, EditNoteOutlined } from "@mui/icons-material";
+import { AutoStoriesOutlined, EditNoteOutlined, MenuBookOutlined } from "@mui/icons-material";
 import { Box, Button, Container, Stack, Tab, Tabs, Typography } from "@mui/material";
 import type { JSX, SyntheticEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,6 +26,11 @@ const SETTINGS_TABS = [
 ] satisfies readonly SettingsTab[];
 
 const NAVIGATION_LINKS = [
+  {
+    label: "Docs",
+    path: "/docs",
+    icon: MenuBookOutlined
+  },
   {
     label: "Stories",
     path: "/stories",
@@ -135,12 +140,21 @@ export function SettingsPage(): JSX.Element {
                 color: "rgba(148, 163, 184, 0.85)",
                 borderRadius: "9999px",
                 minHeight: 48,
-                px: 3
+                px: 3,
+                transition: "box-shadow 150ms ease"
+              },
+              "& .MuiTab-root:focus-visible": {
+                outline: "none",
+                boxShadow: "0 0 0 2px rgba(94, 234, 212, 0.55)"
               },
               "& .MuiTab-root.Mui-selected": {
                 bgcolor: "primary.main",
                 color: "primary.contrastText",
                 boxShadow: "0 10px 25px rgba(16, 185, 129, 0.45)"
+              },
+              "& .MuiTab-root.Mui-selected:focus-visible": {
+                boxShadow:
+                  "0 10px 25px rgba(16, 185, 129, 0.45), 0 0 0 2px rgba(94, 234, 212, 0.55)"
               }
             }}
           >

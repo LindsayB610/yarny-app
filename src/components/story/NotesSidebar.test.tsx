@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react"; // act unused
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../tests/utils/test-utils";
 import { NotesSidebar } from "./NotesSidebar";
@@ -450,7 +450,7 @@ describe("NotesSidebar", () => {
         } as any;
       } else if (noteType === "worldbuilding") {
         return {
-          data: [{ id: "worldbuilding-1", name: "Worldbuilding", content: "Worldbuilding content", modifiedTime: "2024-01-01T00:00:00Z" }],
+          data: [{ id: "worldbuilding-1", name: "Worldbuilding note", content: "Worldbuilding content", modifiedTime: "2024-01-01T00:00:00Z" }],
           isLoading: false,
           isError: false,
           isSuccess: true,
@@ -493,8 +493,8 @@ describe("NotesSidebar", () => {
     });
 
     await waitFor(() => {
-      // Check for the note name in the list (not the tab)
-      expect(screen.getByText("Worldbuilding content")).toBeInTheDocument();
+      // Check for the note name in the list (unique name so we don't match the tab)
+      expect(screen.getByText("Worldbuilding note")).toBeInTheDocument();
     });
   });
 

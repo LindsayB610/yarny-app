@@ -212,7 +212,7 @@ export function useAutoSave(
         const story = getStories[localBackupStoryId];
         if (story) {
           const project = getProjects[story.projectId];
-          isLocalProject = project?.storageType === "local" ?? false;
+          isLocalProject = project?.storageType === "local";
         }
       }
       
@@ -406,7 +406,7 @@ export function useAutoSave(
         const story = getStories[payload.storyId];
         if (story) {
           const project = getProjects[story.projectId];
-          isLocalProject = project?.storageType === "local" ?? false;
+          isLocalProject = project?.storageType === "local";
         }
       }
       

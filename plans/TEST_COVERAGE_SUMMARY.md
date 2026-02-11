@@ -1,20 +1,20 @@
 # Test Coverage Summary
 
-**Last Updated**: 2025-01-XX  
-**Overall Status**: ✅ Tests passing | ⏭️ 23 skipped | ❌ 0 failing (useNotesQuery tests fixed)
+**Last Updated**: 2025-02-11  
+**Overall Status**: ✅ Most tests passing | ⏭️ 23 skipped | ❌ 3 failing (round-trip integration)
 
 ## Test Suite Overview
 
-- **Total Tests**: 501
-- **Passing**: 478 (95.4%)
-- **Skipped**: 23 (4.6%)
-- **Failing**: 0 (0%)
+- **Total Tests**: 607
+- **Passing**: 604 (99.5%)
+- **Skipped**: 23
+- **Failing**: 3 (round-trip integration tests in `tests/integration/round-trip.test.tsx` – `savedContent` timeout/assertion)
 
 ## Component Test Coverage
 
 ### ✅ Fully Tested Components
 
-- **NotesSidebar**: 14/15 tests passing (1 skipped - documented mock issue)
+- **NotesSidebar**: All 15 tests passing
 - **StoryEditor**: 4/14 tests passing (10 skipped - TipTap complexity)
 - **EditorFooter**: All tests passing (newly added)
 - **driveClient**: All tests passing

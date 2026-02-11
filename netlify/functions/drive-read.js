@@ -68,10 +68,10 @@ const handler = async (event) => {
             }
         }
         return (0, types_1.createSuccessResponse)({
-            id: fileMetadata.data.id || "",
-            name: fileMetadata.data.name || "",
-            mimeType: fileMetadata.data.mimeType || "",
-            modifiedTime: fileMetadata.data.modifiedTime || "",
+            id: fileMetadata.data.id ?? "",
+            name: fileMetadata.data.name ?? "",
+            mimeType: fileMetadata.data.mimeType ?? "",
+            modifiedTime: fileMetadata.data.modifiedTime ?? "",
             content: content
         });
     }

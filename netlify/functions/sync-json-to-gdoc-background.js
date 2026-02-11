@@ -5,8 +5,8 @@ const google_auth_library_1 = require("google-auth-library");
 const googleapis_1 = require("googleapis");
 const drive_client_1 = require("./drive-client");
 const types_1 = require("./types");
-const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID || "").trim();
-const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET || "").trim();
+const GDRIVE_CLIENT_ID = (process.env.GDRIVE_CLIENT_ID ?? "").trim();
+const GDRIVE_CLIENT_SECRET = (process.env.GDRIVE_CLIENT_SECRET ?? "").trim();
 /**
  * Background function to sync JSON file content to Google Doc
  * This runs independently of the client connection (up to 15 minutes)
@@ -128,7 +128,7 @@ const handler = async (event, context) => {
         if (!lastElement) {
             throw new Error("Document content is empty");
         }
-        const endIndex = (lastElement.endIndex || 2) - 1;
+        const endIndex = (lastElement.endIndex ?? 2) - 1;
         // Delete existing content and insert new content
         const requests = [];
         if (endIndex > 1) {
@@ -168,7 +168,7 @@ const handler = async (event, context) => {
         return (0, types_1.createSuccessResponse)({
             success: true,
             gdocFileId,
-            modifiedTime: fileMetadata.data.modifiedTime || new Date().toISOString()
+            modifiedTime: fileMetadata.data.modifiedTime ?? new Date().toISOString()
         });
     }
     catch (error) {
