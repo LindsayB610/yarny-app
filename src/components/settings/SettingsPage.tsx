@@ -130,9 +130,12 @@ export function SettingsPage(): JSX.Element {
             TabIndicatorProps={{ sx: { display: "none" } }}
             sx={{
               alignSelf: { xs: "stretch", sm: "flex-start" },
-              bgcolor: "rgba(15, 23, 42, 0.65)",
-              borderRadius: "9999px",
-              p: 0.75,
+              bgcolor: "transparent",
+              p: 0,
+              minHeight: "auto",
+              "& .MuiTabs-flexContainer": {
+                gap: 1.5
+              },
               "& .MuiTab-root": {
                 textTransform: "none",
                 fontWeight: 600,
