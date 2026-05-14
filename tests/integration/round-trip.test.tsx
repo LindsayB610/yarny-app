@@ -415,6 +415,41 @@ const createTestQueryClient = () =>
     }
   });
 
+const restoreAutoSaveMock = () => {
+  vi.mocked(useAutoSaveModule.useAutoSave).mockImplementation((fileId: string | undefined, content: string) => ({
+    save: async () => {
+      let currentContent = content ?? "";
+
+      if (!currentContent || currentContent === "Initial content") {
+        try {
+          const storeProvider = await import("../../src/store/provider");
+          const store = storeProvider.useYarnyStoreApi().getState();
+          const snippet = store.entities.snippets["snippet-1"];
+          if (snippet?.content && snippet.content !== "Initial content") {
+            currentContent = snippet.content;
+          }
+        } catch {
+          // Fall back to the hook content captured at render time.
+        }
+      }
+
+      if (!currentContent) {
+        return;
+      }
+
+      await apiClient.writeDriveFile({
+        fileId: fileId ?? "drive-file-1",
+        fileName: "",
+        content: currentContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+      });
+    },
+    isSaving: false,
+    hasUnsavedChanges: false,
+    lastSavedContent: content ?? "",
+    markAsSaved: vi.fn()
+  }));
+};
+
 // Helper to render AppLayout and wait for initialization (without checking editor)
 const renderAppLayout = async (queryClient: QueryClient) => {
   render(
@@ -437,6 +472,7 @@ describe("Round-Trip Validation with Google Docs", () => {
   beforeEach(async () => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    restoreAutoSaveMock();
     const storeProvider = await import("../../src/store/provider") as (typeof import("../../src/store/provider")) & { __setSnippetContent: (content: string) => void };
     storeProvider.__setSnippetContent("Initial content");
   });
